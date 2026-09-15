@@ -41,6 +41,9 @@ func (s *Store) InstallOfficialPublicCopy(ctx context.Context, catalog localizat
 		if !exists || item.Locale == "" || item.Value == "" || item.DefinitionVersion != definition.DefinitionVersion || item.OfficialBundle != catalog.OfficialBundle {
 			return localization.ErrInvalidPublicCopy
 		}
+		if err := localization.ValidatePublicCopyValue(definition, item.Value); err != nil {
+			return localization.ErrInvalidPublicCopy
+		}
 		if defaults[item.Key] == nil {
 			defaults[item.Key] = make(map[string]localization.PublicCopyDefault)
 		}

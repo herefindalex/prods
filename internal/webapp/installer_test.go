@@ -362,8 +362,8 @@ func TestInstallerOnlyAcceptsEmbeddedInterfaceLocales(t *testing.T) {
 	}
 
 	unsupportedDefault := base
-	unsupportedDefault.DefaultLocale = "fr-FR"
-	unsupportedDefault.SupportedLocales = "fr-FR"
+	unsupportedDefault.DefaultLocale = "ru-RU"
+	unsupportedDefault.SupportedLocales = "ru-RU"
 	if _, err := validateInstallationForm(unsupportedDefault, "ownerpass1", "ownerpass1"); err == nil {
 		t.Fatal("unsupported default locale was accepted")
 	} else if fieldErr, ok := err.(*installerFieldError); !ok || fieldErr.Field != "default_locale" {
@@ -371,7 +371,7 @@ func TestInstallerOnlyAcceptsEmbeddedInterfaceLocales(t *testing.T) {
 	}
 
 	unsupportedList := base
-	unsupportedList.SupportedLocales = "en-US,fr-FR"
+	unsupportedList.SupportedLocales = "en-US,ru-RU"
 	if _, err := validateInstallationForm(unsupportedList, "ownerpass1", "ownerpass1"); err == nil {
 		t.Fatal("unsupported locale list was accepted")
 	} else if fieldErr, ok := err.(*installerFieldError); !ok || fieldErr.Field != "supported_locales" {

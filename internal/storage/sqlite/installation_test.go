@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"prods/internal/identity"
+	"prods/internal/localization"
 )
 
 func TestInstallationCompletionIsAtomicAndCreatesMinimumSiteState(t *testing.T) {
@@ -51,6 +52,14 @@ func TestInstallationCompletionIsAtomicAndCreatesMinimumSiteState(t *testing.T) 
 	}
 	if categories != 2 || settings != 1 || audit != 1 {
 		t.Fatalf("categories=%d settings=%d audit=%d", categories, settings, audit)
+	}
+	copyCatalog, err := store.PublicCopyCatalog(context.Background())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if copyCatalog.OfficialBundle != localization.OfficialBundleVersion ||
+		len(copyCatalog.Defaults) != len(copyCatalog.Definitions)*len(localization.BuiltinLocaleCodes()) {
+		t.Fatalf("official public copy was not installed completely: definitions=%d defaults=%d bundle=%q", len(copyCatalog.Definitions), len(copyCatalog.Defaults), copyCatalog.OfficialBundle)
 	}
 	if _, err := store.CompleteInstallation(context.Background(), Installation{
 		OwnerEmail: "other@example.test", PasswordHash: passwordHash, DefaultLocale: "en-US",

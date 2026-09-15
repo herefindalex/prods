@@ -10,7 +10,7 @@ import (
 
 var ErrUnsupportedLocale = errors.New("unsupported locale")
 
-var interfaceLocales = []string{"en-US", "zh-TW"}
+var interfaceLocales = BuiltinLocaleCodes()
 
 func Available() []string {
 	return append([]string(nil), interfaceLocales...)
@@ -100,9 +100,8 @@ var traditionalChinese = Messages{
 func For(locale string) Messages {
 	tag, err := language.Parse(strings.TrimSpace(locale))
 	if err == nil {
-		base, _ := tag.Base()
-		if base.String() == "zh" {
-			return traditionalChinese
+		if messages, ok := messageCatalogs[tag.String()]; ok {
+			return messages
 		}
 	}
 	return english

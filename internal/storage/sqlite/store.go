@@ -231,6 +231,10 @@ func OpenReady(path string) (*Store, error) {
 		db.Close()
 		return nil, fmt.Errorf("verify schema migration history: %w", err)
 	}
+	if err := store.InstallOfficialPublicCopy(ctx, localization.OfficialPublicCopyCatalog()); err != nil {
+		db.Close()
+		return nil, fmt.Errorf("install official public copy: %w", err)
+	}
 	return store, nil
 }
 
@@ -317,6 +321,9 @@ func (s *Store) CompleteInstallation(ctx context.Context, installation Installat
 		return identity.User{}, ErrInstallationState
 	}
 	installation.DefaultLocale = defaultLocale
+	if err := s.InstallOfficialPublicCopy(ctx, localization.OfficialPublicCopyCatalog()); err != nil {
+		return identity.User{}, fmt.Errorf("install official public copy: %w", err)
+	}
 	encodedLocales, err := json.Marshal(locales)
 	if err != nil {
 		return identity.User{}, err

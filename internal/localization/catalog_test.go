@@ -1,6 +1,9 @@
 package localization
 
-import "testing"
+import (
+	"reflect"
+	"testing"
+)
 
 func TestResolveValidatesExplicitLocaleAndNegotiatesHeader(t *testing.T) {
 	defaultLocale, supported, err := NormalizeSupported("en-us", []string{"en-US", "zh-tw", "en-US"})
@@ -23,15 +26,25 @@ func TestResolveValidatesExplicitLocaleAndNegotiatesHeader(t *testing.T) {
 	}
 }
 
-func TestNormalizeSupportedRejectsLocalesWithoutAnInterfaceCatalog(t *testing.T) {
-	if _, _, err := NormalizeSupported("fr-FR", []string{"fr-FR"}); err != ErrUnsupportedLocale {
-		t.Fatalf("French-only interface locale error = %v, want %v", err, ErrUnsupportedLocale)
-	}
-	if IsAvailable("fr-FR") {
-		t.Fatal("fr-FR must not be advertised without an embedded interface catalog")
-	}
+func TestEveryBuiltinLocaleHasACompleteInterfaceCatalog(t *testing.T) {
+	want := BuiltinLocaleCodes()
 	available := Available()
-	if len(available) != 2 || available[0] != "en-US" || available[1] != "zh-TW" {
-		t.Fatalf("available interface locales = %v", available)
+	if !reflect.DeepEqual(available, want) {
+		t.Fatalf("available interface locales = %v, want %v", available, want)
+	}
+	for _, locale := range want {
+		if !IsAvailable(locale) {
+			t.Fatalf("locale %s is not available", locale)
+		}
+		messages := reflect.ValueOf(For(locale))
+		for index := 0; index < messages.NumField(); index++ {
+			if messages.Field(index).String() == "" {
+				t.Fatalf("locale %s has empty message %s", locale, messages.Type().Field(index).Name)
+			}
+		}
+		defaultLocale, supported, err := NormalizeSupported(locale, []string{locale})
+		if err != nil || defaultLocale != locale || len(supported) != 1 || supported[0] != locale {
+			t.Fatalf("locale %s normalization = %q %v %v", locale, defaultLocale, supported, err)
+		}
 	}
 }
