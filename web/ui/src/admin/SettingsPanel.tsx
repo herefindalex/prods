@@ -11,7 +11,9 @@ type Props = {
 
 const labels = {
 	"en-US": {
-		title: "Site settings",
+    title: "Site settings",
+    refresh: "Refresh",
+    revision: "Revision",
 		defaultLocale: "Default interface locale",
 		supportedLocales: "Supported interface locales",
 		timeZone: "Site time zone",
@@ -22,7 +24,9 @@ const labels = {
 		explanation: "The site time zone controls Admin/RFQ display and the built-in backup schedule. It is independent of interface language and never rewrites stored event times.",
 	},
 	"zh-TW": {
-		title: "站點設定",
+    title: "站點設定",
+    refresh: "重新整理",
+    revision: "修訂",
 		defaultLocale: "預設介面語系",
 		supportedLocales: "支援的介面語系",
 		timeZone: "站點時區",
@@ -90,7 +94,7 @@ export function SettingsPanel({ locale, onError, onMessage }: Props) {
 	};
 
 	return (
-		<Card title={text.title} extra={<Button onClick={() => void load()} loading={loading}>Refresh</Button>}>
+    <Card title={text.title} extra={<Button onClick={() => void load()} loading={loading}>{text.refresh}</Button>}>
 			<Space direction="vertical" size="large" className="panel-stack">
 				<Alert type="info" showIcon message={text.explanation} />
 				<Form form={form} layout="vertical" onFinish={(values) => void save(values)}>
@@ -119,7 +123,7 @@ export function SettingsPanel({ locale, onError, onMessage }: Props) {
 					</div>
 					<Button type="primary" htmlType="submit" loading={loading}>{text.save}</Button>
 				</Form>
-				{settings && <Typography.Text type="secondary">Revision {settings.revision} · {new Date(settings.updated_at).toLocaleString(locale)}</Typography.Text>}
+					{settings && <Typography.Text type="secondary">{text.revision} {settings.revision} · {new Date(settings.updated_at).toLocaleString(locale)}</Typography.Text>}
 			</Space>
 		</Card>
 	);

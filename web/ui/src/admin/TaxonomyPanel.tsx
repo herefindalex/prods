@@ -5,7 +5,59 @@ import { dictionaryKinds, type Category, type DictionaryEntry, type DictionaryKi
 
 type Feedback = { onError: (error: unknown) => void; onMessage: (message: string) => void };
 
-export function TaxonomyPanel({ onError, onMessage }: Feedback) {
+type TaxonomyLocale = "en-US" | "zh-TW";
+
+const labels = {
+  "en-US": {
+    categories: "Categories", dictionaries: "Dictionaries", specifications: "Specifications",
+    createdCategory: (name: string) => `Created category ${name}.`,
+    createdDictionary: (kind: string, name: string) => `Created ${kind} ${name}.`,
+    disabledCategory: (name: string) => `Disabled category ${name}.`,
+    disabledDictionary: (name: string) => `Disabled ${name}. Existing references remain valid.`,
+    updated: (name: string, count: number) => `Updated ${name}; ${count} product(s) queued for publication.`,
+    createdSpec: (name: string) => `Created specification ${name}.`,
+    createdSpecSet: (name: string) => `Created Spec Set ${name}.`,
+    assignedSpecSet: (name: string) => `Assigned Spec Set to ${name}.`,
+    newCategory: "New category", name: "Name", slug: "Slug", parent: "Parent", create: "Create",
+    categoryData: "Category tree data", refresh: "Refresh", root: "Root", status: "Status", revision: "Revision", actions: "Actions",
+    edit: "Edit", disable: "Disable", disableCategoryConfirm: "Disable this category? Existing references are preserved.",
+    dictionary: "Dictionary", optionalSlug: "Optional slug", disableValueConfirm: "Disable this value? Existing references remain valid.",
+    newSpec: "New specification", preferredUnit: "Preferred unit", filterable: "Filterable", newSpecSet: "New Spec Set",
+    assignSpecSet: "Assign exact category Spec Set", category: "Category", specSet: "Spec Set", assign: "Assign",
+    definitions: "Spec definitions and sets", unit: "Unit", semanticVersion: "Semantic version", yes: "Yes", no: "No", members: "Members",
+    editCategory: "Edit category", editDictionary: "Edit dictionary value", applyReviewed: "Apply reviewed change",
+    previewAffected: "Preview affected products and routes", active: "Active", disabled: "Disabled",
+    affected: (count: number) => `${count} affected product(s)`, notPublic: "not currently public",
+    noChanges: "No Product publication changes required.",
+    kinds: { manufacturer: "Manufacturer", brand: "Brand", lifecycle: "Lifecycle", application: "Application", document_type: "Document type" } as Record<DictionaryKind, string>,
+  },
+  "zh-TW": {
+    categories: "分類", dictionaries: "字典", specifications: "規格",
+    createdCategory: (name: string) => `已建立分類 ${name}。`,
+    createdDictionary: (kind: string, name: string) => `已建立${kind} ${name}。`,
+    disabledCategory: (name: string) => `已停用分類 ${name}。`,
+    disabledDictionary: (name: string) => `已停用 ${name}；既有參照仍然有效。`,
+    updated: (name: string, count: number) => `已更新 ${name}；${count} 項產品已排入重新發布。`,
+    createdSpec: (name: string) => `已建立規格 ${name}。`,
+    createdSpecSet: (name: string) => `已建立 Spec Set ${name}。`,
+    assignedSpecSet: (name: string) => `已將 Spec Set 指派給 ${name}。`,
+    newCategory: "新增分類", name: "名稱", slug: "Slug", parent: "上層分類", create: "建立",
+    categoryData: "分類樹資料", refresh: "重新整理", root: "根分類", status: "狀態", revision: "修訂", actions: "操作",
+    edit: "編輯", disable: "停用", disableCategoryConfirm: "要停用這個分類嗎？既有參照會保留。",
+    dictionary: "字典", optionalSlug: "選填 Slug", disableValueConfirm: "要停用這個值嗎？既有參照仍然有效。",
+    newSpec: "新增規格", preferredUnit: "偏好單位", filterable: "可篩選", newSpecSet: "新增 Spec Set",
+    assignSpecSet: "指派分類專屬 Spec Set", category: "分類", specSet: "Spec Set", assign: "指派",
+    definitions: "規格定義與集合", unit: "單位", semanticVersion: "語意版本", yes: "是", no: "否", members: "成員",
+    editCategory: "編輯分類", editDictionary: "編輯字典值", applyReviewed: "套用已檢視的變更",
+    previewAffected: "預覽受影響的產品與路由", active: "有效", disabled: "停用",
+    affected: (count: number) => `${count} 項受影響產品`, notPublic: "目前未公開",
+    noChanges: "不需要變更任何 Product publication。",
+    kinds: { manufacturer: "製造商", brand: "品牌", lifecycle: "生命週期", application: "應用", document_type: "文件類型" } as Record<DictionaryKind, string>,
+  },
+} as const;
+
+export function TaxonomyPanel({ locale, onError, onMessage }: Feedback & { locale: TaxonomyLocale }) {
+  const text = labels[locale];
   const [categories, setCategories] = useState<Category[]>([]);
   const [kind, setKind] = useState<DictionaryKind>("manufacturer");
   const [entries, setEntries] = useState<DictionaryEntry[]>([]);
@@ -64,7 +116,7 @@ export function TaxonomyPanel({ onError, onMessage }: Feedback) {
         revision: 1,
       });
       categoryForm.resetFields();
-      onMessage(`Created category ${values.name}.`);
+      onMessage(text.createdCategory(values.name));
       await loadCategories();
     } catch (error) {
       onError(error);
@@ -81,7 +133,7 @@ export function TaxonomyPanel({ onError, onMessage }: Feedback) {
         revision: 1,
       });
       dictionaryForm.resetFields();
-      onMessage(`Created ${kind.replace("_", " ")} ${values.name}.`);
+      onMessage(text.createdDictionary(text.kinds[kind], values.name));
       await loadDictionary();
     } catch (error) {
       onError(error);
@@ -91,7 +143,7 @@ export function TaxonomyPanel({ onError, onMessage }: Feedback) {
   const disableCategory = async (category: Category) => {
     try {
       await postJSON<void>(`/admin/api/categories/${category.id}/disable`, { expected_revision: category.revision });
-      onMessage(`Disabled category ${category.name}.`);
+      onMessage(text.disabledCategory(category.name));
       await loadCategories();
     } catch (error) {
       onError(error);
@@ -101,7 +153,7 @@ export function TaxonomyPanel({ onError, onMessage }: Feedback) {
 	const disableDictionary = async (entry: DictionaryEntry) => {
     try {
       await postJSON<void>(`/admin/api/dictionaries/${entry.id}/disable`, { expected_revision: entry.revision });
-      onMessage(`Disabled ${entry.name}. Existing references remain valid.`);
+      onMessage(text.disabledDictionary(entry.name));
       await loadDictionary();
     } catch (error) {
       onError(error);
@@ -138,7 +190,7 @@ export function TaxonomyPanel({ onError, onMessage }: Feedback) {
 				...values,
 				parent_id: values.parent_id || "",
 			});
-			onMessage(`Updated ${editingCategory.name}; ${categoryImpact.affected_products.length} product(s) queued for publication.`);
+      onMessage(text.updated(editingCategory.name, categoryImpact.affected_products.length));
 			setEditingCategory(undefined);
 			setCategoryImpact(undefined);
 			await loadCategories();
@@ -179,7 +231,7 @@ export function TaxonomyPanel({ onError, onMessage }: Feedback) {
 				...values,
 				slug: values.slug || "",
 			});
-			onMessage(`Updated ${editingDictionary.name}; ${dictionaryImpact.affected_products.length} product(s) queued for publication.`);
+      onMessage(text.updated(editingDictionary.name, dictionaryImpact.affected_products.length));
 			setEditingDictionary(undefined);
 			setDictionaryImpact(undefined);
 			await loadDictionary();
@@ -200,7 +252,7 @@ export function TaxonomyPanel({ onError, onMessage }: Feedback) {
         revision: 1,
       });
       specForm.resetFields();
-      onMessage(`Created specification ${values.name}.`);
+      onMessage(text.createdSpec(values.name));
       await loadSpecs();
     } catch (error) {
       onError(error);
@@ -216,7 +268,7 @@ export function TaxonomyPanel({ onError, onMessage }: Feedback) {
         revision: 1,
       });
       specSetForm.resetFields();
-      onMessage(`Created Spec Set ${values.name}.`);
+      onMessage(text.createdSpecSet(values.name));
       await loadSpecs();
     } catch (error) {
       onError(error);
@@ -232,7 +284,7 @@ export function TaxonomyPanel({ onError, onMessage }: Feedback) {
         spec_set_id: values.spec_set_id,
       });
       assignmentForm.resetFields();
-      onMessage(`Assigned a Spec Set to ${category.name}.`);
+      onMessage(text.assignedSpecSet(category.name));
       await loadCategories();
     } catch (error) {
       onError(error);
@@ -246,36 +298,36 @@ export function TaxonomyPanel({ onError, onMessage }: Feedback) {
       items={[
         {
           key: "categories",
-          label: "Categories",
+          label: text.categories,
           children: (
             <Space direction="vertical" size="large" className="panel-stack">
-              <Card title="New category">
+              <Card title={text.newCategory}>
                 <Form form={categoryForm} layout="inline" onFinish={(values) => void createCategory(values)}>
-                  <Form.Item name="name" rules={[{ required: true }]}><Input placeholder="Name" /></Form.Item>
-                  <Form.Item name="slug" rules={[{ required: true }]}><Input placeholder="slug" /></Form.Item>
-                  <Form.Item name="parent_id"><Select allowClear showSearch optionFilterProp="label" placeholder="Parent" style={{ minWidth: 180 }} options={categories.filter((row) => row.status === "active").map((row) => ({ value: row.id, label: row.name }))} /></Form.Item>
-                  <Button type="primary" htmlType="submit">Create</Button>
+                  <Form.Item name="name" rules={[{ required: true }]}><Input placeholder={text.name} /></Form.Item>
+                  <Form.Item name="slug" rules={[{ required: true }]}><Input placeholder={text.slug} /></Form.Item>
+                  <Form.Item name="parent_id"><Select allowClear showSearch optionFilterProp="label" placeholder={text.parent} style={{ minWidth: 180 }} options={categories.filter((row) => row.status === "active").map((row) => ({ value: row.id, label: row.name }))} /></Form.Item>
+                  <Button type="primary" htmlType="submit">{text.create}</Button>
                 </Form>
               </Card>
-              <Card title="Category tree data" extra={<Button onClick={() => void loadCategories()}>Refresh</Button>}>
+              <Card title={text.categoryData} extra={<Button onClick={() => void loadCategories()}>{text.refresh}</Button>}>
                 <Table<Category>
                   rowKey="id"
                   dataSource={categories}
                   pagination={false}
                   columns={[
-                    { title: "Name", dataIndex: "name" },
-                    { title: "Slug", dataIndex: "slug" },
-                    { title: "Parent", render: (_, row) => categories.find((item) => item.id === row.parent_id)?.name ?? row.parent_id ?? "Root" },
-                    { title: "Status", render: (_, row) => <Tag color={row.status === "active" ? "green" : "default"}>{row.status}</Tag> },
-                    { title: "Revision", dataIndex: "revision" },
+                    { title: text.name, dataIndex: "name" },
+                    { title: text.slug, dataIndex: "slug" },
+                    { title: text.parent, render: (_, row) => categories.find((item) => item.id === row.parent_id)?.name ?? row.parent_id ?? text.root },
+                    { title: text.status, render: (_, row) => <Tag color={row.status === "active" ? "green" : "default"}>{row.status === "active" ? text.active : text.disabled}</Tag> },
+                    { title: text.revision, dataIndex: "revision" },
                     {
-                      title: "Actions",
+                      title: text.actions,
                       render: (_, row) => row.system_key === "root" ? null : (
                         <Space>
-                          <Button size="small" onClick={() => openCategoryEdit(row)}>Edit</Button>
+                          <Button size="small" onClick={() => openCategoryEdit(row)}>{text.edit}</Button>
                           {!row.system_key && row.status !== "disabled" ? (
-                            <Popconfirm title="Disable this category? Existing references are preserved." onConfirm={() => void disableCategory(row)}>
-                              <Button size="small" danger>Disable</Button>
+                            <Popconfirm title={text.disableCategoryConfirm} onConfirm={() => void disableCategory(row)}>
+                              <Button size="small" danger>{text.disable}</Button>
                             </Popconfirm>
                           ) : null}
                         </Space>
@@ -289,42 +341,42 @@ export function TaxonomyPanel({ onError, onMessage }: Feedback) {
         },
         {
           key: "dictionaries",
-          label: "Dictionaries",
+          label: text.dictionaries,
           children: (
             <Space direction="vertical" size="large" className="panel-stack">
-              <Card title="Dictionary">
+              <Card title={text.dictionary}>
                 <Space direction="vertical" className="panel-stack">
                   <Select<DictionaryKind>
                     value={kind}
                     onChange={setKind}
-                    options={dictionaryKinds.map((value) => ({ value, label: value.replace("_", " ") }))}
+                    options={dictionaryKinds.map((value) => ({ value, label: text.kinds[value] }))}
                     style={{ width: 220 }}
                   />
                   <Form form={dictionaryForm} layout="inline" onFinish={(values) => void createDictionaryEntry(values)}>
-                    <Form.Item name="name" rules={[{ required: true }]}><Input placeholder="Name" /></Form.Item>
-                    <Form.Item name="slug"><Input placeholder="Optional slug" /></Form.Item>
-                    <Button type="primary" htmlType="submit">Create</Button>
+                    <Form.Item name="name" rules={[{ required: true }]}><Input placeholder={text.name} /></Form.Item>
+                    <Form.Item name="slug"><Input placeholder={text.optionalSlug} /></Form.Item>
+                    <Button type="primary" htmlType="submit">{text.create}</Button>
                   </Form>
                 </Space>
               </Card>
-              <Card title={kind.replace("_", " ")} extra={<Button onClick={() => void loadDictionary()}>Refresh</Button>}>
+              <Card title={text.kinds[kind]} extra={<Button onClick={() => void loadDictionary()}>{text.refresh}</Button>}>
                 <Table<DictionaryEntry>
                   rowKey="id"
                   dataSource={entries}
                   pagination={false}
                   columns={[
-                    { title: "Name", dataIndex: "name" },
-                    { title: "Slug", dataIndex: "slug", render: (value: string) => value || "—" },
-                    { title: "Status", render: (_, row) => <Tag color={row.status === "active" ? "green" : "default"}>{row.status}</Tag> },
-                    { title: "Revision", dataIndex: "revision" },
+                    { title: text.name, dataIndex: "name" },
+                    { title: text.slug, dataIndex: "slug", render: (value: string) => value || "—" },
+                    { title: text.status, render: (_, row) => <Tag color={row.status === "active" ? "green" : "default"}>{row.status === "active" ? text.active : text.disabled}</Tag> },
+                    { title: text.revision, dataIndex: "revision" },
                     {
-                      title: "Actions",
+                      title: text.actions,
                       render: (_, row) => (
                         <Space>
-                          <Button size="small" onClick={() => openDictionaryEdit(row)}>Edit</Button>
+                          <Button size="small" onClick={() => openDictionaryEdit(row)}>{text.edit}</Button>
                           {row.status !== "disabled" ? (
-                            <Popconfirm title="Disable this value? Existing references remain valid." onConfirm={() => void disableDictionary(row)}>
-                              <Button size="small" danger>Disable</Button>
+                            <Popconfirm title={text.disableValueConfirm} onConfirm={() => void disableDictionary(row)}>
+                              <Button size="small" danger>{text.disable}</Button>
                             </Popconfirm>
                           ) : null}
                         </Space>
@@ -338,43 +390,43 @@ export function TaxonomyPanel({ onError, onMessage }: Feedback) {
         },
         {
           key: "specifications",
-          label: "Specifications",
+          label: text.specifications,
           children: (
             <Space direction="vertical" size="large" className="panel-stack">
-              <Card title="New specification">
+              <Card title={text.newSpec}>
                 <Form form={specForm} layout="inline" initialValues={{ filterable: false, semantic_version: 1 }} onFinish={(values) => void createSpec(values)}>
-                  <Form.Item name="name" rules={[{ required: true }]}><Input placeholder="Name" /></Form.Item>
-                  <Form.Item name="preferred_unit"><Input placeholder="Preferred unit" /></Form.Item>
+                  <Form.Item name="name" rules={[{ required: true }]}><Input placeholder={text.name} /></Form.Item>
+                  <Form.Item name="preferred_unit"><Input placeholder={text.preferredUnit} /></Form.Item>
                   <Form.Item name="semantic_version" rules={[{ required: true }]}><InputNumber min={1} precision={0} /></Form.Item>
-                  <Form.Item name="filterable" valuePropName="checked"><Checkbox>Filterable</Checkbox></Form.Item>
-                  <Button type="primary" htmlType="submit">Create</Button>
+                  <Form.Item name="filterable" valuePropName="checked"><Checkbox>{text.filterable}</Checkbox></Form.Item>
+                  <Button type="primary" htmlType="submit">{text.create}</Button>
                 </Form>
               </Card>
-              <Card title="New Spec Set">
+              <Card title={text.newSpecSet}>
                 <Form form={specSetForm} layout="inline" onFinish={(values) => void createSpecSet(values)}>
-                  <Form.Item name="name" rules={[{ required: true }]}><Input placeholder="Name" /></Form.Item>
-                  <Form.Item name="spec_ids" rules={[{ required: true }]}><Select mode="multiple" placeholder="Specifications" style={{ minWidth: 320 }} options={specs.filter((spec) => spec.status === "active").map((spec) => ({ value: spec.id, label: spec.name }))} /></Form.Item>
-                  <Button type="primary" htmlType="submit">Create</Button>
+                  <Form.Item name="name" rules={[{ required: true }]}><Input placeholder={text.name} /></Form.Item>
+                  <Form.Item name="spec_ids" rules={[{ required: true }]}><Select mode="multiple" placeholder={text.specifications} style={{ minWidth: 320 }} options={specs.filter((spec) => spec.status === "active").map((spec) => ({ value: spec.id, label: spec.name }))} /></Form.Item>
+                  <Button type="primary" htmlType="submit">{text.create}</Button>
                 </Form>
               </Card>
-              <Card title="Assign exact category Spec Set">
+              <Card title={text.assignSpecSet}>
                 <Form form={assignmentForm} layout="inline" onFinish={(values) => void assignSpecSet(values)}>
-                  <Form.Item name="category_id" rules={[{ required: true }]}><Select placeholder="Category" style={{ minWidth: 220 }} options={categories.filter((category) => category.status === "active" && !category.system_key).map((category) => ({ value: category.id, label: category.name }))} /></Form.Item>
-                  <Form.Item name="spec_set_id" rules={[{ required: true }]}><Select placeholder="Spec Set" style={{ minWidth: 220 }} options={specSets.filter((set) => set.status === "active").map((set) => ({ value: set.id, label: set.name }))} /></Form.Item>
-                  <Button type="primary" htmlType="submit">Assign</Button>
+                  <Form.Item name="category_id" rules={[{ required: true }]}><Select placeholder={text.category} style={{ minWidth: 220 }} options={categories.filter((category) => category.status === "active" && !category.system_key).map((category) => ({ value: category.id, label: category.name }))} /></Form.Item>
+                  <Form.Item name="spec_set_id" rules={[{ required: true }]}><Select placeholder={text.specSet} style={{ minWidth: 220 }} options={specSets.filter((set) => set.status === "active").map((set) => ({ value: set.id, label: set.name }))} /></Form.Item>
+                  <Button type="primary" htmlType="submit">{text.assign}</Button>
                 </Form>
               </Card>
-              <Card title="Spec definitions and sets" extra={<Button onClick={() => void loadSpecs()}>Refresh</Button>}>
+              <Card title={text.definitions} extra={<Button onClick={() => void loadSpecs()}>{text.refresh}</Button>}>
                 <Table<SpecDefinition>
                   rowKey="id"
                   dataSource={specs}
                   pagination={false}
                   columns={[
-                    { title: "Name", dataIndex: "name" },
-                    { title: "Unit", dataIndex: "preferred_unit", render: (value: string) => value || "—" },
-                    { title: "Semantic version", dataIndex: "semantic_version" },
-                    { title: "Filterable", dataIndex: "filterable", render: (value: boolean) => value ? "Yes" : "No" },
-                    { title: "Status", dataIndex: "status" },
+                    { title: text.name, dataIndex: "name" },
+                    { title: text.unit, dataIndex: "preferred_unit", render: (value: string) => value || "—" },
+                    { title: text.semanticVersion, dataIndex: "semantic_version" },
+                    { title: text.filterable, dataIndex: "filterable", render: (value: boolean) => value ? text.yes : text.no },
+                    { title: text.status, dataIndex: "status", render: (value: string) => value === "active" ? text.active : text.disabled },
                   ]}
                 />
                 <Table<SpecSet>
@@ -383,10 +435,10 @@ export function TaxonomyPanel({ onError, onMessage }: Feedback) {
                   dataSource={specSets}
                   pagination={false}
                   columns={[
-                    { title: "Spec Set", dataIndex: "name" },
-                    { title: "Members", dataIndex: "spec_ids", render: (ids: string[]) => ids.map((id) => specs.find((spec) => spec.id === id)?.name ?? id).join(", ") },
-                    { title: "Revision", dataIndex: "revision" },
-                    { title: "Status", dataIndex: "status" },
+                    { title: text.specSet, dataIndex: "name" },
+                    { title: text.members, dataIndex: "spec_ids", render: (ids: string[]) => ids.map((id) => specs.find((spec) => spec.id === id)?.name ?? id).join(", ") },
+                    { title: text.revision, dataIndex: "revision" },
+                    { title: text.status, dataIndex: "status", render: (value: string) => value === "active" ? text.active : text.disabled },
                   ]}
                 />
               </Card>
@@ -397,17 +449,17 @@ export function TaxonomyPanel({ onError, onMessage }: Feedback) {
     />
     <Modal
       open={Boolean(editingCategory)}
-      title="Edit category"
-      okText="Apply reviewed change"
+      title={text.editCategory}
+      okText={text.applyReviewed}
       okButtonProps={{ disabled: !categoryImpact }}
       confirmLoading={taxonomySaving}
       onOk={() => void applyCategoryEdit()}
       onCancel={() => { setEditingCategory(undefined); setCategoryImpact(undefined); }}
     >
       <Form form={categoryEditForm} layout="vertical" onValuesChange={() => setCategoryImpact(undefined)}>
-        <Form.Item name="name" label="Name" rules={[{ required: true }]}><Input disabled={editingCategory?.system_key === "uncategorized"} /></Form.Item>
-        <Form.Item name="slug" label="Slug" rules={[{ required: true }]}><Input /></Form.Item>
-        <Form.Item name="parent_id" label="Parent">
+        <Form.Item name="name" label={text.name} rules={[{ required: true }]}><Input disabled={editingCategory?.system_key === "uncategorized"} /></Form.Item>
+        <Form.Item name="slug" label={text.slug} rules={[{ required: true }]}><Input /></Form.Item>
+        <Form.Item name="parent_id" label={text.parent}>
           <Select
             disabled={editingCategory?.system_key === "uncategorized"}
             showSearch
@@ -416,43 +468,44 @@ export function TaxonomyPanel({ onError, onMessage }: Feedback) {
           />
         </Form.Item>
       </Form>
-      <Button onClick={() => void previewCategoryEdit()}>Preview affected products and routes</Button>
-      {categoryImpact ? <ImpactSummary impact={categoryImpact} /> : null}
+      <Button onClick={() => void previewCategoryEdit()}>{text.previewAffected}</Button>
+      {categoryImpact ? <ImpactSummary impact={categoryImpact} locale={locale} /> : null}
     </Modal>
     <Modal
       open={Boolean(editingDictionary)}
-      title="Edit dictionary value"
-      okText="Apply reviewed change"
+      title={text.editDictionary}
+      okText={text.applyReviewed}
       okButtonProps={{ disabled: !dictionaryImpact }}
       confirmLoading={taxonomySaving}
       onOk={() => void applyDictionaryEdit()}
       onCancel={() => { setEditingDictionary(undefined); setDictionaryImpact(undefined); }}
     >
       <Form form={dictionaryEditForm} layout="vertical" onValuesChange={() => setDictionaryImpact(undefined)}>
-        <Form.Item name="name" label="Name" rules={[{ required: true }]}><Input /></Form.Item>
-        <Form.Item name="slug" label="Slug"><Input /></Form.Item>
+        <Form.Item name="name" label={text.name} rules={[{ required: true }]}><Input /></Form.Item>
+        <Form.Item name="slug" label={text.slug}><Input /></Form.Item>
       </Form>
-      <Button onClick={() => void previewDictionaryEdit()}>Preview affected products and routes</Button>
-      {dictionaryImpact ? <ImpactSummary impact={dictionaryImpact} /> : null}
+      <Button onClick={() => void previewDictionaryEdit()}>{text.previewAffected}</Button>
+      {dictionaryImpact ? <ImpactSummary impact={dictionaryImpact} locale={locale} /> : null}
     </Modal>
     </>
   );
 }
 
-function ImpactSummary({ impact }: { impact: TaxonomyImpact }) {
+function ImpactSummary({ impact, locale }: { impact: TaxonomyImpact; locale: TaxonomyLocale }) {
+  const text = labels[locale];
   return (
     <div className="top-gap">
-      <strong>{impact.affected_products.length} affected product(s)</strong>
+      <strong>{text.affected(impact.affected_products.length)}</strong>
       {impact.affected_products.length ? (
         <ul>
           {impact.affected_products.map((item) => (
             <li key={item.product_id}>
-              {item.part_number}: {item.current_route || "not currently public"}
+              {item.part_number}: {item.current_route || text.notPublic}
               {item.proposed_route && item.proposed_route !== item.current_route ? ` → ${item.proposed_route}` : ""}
             </li>
           ))}
         </ul>
-      ) : <p>No Product publication changes are required.</p>}
+      ) : <p>{text.noChanges}</p>}
     </div>
   );
 }

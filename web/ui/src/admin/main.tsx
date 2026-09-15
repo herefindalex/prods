@@ -169,7 +169,7 @@ function AdminApp() {
                 {
                   key: "taxonomy",
                   label: text.taxonomy,
-                  children: <TaxonomyPanel onError={showError} onMessage={showMessage} />,
+                  children: <TaxonomyPanel locale={locale} onError={showError} onMessage={showMessage} />,
                 },
                 {
                   key: "imports",
@@ -184,7 +184,7 @@ function AdminApp() {
                 {
                   key: "website",
                   label: text.website,
-                  children: <WebsitePanel onError={showError} onMessage={showMessage} />,
+                  children: <WebsitePanel locale={locale} onError={showError} onMessage={showMessage} />,
                 },
                 {
                   key: "access",
@@ -194,7 +194,7 @@ function AdminApp() {
                 {
                   key: "activity",
                   label: text.activity,
-                  children: <ActivityPanel onError={showError} />,
+                  children: <ActivityPanel locale={locale} onError={showError} />,
                 },
 				{
 					key: "settings",

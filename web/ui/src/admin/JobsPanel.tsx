@@ -32,13 +32,31 @@ export function JobsPanel({ locale, onError, onMessage }: Props) {
     refresh: "重新整理",
       policy: "公開生成只重試仍指向相同 Current／Published revision 的工作；搜尋提交可重試，但 accepted 只代表服務已接收，不代表已收錄。Import commit、SMTP 不確定結果、Restore 與 Migration 不會自動重試。",
     retry: "重試",
-      retryQueued: "已排入安全重試。",
+    retryQueued: "已排入安全重試。",
+    outputs: "輸出：",
+    type: "類型",
+    jobTarget: "工作／目標",
+    revision: "修訂",
+    status: "狀態",
+    stage: "階段",
+    progress: "進度",
+    updated: "更新時間",
+    action: "操作",
   } : {
     title: "Background jobs",
     refresh: "Refresh",
       policy: "Publication retries remain tied to the same Current, Published revision. Search submissions may be retried, but accepted means received—not indexed. Import commits, uncertain SMTP outcomes, restores, and migrations are never retried automatically.",
     retry: "Retry",
-      retryQueued: "A safe retry was queued.",
+    retryQueued: "A safe retry was queued.",
+    outputs: "Outputs:",
+    type: "Type",
+    jobTarget: "Job / target",
+    revision: "revision",
+    status: "Status",
+    stage: "Stage",
+    progress: "Progress",
+    updated: "Updated",
+    action: "Action",
   };
 
   const refresh = useCallback(async () => {
@@ -93,7 +111,7 @@ export function JobsPanel({ locale, onError, onMessage }: Props) {
                 {job.error_message && <Alert showIcon type="error" message={job.error_message} />}
                 {job.outputs?.length ? (
                   <Space wrap>
-                    <Typography.Text type="secondary">Outputs:</Typography.Text>
+                    <Typography.Text type="secondary">{text.outputs}</Typography.Text>
                     {job.outputs.map((output) => <Tag key={output}>{output}</Tag>)}
                   </Space>
                 ) : null}
@@ -101,25 +119,25 @@ export function JobsPanel({ locale, onError, onMessage }: Props) {
             ),
           }}
           columns={[
-            { title: "Type", dataIndex: "kind", render: (kind: string) => <Tag>{kind}</Tag> },
+            { title: text.type, dataIndex: "kind", render: (kind: string) => <Tag>{kind}</Tag> },
             {
-              title: "Job / target",
+              title: text.jobTarget,
               render: (_, job) => (
                 <Space direction="vertical" size={0}>
                   <Typography.Text code>{job.id}</Typography.Text>
                   <Typography.Text type="secondary">
                     {job.target_type && job.target_id ? `${job.target_type}: ${job.target_id}` : job.label || "—"}
-                    {job.desired_revision ? ` · revision ${job.desired_revision}` : ""}
+                    {job.desired_revision ? ` · ${text.revision} ${job.desired_revision}` : ""}
                   </Typography.Text>
                 </Space>
               ),
             },
-            { title: "Status", dataIndex: "status", render: (status: string) => <Tag color={statusColor(status)}>{status}</Tag> },
-            { title: "Stage", dataIndex: "stage" },
-            { title: "Progress", width: 150, render: (_, job) => jobProgress(job) },
-            { title: "Updated", dataIndex: "updated_at", render: (value: string) => new Date(value).toLocaleString(locale) },
+            { title: text.status, dataIndex: "status", render: (status: string) => <Tag color={statusColor(status)}>{status}</Tag> },
+            { title: text.stage, dataIndex: "stage" },
+            { title: text.progress, width: 150, render: (_, job) => jobProgress(job) },
+            { title: text.updated, dataIndex: "updated_at", render: (value: string) => new Date(value).toLocaleString(locale) },
             {
-              title: "Action",
+              title: text.action,
               render: (_, job) => (job.kind === "publication" || job.kind === "search_submission") && job.retryable
                 ? <Button onClick={() => void retry(job)}>{text.retry}</Button>
                 : "—",
