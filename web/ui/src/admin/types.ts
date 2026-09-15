@@ -320,6 +320,14 @@ export type SiteMaintenance = {
   updated_at: string;
 };
 
+export type SiteSettings = {
+	default_locale: string;
+	supported_locales: string[];
+	time_zone: string;
+	revision: number;
+	updated_at: string;
+};
+
 export type BackupSettings = {
   enabled: boolean;
   local_time: string;

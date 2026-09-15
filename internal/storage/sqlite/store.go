@@ -279,8 +279,8 @@ func CreatePOC(path string) (*Store, error) {
 	}
 	now := time.Now().UTC().Format(time.RFC3339Nano)
 	if _, err := store.db.ExecContext(ctx, `INSERT INTO site_settings(
-		singleton,default_locale,supported_locales_json,time_zone,created_at,updated_at
-	) VALUES(1,'en-US','["en-US"]','UTC',?,?) ON CONFLICT(singleton) DO NOTHING`, now, now); err != nil {
+		singleton,default_locale,supported_locales_json,time_zone,revision,updated_by,created_at,updated_at
+	) VALUES(1,'en-US','["en-US"]','UTC',1,NULL,?,?) ON CONFLICT(singleton) DO NOTHING`, now, now); err != nil {
 		_ = store.Close()
 		return nil, err
 	}
@@ -366,8 +366,8 @@ func (s *Store) CompleteInstallation(ctx context.Context, installation Installat
 		return identity.User{}, err
 	}
 	if _, err := tx.ExecContext(ctx, `INSERT INTO site_settings(
-		singleton,default_locale,supported_locales_json,time_zone,created_at,updated_at
-	) VALUES(1,?,?,?,?,?)`, installation.DefaultLocale, string(encodedLocales), installation.TimeZone, now, now); err != nil {
+		singleton,default_locale,supported_locales_json,time_zone,revision,updated_by,created_at,updated_at
+	) VALUES(1,?,?,?,1,?,?,?)`, installation.DefaultLocale, string(encodedLocales), installation.TimeZone, ownerID, now, now); err != nil {
 		return identity.User{}, fmt.Errorf("create site settings: %w", err)
 	}
 	if _, err := tx.ExecContext(ctx, `INSERT INTO admin_log(

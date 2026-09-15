@@ -11,6 +11,7 @@ import { CatalogPanel } from "./CatalogPanel";
 import { HealthPanel } from "./HealthPanel";
 import { ImportPanel } from "./ImportPanel";
 import { JobsPanel } from "./JobsPanel";
+import { SettingsPanel } from "./SettingsPanel";
 import { TaxonomyPanel } from "./TaxonomyPanel";
 import { TrafficPanel } from "./TrafficPanel";
 import { WebsitePanel } from "./WebsitePanel";
@@ -31,7 +32,8 @@ const adminText = {
     website: "Website",
     access: "Users & roles",
     activity: "RFQs & Admin Log",
-    health: "System health",
+		health: "System health",
+		settings: "Site settings",
     backups: "Backups",
     traffic: "Traffic protection",
     language: "Interface language",
@@ -47,7 +49,8 @@ const adminText = {
     website: "網站",
     access: "使用者與角色",
     activity: "詢價與管理紀錄",
-    health: "系統健康狀態",
+		health: "系統健康狀態",
+		settings: "站點設定",
     backups: "備份",
     traffic: "流量保護",
     language: "介面語言",
@@ -194,7 +197,12 @@ function AdminApp() {
                   children: <ActivityPanel onError={showError} />,
                 },
 				{
-				  key: "health",
+					key: "settings",
+					label: text.settings,
+					children: <SettingsPanel locale={locale} onError={showError} onMessage={showMessage} />,
+				},
+				{
+					key: "health",
 				  label: text.health,
 				  children: <HealthPanel locale={locale} onError={showError} />,
 				},

@@ -13,7 +13,7 @@ import (
 
 const (
 	MinimumSupportedSchemaVersion = 1
-	CurrentSchemaVersion          = 13
+	CurrentSchemaVersion          = 14
 )
 
 var (
@@ -302,6 +302,13 @@ CREATE TABLE search_submission_jobs (
  accepted_at TEXT
 );
 CREATE INDEX search_submission_jobs_due_idx ON search_submission_jobs(status,next_attempt_at,created_at,id);`,
+	},
+	{
+		Version:       14,
+		Name:          "versioned-site-time-zone-settings",
+		Transactional: true,
+		SQL: `ALTER TABLE site_settings ADD COLUMN revision INTEGER NOT NULL DEFAULT 1 CHECK(revision>=1);
+ALTER TABLE site_settings ADD COLUMN updated_by TEXT REFERENCES users(id);`,
 	},
 }
 
