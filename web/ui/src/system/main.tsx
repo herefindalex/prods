@@ -81,8 +81,8 @@ type InstallerValues = {
   owner_display_name: string;
   password: string;
   password_confirm: string;
-  default_locale: string;
-  supported_locales: string;
+  default_locale: SystemLocale;
+  supported_locales: SystemLocale[];
   time_zone: string;
 };
 
@@ -93,7 +93,7 @@ const installerText = {
     setup: "Create the first Owner and minimum site settings. Product data, Website configuration, SMTP, and the public URL can be configured later.",
     email: "Owner email", name: "Owner display name", password: "Password", confirm: "Confirm password",
     passwordHelp: "Use at least 8 characters with at least one letter and one number.", defaultLocale: "Default locale", supportedLocales: "Supported locales",
-    localesHelp: "Comma-separated BCP 47 language tags; include the default locale.", timeZone: "Site time zone", finish: "Complete installation",
+    localesHelp: "Choose one or more interface languages available in this binary; include the default locale.", timeZone: "Site time zone", finish: "Complete installation",
     complete: "Installation was saved atomically. Restart Prods to enter Normal mode.",
   },
   "zh-TW": {
@@ -102,7 +102,7 @@ const installerText = {
     setup: "建立第一位 Owner 與最低限度站點設定。產品、網站設定、SMTP 與正式公開網址可稍後設定。",
     email: "Owner 電子郵件", name: "Owner 顯示名稱", password: "密碼", confirm: "確認密碼",
     passwordHelp: "至少 8 個字元，並至少包含一個英文字母與一個數字。", defaultLocale: "預設語系", supportedLocales: "支援語系",
-    localesHelp: "以逗號分隔 BCP 47 語言標籤，且必須包含預設語系。", timeZone: "站點時區", finish: "完成安裝",
+    localesHelp: "選擇此 binary 提供的一個或多個介面語系，且必須包含預設語系。", timeZone: "站點時區", finish: "完成安裝",
     complete: "安裝資料已原子保存。請重新啟動 Prods 進入正常模式。",
   },
 } as const;
@@ -114,6 +114,14 @@ function InstallerApp() {
   const [loading, setLoading] = useState(false);
   const [form] = Form.useForm<InstallerValues>();
   const copy = installerText[locale];
+  const localeOptions = [
+    { value: "en-US", label: "English" },
+    { value: "zh-TW", label: "繁體中文" },
+  ];
+  const parseSupportedLocales = (value: string): SystemLocale[] => value
+    .split(",")
+    .map((item) => item.trim())
+    .filter((item): item is SystemLocale => item === "en-US" || item === "zh-TW");
 
   const load = async () => {
     setLoading(true);
@@ -123,8 +131,8 @@ function InstallerApp() {
       setState(next);
       form.setFieldsValue({
         token: new URL(window.location.href).searchParams.get("token") ?? form.getFieldValue("token") ?? "",
-        default_locale: form.getFieldValue("default_locale") ?? next.default_locale,
-        supported_locales: form.getFieldValue("supported_locales") ?? next.supported_locales,
+        default_locale: form.getFieldValue("default_locale") ?? next.default_locale as SystemLocale,
+        supported_locales: form.getFieldValue("supported_locales") ?? parseSupportedLocales(next.supported_locales),
         time_zone: form.getFieldValue("time_zone") ?? next.time_zone,
       });
     } catch (nextError) {
@@ -146,12 +154,12 @@ function InstallerApp() {
   const submit = async (values: InstallerValues) => {
     setLoading(true);
     setError(undefined);
-    const body = new URLSearchParams({ ...values, interface_locale: locale });
+    const body = new URLSearchParams({ ...values, supported_locales: values.supported_locales.join(","), interface_locale: locale });
     try {
       if (state?.stage === "claim") {
         const next = await requestJSON<InstallerState>("/install/claim", { method: "POST", headers: { Accept: "application/json", "Content-Type": "application/x-www-form-urlencoded" }, body });
         setState(next);
-        form.setFieldsValue({ default_locale: next.default_locale, supported_locales: next.supported_locales, time_zone: next.time_zone });
+        form.setFieldsValue({ default_locale: next.default_locale as SystemLocale, supported_locales: parseSupportedLocales(next.supported_locales), time_zone: next.time_zone });
         const location = new URL(window.location.href);
         location.searchParams.delete("token");
         window.history.replaceState(null, "", location);
@@ -187,8 +195,8 @@ function InstallerApp() {
               <Form.Item name="owner_display_name" label={copy.name}><Input /></Form.Item>
               <Form.Item name="password" label={copy.password} extra={copy.passwordHelp} rules={[{ required: true }, { min: 8 }, { pattern: /[A-Za-z]/, message: copy.passwordHelp }, { pattern: /[0-9]/, message: copy.passwordHelp }]}><Input.Password autoComplete="new-password" /></Form.Item>
               <Form.Item name="password_confirm" label={copy.confirm} dependencies={["password"]} rules={[{ required: true }, ({ getFieldValue }) => ({ validator(_, value) { return !value || value === getFieldValue("password") ? Promise.resolve() : Promise.reject(new Error(copy.confirm)); } })]}><Input.Password autoComplete="new-password" /></Form.Item>
-              <Form.Item name="default_locale" label={copy.defaultLocale} rules={[{ required: true }]}><Input /></Form.Item>
-              <Form.Item name="supported_locales" label={copy.supportedLocales} extra={copy.localesHelp} dependencies={["default_locale"]} rules={[{ required: true }, ({ getFieldValue }) => ({ validator(_, value?: string) { const locales = (value ?? "").split(",").map((item) => item.trim()).filter(Boolean); return locales.includes(getFieldValue("default_locale")) ? Promise.resolve() : Promise.reject(new Error(copy.localesHelp)); } })]}><Input /></Form.Item>
+              <Form.Item name="default_locale" label={copy.defaultLocale} rules={[{ required: true }]}><Select options={localeOptions} /></Form.Item>
+              <Form.Item name="supported_locales" label={copy.supportedLocales} extra={copy.localesHelp} dependencies={["default_locale"]} rules={[{ required: true }, ({ getFieldValue }) => ({ validator(_, value?: SystemLocale[]) { return value?.includes(getFieldValue("default_locale")) ? Promise.resolve() : Promise.reject(new Error(copy.localesHelp)); } })]}><Select mode="multiple" options={localeOptions} /></Form.Item>
               <Form.Item name="time_zone" label={copy.timeZone} rules={[{ required: true }]}><Input placeholder="UTC" /></Form.Item>
             </>
           )}

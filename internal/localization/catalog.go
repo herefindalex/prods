@@ -10,6 +10,26 @@ import (
 
 var ErrUnsupportedLocale = errors.New("unsupported locale")
 
+var interfaceLocales = []string{"en-US", "zh-TW"}
+
+func Available() []string {
+	return append([]string(nil), interfaceLocales...)
+}
+
+func IsAvailable(locale string) bool {
+	tag, err := language.Parse(strings.TrimSpace(locale))
+	if err != nil {
+		return false
+	}
+	normalized := tag.String()
+	for _, available := range interfaceLocales {
+		if normalized == available {
+			return true
+		}
+	}
+	return false
+}
+
 type Messages struct {
 	Catalog          string
 	RequestPart      string
@@ -95,6 +115,9 @@ func NormalizeSupported(defaultLocale string, supported []string) (string, []str
 		return "", nil, ErrUnsupportedLocale
 	}
 	defaultLocale = defaultTag.String()
+	if !IsAvailable(defaultLocale) {
+		return "", nil, ErrUnsupportedLocale
+	}
 	result := make([]string, 0, len(supported))
 	seen := make(map[string]struct{}, len(supported))
 	foundDefault := false
@@ -104,6 +127,9 @@ func NormalizeSupported(defaultLocale string, supported []string) (string, []str
 			return "", nil, ErrUnsupportedLocale
 		}
 		normalized := tag.String()
+		if !IsAvailable(normalized) {
+			return "", nil, ErrUnsupportedLocale
+		}
 		if _, exists := seen[normalized]; exists {
 			continue
 		}

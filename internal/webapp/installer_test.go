@@ -350,6 +350,42 @@ func TestInstallerLanguageCanBeSelectedBeforeInstallation(t *testing.T) {
 	}
 }
 
+func TestInstallerOnlyAcceptsEmbeddedInterfaceLocales(t *testing.T) {
+	base := installerPage{
+		OwnerEmail:       "owner@example.test",
+		DefaultLocale:    "en-US",
+		SupportedLocales: "en-US,zh-TW",
+		TimeZone:         "UTC",
+	}
+	if locales, err := validateInstallationForm(base, "ownerpass1", "ownerpass1"); err != nil || len(locales) != 2 {
+		t.Fatalf("valid embedded locales = %v, err=%v", locales, err)
+	}
+
+	unsupportedDefault := base
+	unsupportedDefault.DefaultLocale = "fr-FR"
+	unsupportedDefault.SupportedLocales = "fr-FR"
+	if _, err := validateInstallationForm(unsupportedDefault, "ownerpass1", "ownerpass1"); err == nil {
+		t.Fatal("unsupported default locale was accepted")
+	} else if fieldErr, ok := err.(*installerFieldError); !ok || fieldErr.Field != "default_locale" {
+		t.Fatalf("unsupported default locale error = %#v", err)
+	}
+
+	unsupportedList := base
+	unsupportedList.SupportedLocales = "en-US,fr-FR"
+	if _, err := validateInstallationForm(unsupportedList, "ownerpass1", "ownerpass1"); err == nil {
+		t.Fatal("unsupported locale list was accepted")
+	} else if fieldErr, ok := err.(*installerFieldError); !ok || fieldErr.Field != "supported_locales" {
+		t.Fatalf("unsupported locale list error = %#v", err)
+	}
+
+	canonical := base
+	canonical.DefaultLocale = "en-us"
+	canonical.SupportedLocales = "en-US,zh-tw"
+	if locales, err := validateInstallationForm(canonical, "ownerpass1", "ownerpass1"); err != nil || len(locales) != 2 || locales[1] != "zh-TW" {
+		t.Fatalf("canonical embedded locales = %v, err=%v", locales, err)
+	}
+}
+
 func TestLoginThrottleIsTemporaryAndProgressive(t *testing.T) {
 	server := &Server{loginAttempts: make(map[string]loginAttempt)}
 	now := time.Now().UTC()

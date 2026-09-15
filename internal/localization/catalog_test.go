@@ -22,3 +22,16 @@ func TestResolveValidatesExplicitLocaleAndNegotiatesHeader(t *testing.T) {
 		t.Fatal("message catalog selection failed")
 	}
 }
+
+func TestNormalizeSupportedRejectsLocalesWithoutAnInterfaceCatalog(t *testing.T) {
+	if _, _, err := NormalizeSupported("fr-FR", []string{"fr-FR"}); err != ErrUnsupportedLocale {
+		t.Fatalf("French-only interface locale error = %v, want %v", err, ErrUnsupportedLocale)
+	}
+	if IsAvailable("fr-FR") {
+		t.Fatal("fr-FR must not be advertised without an embedded interface catalog")
+	}
+	available := Available()
+	if len(available) != 2 || available[0] != "en-US" || available[1] != "zh-TW" {
+		t.Fatalf("available interface locales = %v", available)
+	}
+}

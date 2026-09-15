@@ -347,8 +347,12 @@ func validateInstallationForm(page installerPage, password, confirmation string)
 	if err := identity.ValidatePassword(password); err != nil {
 		return nil, &installerFieldError{Field: "password", Message: err.Error()}
 	}
-	if _, err := language.Parse(page.DefaultLocale); err != nil {
+	defaultTag, err := language.Parse(page.DefaultLocale)
+	if err != nil {
 		return nil, &installerFieldError{Field: "default_locale", Message: "default locale is not valid"}
+	}
+	if !localization.IsAvailable(defaultTag.String()) {
+		return nil, &installerFieldError{Field: "default_locale", Message: "default locale is not available in this binary"}
 	}
 	parts := strings.Split(page.SupportedLocales, ",")
 	locales := make([]string, 0, len(parts))
@@ -358,11 +362,15 @@ func validateInstallationForm(page installerPage, password, confirmation string)
 		if part == "" {
 			continue
 		}
-		if _, err := language.Parse(part); err != nil {
+		tag, err := language.Parse(part)
+		if err != nil {
 			return nil, &installerFieldError{Field: "supported_locales", Message: fmt.Sprintf("supported locale %q is not valid", part)}
 		}
-		locales = append(locales, part)
-		foundDefault = foundDefault || part == page.DefaultLocale
+		if !localization.IsAvailable(tag.String()) {
+			return nil, &installerFieldError{Field: "supported_locales", Message: fmt.Sprintf("supported locale %q is not available in this binary", part)}
+		}
+		locales = append(locales, tag.String())
+		foundDefault = foundDefault || tag.String() == defaultTag.String()
 	}
 	if len(locales) == 0 || !foundDefault {
 		return nil, &installerFieldError{Field: "supported_locales", Message: "supported locales must include the default locale"}
