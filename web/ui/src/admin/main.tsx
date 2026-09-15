@@ -164,7 +164,7 @@ function AdminApp() {
                 {
                   key: "catalog",
                   label: text.catalog,
-                  children: <CatalogPanel onError={showError} onMessage={showMessage} />,
+                  children: <CatalogPanel locale={locale} onError={showError} onMessage={showMessage} />,
                 },
                 {
                   key: "taxonomy",
@@ -174,7 +174,7 @@ function AdminApp() {
                 {
                   key: "imports",
                   label: text.imports,
-                  children: <ImportPanel onError={showError} onMessage={showMessage} />,
+                  children: <ImportPanel locale={locale} onError={showError} onMessage={showMessage} />,
                 },
                 {
                   key: "jobs",

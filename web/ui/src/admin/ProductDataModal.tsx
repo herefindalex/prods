@@ -14,6 +14,7 @@ import type {
 } from "./types";
 
 type Props = {
+ locale: "en-US" | "zh-TW";
   product?: Product;
   open: boolean;
   onClose: () => void;
@@ -22,7 +23,49 @@ type Props = {
   onMessage: (message: string) => void;
 };
 
-export function ProductDataModal({ product, open, onClose, onChanged, onError, onMessage }: Props) {
+const labels = {
+ "en-US": {
+  title: (part?: string, revision?: number) => part ? `Specs and documents — ${part} · r${revision}` : "Specs and documents",
+  noSpecSet: "This product's category has no Spec Set assigned.", specs: "Specification values", noValues: "No values saved",
+  active: "active", inactive: "inactive", sourceRevision: "source r", specification: "Specification", rawValue: "Raw value",
+  localeOptional: "Locale (optional)", saveValue: "Save value", images: "Product images", noImages: "No product images",
+  setPrimary: "Set primary", removeImageConfirm: "Remove this image reference?", remove: "Remove", primary: "Primary",
+  altFallback: "Alt falls back to product name", order: "order", externalImage: "External image", managedAsset: "Managed asset",
+  source: "Source", externalURL: "External URL", uploadImage: "Upload image", externalHTTP: "External HTTP(S) URL",
+  imageTypes: "JPEG, PNG, or WebP", chooseUpload: "Choose and upload", altText: "Alt text",
+  altHelp: "Optional; product name is the public fallback.", sortOrder: "Sort order", primaryImage: "Primary image", addImage: "Add image",
+  documents: "Documents", noDocuments: "No documents", localPDF: "Local PDF", uploadPDF: "Upload PDF", label: "Label",
+  documentType: "Document type", language: "Language", addDocument: "Add document",
+  savedValue: (name: string) => `Saved ${name} raw value.`, uploadedDocument: (name: string) => `Uploaded ${name}. Add a document to publish its reference.`,
+  uploadedImage: (name: string) => `Uploaded ${name}. Add it to the product image list to publish its reference.`,
+  uploadImageFirst: "Upload an image before adding it.", imageAdded: "Product image added.",
+  imageUpdated: (primary: boolean) => primary ? "Primary image updated." : "Product image updated.",
+  imageRemoved: "Product image reference removed; the immutable asset remains available under the retention/GC policy.",
+  uploadPDFFirst: "Upload a PDF before adding this document.", documentAdded: (label: string) => `Added ${label}.`,
+ },
+ "zh-TW": {
+  title: (part?: string, revision?: number) => part ? `規格與文件 — ${part} · r${revision}` : "規格與文件",
+  noSpecSet: "這項產品的分類尚未指派 Spec Set。", specs: "規格值", noValues: "尚未儲存規格值",
+  active: "有效", inactive: "停用", sourceRevision: "來源修訂 r", specification: "規格", rawValue: "原始值",
+  localeOptional: "語系（選填）", saveValue: "儲存規格值", images: "產品圖片", noImages: "尚無產品圖片",
+  setPrimary: "設為主圖", removeImageConfirm: "要移除這個圖片參照嗎？", remove: "移除", primary: "主圖",
+  altFallback: "Alt 文字將使用產品名稱", order: "順序", externalImage: "外部圖片", managedAsset: "受管理資產",
+  source: "來源", externalURL: "外部 URL", uploadImage: "上傳圖片", externalHTTP: "外部 HTTP(S) URL",
+  imageTypes: "JPEG、PNG 或 WebP", chooseUpload: "選擇並上傳", altText: "Alt 文字",
+  altHelp: "選填；公開頁未填時使用產品名稱。", sortOrder: "排序", primaryImage: "主圖", addImage: "新增圖片",
+  documents: "文件", noDocuments: "尚無文件", localPDF: "本機 PDF", uploadPDF: "上傳 PDF", label: "標籤",
+  documentType: "文件類型", language: "語言", addDocument: "新增文件",
+  savedValue: (name: string) => `已儲存「${name}」的原始值。`, uploadedDocument: (name: string) => `已上傳 ${name}；新增文件後才會發布其參照。`,
+  uploadedImage: (name: string) => `已上傳 ${name}；加入產品圖片清單後才會發布其參照。`,
+  uploadImageFirst: "請先上傳圖片再新增。", imageAdded: "已新增產品圖片。",
+  imageUpdated: (primary: boolean) => primary ? "已更新主圖。" : "已更新產品圖片。",
+  imageRemoved: "已移除產品圖片參照；immutable asset 仍依 retention／GC 政策保留。",
+  uploadPDFFirst: "請先上傳 PDF 再新增文件。", documentAdded: (label: string) => `已新增「${label}」。`,
+ },
+};
+
+export function ProductDataModal({ locale, product, open, onClose, onChanged, onError, onMessage }: Props) {
+ const text = labels[locale];
   const [current, setCurrent] = useState<Product>();
   const [specs, setSpecs] = useState<SpecDefinition[]>([]);
   const [specSet, setSpecSet] = useState<SpecSet>();
@@ -86,7 +129,7 @@ export function ProductDataModal({ product, open, onClose, onChanged, onError, o
         source_locale: input.source_locale || "",
       });
       valueForm.resetFields();
-      onMessage(`Saved ${specs.find((spec) => spec.id === value.spec_id)?.name ?? value.spec_id} raw value.`);
+      onMessage(text.savedValue(specs.find((spec) => spec.id === value.spec_id)?.name ?? value.spec_id));
       await load();
       await onChanged();
     } catch (error) {
@@ -103,7 +146,7 @@ export function ProductDataModal({ product, open, onClose, onChanged, onError, o
 			body.append("file", file);
 			const asset = await api<Asset>(`/admin/api/products/${current.id}/assets`, { method: "POST", body });
 			setUploadedAsset(asset);
-			onMessage(`Uploaded ${asset.original_filename}. Add the document to publish its reference.`);
+      onMessage(text.uploadedDocument(asset.original_filename));
 		} catch (error) {
 			onError(error);
 		} finally {
@@ -119,7 +162,7 @@ export function ProductDataModal({ product, open, onClose, onChanged, onError, o
 			body.append("file", file);
 			const asset = await api<Asset>(`/admin/api/products/${current.id}/assets`, { method: "POST", body });
 			setUploadedImageAsset(asset);
-			onMessage(`Uploaded ${asset.original_filename}. Add it to the product image list to publish the reference.`);
+      onMessage(text.uploadedImage(asset.original_filename));
 		} catch (error) {
 			onError(error);
 		} finally {
@@ -130,7 +173,7 @@ export function ProductDataModal({ product, open, onClose, onChanged, onError, o
 	const addImage = async (input: { external_url?: string; alt_text?: string; sort_order: number; primary?: boolean }) => {
 		if (!current) return;
 		if (imageSource === "upload" && !uploadedImageAsset) {
-			onError(new Error("Upload an image before adding it."));
+			onError(new Error(text.uploadImageFirst));
 			return;
 		}
 		try {
@@ -147,7 +190,7 @@ export function ProductDataModal({ product, open, onClose, onChanged, onError, o
 			});
 			imageForm.resetFields();
 			setUploadedImageAsset(undefined);
-			onMessage("Product image added.");
+			onMessage(text.imageAdded);
 			await load();
 			await onChanged();
 		} catch (error) {
@@ -163,7 +206,7 @@ export function ProductDataModal({ product, open, onClose, onChanged, onError, o
 				expected_revision: current.revision,
 				image: { ...image, primary },
 			});
-			onMessage(primary ? "Primary image updated." : "Product image updated.");
+			onMessage(text.imageUpdated(primary));
 			await load();
 			await onChanged();
 		} catch (error) {
@@ -176,7 +219,7 @@ export function ProductDataModal({ product, open, onClose, onChanged, onError, o
 		if (!current) return;
 		try {
 			await postJSON<void>(`/admin/api/products/${current.id}/images/${image.id}/delete`, { expected_revision: current.revision });
-			onMessage("Product image reference removed; the immutable asset remains available for retention/GC policy.");
+			onMessage(text.imageRemoved);
 			await load();
 			await onChanged();
 		} catch (error) {
@@ -188,7 +231,7 @@ export function ProductDataModal({ product, open, onClose, onChanged, onError, o
 	const addDocument = async (input: { label: string; document_type_id: string; external_url?: string; language?: string; sort_order: number }) => {
 		if (!current) return;
 		if (documentSource === "upload" && !uploadedAsset) {
-			onError(new Error("Upload a PDF before adding this document."));
+			onError(new Error(text.uploadPDFFirst));
 			return;
 		}
 		try {
@@ -206,7 +249,7 @@ export function ProductDataModal({ product, open, onClose, onChanged, onError, o
 			});
 			documentForm.resetFields();
 			setUploadedAsset(undefined);
-      onMessage(`Added ${input.label}.`);
+      onMessage(text.documentAdded(input.label));
       await load();
       await onChanged();
     } catch (error) {
@@ -216,13 +259,13 @@ export function ProductDataModal({ product, open, onClose, onChanged, onError, o
   };
 
   return (
-    <Modal open={open} onCancel={onClose} footer={null} width={900} title={current ? `Specs and documents — ${current.part_number} · r${current.revision}` : "Specs and documents"}>
+    <Modal open={open} onCancel={onClose} footer={null} width={900} title={text.title(current?.part_number, current?.revision)}>
       <Space direction="vertical" size="large" className="panel-stack">
-        {!specSet && <Alert type="warning" showIcon message="This product's category has no Spec Set assigned." />}
-        <Card title="Specification values" size="small">
+        {!specSet && <Alert type="warning" showIcon message={text.noSpecSet} />}
+        <Card title={text.specs} size="small">
           <List
             dataSource={values}
-            locale={{ emptyText: "No values saved" }}
+            locale={{ emptyText: text.noValues }}
             renderItem={(detail) => (
               <List.Item>
                 <List.Item.Meta
@@ -230,8 +273,8 @@ export function ProductDataModal({ product, open, onClose, onChanged, onError, o
                   description={
                     <Space wrap>
                       <Typography.Text>{detail.value.raw_value}</Typography.Text>
-                      <Tag color={detail.value.active ? "green" : "default"}>{detail.value.active ? "active" : "inactive"}</Tag>
-                      <Tag>source r{detail.value.source_revision}</Tag>
+                      <Tag color={detail.value.active ? "green" : "default"}>{detail.value.active ? text.active : text.inactive}</Tag>
+                      <Tag>{text.sourceRevision}{detail.value.source_revision}</Tag>
                       {detail.normalized?.map((normalized) => <Tag key={normalized.id} color={normalized.status === "current" ? "blue" : "default"}>{normalized.source}:{normalized.status}</Tag>)}
                     </Space>
                   }
@@ -240,53 +283,53 @@ export function ProductDataModal({ product, open, onClose, onChanged, onError, o
             )}
           />
           <Form form={valueForm} layout="inline" onFinish={(input) => void saveValue(input)}>
-            <Form.Item name="spec_id" rules={[{ required: true }]}><Select placeholder="Specification" style={{ width: 220 }} options={applicableSpecs.map((spec) => ({ value: spec.id, label: `${spec.name}${spec.preferred_unit ? ` (${spec.preferred_unit})` : ""}` }))} /></Form.Item>
-            <Form.Item name="raw_value" rules={[{ required: true }]}><Input placeholder="Raw value" /></Form.Item>
-            <Form.Item name="source_locale"><Input placeholder="Locale (optional)" /></Form.Item>
-            <Button type="primary" htmlType="submit" disabled={!applicableSpecs.length}>Save value</Button>
+            <Form.Item name="spec_id" rules={[{ required: true }]}><Select placeholder={text.specification} style={{ width: 220 }} options={applicableSpecs.map((spec) => ({ value: spec.id, label: `${spec.name}${spec.preferred_unit ? ` (${spec.preferred_unit})` : ""}` }))} /></Form.Item>
+            <Form.Item name="raw_value" rules={[{ required: true }]}><Input placeholder={text.rawValue} /></Form.Item>
+            <Form.Item name="source_locale"><Input placeholder={text.localeOptional} /></Form.Item>
+            <Button type="primary" htmlType="submit" disabled={!applicableSpecs.length}>{text.saveValue}</Button>
           </Form>
         </Card>
 
-		<Card title="Product images" size="small">
+		<Card title={text.images} size="small">
 			<List
 				dataSource={images}
-				locale={{ emptyText: "No product images" }}
+				locale={{ emptyText: text.noImages }}
 				renderItem={(image) => (
 					<List.Item actions={[
-						<Button key="primary" size="small" disabled={image.primary} onClick={() => void updateImage(image, true)}>Set primary</Button>,
-						<Popconfirm key="delete" title="Remove this image reference?" onConfirm={() => void deleteImage(image)}><Button size="small" danger>Remove</Button></Popconfirm>,
+						<Button key="primary" size="small" disabled={image.primary} onClick={() => void updateImage(image, true)}>{text.setPrimary}</Button>,
+						<Popconfirm key="delete" title={text.removeImageConfirm} onConfirm={() => void deleteImage(image)}><Button size="small" danger>{text.remove}</Button></Popconfirm>,
 					]}>
 						<List.Item.Meta
-							title={<Space>{image.primary && <Tag color="blue">Primary</Tag>}<span>{image.alt_text || "Alt falls back to product name"}</span></Space>}
-							description={<Space wrap><Tag>order {image.sort_order}</Tag>{image.external_url ? <a href={image.external_url} target="_blank" rel="noreferrer">External image</a> : <span>Managed asset {image.asset_id}</span>}</Space>}
+							title={<Space>{image.primary && <Tag color="blue">{text.primary}</Tag>}<span>{image.alt_text || text.altFallback}</span></Space>}
+							description={<Space wrap><Tag>{text.order} {image.sort_order}</Tag>{image.external_url ? <a href={image.external_url} target="_blank" rel="noreferrer">{text.externalImage}</a> : <span>{text.managedAsset} {image.asset_id}</span>}</Space>}
 						/>
 					</List.Item>
 				)}
 			/>
 			<Form form={imageForm} layout="vertical" initialValues={{ sort_order: images.length + 1, primary: images.length === 0 }} onFinish={(input) => void addImage(input)}>
-				<Form.Item label="Source">
-					<Radio.Group optionType="button" value={imageSource} onChange={(event) => { setImageSource(event.target.value as "external" | "upload"); setUploadedImageAsset(undefined); }} options={[{ label: "External URL", value: "external" }, { label: "Upload image", value: "upload" }]} />
+				<Form.Item label={text.source}>
+					<Radio.Group optionType="button" value={imageSource} onChange={(event) => { setImageSource(event.target.value as "external" | "upload"); setUploadedImageAsset(undefined); }} options={[{ label: text.externalURL, value: "external" }, { label: text.uploadImage, value: "upload" }]} />
 				</Form.Item>
 				<div className="form-grid three-columns">
 					{imageSource === "external" ? (
-						<Form.Item name="external_url" label="External HTTP(S) URL" rules={[{ required: true }, { type: "url" }]}><Input /></Form.Item>
+						<Form.Item name="external_url" label={text.externalHTTP} rules={[{ required: true }, { type: "url" }]}><Input /></Form.Item>
 					) : (
-						<Form.Item label="JPEG, PNG, or WebP" required>
-							<Space><Upload accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp" maxCount={1} showUploadList={false} beforeUpload={(file) => { void uploadProductImage(file); return false; }}><Button loading={imageUploading}>Choose and upload</Button></Upload>{uploadedImageAsset && <Typography.Text>{uploadedImageAsset.original_filename}</Typography.Text>}</Space>
+						<Form.Item label={text.imageTypes} required>
+							<Space><Upload accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp" maxCount={1} showUploadList={false} beforeUpload={(file) => { void uploadProductImage(file); return false; }}><Button loading={imageUploading}>{text.chooseUpload}</Button></Upload>{uploadedImageAsset && <Typography.Text>{uploadedImageAsset.original_filename}</Typography.Text>}</Space>
 						</Form.Item>
 					)}
-					<Form.Item name="alt_text" label="Alt text" extra="Optional; product name is the public fallback."><Input /></Form.Item>
-					<Form.Item name="sort_order" label="Sort order" rules={[{ required: true }]}><InputNumber min={0} precision={0} /></Form.Item>
-					<Form.Item name="primary" valuePropName="checked"><Checkbox>Primary image</Checkbox></Form.Item>
+					<Form.Item name="alt_text" label={text.altText} extra={text.altHelp}><Input /></Form.Item>
+					<Form.Item name="sort_order" label={text.sortOrder} rules={[{ required: true }]}><InputNumber min={0} precision={0} /></Form.Item>
+					<Form.Item name="primary" valuePropName="checked"><Checkbox>{text.primaryImage}</Checkbox></Form.Item>
 				</div>
-				<Button type="primary" htmlType="submit">Add image</Button>
+				<Button type="primary" htmlType="submit">{text.addImage}</Button>
 			</Form>
 		</Card>
 
-        <Card title="Documents" size="small">
+        <Card title={text.documents} size="small">
           <List
             dataSource={documents}
-            locale={{ emptyText: "No documents" }}
+            locale={{ emptyText: text.noDocuments }}
             renderItem={(document) => (
               <List.Item>
                 <List.Item.Meta
@@ -295,7 +338,7 @@ export function ProductDataModal({ product, open, onClose, onChanged, onError, o
                     <Space wrap>
                       <Tag>{documentTypes.find((type) => type.id === document.document_type_id)?.name ?? document.document_type_id}</Tag>
                       {document.external_url && <a href={document.external_url} target="_blank" rel="noreferrer">{document.external_url}</a>}
-							{document.asset_id && <a href={`/assets/${document.asset_id}`} target="_blank" rel="noreferrer">Local PDF</a>}
+							{document.asset_id && <a href={`/assets/${document.asset_id}`} target="_blank" rel="noreferrer">{text.localPDF}</a>}
                     </Space>
                   }
                 />
@@ -303,7 +346,7 @@ export function ProductDataModal({ product, open, onClose, onChanged, onError, o
             )}
           />
 		  <Form form={documentForm} layout="vertical" initialValues={{ sort_order: documents.length + 1 }} onFinish={(input) => void addDocument(input)}>
-			<Form.Item label="Source">
+			<Form.Item label={text.source}>
 			  <Radio.Group
 				optionType="button"
 				value={documentSource}
@@ -311,14 +354,14 @@ export function ProductDataModal({ product, open, onClose, onChanged, onError, o
 				  setDocumentSource(event.target.value as "external" | "upload");
 				  setUploadedAsset(undefined);
 				}}
-				options={[{ label: "External URL", value: "external" }, { label: "Upload PDF", value: "upload" }]}
+				options={[{ label: text.externalURL, value: "external" }, { label: text.uploadPDF, value: "upload" }]}
 			  />
 			</Form.Item>
 			<div className="form-grid three-columns">
-			  <Form.Item name="label" label="Label" rules={[{ required: true }]}><Input /></Form.Item>
-			  <Form.Item name="document_type_id" label="Document type" rules={[{ required: true }]}><Select options={documentTypes.filter((type) => type.status === "active").map((type) => ({ value: type.id, label: type.name }))} /></Form.Item>
+			  <Form.Item name="label" label={text.label} rules={[{ required: true }]}><Input /></Form.Item>
+			  <Form.Item name="document_type_id" label={text.documentType} rules={[{ required: true }]}><Select options={documentTypes.filter((type) => type.status === "active").map((type) => ({ value: type.id, label: type.name }))} /></Form.Item>
 			  {documentSource === "external" ? (
-				<Form.Item name="external_url" label="External HTTP(S) URL" rules={[{ required: true }, { type: "url" }]}><Input /></Form.Item>
+				<Form.Item name="external_url" label={text.externalHTTP} rules={[{ required: true }, { type: "url" }]}><Input /></Form.Item>
 			  ) : (
 				<Form.Item label="PDF" required>
 				  <Space>
@@ -328,16 +371,16 @@ export function ProductDataModal({ product, open, onClose, onChanged, onError, o
 					  showUploadList={false}
 					  beforeUpload={(file) => { void uploadPDF(file); return false; }}
 					>
-					  <Button loading={uploading}>Choose and upload</Button>
+					  <Button loading={uploading}>{text.chooseUpload}</Button>
 					</Upload>
 					{uploadedAsset && <Typography.Text>{uploadedAsset.original_filename}</Typography.Text>}
 				  </Space>
 				</Form.Item>
 			  )}
-              <Form.Item name="language" label="Language"><Input placeholder="en-US" /></Form.Item>
-              <Form.Item name="sort_order" label="Sort order" rules={[{ required: true }]}><InputNumber min={0} precision={0} /></Form.Item>
+              <Form.Item name="language" label={text.language}><Input placeholder="en-US" /></Form.Item>
+              <Form.Item name="sort_order" label={text.sortOrder} rules={[{ required: true }]}><InputNumber min={0} precision={0} /></Form.Item>
             </div>
-            <Button type="primary" htmlType="submit">Add document</Button>
+            <Button type="primary" htmlType="submit">{text.addDocument}</Button>
           </Form>
         </Card>
       </Space>
