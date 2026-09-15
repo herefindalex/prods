@@ -64,20 +64,23 @@ type SourceImage struct {
 }
 
 type Source struct {
-	Product          catalog.Product
-	Site             site.Configuration
-	Category         string
-	CategoryPath     string
-	CategoryTrail    []SourceCategory
-	ManufacturerSlug string
-	BrandSlug        string
-	Specs            []SourceSpec
-	Documents        []SourceDocument
-	Images           []SourceImage
-	SiteEpoch        int64
-	Route            string
-	Language         string
-	SupportedLocales []string
+	Product                    catalog.Product
+	Translations               []catalog.ProductTranslation
+	SourceLocale               string
+	ContentMultilingualEnabled bool
+	Site                       site.Configuration
+	Category                   string
+	CategoryPath               string
+	CategoryTrail              []SourceCategory
+	ManufacturerSlug           string
+	BrandSlug                  string
+	Specs                      []SourceSpec
+	Documents                  []SourceDocument
+	Images                     []SourceImage
+	SiteEpoch                  int64
+	Route                      string
+	Language                   string
+	SupportedLocales           []string
 }
 
 type SourceCategory struct {
@@ -228,20 +231,22 @@ type assetTarget struct {
 }
 
 type Engine struct {
-	repository     Repository
-	root           string
-	assetRoot      string
-	baseURL        string
-	resources      *platform.ResourceGate
-	byteHeadroom   uint64
-	inodeHeadroom  uint64
-	minFreePercent uint8
-	gate           sync.RWMutex
-	index          *publicIndex
-	wake           chan struct{}
-	cancel         context.CancelFunc
-	wg             sync.WaitGroup
-	draining       atomic.Bool
+	repository                 Repository
+	root                       string
+	assetRoot                  string
+	baseURL                    string
+	resources                  *platform.ResourceGate
+	byteHeadroom               uint64
+	inodeHeadroom              uint64
+	minFreePercent             uint8
+	gate                       sync.RWMutex
+	contentLocales             []string
+	contentMultilingualEnabled bool
+	index                      *publicIndex
+	wake                       chan struct{}
+	cancel                     context.CancelFunc
+	wg                         sync.WaitGroup
+	draining                   atomic.Bool
 }
 
 func NewEngine(ctx context.Context, repository Repository, config Config) (*Engine, error) {
@@ -482,6 +487,13 @@ func (e *Engine) InstallVisibility(ctx context.Context) error { return e.install
 
 func (e *Engine) UnlockVisibility() { e.gate.Unlock() }
 
+func (e *Engine) SetContentLanguagePolicy(locales []string, enabled bool) {
+	e.gate.Lock()
+	defer e.gate.Unlock()
+	e.contentLocales = append([]string(nil), locales...)
+	e.contentMultilingualEnabled = enabled
+}
+
 func (e *Engine) installLocked(ctx context.Context) error {
 	activations, err := e.repository.ActivePublications(ctx)
 	if err != nil {
@@ -574,6 +586,15 @@ func (e *Engine) viewFromSource(source Source) PublicView {
 		CanonicalURL: e.baseURL + source.Route, Language: source.Language,
 		SupportedLocales: append([]string(nil), source.SupportedLocales...),
 		RFQURL:           "/rfq?product_id=" + source.Product.ID,
+		Localizations:    make(map[string]LocalizedContent),
+	}
+	if source.SourceLocale != "" {
+		view.Language = source.SourceLocale
+	}
+	if source.ContentMultilingualEnabled {
+		for _, item := range source.Translations {
+			view.Localizations[item.Locale] = LocalizedContent{Name: item.Name, Description: item.Description, Features: item.Features, Specification: item.Specification}
+		}
 	}
 	if source.CategoryPath != "" {
 		view.CategoryURL = e.baseURL + "/categories/" + source.CategoryPath
@@ -762,11 +783,42 @@ func (e *Engine) stage(ctx context.Context, operationID string, view PublicView)
 		"index.html": htmlBody, "product.json": jsonBody, "product.jsonld": jsonLDBody, "product.md": Markdown(view),
 	}
 	for _, locale := range publicSupportedLocales(view) {
-		localizedHTML, err := HTMLForLocale(view, locale)
+		localizedView := view.ForLocale(locale)
+		localizedHTML, err := HTMLForLocale(localizedView, locale)
 		if err != nil {
 			return "", "", err
 		}
-		files[localeArtifactName(locale)] = localizedHTML
+		localizedJSON, err := JSON(localizedView)
+		if err != nil {
+			return "", "", err
+		}
+		localizedJSONLD, err := JSONLD(localizedView)
+		if err != nil {
+			return "", "", err
+		}
+		files[localizedArtifactName(locale, "index.html")] = localizedHTML
+		files[localizedArtifactName(locale, "product.json")] = localizedJSON
+		files[localizedArtifactName(locale, "product.jsonld")] = localizedJSONLD
+		files[localizedArtifactName(locale, "product.md")] = Markdown(localizedView)
+		fallbackView := view
+		fallbackView.Localizations = nil
+		fallbackView = fallbackView.ForLocale(locale)
+		fallbackHTML, err := HTMLForLocale(fallbackView, locale)
+		if err != nil {
+			return "", "", err
+		}
+		fallbackJSON, err := JSON(fallbackView)
+		if err != nil {
+			return "", "", err
+		}
+		fallbackJSONLD, err := JSONLD(fallbackView)
+		if err != nil {
+			return "", "", err
+		}
+		files[fallbackLocalizedArtifactName(locale, "index.html")] = fallbackHTML
+		files[fallbackLocalizedArtifactName(locale, "product.json")] = fallbackJSON
+		files[fallbackLocalizedArtifactName(locale, "product.jsonld")] = fallbackJSONLD
+		files[fallbackLocalizedArtifactName(locale, "product.md")] = Markdown(fallbackView)
 	}
 	var requiredBytes uint64 = 16 << 10
 	for _, body := range files {
@@ -901,31 +953,40 @@ func (e *Engine) ServePath(w http.ResponseWriter, r *http.Request) bool {
 	}
 	locale := lease.Publication.View.Language
 	if explicit := r.URL.Query().Get("lang"); explicit != "" {
-		resolvedLocale, resolveErr := localization.Resolve(lease.Publication.View.Language, publicSupportedLocales(lease.Publication.View), explicit, "")
+		supported := publicSupportedLocales(lease.Publication.View)
+		e.gate.RLock()
+		if len(e.contentLocales) > 0 {
+			supported = append([]string(nil), e.contentLocales...)
+		}
+		multilingualEnabled := e.contentMultilingualEnabled
+		e.gate.RUnlock()
+		resolvedLocale, resolveErr := localization.Resolve(lease.Publication.View.Language, supported, explicit, "")
 		err = resolveErr
 		if err != nil {
 			lease.File.Close()
 			http.Error(w, "unsupported language", http.StatusBadRequest)
 			return true
 		}
-		if lease.Name == "index.html" {
-			locale = resolvedLocale
-			lease.File.Close()
-			directory, directoryErr := e.unitDirectory(lease.Publication.ArtifactID)
-			if directoryErr != nil {
-				http.Error(w, "public representation temporarily unavailable", http.StatusServiceUnavailable)
-				return true
-			}
-			lease.Name = localeArtifactName(locale)
-			lease.File, err = os.Open(filepath.Join(directory, lease.Name))
-			if err != nil {
-				http.Error(w, "public representation temporarily unavailable", http.StatusServiceUnavailable)
-				return true
-			}
+		locale = resolvedLocale
+		lease.File.Close()
+		directory, directoryErr := e.unitDirectory(lease.Publication.ArtifactID)
+		if directoryErr != nil {
+			http.Error(w, "public representation temporarily unavailable", http.StatusServiceUnavailable)
+			return true
+		}
+		if multilingualEnabled {
+			lease.Name = localizedArtifactName(locale, lease.Name)
+		} else {
+			lease.Name = fallbackLocalizedArtifactName(locale, lease.Name)
+		}
+		lease.File, err = os.Open(filepath.Join(directory, lease.Name))
+		if err != nil {
+			http.Error(w, "public representation temporarily unavailable", http.StatusServiceUnavailable)
+			return true
 		}
 	}
 	defer lease.File.Close()
-	etagMaterial := fmt.Sprintf("%s\x00%d\x00%d\x00%s\x00%s", lease.Publication.ProductID, lease.Publication.PublicRevision, lease.Publication.SiteEpoch, lease.Publication.ManifestHash, locale)
+	etagMaterial := fmt.Sprintf("%s\x00%d\x00%d\x00%s\x00%s\x00%s", lease.Publication.ProductID, lease.Publication.PublicRevision, lease.Publication.SiteEpoch, lease.Publication.ManifestHash, locale, lease.Name)
 	etag := `"p-` + hashBytes([]byte(etagMaterial))[:32] + `"`
 	w.Header().Set("ETag", etag)
 	w.Header().Set("Cache-Control", "public, max-age=0, must-revalidate")
@@ -950,8 +1011,11 @@ func publicSupportedLocales(view PublicView) []string {
 	return []string{locale}
 }
 
-func localeArtifactName(locale string) string {
-	return "index.lang-" + hashBytes([]byte(locale))[:16] + ".html"
+func localizedArtifactName(locale, name string) string {
+	return name + ".lang-" + hashBytes([]byte(locale))[:16]
+}
+func fallbackLocalizedArtifactName(locale, name string) string {
+	return name + ".fallback-lang-" + hashBytes([]byte(locale))[:16]
 }
 
 func (e *Engine) ServeAsset(w http.ResponseWriter, r *http.Request, assetID string) bool {
@@ -1034,7 +1098,30 @@ func (e *Engine) Views() ([]PublicView, error) {
 	if e.index == nil || e.index.unhealthy != nil {
 		return nil, ErrPublicUnavailable
 	}
-	return append([]PublicView(nil), e.index.views...), nil
+	views := make([]PublicView, len(e.index.views))
+	for index, view := range e.index.views {
+		views[index] = e.admittedViewLocked(view)
+	}
+	return views, nil
+}
+
+func (e *Engine) admittedViewLocked(view PublicView) PublicView {
+	if !e.contentMultilingualEnabled {
+		view.Localizations = nil
+		return view
+	}
+	allowed := make(map[string]struct{}, len(e.contentLocales))
+	for _, locale := range e.contentLocales {
+		allowed[locale] = struct{}{}
+	}
+	filtered := make(map[string]LocalizedContent)
+	for locale, item := range view.Localizations {
+		if _, ok := allowed[locale]; ok {
+			filtered[locale] = item
+		}
+	}
+	view.Localizations = filtered
+	return view
 }
 
 func (e *Engine) PublicSite() (site.Configuration, int64, error) {
@@ -1070,8 +1157,12 @@ func (e *Engine) Search(ctx context.Context, query string) ([]PublicView, error)
 			current.View.PartNumber, current.View.Name, current.View.Manufacturer, current.View.Brand,
 			current.View.Category, current.View.Lifecycle, applicationNames(current.View.Applications), current.View.Description, current.View.Features,
 		}, " "))
+		admittedView := e.admittedViewLocked(current.View)
+		for _, localized := range admittedView.Localizations {
+			haystack += " " + catalog.FoldSearch(strings.Join([]string{localized.Name, localized.Description, localized.Features, localized.Specification}, " "))
+		}
 		if strings.Contains(haystack, folded) {
-			views = append(views, current.View)
+			views = append(views, admittedView)
 		}
 	}
 	return views, nil
@@ -1092,7 +1183,7 @@ func (e *Engine) Product(productID string) (PublicView, bool) {
 		return PublicView{}, false
 	}
 	activation, exists := e.index.byID[productID]
-	return activation.View, exists
+	return e.admittedViewLocked(activation.View), exists
 }
 
 func writeDurable(path string, body []byte) error {

@@ -40,35 +40,62 @@ type Image struct {
 }
 
 type PublicView struct {
-	ID               string             `json:"id"`
-	Revision         int64              `json:"revision"`
-	SiteEpoch        int64              `json:"site_epoch"`
-	PartNumber       string             `json:"part_number"`
-	Name             string             `json:"name,omitempty"`
-	Manufacturer     string             `json:"manufacturer"`
-	ManufacturerID   string             `json:"manufacturer_id,omitempty"`
-	ManufacturerURL  string             `json:"manufacturer_url,omitempty"`
-	Brand            string             `json:"brand,omitempty"`
-	BrandID          string             `json:"brand_id,omitempty"`
-	BrandURL         string             `json:"brand_url,omitempty"`
-	Category         string             `json:"category,omitempty"`
-	CategoryID       string             `json:"category_id,omitempty"`
-	CategoryURL      string             `json:"category_url,omitempty"`
-	CategoryTrail    []CategoryRef      `json:"category_trail,omitempty"`
-	Lifecycle        string             `json:"lifecycle,omitempty"`
-	LifecycleID      string             `json:"lifecycle_id,omitempty"`
-	Applications     []Application      `json:"applications,omitempty"`
-	Images           []Image            `json:"images,omitempty"`
-	Description      string             `json:"description,omitempty"`
-	Features         string             `json:"features,omitempty"`
-	Specification    string             `json:"specification,omitempty"`
-	Specifications   []Specification    `json:"specifications,omitempty"`
-	Documents        []Document         `json:"documents,omitempty"`
-	CanonicalURL     string             `json:"canonical_url"`
-	Language         string             `json:"language"`
-	SupportedLocales []string           `json:"supported_locales,omitempty"`
-	RFQURL           string             `json:"rfq_url"`
-	Site             site.Configuration `json:"site"`
+	ID               string                      `json:"id"`
+	Revision         int64                       `json:"revision"`
+	SiteEpoch        int64                       `json:"site_epoch"`
+	PartNumber       string                      `json:"part_number"`
+	Name             string                      `json:"name,omitempty"`
+	Manufacturer     string                      `json:"manufacturer"`
+	ManufacturerID   string                      `json:"manufacturer_id,omitempty"`
+	ManufacturerURL  string                      `json:"manufacturer_url,omitempty"`
+	Brand            string                      `json:"brand,omitempty"`
+	BrandID          string                      `json:"brand_id,omitempty"`
+	BrandURL         string                      `json:"brand_url,omitempty"`
+	Category         string                      `json:"category,omitempty"`
+	CategoryID       string                      `json:"category_id,omitempty"`
+	CategoryURL      string                      `json:"category_url,omitempty"`
+	CategoryTrail    []CategoryRef               `json:"category_trail,omitempty"`
+	Lifecycle        string                      `json:"lifecycle,omitempty"`
+	LifecycleID      string                      `json:"lifecycle_id,omitempty"`
+	Applications     []Application               `json:"applications,omitempty"`
+	Images           []Image                     `json:"images,omitempty"`
+	Description      string                      `json:"description,omitempty"`
+	Features         string                      `json:"features,omitempty"`
+	Specification    string                      `json:"specification,omitempty"`
+	Specifications   []Specification             `json:"specifications,omitempty"`
+	Documents        []Document                  `json:"documents,omitempty"`
+	CanonicalURL     string                      `json:"canonical_url"`
+	Language         string                      `json:"language"`
+	SupportedLocales []string                    `json:"supported_locales,omitempty"`
+	RFQURL           string                      `json:"rfq_url"`
+	Site             site.Configuration          `json:"site"`
+	Localizations    map[string]LocalizedContent `json:"-"`
+}
+
+type LocalizedContent struct {
+	Name          string
+	Description   string
+	Features      string
+	Specification string
+}
+
+func (v PublicView) ForLocale(locale string) PublicView {
+	v.Language = locale
+	if item, ok := v.Localizations[locale]; ok {
+		if item.Name != "" {
+			v.Name = item.Name
+		}
+		if item.Description != "" {
+			v.Description = item.Description
+		}
+		if item.Features != "" {
+			v.Features = item.Features
+		}
+		if item.Specification != "" {
+			v.Specification = item.Specification
+		}
+	}
+	return v
 }
 
 type CategoryRef struct {

@@ -40,6 +40,7 @@ type Product struct {
 	CustomPath        string        `json:"custom_path,omitempty"`
 	PartNumber        string        `json:"part_number"`
 	Name              string        `json:"name"`
+	SourceLocale      string        `json:"source_locale,omitempty"`
 	ManufacturerID    string        `json:"manufacturer_id,omitempty"`
 	Manufacturer      string        `json:"manufacturer,omitempty"`
 	BrandID           string        `json:"brand_id,omitempty"`
@@ -72,12 +73,31 @@ type Application struct {
 	Slug string `json:"slug"`
 }
 
+type ProductTranslation struct {
+	Locale        string `json:"locale"`
+	Name          string `json:"name,omitempty"`
+	Description   string `json:"description,omitempty"`
+	Features      string `json:"features,omitempty"`
+	Specification string `json:"specification,omitempty"`
+	Revision      int64  `json:"revision"`
+	UpdatedBy     string `json:"updated_by,omitempty"`
+	UpdatedAt     string `json:"updated_at,omitempty"`
+}
+
+type ProductContent struct {
+	ProductID       string               `json:"product_id"`
+	ProductRevision int64                `json:"product_revision"`
+	SourceLocale    string               `json:"source_locale"`
+	Translations    []ProductTranslation `json:"translations"`
+}
+
 func (p *Product) Prepare() error {
 	p.ID = strings.TrimSpace(p.ID)
 	p.Slug = strings.TrimSpace(p.Slug)
 	p.CustomPath = strings.TrimSpace(p.CustomPath)
 	p.IdentityPart = strings.TrimSpace(p.PartNumber)
 	p.Name = strings.TrimSpace(p.Name)
+	p.SourceLocale = strings.TrimSpace(p.SourceLocale)
 	p.ManufacturerID = strings.TrimSpace(p.ManufacturerID)
 	p.BrandID = strings.TrimSpace(p.BrandID)
 	p.Brand = strings.TrimSpace(p.Brand)

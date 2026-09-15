@@ -215,6 +215,12 @@ func New(store *sqlite.Store, config Config) (*Server, string, error) {
 		if err != nil {
 			return nil, "", fmt.Errorf("initialize public architecture: %w", err)
 		}
+		languageSettings, settingsErr := store.SiteSettings(context.Background())
+		if settingsErr != nil {
+			server.publisher.Close()
+			return nil, "", fmt.Errorf("initialize content language policy: %w", settingsErr)
+		}
+		server.publisher.SetContentLanguagePolicy(languageSettings.SupportedLocales, languageSettings.ContentMultilingualEnabled)
 		server.searchManager, err = searchnotify.NewManager(context.Background(), store, searchnotify.Config{
 			BaseURL: config.BaseURL, IndexNow: config.IndexNowSubmitter, Google: config.GoogleSearchSubmitter,
 		})
@@ -457,6 +463,7 @@ func (s *Server) routes(static fs.FS) {
 	s.mux.HandleFunc("PUT /admin/api/system/maintenance", s.adminUpdateSiteMaintenance)
 	s.mux.HandleFunc("GET /admin/api/system/settings", s.adminSiteSettings)
 	s.mux.HandleFunc("PUT /admin/api/system/settings", s.adminUpdateSiteSettings)
+	s.mux.HandleFunc("PUT /admin/api/system/settings/content-localization", s.adminUpdateContentLocalization)
 	s.mux.HandleFunc("GET /admin/api/jobs", s.adminJobs)
 	s.mux.HandleFunc("POST /admin/api/jobs/publication/{id}/retry", s.adminRetryPublicationJob)
 	s.mux.HandleFunc("POST /admin/api/jobs/search/{id}/retry", s.adminRetrySearchSubmission)
@@ -470,8 +477,11 @@ func (s *Server) routes(static fs.FS) {
 	s.mux.HandleFunc("GET /admin/api/audit", s.adminAudit)
 	s.mux.HandleFunc("GET /admin/api/products", s.adminProducts)
 	s.mux.HandleFunc("POST /admin/api/products", s.adminCreateProduct)
+	s.mux.HandleFunc("GET /admin/api/products/content-settings", s.adminCatalogContentSettings)
 	s.mux.HandleFunc("GET /admin/api/products/{id}", s.adminProduct)
 	s.mux.HandleFunc("PUT /admin/api/products/{id}", s.adminUpdateProduct)
+	s.mux.HandleFunc("GET /admin/api/products/{id}/content", s.adminProductContent)
+	s.mux.HandleFunc("PUT /admin/api/products/{id}/translations/{locale}", s.adminSaveProductTranslation)
 	s.mux.HandleFunc("POST /admin/api/products/{id}/url", s.adminUpdateProductURL)
 	s.mux.HandleFunc("POST /admin/api/products/{id}/hide", s.adminHideProduct)
 	s.mux.HandleFunc("POST /admin/api/products/{id}/archive", s.adminArchiveProduct)
@@ -725,6 +735,7 @@ func (s *Server) search(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Language", presentation.Language)
 	displayProducts := append([]publishing.PublicView(nil), views[start:end]...)
 	for index := range displayProducts {
+		displayProducts[index] = displayProducts[index].ForLocale(presentation.Language)
 		displayProducts[index].CanonicalURL = withLanguage(displayProducts[index].CanonicalURL, presentation.Language)
 	}
 	data := searchPage{
@@ -894,6 +905,7 @@ func (s *Server) publicAggregate(w http.ResponseWriter, r *http.Request, kind st
 	w.Header().Set("Content-Language", presentation.Language)
 	displayProducts := append([]publishing.PublicView(nil), filtered...)
 	for index := range displayProducts {
+		displayProducts[index] = displayProducts[index].ForLocale(presentation.Language)
 		displayProducts[index].CanonicalURL = withLanguage(displayProducts[index].CanonicalURL, presentation.Language)
 	}
 	s.render(w, "search", searchPage{publicPage: presentation, Title: title, Products: displayProducts})

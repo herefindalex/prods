@@ -11,10 +11,10 @@ export type Product = {
   manufacturer?: string;
   brand_id?: string;
   brand?: string;
-	lifecycle_id?: string;
-	lifecycle?: string;
-	application_ids?: string[];
-	applications?: Array<{ id: string; name: string; slug: string }>;
+  lifecycle_id?: string;
+  lifecycle?: string;
+  application_ids?: string[];
+  applications?: Array<{ id: string; name: string; slug: string }>;
   category_id: string;
   package_form_factor?: string;
   description: string;
@@ -26,7 +26,27 @@ export type Product = {
   revision: number;
 };
 
-export type ProductForm = Omit<Product, "id" | "record_state" | "revision" | "applications">;
+export type ProductTranslation = {
+  locale: string;
+  name?: string;
+  description?: string;
+  features?: string;
+  specification?: string;
+  revision: number;
+  updated_by?: string;
+  updated_at?: string;
+};
+export type ProductContent = {
+  product_id: string;
+  product_revision: number;
+  source_locale: string;
+  translations: ProductTranslation[];
+};
+
+export type ProductForm = Omit<
+  Product,
+  "id" | "record_state" | "revision" | "applications"
+>;
 
 export type Category = {
   id: string;
@@ -56,16 +76,16 @@ export type DictionaryEntry = {
 };
 
 export type TaxonomyProductImpact = {
-	product_id: string;
-	part_number: string;
-	current_route?: string;
-	proposed_route?: string;
+  product_id: string;
+  part_number: string;
+  current_route?: string;
+  proposed_route?: string;
 };
 
 export type TaxonomyImpact = {
-	entity_type: string;
-	entity_id: string;
-	affected_products: TaxonomyProductImpact[];
+  entity_type: string;
+  entity_id: string;
+  affected_products: TaxonomyProductImpact[];
 };
 
 export type SpecDefinition = {
@@ -104,7 +124,10 @@ export type NormalizedValue = {
   status: "current" | "stale" | "failed";
   failure_reason?: string;
 };
-export type SpecValueDetail = { value: SpecValue; normalized: NormalizedValue[] };
+export type SpecValueDetail = {
+  value: SpecValue;
+  normalized: NormalizedValue[];
+};
 export type ProductDocument = {
   id: string;
   product_id: string;
@@ -117,13 +140,13 @@ export type ProductDocument = {
 };
 
 export type ProductImage = {
-	id: string;
-	product_id: string;
-	asset_id?: string;
-	external_url?: string;
-	alt_text?: string;
-	sort_order: number;
-	primary: boolean;
+  id: string;
+  product_id: string;
+  asset_id?: string;
+  external_url?: string;
+  alt_text?: string;
+  sort_order: number;
+  primary: boolean;
 };
 
 export type Asset = {
@@ -263,21 +286,29 @@ export type BrandCaptureResponse = {
 };
 
 export type SystemResourceHealth = {
-	resource: string;
-	status: "Normal" | "Warning" | "Critical";
-	reason?: string;
-	checked_utc: string;
-	total_bytes?: number;
-	free_bytes?: number;
-	reserved_bytes?: number;
-	free_inodes?: number;
-	reserved_inodes?: number;
-	supports_inodes: boolean;
+  resource: string;
+  status: "Normal" | "Warning" | "Critical";
+  reason?: string;
+  checked_utc: string;
+  total_bytes?: number;
+  free_bytes?: number;
+  reserved_bytes?: number;
+  free_inodes?: number;
+  reserved_inodes?: number;
+  supports_inodes: boolean;
   affected_operations: string[];
 };
 
 export type SystemComponentHealth = {
-  component: "database" | "maintenance" | "public_generation" | "background_jobs" | "backup" | "asset_gc" | "search" | "smtp";
+  component:
+    | "database"
+    | "maintenance"
+    | "public_generation"
+    | "background_jobs"
+    | "backup"
+    | "asset_gc"
+    | "search"
+    | "smtp";
   status: "Normal" | "Warning" | "Critical";
   summary: string;
   checked_utc: string;
@@ -321,11 +352,12 @@ export type SiteMaintenance = {
 };
 
 export type SiteSettings = {
-	default_locale: string;
-	supported_locales: string[];
-	time_zone: string;
-	revision: number;
-	updated_at: string;
+  default_locale: string;
+  supported_locales: string[];
+  content_multilingual_enabled: boolean;
+  time_zone: string;
+  revision: number;
+  updated_at: string;
 };
 
 export type BackupSettings = {
@@ -360,10 +392,10 @@ export type BackupStatus = {
   settings: BackupSettings;
   runs: BackupRun[];
   next_run_utc?: string;
-	due: boolean;
-	contains_sensitive_data: boolean;
-	external_requirements?: string[];
-	retention: {
+  due: boolean;
+  contains_sensitive_data: boolean;
+  external_requirements?: string[];
+  retention: {
     reasons: Record<string, string[]>;
     expired: string[];
     deleted: string[];
@@ -386,8 +418,8 @@ export const capabilities = [
   "catalog.import",
   "catalog.export",
   "rfq.view",
-	"rfq.manage",
-	"rfq.export",
+  "rfq.manage",
+  "rfq.export",
   "users.manage",
   "system.manage",
   "audit.view",
@@ -425,11 +457,25 @@ export type RFQ = {
   PrivacyState: "retained" | "anonymized";
   PrivacyAt: string;
   PrivacyBy: string;
-  Items: Array<{ kind: string; product_id?: string; requested?: string; raw_query?: string }>;
-  Recipients: Array<{ kind: "user" | "email"; user_id?: string; email?: string; display_name?: string }>;
+  Items: Array<{
+    kind: string;
+    product_id?: string;
+    requested?: string;
+    raw_query?: string;
+  }>;
+  Recipients: Array<{
+    kind: "user" | "email";
+    user_id?: string;
+    email?: string;
+    display_name?: string;
+  }>;
 };
 
-export type RFQRecipientUser = { id: string; email: string; display_name: string };
+export type RFQRecipientUser = {
+  id: string;
+  email: string;
+  display_name: string;
+};
 export type RFQRecipientSettings = {
   revision: number;
   updated_by?: string;

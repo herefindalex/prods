@@ -50,3 +50,38 @@ func (s *Server) adminUpdateSiteSettings(w http.ResponseWriter, r *http.Request)
 	}
 	writeJSON(w, http.StatusOK, settings)
 }
+
+func (s *Server) adminUpdateContentLocalization(w http.ResponseWriter, r *http.Request) {
+	current, ok := s.requireCapability(w, r, identity.CapabilitySystemManage, true)
+	if !ok {
+		return
+	}
+	var request struct {
+		ExpectedRevision int64    `json:"expected_revision"`
+		Enabled          bool     `json:"enabled"`
+		SupportedLocales []string `json:"supported_locales"`
+	}
+	if err := decodeJSON(r.Body, &request); err != nil {
+		s.writeAPIError(w, r, http.StatusBadRequest, apiCodeInvalidJSON)
+		return
+	}
+	settings, err := s.store.UpdateContentLocalization(r.Context(), current.UserID, request.ExpectedRevision, request.Enabled, request.SupportedLocales)
+	if err != nil {
+		switch {
+		case errors.Is(err, site.ErrInvalidSettings):
+			s.writeAPIError(w, r, http.StatusUnprocessableEntity, apiCodeValidationFailed)
+		case errors.Is(err, site.ErrSettingsConflict):
+			s.writeAPIError(w, r, http.StatusConflict, apiCodeRevisionConflict)
+		case errors.Is(err, sqlite.ErrPermissionDenied):
+			s.writeAPIError(w, r, http.StatusForbidden, apiCodeForbidden)
+		default:
+			s.internalAPIError(w, r, err)
+		}
+		return
+	}
+	if s.publisher != nil {
+		s.publisher.SetContentLanguagePolicy(settings.SupportedLocales, settings.ContentMultilingualEnabled)
+		s.publisher.Wake()
+	}
+	writeJSON(w, http.StatusOK, settings)
+}

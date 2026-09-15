@@ -13,7 +13,7 @@ import (
 
 const (
 	MinimumSupportedSchemaVersion = 1
-	CurrentSchemaVersion          = 15
+	CurrentSchemaVersion          = 16
 )
 
 var (
@@ -330,6 +330,31 @@ ALTER TABLE site_settings ADD COLUMN updated_by TEXT REFERENCES users(id);`,
  CHECK((status='pending' AND completed_at IS NULL) OR (status<>'pending' AND completed_at IS NOT NULL))
 );
 CREATE INDEX user_invitation_mail_attempts_user_idx ON user_invitation_mail_attempts(user_id,created_at DESC,id DESC);`,
+	},
+	{
+		Version:       16,
+		Name:          "product-content-translations",
+		Transactional: true,
+		SQL: `ALTER TABLE site_settings ADD COLUMN content_multilingual_enabled INTEGER NOT NULL DEFAULT 0 CHECK(content_multilingual_enabled IN (0,1));
+CREATE TABLE product_content_metadata (
+ product_id TEXT PRIMARY KEY REFERENCES products(id) ON DELETE CASCADE,
+ source_locale TEXT NOT NULL
+);
+INSERT INTO product_content_metadata(product_id,source_locale)
+SELECT p.id,s.default_locale FROM products p CROSS JOIN site_settings s WHERE s.singleton=1;
+CREATE TABLE product_translations (
+ product_id TEXT NOT NULL REFERENCES products(id) ON DELETE CASCADE,
+ locale TEXT NOT NULL,
+ name TEXT NOT NULL DEFAULT '',
+ description TEXT NOT NULL DEFAULT '',
+ features TEXT NOT NULL DEFAULT '',
+ specification TEXT NOT NULL DEFAULT '',
+ revision INTEGER NOT NULL CHECK(revision>=1),
+ updated_by TEXT REFERENCES users(id),
+ updated_at TEXT NOT NULL,
+ PRIMARY KEY(product_id,locale)
+);
+CREATE INDEX product_translations_locale_idx ON product_translations(locale,product_id);`,
 	},
 }
 

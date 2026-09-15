@@ -12,11 +12,12 @@ var (
 )
 
 type Settings struct {
-	DefaultLocale    string   `json:"default_locale"`
-	SupportedLocales []string `json:"supported_locales"`
-	TimeZone         string   `json:"time_zone"`
-	Revision         int64    `json:"revision"`
-	UpdatedAt        string   `json:"updated_at"`
+	DefaultLocale              string   `json:"default_locale"`
+	SupportedLocales           []string `json:"supported_locales"`
+	ContentMultilingualEnabled bool     `json:"content_multilingual_enabled"`
+	TimeZone                   string   `json:"time_zone"`
+	Revision                   int64    `json:"revision"`
+	UpdatedAt                  string   `json:"updated_at"`
 }
 
 func PrepareTimeZone(value string) (string, error) {

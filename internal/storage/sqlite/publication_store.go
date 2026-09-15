@@ -69,10 +69,31 @@ func (s *Store) PublicationSource(ctx context.Context, productID string) (publis
 		return publishing.Source{}, err
 	}
 	var supportedLocalesJSON string
-	if err := tx.QueryRowContext(ctx, `SELECT default_locale,supported_locales_json FROM site_settings WHERE singleton=1`).Scan(&source.Language, &supportedLocalesJSON); err != nil {
+	if err := tx.QueryRowContext(ctx, `SELECT default_locale,supported_locales_json,content_multilingual_enabled FROM site_settings WHERE singleton=1`).Scan(&source.Language, &supportedLocalesJSON, &source.ContentMultilingualEnabled); err != nil {
 		return publishing.Source{}, err
 	}
 	if err := json.Unmarshal([]byte(supportedLocalesJSON), &source.SupportedLocales); err != nil {
+		return publishing.Source{}, err
+	}
+	if err := tx.QueryRowContext(ctx, `SELECT source_locale FROM product_content_metadata WHERE product_id=?`, productID).Scan(&source.SourceLocale); err != nil {
+		return publishing.Source{}, err
+	}
+	translationRows, err := tx.QueryContext(ctx, `SELECT locale,name,description,features,specification,revision,COALESCE(updated_by,''),updated_at FROM product_translations WHERE product_id=? ORDER BY locale`, productID)
+	if err != nil {
+		return publishing.Source{}, err
+	}
+	for translationRows.Next() {
+		var item catalog.ProductTranslation
+		if err := translationRows.Scan(&item.Locale, &item.Name, &item.Description, &item.Features, &item.Specification, &item.Revision, &item.UpdatedBy, &item.UpdatedAt); err != nil {
+			translationRows.Close()
+			return publishing.Source{}, err
+		}
+		source.Translations = append(source.Translations, item)
+	}
+	if err := translationRows.Close(); err != nil {
+		return publishing.Source{}, err
+	}
+	if err := translationRows.Err(); err != nil {
 		return publishing.Source{}, err
 	}
 	source.Site, _, err = websiteConfigurationAtEpoch(ctx, tx, source.SiteEpoch)
@@ -700,7 +721,49 @@ func (s *Store) ActivePublications(ctx context.Context) ([]publishing.ActivePubl
 		}
 		activations = append(activations, activation)
 	}
-	return activations, rows.Err()
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	return s.attachActiveTranslations(ctx, activations)
+}
+
+func (s *Store) attachActiveTranslations(ctx context.Context, activations []publishing.ActivePublication) ([]publishing.ActivePublication, error) {
+	var enabled bool
+	var supportedJSON string
+	if err := s.db.QueryRowContext(ctx, `SELECT content_multilingual_enabled,supported_locales_json FROM site_settings WHERE singleton=1`).Scan(&enabled, &supportedJSON); err != nil {
+		return nil, err
+	}
+	if !enabled {
+		return activations, nil
+	}
+	for index := range activations {
+		rows, err := s.db.QueryContext(ctx, `SELECT locale,name,description,features,specification FROM product_translations WHERE product_id=? ORDER BY locale`, activations[index].ProductID)
+		if err != nil {
+			return nil, err
+		}
+		activations[index].View.Localizations = make(map[string]publishing.LocalizedContent)
+		for rows.Next() {
+			var locale string
+			var item publishing.LocalizedContent
+			if err := rows.Scan(&locale, &item.Name, &item.Description, &item.Features, &item.Specification); err != nil {
+				rows.Close()
+				return nil, err
+			}
+			if localeInJSON(supportedJSON, locale) {
+				activations[index].View.Localizations[locale] = item
+			}
+		}
+		if err := rows.Close(); err != nil {
+			return nil, err
+		}
+		if err := rows.Err(); err != nil {
+			return nil, err
+		}
+	}
+	return activations, nil
 }
 
 func (s *Store) SearchPublications(ctx context.Context, foldedQuery, projectionVersion string) ([]publishing.ActivePublication, error) {
@@ -942,7 +1005,36 @@ func upsertPublicSearchProjection(ctx context.Context, tx *sql.Tx, activation pu
 	manufacturer := catalog.FoldSearch(view.Manufacturer)
 	brand := catalog.FoldSearch(view.Brand)
 	category := catalog.FoldSearch(view.Category)
-	all := catalog.FoldSearch(strings.Join([]string{view.PartNumber, view.Name, view.Manufacturer, view.Brand, view.Category, view.Lifecycle, publishingApplicationNames(view.Applications)}, " "))
+	searchValues := []string{view.PartNumber, view.Name, view.Manufacturer, view.Brand, view.Category, view.Lifecycle, publishingApplicationNames(view.Applications)}
+	var enabled bool
+	var supportedJSON string
+	if err := tx.QueryRowContext(ctx, `SELECT content_multilingual_enabled,supported_locales_json FROM site_settings WHERE singleton=1`).Scan(&enabled, &supportedJSON); err != nil {
+		return err
+	}
+	if enabled {
+		rows, err := tx.QueryContext(ctx, `SELECT locale,name,description,features,specification FROM product_translations WHERE product_id=?`, activation.ProductID)
+		if err != nil {
+			return err
+		}
+		for rows.Next() {
+			var locale string
+			var values [4]string
+			if err := rows.Scan(&locale, &values[0], &values[1], &values[2], &values[3]); err != nil {
+				rows.Close()
+				return err
+			}
+			if localeInJSON(supportedJSON, locale) {
+				searchValues = append(searchValues, values[:]...)
+			}
+		}
+		if err := rows.Close(); err != nil {
+			return err
+		}
+		if err := rows.Err(); err != nil {
+			return err
+		}
+	}
+	all := catalog.FoldSearch(strings.Join(searchValues, " "))
 	_, err := tx.ExecContext(ctx, `INSERT INTO public_search_projection(
 		product_id,source_revision,site_epoch,visibility_generation,projection_version,
 		part_number_folded,product_name_folded,manufacturer_folded,brand_folded,category_folded,all_folded,updated_at

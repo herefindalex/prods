@@ -1,0 +1,108 @@
+package sqlite
+
+import (
+	"context"
+	"database/sql"
+	"encoding/json"
+	"errors"
+	"strings"
+	"time"
+
+	"prods/internal/catalog"
+	"prods/internal/identity"
+)
+
+var ErrContentLocaleUnavailable = errors.New("content locale unavailable")
+
+func (s *Store) ProductContent(ctx context.Context, productID string) (catalog.ProductContent, error) {
+	content := catalog.ProductContent{ProductID: productID}
+	if err := s.db.QueryRowContext(ctx, `SELECT m.source_locale,p.revision FROM product_content_metadata m JOIN products p ON p.id=m.product_id WHERE m.product_id=?`, productID).Scan(&content.SourceLocale, &content.ProductRevision); err != nil {
+		return content, err
+	}
+	rows, err := s.db.QueryContext(ctx, `SELECT locale,name,description,features,specification,revision,COALESCE(updated_by,''),updated_at
+		FROM product_translations WHERE product_id=? ORDER BY locale`, productID)
+	if err != nil {
+		return content, err
+	}
+	defer rows.Close()
+	for rows.Next() {
+		var item catalog.ProductTranslation
+		if err := rows.Scan(&item.Locale, &item.Name, &item.Description, &item.Features, &item.Specification, &item.Revision, &item.UpdatedBy, &item.UpdatedAt); err != nil {
+			return content, err
+		}
+		content.Translations = append(content.Translations, item)
+	}
+	return content, rows.Err()
+}
+
+func (s *Store) SaveProductTranslation(ctx context.Context, actorID, productID string, expectedProductRevision int64, item catalog.ProductTranslation) (catalog.ProductContent, error) {
+	item.Locale = strings.TrimSpace(item.Locale)
+	item.Name = strings.TrimSpace(item.Name)
+	item.Description = strings.TrimSpace(item.Description)
+	item.Features = strings.TrimSpace(item.Features)
+	item.Specification = strings.TrimSpace(item.Specification)
+	if actorID == "" || productID == "" || expectedProductRevision < 1 || item.Locale == "" {
+		return catalog.ProductContent{}, catalog.ErrInvalidProduct
+	}
+	err := s.withWriteTx(ctx, func(tx *sql.Tx) error {
+		if err := requireActorCapability(ctx, tx, actorID, identity.CapabilityCatalogEdit); err != nil {
+			return err
+		}
+		var revision int64
+		var state catalog.RecordState
+		if err := tx.QueryRowContext(ctx, `SELECT revision,record_state FROM products WHERE id=?`, productID).Scan(&revision, &state); err != nil {
+			return err
+		}
+		if state != catalog.RecordCurrent {
+			return catalog.ErrArchivedProduct
+		}
+		if revision != expectedProductRevision {
+			return catalog.ErrRevisionConflict
+		}
+		var sourceLocale, supportedJSON string
+		var enabled bool
+		if err := tx.QueryRowContext(ctx, `SELECT m.source_locale,s.supported_locales_json,s.content_multilingual_enabled
+			FROM product_content_metadata m CROSS JOIN site_settings s WHERE m.product_id=? AND s.singleton=1`, productID).Scan(&sourceLocale, &supportedJSON, &enabled); err != nil {
+			return err
+		}
+		if !enabled || item.Locale == sourceLocale || !localeInJSON(supportedJSON, item.Locale) {
+			return ErrContentLocaleUnavailable
+		}
+		now := time.Now().UTC().Format(time.RFC3339Nano)
+		_, err := tx.ExecContext(ctx, `INSERT INTO product_translations(product_id,locale,name,description,features,specification,revision,updated_by,updated_at)
+			VALUES(?,?,?,?,?,?,1,?,?) ON CONFLICT(product_id,locale) DO UPDATE SET name=excluded.name,description=excluded.description,
+			features=excluded.features,specification=excluded.specification,revision=product_translations.revision+1,updated_by=excluded.updated_by,updated_at=excluded.updated_at`,
+			productID, item.Locale, item.Name, item.Description, item.Features, item.Specification, actorID, now)
+		if err != nil {
+			return err
+		}
+		result, err := tx.ExecContext(ctx, `UPDATE products SET revision=revision+1,updated_by=?,updated_at=? WHERE id=? AND revision=?`, actorID, now, productID, expectedProductRevision)
+		if err != nil {
+			return err
+		}
+		if changed, _ := result.RowsAffected(); changed != 1 {
+			return catalog.ErrRevisionConflict
+		}
+		if err := appendAudit(ctx, tx, actorID, "product.translation_saved", "product", productID, map[string]any{"locale": item.Locale, "revision": expectedProductRevision + 1}); err != nil {
+			return err
+		}
+		return appendPublicationIntent(ctx, tx, productID, expectedProductRevision+1, "product.translation_saved", now)
+	})
+	if err != nil {
+		return catalog.ProductContent{}, err
+	}
+	return s.ProductContent(ctx, productID)
+}
+
+func localeInJSON(encoded, locale string) bool {
+	var locales []string
+	if json.Unmarshal([]byte(encoded), &locales) != nil {
+		return false
+	}
+	for _, candidate := range locales {
+		if candidate == locale {
+			return true
+		}
+	}
+	return false
+}

@@ -113,8 +113,11 @@ func newMigrationFixture(t *testing.T) migrationFixture {
 		ALTER TABLE rfqs DROP COLUMN revision;
 		ALTER TABLE rfqs DROP COLUMN status;
 		ALTER TABLE publication_intents DROP COLUMN error_message;
-		DROP TABLE user_invitation_mail_attempts;
-		ALTER TABLE site_settings DROP COLUMN updated_by;
+	DROP TABLE user_invitation_mail_attempts;
+	DROP TABLE product_translations;
+	DROP TABLE product_content_metadata;
+	ALTER TABLE site_settings DROP COLUMN content_multilingual_enabled;
+	ALTER TABLE site_settings DROP COLUMN updated_by;
 		ALTER TABLE site_settings DROP COLUMN revision;
 		DROP TABLE schema_migrations;
 		UPDATE system_state SET schema_version=1 WHERE singleton=1;

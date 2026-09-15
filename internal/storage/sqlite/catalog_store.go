@@ -372,6 +372,13 @@ func (s *Store) CloneProduct(ctx context.Context, actorID, sourceID string, expe
 		if err := insertProductTx(ctx, tx, clone, now); err != nil {
 			return err
 		}
+		if _, err := tx.ExecContext(ctx, `UPDATE product_content_metadata SET source_locale=(SELECT source_locale FROM product_content_metadata WHERE product_id=?) WHERE product_id=?`, source.ID, clone.ID); err != nil {
+			return err
+		}
+		if _, err := tx.ExecContext(ctx, `INSERT INTO product_translations(product_id,locale,name,description,features,specification,revision,updated_by,updated_at)
+			SELECT ?,locale,name,description,features,specification,1,?,? FROM product_translations WHERE product_id=?`, clone.ID, actorID, now, source.ID); err != nil {
+			return err
+		}
 		if err := cloneSpecValues(ctx, tx, source.ID, clone.ID, clone.CategoryID, actorID, now); err != nil {
 			return err
 		}
@@ -599,6 +606,19 @@ func insertProductTx(ctx context.Context, tx *sql.Tx, product catalog.Product, n
 		product.SearchFolded, product.ProjectionVer, now, now)
 	if err != nil {
 		return fmt.Errorf("insert product: %w", err)
+	}
+	var sourceLocale, supportedJSON string
+	if err := tx.QueryRowContext(ctx, `SELECT default_locale,supported_locales_json FROM site_settings WHERE singleton=1`).Scan(&sourceLocale, &supportedJSON); err != nil {
+		return err
+	}
+	if product.SourceLocale != "" {
+		if !localeInJSON(supportedJSON, product.SourceLocale) {
+			return catalog.ErrInvalidProduct
+		}
+		sourceLocale = product.SourceLocale
+	}
+	if _, err := tx.ExecContext(ctx, `INSERT INTO product_content_metadata(product_id,source_locale) VALUES(?,?)`, product.ID, sourceLocale); err != nil {
+		return fmt.Errorf("insert product content metadata: %w", err)
 	}
 	if _, err := tx.ExecContext(ctx, `INSERT INTO product_url_names(product_id,slug,custom_path,revision,updated_at) VALUES(?,?,?,1,?)`, product.ID, product.Slug, product.CustomPath, now); err != nil {
 		return fmt.Errorf("insert product URL name: %w", err)

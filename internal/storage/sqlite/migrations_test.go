@@ -65,6 +65,9 @@ func TestVersionOneUpgradeRequiresBackupAndBecomesReady(t *testing.T) {
 		DROP TABLE search_notification_state;
 		DROP TABLE search_integration_settings;
 		DROP TABLE user_invitation_mail_attempts;
+		DROP TABLE product_translations;
+		DROP TABLE product_content_metadata;
+		ALTER TABLE site_settings DROP COLUMN content_multilingual_enabled;
 		ALTER TABLE site_settings DROP COLUMN updated_by;
 		ALTER TABLE site_settings DROP COLUMN revision;
 		DROP TABLE schema_migrations;
@@ -152,9 +155,12 @@ func TestVersionFourUpgradePreservesRFQAndClassifiesLegacyRecipient(t *testing.T
 		DROP TABLE search_notification_state;
 		DROP TABLE search_integration_settings;
 		DROP TABLE user_invitation_mail_attempts;
+		DROP TABLE product_translations;
+		DROP TABLE product_content_metadata;
+		ALTER TABLE site_settings DROP COLUMN content_multilingual_enabled;
 		ALTER TABLE site_settings DROP COLUMN updated_by;
 		ALTER TABLE site_settings DROP COLUMN revision;
-		DELETE FROM schema_migrations WHERE version IN (5,6,7,8,9,10,11,12,13,14,15);
+		DELETE FROM schema_migrations WHERE version IN (5,6,7,8,9,10,11,12,13,14,15,16);
 		UPDATE system_state SET schema_version=4 WHERE singleton=1;
 	`, created); err != nil {
 		t.Fatal(err)

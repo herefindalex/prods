@@ -278,6 +278,115 @@ func TestPublicationRestartFailsClosedAndRepairsCorruptActiveUnit(t *testing.T) 
 	}
 }
 
+func TestDisabledContentLanguageCannotReplayTranslatedETagOrRange(t *testing.T) {
+	root := t.TempDir()
+	store, err := sqlite.Create(filepath.Join(root, "prods.db"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	hash, err := identity.HashPassword("ownerpass1")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err = store.CompleteInstallation(t.Context(), sqlite.Installation{OwnerEmail: "owner@example.test", PasswordHash: hash, DefaultLocale: "en-US", SupportedLocales: []string{"en-US", "zh-TW"}, TimeZone: "UTC"}); err != nil {
+		t.Fatal(err)
+	}
+	app, _, err := New(store, Config{BaseURL: "http://catalog.example.test", PublicDir: filepath.Join(root, "generated"), WorkDir: filepath.Join(root, "work")})
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer app.Close()
+	defer store.Close()
+	server := httptest.NewServer(app)
+	defer server.Close()
+	client := newCookieClient(t)
+	csrf := loginNormalAdmin(t, client, server.URL, "owner@example.test", "ownerpass1")
+	enable := adminJSONMethod(t, client, http.MethodPut, server.URL+"/admin/api/system/settings/content-localization", csrf, `{"expected_revision":1,"enabled":true,"supported_locales":["en-US","zh-TW"]}`)
+	if body := responseBody(t, enable); enable.StatusCode != http.StatusOK {
+		t.Fatalf("enable=%d %s", enable.StatusCode, body)
+	}
+	created := postAdminJSON(t, client, server.URL+"/admin/api/products", csrf, `{"part_number":"ML-PUB-1","name":"Source name","description":"Source description","status":"published"}`)
+	if created.StatusCode != http.StatusCreated {
+		t.Fatalf("create=%d %s", created.StatusCode, responseBody(t, created))
+	}
+	var product catalog.Product
+	decodeResponseJSON(t, created, &product)
+	saved := adminJSONMethod(t, client, http.MethodPut, server.URL+"/admin/api/products/"+product.ID+"/translations/zh-TW", csrf, fmt.Sprintf(`{"expected_revision":%d,"translation":{"name":"翻譯名稱","description":"翻譯說明","features":"localizedneedle"}}`, product.Revision))
+	if body := responseBody(t, saved); saved.StatusCode != http.StatusOK {
+		t.Fatalf("translation=%d %s", saved.StatusCode, body)
+	}
+	baseProductURL := server.URL + "/products/" + product.Slug
+	localizedURLs := []string{baseProductURL + "?lang=zh-TW", baseProductURL + ".json?lang=zh-TW", baseProductURL + ".md?lang=zh-TW"}
+	etags := make(map[string]string, len(localizedURLs))
+	for _, productURL := range localizedURLs {
+		waitForPublicBody(t, client, productURL, "翻譯名稱")
+		translated, err := client.Get(productURL)
+		if err != nil {
+			t.Fatal(err)
+		}
+		etags[productURL] = translated.Header.Get("ETag")
+		_ = responseBody(t, translated)
+		if etags[productURL] == "" {
+			t.Fatalf("missing translated ETag for %s", productURL)
+		}
+	}
+	waitForPublicBody(t, client, server.URL+"/search?q=localizedneedle&lang=zh-TW", "翻譯名稱")
+	disable := adminJSONMethod(t, client, http.MethodPut, server.URL+"/admin/api/system/settings/content-localization", csrf, `{"expected_revision":2,"enabled":false,"supported_locales":["en-US","zh-TW"]}`)
+	if body := responseBody(t, disable); disable.StatusCode != http.StatusOK {
+		t.Fatalf("disable=%d %s", disable.StatusCode, body)
+	}
+	disabledSearch, err := client.Get(server.URL + "/search?q=localizedneedle&lang=zh-TW")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if body := responseBody(t, disabledSearch); strings.Contains(body, "翻譯名稱") || strings.Contains(body, "/products/"+product.Slug) {
+		t.Fatalf("disabled search residue status=%d body=%s", disabledSearch.StatusCode, body)
+	}
+	for _, productURL := range localizedURLs {
+		for _, headers := range []map[string]string{{"If-None-Match": etags[productURL]}, {"Range": "bytes=0-80", "If-Range": etags[productURL]}} {
+			request := mustRequest(t, http.MethodGet, productURL, headers)
+			response, err := client.Do(request)
+			if err != nil {
+				t.Fatal(err)
+			}
+			body := responseBody(t, response)
+			if response.StatusCode == http.StatusNotModified || strings.Contains(body, "翻譯名稱") || strings.Contains(body, "翻譯說明") {
+				t.Fatalf("disabled translation status=%d body=%s", response.StatusCode, body)
+			}
+			if !strings.Contains(body, "Source name") && !strings.Contains(body, "Source description") {
+				t.Fatalf("missing source fallback status=%d body=%s", response.StatusCode, body)
+			}
+		}
+	}
+	removeLocale := adminJSONMethod(t, client, http.MethodPut, server.URL+"/admin/api/system/settings/content-localization", csrf, `{"expected_revision":3,"enabled":true,"supported_locales":["en-US"]}`)
+	if body := responseBody(t, removeLocale); removeLocale.StatusCode != http.StatusOK {
+		t.Fatalf("remove locale=%d %s", removeLocale.StatusCode, body)
+	}
+	stale := mustRequest(t, http.MethodGet, localizedURLs[0], map[string]string{"If-None-Match": etags[localizedURLs[0]], "Range": "bytes=0-80"})
+	response, err := client.Do(stale)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if body := responseBody(t, response); response.StatusCode != http.StatusBadRequest || strings.Contains(body, "翻譯") {
+		t.Fatalf("removed locale status=%d body=%s", response.StatusCode, body)
+	}
+}
+
+func adminJSONMethod(t *testing.T, client *http.Client, method, endpoint, csrf, body string) *http.Response {
+	t.Helper()
+	request, err := http.NewRequest(method, endpoint, bytes.NewBufferString(body))
+	if err != nil {
+		t.Fatal(err)
+	}
+	request.Header.Set("Content-Type", "application/json")
+	request.Header.Set("X-CSRF-Token", csrf)
+	response, err := client.Do(request)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return response
+}
+
 func waitForPublicBody(t *testing.T, client *http.Client, endpoint, expected string) {
 	t.Helper()
 	deadline := time.Now().Add(3 * time.Second)
