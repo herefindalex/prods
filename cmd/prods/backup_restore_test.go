@@ -10,6 +10,39 @@ import (
 	storesqlite "prods/internal/storage/sqlite"
 )
 
+func TestExplicitRestoreReturnsSuccessAfterVerifiedCompletion(t *testing.T) {
+	root := t.TempDir()
+	allowBackupTestCleanup(t, root)
+	dataDir := filepath.Join(root, "data")
+	backupDir := filepath.Join(root, "backups")
+	databasePath := filepath.Join(dataDir, "prods.db")
+	if err := os.MkdirAll(dataDir, 0o700); err != nil {
+		t.Fatal(err)
+	}
+	store, err := storesqlite.CreatePOC(databasePath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	selected, err := recovery.CreateBackup(t.Context(), store, recovery.BackupConfig{
+		BackupDir: backupDir,
+		AssetDir:  filepath.Join(dataDir, "assets"),
+		Kind:      "selected-restore-point",
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := store.Close(); err != nil {
+		t.Fatal(err)
+	}
+
+	previousArgs := os.Args
+	os.Args = []string{previousArgs[0], "--data-dir", dataDir, "--backup-dir", backupDir, "--restore-backup", selected.ID}
+	t.Cleanup(func() { os.Args = previousArgs })
+	if err := runWithStop(nil); err != nil {
+		t.Fatalf("verified explicit restore returned an error: %v", err)
+	}
+}
+
 func TestOfflineRestorePrebackupIncludesCurrentHostConfig(t *testing.T) {
 	root := t.TempDir()
 	allowBackupTestCleanup(t, root)

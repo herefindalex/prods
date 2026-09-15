@@ -143,7 +143,9 @@ func runWithStop(stop <-chan struct{}) (returnErr error) {
 			*allowRestoreWithoutPrebackup, resourceGate, externalBackupRequirements(options)); err != nil {
 			return err
 		}
-		return errors.New("restore completed and verified; restart Prods to run normal startup checks")
+		slog.Info("restore completed and verified", "restart_required", true)
+		fmt.Fprintln(os.Stdout, "Restore completed and verified. Restart Prods to run normal startup checks.")
+		return nil
 	}
 	pendingMigrations, err := recovery.PendingMigrationJournals(controlDir)
 	if err != nil {
