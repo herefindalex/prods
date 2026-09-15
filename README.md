@@ -131,12 +131,12 @@ IndexNow and Google Search Console submission are optional. They require a publi
 Required build tools:
 
 - Go 1.27.1
-- Node.js with pnpm 10.28.1
+- Node.js with pnpm 10.28.1 (the version pinned by `packageManager`)
 
 ```sh
 pnpm --dir web/ui install --frozen-lockfile
-npm --prefix web/ui run typecheck
-npm --prefix web/ui run build
+pnpm --dir web/ui typecheck
+pnpm --dir web/ui build
 go test ./... -count=1
 go test -tags poc ./... -count=1 -timeout=5m
 go vet ./...
