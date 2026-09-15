@@ -58,6 +58,77 @@ func insertTaxonomySource(ctx context.Context, tx *sql.Tx, subjectType, subjectI
 	return err
 }
 
+func (s *Store) SaveTaxonomySourceLocales(ctx context.Context, actorID, subjectType, subjectID string, expectedRevision int64, sourceLocale string, sourceLocales map[string]string) (catalog.TaxonomyContent, error) {
+	if actorID == "" || subjectID == "" || expectedRevision < 1 || (subjectType != "category" && subjectType != "dictionary") {
+		return catalog.TaxonomyContent{}, catalog.ErrInvalidDictionary
+	}
+	normalizedLocale, ok := localization.NormalizeBuiltinLocale(sourceLocale)
+	if !ok {
+		return catalog.TaxonomyContent{}, catalog.ErrInvalidContentLocale
+	}
+	normalizedFields, err := catalog.NormalizeFieldSourceLocales(sourceLocales, normalizedLocale, catalog.TaxonomyTranslatableFields)
+	if err != nil {
+		return catalog.TaxonomyContent{}, err
+	}
+	encoded, err := json.Marshal(normalizedFields)
+	if err != nil {
+		return catalog.TaxonomyContent{}, err
+	}
+	err = s.withWriteTx(ctx, func(tx *sql.Tx) error {
+		if err := requireActorCapability(ctx, tx, actorID, identity.CapabilityCatalogEdit); err != nil {
+			return err
+		}
+		var revision int64
+		var targetType string
+		if subjectType == "category" {
+			if err := tx.QueryRowContext(ctx, `SELECT revision FROM categories WHERE id=?`, subjectID).Scan(&revision); err != nil {
+				return err
+			}
+			targetType = "category"
+		} else {
+			var kind catalog.DictionaryKind
+			if err := tx.QueryRowContext(ctx, `SELECT revision,kind FROM dictionary_entries WHERE id=?`, subjectID).Scan(&revision, &kind); err != nil {
+				return err
+			}
+			targetType = string(kind)
+		}
+		if revision != expectedRevision {
+			return catalog.ErrRevisionConflict
+		}
+		var enabled bool
+		if err := tx.QueryRowContext(ctx, `SELECT content_editing_enabled FROM website_working WHERE singleton=1`).Scan(&enabled); err != nil {
+			return err
+		}
+		if !enabled {
+			return ErrContentLocaleUnavailable
+		}
+		now := time.Now().UTC().Format(time.RFC3339Nano)
+		if _, err := tx.ExecContext(ctx, `UPDATE taxonomy_content SET source_locale=?,source_locales_json=? WHERE subject_type=? AND subject_id=?`, normalizedLocale, string(encoded), subjectType, subjectID); err != nil {
+			return err
+		}
+		var result sql.Result
+		if subjectType == "category" {
+			result, err = tx.ExecContext(ctx, `UPDATE categories SET revision=revision+1,updated_by=?,updated_at=? WHERE id=? AND revision=?`, actorID, now, subjectID, expectedRevision)
+		} else {
+			result, err = tx.ExecContext(ctx, `UPDATE dictionary_entries SET revision=revision+1,updated_by=?,updated_at=? WHERE id=? AND revision=?`, actorID, now, subjectID, expectedRevision)
+		}
+		if err != nil {
+			return err
+		}
+		if changed, err := result.RowsAffected(); err != nil || changed != 1 {
+			return catalog.ErrRevisionConflict
+		}
+		if _, err := requeueAffectedProductsTx(ctx, tx, actorID, targetType, subjectID, "taxonomy.source_locales_saved", now); err != nil {
+			return err
+		}
+		return appendAudit(ctx, tx, actorID, "taxonomy.source_locales_saved", targetType, subjectID, map[string]any{"source_locale": normalizedLocale, "source_locales": normalizedFields, "revision": expectedRevision + 1})
+	})
+	if err != nil {
+		return catalog.TaxonomyContent{}, err
+	}
+	return s.TaxonomyContent(ctx, subjectType, subjectID)
+}
+
 func (s *Store) TaxonomyContent(ctx context.Context, subjectType, subjectID string) (catalog.TaxonomyContent, error) {
 	content := catalog.TaxonomyContent{SubjectType: subjectType, SubjectID: subjectID}
 	var table string

@@ -57,6 +57,8 @@ const labels = {
     edit: "Edit",
     data: "Data",
     translations: "Translations",
+    sourceLocale: "Source Locale",
+    sourceLocaleHelp: "Defaults from the current Website Site Default, not your Admin UI language. You may override it for this Product.",
     clone: "Clone",
     publishConfirm: "Publish this product?",
     publishDescription:
@@ -126,6 +128,8 @@ const labels = {
     edit: "編輯",
     data: "資料",
     translations: "翻譯",
+    sourceLocale: "來源語系",
+    sourceLocaleHelp: "預設取目前 Website Site Default，而不是你的 Admin UI 語系；此 Product 可單獨改選。",
     clone: "複製",
     publishConfirm: "要發布這項產品嗎？",
     publishDescription: "完整的 Product publication unit 啟用後才會公開。",
@@ -276,7 +280,7 @@ export function CatalogPanel({
   const beginCreate = () => {
     setEditing(undefined);
     setCloning(undefined);
-    form.setFieldsValue(blankProduct);
+    form.setFieldsValue({ ...blankProduct, source_locale: siteSettings?.default_locale ?? "en-US" });
     setFormOpen(true);
   };
 
@@ -364,10 +368,7 @@ export function CatalogPanel({
         }
         onMessage(text.saved(updated.part_number, updated.revision));
       } else {
-        const created = await postJSON<Product>("/admin/api/products", {
-          ...values,
-          source_locale: locale,
-        });
+      const created = await postJSON<Product>("/admin/api/products", values);
         onMessage(text.created(created.part_number));
       }
       setEditing(undefined);
@@ -647,6 +648,11 @@ export function CatalogPanel({
             <Form.Item name="name" label={text.productName}>
               <Input />
             </Form.Item>
+            {!editing && !cloning ? (
+              <Form.Item name="source_locale" label={text.sourceLocale} extra={text.sourceLocaleHelp} rules={[{ required: true }]}>
+                <Select options={(siteSettings?.supported_locales ?? []).map((value) => ({ value, label: value }))} />
+              </Form.Item>
+            ) : null}
             <Form.Item name="manufacturer_id" label={text.manufacturer}>
               <Select
                 allowClear

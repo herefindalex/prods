@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"sort"
 	"strings"
+
+	"prods/internal/localization"
 )
 
 func JSON(view PublicView) ([]byte, error) {
@@ -65,35 +67,36 @@ func JSONLD(view PublicView) ([]byte, error) {
 
 func Markdown(view PublicView) []byte {
 	var out strings.Builder
+	text := localization.ApplyPublicCopy(localization.For(view.Language), view.PublicCopy)
 	fmt.Fprintf(&out, "# %s\n\n", view.PartNumber)
 	if view.Name != "" {
 		fmt.Fprintf(&out, "%s\n\n", view.Name)
 	}
-	fmt.Fprintf(&out, "- Product ID: `%s`\n- Public revision: `%d`\n- Manufacturer: %s\n- Canonical URL: %s\n",
-		view.ID, view.Revision, view.Manufacturer, view.CanonicalURL)
+	fmt.Fprintf(&out, "- Product ID: `%s`\n- Public revision: `%d`\n- %s: %s\n- Canonical URL: %s\n",
+		view.ID, view.Revision, text.Manufacturer, view.Manufacturer, view.CanonicalURL)
 	if view.Description != "" {
-		fmt.Fprintf(&out, "\n## Description\n\n%s\n", view.Description)
+		fmt.Fprintf(&out, "\n## %s\n\n%s\n", text.Description, view.Description)
 	}
 	if view.Features != "" {
-		fmt.Fprintf(&out, "\n## Features\n\n%s\n", view.Features)
+		fmt.Fprintf(&out, "\n## %s\n\n%s\n", text.Features, view.Features)
 	}
 	if len(view.Images) > 0 {
-		out.WriteString("\n## Images\n\n")
+		fmt.Fprintf(&out, "\n## %s\n\n", text.ProductImages)
 		for _, image := range view.Images {
 			fmt.Fprintf(&out, "- [%s](%s)\n", image.AltText, image.URL)
 		}
 	}
 	if len(view.Applications) > 0 {
-		out.WriteString("\n## Applications\n\n")
+		fmt.Fprintf(&out, "\n## %s\n\n", text.Applications)
 		for _, application := range view.Applications {
 			fmt.Fprintf(&out, "- [%s](%s)\n", application.Name, application.URL)
 		}
 	}
 	if view.Lifecycle != "" {
-		fmt.Fprintf(&out, "\n## Lifecycle\n\n%s\n", view.Lifecycle)
+		fmt.Fprintf(&out, "\n## %s\n\n%s\n", text.Lifecycle, view.Lifecycle)
 	}
 	if len(view.Specifications) > 0 {
-		out.WriteString("\n## Specifications\n\n")
+		fmt.Fprintf(&out, "\n## %s\n\n", text.Specifications)
 		for _, spec := range view.Specifications {
 			fmt.Fprintf(&out, "- %s: %s", spec.Name, spec.RawValue)
 			if spec.PreferredUnit != "" {
@@ -103,15 +106,15 @@ func Markdown(view PublicView) []byte {
 		}
 	}
 	if view.Specification != "" {
-		fmt.Fprintf(&out, "\n## Specifications\n\n- Operating range: %s\n", view.Specification)
+		fmt.Fprintf(&out, "\n## %s\n\n- %s\n", text.Specification, view.Specification)
 	}
 	if len(view.Documents) > 0 {
-		out.WriteString("\n## Documents\n\n")
+		fmt.Fprintf(&out, "\n## %s\n\n", text.Documents)
 		for _, document := range view.Documents {
 			fmt.Fprintf(&out, "- [%s](%s)\n", document.Label, document.URL)
 		}
 	}
-	fmt.Fprintf(&out, "\n[Request a quote](%s)\n", view.RFQURL)
+	fmt.Fprintf(&out, "\n[%s](%s)\n", text.RequestQuote, view.RFQURL)
 	return []byte(out.String())
 }
 
@@ -132,11 +135,17 @@ func Sitemap(views []PublicView) ([]byte, error) {
 		for _, location := range []string{view.CanonicalURL, view.CategoryURL, view.ManufacturerURL, view.BrandURL} {
 			if location != "" {
 				locations[location] = struct{}{}
+				for _, locale := range view.SupportedLocales {
+					locations[localizedURL(location, locale, true)] = struct{}{}
+				}
 			}
 		}
 		for _, application := range view.Applications {
 			if application.URL != "" {
 				locations[application.URL] = struct{}{}
+				for _, locale := range view.SupportedLocales {
+					locations[localizedURL(application.URL, locale, true)] = struct{}{}
+				}
 			}
 		}
 	}

@@ -104,7 +104,7 @@ func renderHTML(view PublicView, locale string, explicit bool) ([]byte, error) {
 	}{
 		View: view, JSONLD: template.JS(jsonLD), Description: description,
 		Navigation: configuration.VisibleNavigation(), ThemeCSS: template.CSS(configuration.Stylesheet()),
-		Text: localization.For(locale), CatalogURL: localizedURL("/search", locale, explicit),
+		Text: localization.ApplyPublicCopy(localization.For(locale), view.PublicCopy), CatalogURL: localizedURL("/search", locale, explicit),
 		RFQURL: localizedURL(view.RFQURL, locale, explicit),
 	}
 	for _, supported := range view.SupportedLocales {

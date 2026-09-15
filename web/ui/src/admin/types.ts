@@ -7,6 +7,8 @@ export type Product = {
   custom_path?: string;
   part_number: string;
   name: string;
+  source_locale?: string;
+  source_locales?: Record<string, string>;
   manufacturer_id?: string;
   manufacturer?: string;
   brand_id?: string;
@@ -40,7 +42,27 @@ export type ProductContent = {
   product_id: string;
   product_revision: number;
   source_locale: string;
+  source_locales: Record<string, string>;
   translations: ProductTranslation[];
+};
+
+export type TaxonomyTranslation = {
+  locale: string;
+  name?: string;
+  description?: string;
+  revision: number;
+  updated_by?: string;
+  updated_at?: string;
+};
+
+export type TaxonomyContent = {
+  subject_type: "category" | "dictionary";
+  subject_id: string;
+  subject_revision: number;
+  source_locale: string;
+  source_locales: Record<string, string>;
+  description?: string;
+  translations: TaxonomyTranslation[];
 };
 
 export type ProductForm = Omit<
@@ -236,6 +258,40 @@ export type PublicCopyOverride = {
   locale: string;
   value: string;
   definition_version: number;
+};
+
+export type PublicCopyDefinition = {
+  key: string;
+  definition_version: number;
+  description: string;
+  value_kind: "plain" | "rich" | "plural" | "select";
+  required_placeholders: string[];
+  allowed_placeholders: string[];
+  sample?: Record<string, string>;
+  official_bundle_version: string;
+};
+
+export type PublicCopyDefault = {
+  key: string;
+  locale: string;
+  value: string;
+  definition_version: number;
+  official_bundle_version: string;
+};
+
+export type PublicCopyCatalog = {
+  official_bundle_version: string;
+  review_status: string;
+  definitions: PublicCopyDefinition[];
+  defaults: PublicCopyDefault[];
+};
+
+export type PublicCopyEditorState = {
+  working_revision: number;
+  default_locale: string;
+  enabled_locales: string[];
+  overrides: Record<string, Record<string, PublicCopyOverride>>;
+  catalog: PublicCopyCatalog;
 };
 
 export type WebsiteLocalization = {

@@ -13,6 +13,66 @@ import (
 	"prods/internal/localization"
 )
 
+func (s *Store) SaveProductSourceLocales(ctx context.Context, actorID, productID string, expectedProductRevision int64, sourceLocale string, sourceLocales map[string]string) (catalog.ProductContent, error) {
+	if actorID == "" || productID == "" || expectedProductRevision < 1 {
+		return catalog.ProductContent{}, catalog.ErrInvalidProduct
+	}
+	normalizedLocale, ok := localization.NormalizeBuiltinLocale(sourceLocale)
+	if !ok {
+		return catalog.ProductContent{}, catalog.ErrInvalidContentLocale
+	}
+	normalizedFields, err := catalog.NormalizeFieldSourceLocales(sourceLocales, normalizedLocale, catalog.ProductTranslatableFields)
+	if err != nil {
+		return catalog.ProductContent{}, err
+	}
+	encoded, err := json.Marshal(normalizedFields)
+	if err != nil {
+		return catalog.ProductContent{}, err
+	}
+	err = s.withWriteTx(ctx, func(tx *sql.Tx) error {
+		if err := requireActorCapability(ctx, tx, actorID, identity.CapabilityCatalogEdit); err != nil {
+			return err
+		}
+		var revision int64
+		var state catalog.RecordState
+		if err := tx.QueryRowContext(ctx, `SELECT revision,record_state FROM products WHERE id=?`, productID).Scan(&revision, &state); err != nil {
+			return err
+		}
+		if state != catalog.RecordCurrent {
+			return catalog.ErrArchivedProduct
+		}
+		if revision != expectedProductRevision {
+			return catalog.ErrRevisionConflict
+		}
+		var enabled bool
+		if err := tx.QueryRowContext(ctx, `SELECT content_editing_enabled FROM website_working WHERE singleton=1`).Scan(&enabled); err != nil {
+			return err
+		}
+		if !enabled {
+			return ErrContentLocaleUnavailable
+		}
+		now := time.Now().UTC().Format(time.RFC3339Nano)
+		if _, err := tx.ExecContext(ctx, `UPDATE product_content_metadata SET source_locale=?,source_locales_json=? WHERE product_id=?`, normalizedLocale, string(encoded), productID); err != nil {
+			return err
+		}
+		result, err := tx.ExecContext(ctx, `UPDATE products SET revision=revision+1,updated_by=?,updated_at=? WHERE id=? AND revision=?`, actorID, now, productID, expectedProductRevision)
+		if err != nil {
+			return err
+		}
+		if changed, err := result.RowsAffected(); err != nil || changed != 1 {
+			return catalog.ErrRevisionConflict
+		}
+		if err := appendAudit(ctx, tx, actorID, "product.source_locales_saved", "product", productID, map[string]any{"source_locale": normalizedLocale, "source_locales": normalizedFields, "revision": expectedProductRevision + 1}); err != nil {
+			return err
+		}
+		return appendPublicationIntent(ctx, tx, productID, expectedProductRevision+1, "product.source_locales_saved", now)
+	})
+	if err != nil {
+		return catalog.ProductContent{}, err
+	}
+	return s.ProductContent(ctx, productID)
+}
+
 var ErrContentLocaleUnavailable = errors.New("content locale unavailable")
 
 func (s *Store) ProductContent(ctx context.Context, productID string) (catalog.ProductContent, error) {

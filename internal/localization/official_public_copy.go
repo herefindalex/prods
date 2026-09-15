@@ -70,3 +70,46 @@ func OfficialPublicCopyCatalog() PublicCopyCatalog {
 	}
 	return catalog
 }
+
+func ApplyPublicCopy(messages Messages, values map[string]string) Messages {
+	targets := map[string]*string{
+		"catalog.title": &messages.Catalog, "catalog.request_part": &messages.RequestPart,
+		"search.label": &messages.SearchLabel, "search.submit": &messages.Search, "search.all": &messages.All,
+		"search.no_products": &messages.NoProducts, "search.no_products_prefix": &messages.NoProductsPrefix,
+		"search.request_this_part": &messages.RequestThisPart, "pagination.previous": &messages.PreviousPage,
+		"pagination.next": &messages.NextPage, "product.part_number": &messages.PartNumber,
+		"product.manufacturer": &messages.Manufacturer, "product.brand": &messages.Brand,
+		"product.category": &messages.Category, "product.lifecycle": &messages.Lifecycle,
+		"product.applications": &messages.Applications, "product.images": &messages.ProductImages,
+		"product.description": &messages.Description, "product.features": &messages.Features,
+		"product.specification": &messages.Specification, "product.specifications": &messages.Specifications,
+		"product.documents": &messages.Documents, "product.request_quote": &messages.RequestQuote,
+		"rfq.title": &messages.RFQTitle, "rfq.catalog_product": &messages.CatalogProduct,
+		"rfq.requested_part": &messages.RequestedPart, "rfq.original_search": &messages.OriginalSearch,
+		"rfq.name": &messages.Name, "rfq.email": &messages.Email, "rfq.quantity_optional": &messages.QuantityOptional,
+		"rfq.notes": &messages.Notes, "rfq.submit": &messages.SubmitRFQ, "rfq.received": &messages.RFQReceived,
+		"rfq.reference": &messages.Reference, "rfq.replay_notice": &messages.ReplayNotice,
+		"footer.privacy": &messages.Privacy, "footer.terms": &messages.Terms, "locale.language": &messages.Language,
+	}
+	for key, value := range values {
+		if target := targets[key]; target != nil && value != "" {
+			*target = value
+		}
+	}
+	return messages
+}
+
+func ResolvePublicCopyMap(locale, defaultLocale string, enabledLocales []string, overrides PublicCopyOverrideMap, catalog PublicCopyCatalog) map[string]string {
+	defaults := make(map[string][]PublicCopyDefault)
+	for _, item := range catalog.Defaults {
+		defaults[item.Key] = append(defaults[item.Key], item)
+	}
+	result := make(map[string]string, len(catalog.Definitions))
+	for _, definition := range catalog.Definitions {
+		resolved := ResolvePublicCopy(definition.Key, locale, defaultLocale, enabledLocales, overrides, defaults[definition.Key])
+		if resolved.Value != "" {
+			result[definition.Key] = resolved.Value
+		}
+	}
+	return result
+}

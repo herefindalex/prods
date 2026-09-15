@@ -41,40 +41,44 @@ type Image struct {
 }
 
 type PublicView struct {
-	ID                string                       `json:"id"`
-	Revision          int64                        `json:"revision"`
-	SiteEpoch         int64                        `json:"site_epoch"`
-	PartNumber        string                       `json:"part_number"`
-	Name              string                       `json:"name,omitempty"`
-	Manufacturer      string                       `json:"manufacturer"`
-	ManufacturerID    string                       `json:"manufacturer_id,omitempty"`
-	ManufacturerURL   string                       `json:"manufacturer_url,omitempty"`
-	Brand             string                       `json:"brand,omitempty"`
-	BrandID           string                       `json:"brand_id,omitempty"`
-	BrandURL          string                       `json:"brand_url,omitempty"`
-	Category          string                       `json:"category,omitempty"`
-	CategoryID        string                       `json:"category_id,omitempty"`
-	CategoryURL       string                       `json:"category_url,omitempty"`
-	CategoryTrail     []CategoryRef                `json:"category_trail,omitempty"`
-	Lifecycle         string                       `json:"lifecycle,omitempty"`
-	LifecycleID       string                       `json:"lifecycle_id,omitempty"`
-	Applications      []Application                `json:"applications,omitempty"`
-	Images            []Image                      `json:"images,omitempty"`
-	Description       string                       `json:"description,omitempty"`
-	Features          string                       `json:"features,omitempty"`
-	Specification     string                       `json:"specification,omitempty"`
-	Specifications    []Specification              `json:"specifications,omitempty"`
-	Documents         []Document                   `json:"documents,omitempty"`
-	CanonicalURL      string                       `json:"canonical_url"`
-	Language          string                       `json:"language"`
-	DefaultLocale     string                       `json:"default_locale,omitempty"`
-	SupportedLocales  []string                     `json:"supported_locales,omitempty"`
-	FieldLocalization map[string]FieldLocalization `json:"field_localization,omitempty"`
-	RFQURL            string                       `json:"rfq_url"`
-	Site              site.Configuration           `json:"site"`
-	Localizations     map[string]LocalizedContent  `json:"-"`
-	SourceLocale      string                       `json:"-"`
-	SourceLocales     map[string]string            `json:"-"`
+	ID                  string                             `json:"id"`
+	Revision            int64                              `json:"revision"`
+	SiteEpoch           int64                              `json:"site_epoch"`
+	PartNumber          string                             `json:"part_number"`
+	Name                string                             `json:"name,omitempty"`
+	Manufacturer        string                             `json:"manufacturer"`
+	ManufacturerID      string                             `json:"manufacturer_id,omitempty"`
+	ManufacturerURL     string                             `json:"manufacturer_url,omitempty"`
+	Brand               string                             `json:"brand,omitempty"`
+	BrandID             string                             `json:"brand_id,omitempty"`
+	BrandURL            string                             `json:"brand_url,omitempty"`
+	Category            string                             `json:"category,omitempty"`
+	CategoryID          string                             `json:"category_id,omitempty"`
+	CategoryURL         string                             `json:"category_url,omitempty"`
+	CategoryTrail       []CategoryRef                      `json:"category_trail,omitempty"`
+	Lifecycle           string                             `json:"lifecycle,omitempty"`
+	LifecycleID         string                             `json:"lifecycle_id,omitempty"`
+	Applications        []Application                      `json:"applications,omitempty"`
+	Images              []Image                            `json:"images,omitempty"`
+	Description         string                             `json:"description,omitempty"`
+	Features            string                             `json:"features,omitempty"`
+	Specification       string                             `json:"specification,omitempty"`
+	Specifications      []Specification                    `json:"specifications,omitempty"`
+	Documents           []Document                         `json:"documents,omitempty"`
+	CanonicalURL        string                             `json:"canonical_url"`
+	Language            string                             `json:"language"`
+	DefaultLocale       string                             `json:"default_locale,omitempty"`
+	SupportedLocales    []string                           `json:"supported_locales,omitempty"`
+	FieldLocalization   map[string]FieldLocalization       `json:"field_localization,omitempty"`
+	PublicCopy          map[string]string                  `json:"public_copy,omitempty"`
+	RFQURL              string                             `json:"rfq_url"`
+	Site                site.Configuration                 `json:"site"`
+	Localizations       map[string]LocalizedContent        `json:"-"`
+	SourceLocale        string                             `json:"-"`
+	SourceLocales       map[string]string                  `json:"-"`
+	LabelLocalizations  map[string]LocalizedLabel          `json:"-"`
+	PublicCopyDefaults  map[string]map[string]string       `json:"-"`
+	PublicCopyOverrides localization.PublicCopyOverrideMap `json:"-"`
 }
 
 type FieldLocalization struct {
@@ -88,6 +92,11 @@ type LocalizedContent struct {
 	Description   string
 	Features      string
 	Specification string
+}
+
+type LocalizedLabel struct {
+	SourceLocale string
+	Values       map[string]string
 }
 
 func (v PublicView) ForLocale(locale string) PublicView {
@@ -131,6 +140,37 @@ func (v PublicView) ForLocale(locale string) PublicView {
 			RequestedLocale: resolved.RequestedLocale,
 			EffectiveLocale: resolved.EffectiveLocale,
 			Provenance:      resolved.Provenance,
+		}
+	}
+	resolveLabel := func(key string, target *string) {
+		label, ok := v.LabelLocalizations[key]
+		if !ok || target == nil {
+			return
+		}
+		resolved := localization.ResolveCustomerValue(locale, defaultLocale, label.SourceLocale, v.SupportedLocales, label.Values)
+		*target = resolved.Value
+		v.FieldLocalization[key] = FieldLocalization{RequestedLocale: resolved.RequestedLocale, EffectiveLocale: resolved.EffectiveLocale, Provenance: resolved.Provenance}
+	}
+	resolveLabel("manufacturer.name", &v.Manufacturer)
+	resolveLabel("brand.name", &v.Brand)
+	resolveLabel("category.name", &v.Category)
+	resolveLabel("lifecycle.name", &v.Lifecycle)
+	for index := range v.CategoryTrail {
+		resolveLabel("category."+v.CategoryTrail[index].ID+".name", &v.CategoryTrail[index].Name)
+	}
+	for index := range v.Applications {
+		resolveLabel("application."+v.Applications[index].ID+".name", &v.Applications[index].Name)
+	}
+	v.PublicCopy = make(map[string]string, len(v.PublicCopyDefaults))
+	for key, byLocale := range v.PublicCopyDefaults {
+		defaults := make([]localization.PublicCopyDefault, 0, len(byLocale))
+		for itemLocale, value := range byLocale {
+			defaults = append(defaults, localization.PublicCopyDefault{Key: key, Locale: itemLocale, Value: value, DefinitionVersion: 1, OfficialBundle: localization.OfficialBundleVersion})
+		}
+		resolved := localization.ResolvePublicCopy(key, locale, defaultLocale, v.SupportedLocales, v.PublicCopyOverrides, defaults)
+		if resolved.Value != "" {
+			v.PublicCopy[key] = resolved.Value
+			v.FieldLocalization["public_copy."+key] = FieldLocalization{RequestedLocale: resolved.RequestedLocale, EffectiveLocale: resolved.EffectiveLocale, Provenance: resolved.Provenance}
 		}
 	}
 	return v

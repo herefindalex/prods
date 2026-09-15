@@ -10,6 +10,7 @@ import (
 
 	"prods/internal/catalog"
 	"prods/internal/identity"
+	"prods/internal/localization"
 	"prods/internal/publishing"
 	"prods/internal/site"
 )
@@ -214,6 +215,21 @@ func (s *Store) SaveWebsiteLocalization(ctx context.Context, actorID string, exp
 	}
 	if err := settings.Prepare(); err != nil {
 		return site.State{}, err
+	}
+	definitions := make(map[string]localization.PublicCopyDefinition)
+	for _, definition := range localization.OfficialPublicCopyCatalog().Definitions {
+		definitions[definition.Key] = definition
+	}
+	for key, byLocale := range settings.PublicCopyOverrides {
+		definition, exists := definitions[key]
+		if !exists {
+			return site.State{}, site.ErrInvalidSettings
+		}
+		for _, override := range byLocale {
+			if err := localization.ValidatePublicCopyOverride(definition, override); err != nil {
+				return site.State{}, site.ErrInvalidSettings
+			}
+		}
 	}
 	localesJSON, err := json.Marshal(settings.EnabledLocales)
 	if err != nil {

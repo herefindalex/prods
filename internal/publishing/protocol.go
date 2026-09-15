@@ -82,6 +82,9 @@ type Source struct {
 	Route                      string
 	Language                   string
 	SupportedLocales           []string
+	LabelLocalizations         map[string]LocalizedLabel
+	PublicCopyDefaults         map[string]map[string]string
+	PublicCopyOverrides        localization.PublicCopyOverrideMap
 }
 
 type SourceCategory struct {
@@ -585,11 +588,14 @@ func (e *Engine) viewFromSource(source Source) PublicView {
 		Category: source.Category, CategoryID: source.Product.CategoryID, Description: source.Product.Description,
 		Features: source.Product.Features, Specification: source.Product.Specification,
 		CanonicalURL: e.baseURL + source.Route, Language: source.Language, DefaultLocale: source.Language,
-		SupportedLocales: append([]string(nil), source.SupportedLocales...),
-		RFQURL:           "/rfq?product_id=" + source.Product.ID,
-		Localizations:    make(map[string]LocalizedContent),
-		SourceLocale:     source.SourceLocale,
-		SourceLocales:    source.SourceLocales,
+		SupportedLocales:    append([]string(nil), source.SupportedLocales...),
+		RFQURL:              "/rfq?product_id=" + source.Product.ID,
+		Localizations:       make(map[string]LocalizedContent),
+		SourceLocale:        source.SourceLocale,
+		SourceLocales:       source.SourceLocales,
+		LabelLocalizations:  source.LabelLocalizations,
+		PublicCopyDefaults:  source.PublicCopyDefaults,
+		PublicCopyOverrides: source.PublicCopyOverrides,
 	}
 	for _, item := range source.Translations {
 		view.Localizations[item.Locale] = LocalizedContent{Name: item.Name, Description: item.Description, Features: item.Features, Specification: item.Specification}
@@ -765,20 +771,21 @@ func (e *Engine) stage(ctx context.Context, operationID string, view PublicView)
 	if err != nil {
 		return "", "", err
 	}
-	htmlBody, err := HTML(view)
+	defaultView := view.ForLocale(view.Language)
+	htmlBody, err := HTML(defaultView)
 	if err != nil {
 		return "", "", err
 	}
-	jsonBody, err := JSON(view)
+	jsonBody, err := JSON(defaultView)
 	if err != nil {
 		return "", "", err
 	}
-	jsonLDBody, err := JSONLD(view)
+	jsonLDBody, err := JSONLD(defaultView)
 	if err != nil {
 		return "", "", err
 	}
 	files := map[string][]byte{
-		"index.html": htmlBody, "product.json": jsonBody, "product.jsonld": jsonLDBody, "product.md": Markdown(view),
+		"index.html": htmlBody, "product.json": jsonBody, "product.jsonld": jsonLDBody, "product.md": Markdown(defaultView),
 	}
 	for _, locale := range publicSupportedLocales(view) {
 		localizedView := view.ForLocale(locale)

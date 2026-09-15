@@ -481,6 +481,7 @@ func (s *Server) routes(static fs.FS) {
 	s.mux.HandleFunc("GET /admin/api/products/{id}", s.adminProduct)
 	s.mux.HandleFunc("PUT /admin/api/products/{id}", s.adminUpdateProduct)
 	s.mux.HandleFunc("GET /admin/api/products/{id}/content", s.adminProductContent)
+	s.mux.HandleFunc("PUT /admin/api/products/{id}/content/source-locales", s.adminSaveProductSourceLocales)
 	s.mux.HandleFunc("PUT /admin/api/products/{id}/translations/{locale}", s.adminSaveProductTranslation)
 	s.mux.HandleFunc("POST /admin/api/products/{id}/url", s.adminUpdateProductURL)
 	s.mux.HandleFunc("POST /admin/api/products/{id}/hide", s.adminHideProduct)
@@ -497,6 +498,9 @@ func (s *Server) routes(static fs.FS) {
 	s.mux.HandleFunc("POST /admin/api/dictionaries/{id}/disable", s.adminDisableDictionary)
 	s.mux.HandleFunc("POST /admin/api/dictionaries/{id}/update-preview", s.adminPreviewDictionaryUpdate)
 	s.mux.HandleFunc("POST /admin/api/dictionaries/{id}/update", s.adminUpdateDictionary)
+	s.mux.HandleFunc("GET /admin/api/taxonomy/{type}/{id}/content", s.adminTaxonomyContent)
+	s.mux.HandleFunc("PUT /admin/api/taxonomy/{type}/{id}/content/source-locales", s.adminSaveTaxonomySourceLocales)
+	s.mux.HandleFunc("PUT /admin/api/taxonomy/{type}/{id}/translations/{locale}", s.adminSaveTaxonomyTranslation)
 	s.mux.HandleFunc("POST /admin/api/specs", s.adminCreateSpec)
 	s.mux.HandleFunc("GET /admin/api/specs", s.adminSpecs)
 	s.mux.HandleFunc("GET /admin/api/spec-sets", s.adminSpecSets)
@@ -528,6 +532,9 @@ func (s *Server) routes(static fs.FS) {
 	s.mux.HandleFunc("POST /admin/api/website/routes/publish", s.adminPublishSiteRoutes)
 	s.mux.HandleFunc("GET /admin/api/website/configuration", s.adminWebsiteConfiguration)
 	s.mux.HandleFunc("PUT /admin/api/website/localization", s.adminSaveWebsiteLocalization)
+	s.mux.HandleFunc("GET /admin/api/website/public-copy", s.adminPublicCopy)
+	s.mux.HandleFunc("PUT /admin/api/website/public-copy/{key}/{locale}", s.adminSavePublicCopy)
+	s.mux.HandleFunc("DELETE /admin/api/website/public-copy/{key}/{locale}", s.adminResetPublicCopy)
 	s.mux.HandleFunc("POST /admin/api/website/capture", s.adminCaptureWebsiteBrand)
 	s.mux.HandleFunc("PUT /admin/api/website/configuration", s.adminSaveWebsiteConfiguration)
 	s.mux.HandleFunc("GET /admin/api/website/versions", s.adminWebsiteVersions)
@@ -573,17 +580,23 @@ func (s *Server) currentPublicPage(r *http.Request, views []publishing.PublicVie
 	var epoch int64
 	var defaultLocale string
 	var supportedLocales []string
+	var activeLocalization site.WebsiteLocalization
 	if len(views) > 0 {
 		configuration = views[0].Site
 		epoch = views[0].SiteEpoch
 		defaultLocale = views[0].Language
 		supportedLocales = append([]string(nil), views[0].SupportedLocales...)
 	} else {
-		var err error
-		if s.publisher != nil {
-			configuration, epoch, err = s.publisher.PublicSite()
-		} else {
-			configuration, _, epoch, err = s.store.ActiveWebsiteConfiguration(ctx)
+		website, err := s.store.WebsiteState(ctx)
+		if err == nil {
+			activeLocalization = website.ActiveLocalization
+			defaultLocale = activeLocalization.DefaultLocale
+			supportedLocales = append([]string(nil), activeLocalization.EnabledLocales...)
+			configuration = website.Active
+			epoch = website.ActiveEpoch
+			if s.publisher != nil {
+				configuration, epoch, err = s.publisher.PublicSite()
+			}
 		}
 		if err != nil {
 			if !s.config.EnablePOCAdmin {
@@ -593,15 +606,6 @@ func (s *Server) currentPublicPage(r *http.Request, views []publishing.PublicVie
 			defaultLocale = "en-US"
 			supportedLocales = []string{"en-US"}
 			epoch = 1
-		} else {
-			defaultLocale, supportedLocales, err = s.store.SiteLocales(ctx)
-			if err != nil {
-				if !s.config.EnablePOCAdmin {
-					return publicPage{}, err
-				}
-				defaultLocale = "en-US"
-				supportedLocales = []string{"en-US"}
-			}
 		}
 	}
 	if len(supportedLocales) == 0 {
@@ -614,10 +618,14 @@ func (s *Server) currentPublicPage(r *http.Request, views []publishing.PublicVie
 	if err := configuration.Prepare(); err != nil {
 		return publicPage{}, err
 	}
+	publicCopy := localization.ResolvePublicCopyMap(language, defaultLocale, supportedLocales, activeLocalization.PublicCopyOverrides, localization.OfficialPublicCopyCatalog())
+	if len(views) > 0 {
+		publicCopy = views[0].ForLocale(language).PublicCopy
+	}
 	page := publicPage{
 		Site: configuration, SiteEpoch: epoch, Language: language,
 		Navigation: configuration.VisibleNavigation(), Stylesheet: template.CSS(configuration.Stylesheet()),
-		Text: localization.For(language), CatalogURL: withLanguage("/search", language), RFQURL: withLanguage("/rfq", language),
+		Text: localization.ApplyPublicCopy(localization.For(language), publicCopy), CatalogURL: withLanguage("/search", language), RFQURL: withLanguage("/rfq", language),
 	}
 	for _, locale := range supportedLocales {
 		page.LanguageOptions = append(page.LanguageOptions, publicLanguageOption{Locale: locale, URL: withLanguage(r.URL.RequestURI(), locale), Active: locale == language})

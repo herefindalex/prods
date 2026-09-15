@@ -11,6 +11,7 @@ import { CatalogPanel } from "./CatalogPanel";
 import { HealthPanel } from "./HealthPanel";
 import { ImportPanel } from "./ImportPanel";
 import { JobsPanel } from "./JobsPanel";
+import { PublicCopyPanel } from "./PublicCopyPanel";
 import { SettingsPanel } from "./SettingsPanel";
 import { TaxonomyPanel } from "./TaxonomyPanel";
 import { TrafficPanel } from "./TrafficPanel";
@@ -30,6 +31,7 @@ const adminText = {
     imports: "Imports",
     jobs: "Jobs",
     website: "Website",
+    publicCopy: "Public copy",
     access: "Users & roles",
     activity: "RFQs & Admin Log",
 		health: "System health",
@@ -47,6 +49,7 @@ const adminText = {
     imports: "匯入",
     jobs: "工作",
     website: "網站",
+    publicCopy: "公開介面文案",
     access: "使用者與角色",
     activity: "詢價與管理紀錄",
 		health: "系統健康狀態",
@@ -189,6 +192,11 @@ function AdminApp() {
                   key: "website",
                   label: text.website,
                   children: <WebsitePanel locale={locale} onError={showError} onMessage={showMessage} />,
+                },
+                {
+                  key: "public-copy",
+                  label: text.publicCopy,
+                  children: <PublicCopyPanel locale={locale} onError={showError} onMessage={showMessage} />,
                 },
                 {
                   key: "access",

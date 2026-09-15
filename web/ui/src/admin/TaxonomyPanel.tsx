@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Button, Card, Checkbox, Form, Input, InputNumber, Modal, Popconfirm, Select, Space, Table, Tabs, Tag } from "antd";
 import { api, clientID, postJSON } from "./api";
+import { TaxonomyTranslationsModal, type TaxonomyTranslationTarget } from "./TaxonomyTranslationsModal";
 import { dictionaryKinds, type Category, type DictionaryEntry, type DictionaryKind, type SpecDefinition, type SpecSet, type TaxonomyImpact } from "./types";
 
 type Feedback = { onError: (error: unknown) => void; onMessage: (message: string) => void };
@@ -20,7 +21,7 @@ const labels = {
     assignedSpecSet: (name: string) => `Assigned Spec Set to ${name}.`,
     newCategory: "New category", name: "Name", slug: "Slug", parent: "Parent", create: "Create",
     categoryData: "Category tree data", refresh: "Refresh", root: "Root", status: "Status", revision: "Revision", actions: "Actions",
-    edit: "Edit", disable: "Disable", disableCategoryConfirm: "Disable this category? Existing references are preserved.",
+    edit: "Edit", translate: "Translations", disable: "Disable", disableCategoryConfirm: "Disable this category? Existing references are preserved.",
     dictionary: "Dictionary", optionalSlug: "Optional slug", disableValueConfirm: "Disable this value? Existing references remain valid.",
     newSpec: "New specification", preferredUnit: "Preferred unit", filterable: "Filterable", newSpecSet: "New Spec Set",
     assignSpecSet: "Assign exact category Spec Set", category: "Category", specSet: "Spec Set", assign: "Assign",
@@ -43,7 +44,7 @@ const labels = {
     assignedSpecSet: (name: string) => `已將 Spec Set 指派給 ${name}。`,
     newCategory: "新增分類", name: "名稱", slug: "Slug", parent: "上層分類", create: "建立",
     categoryData: "分類樹資料", refresh: "重新整理", root: "根分類", status: "狀態", revision: "修訂", actions: "操作",
-    edit: "編輯", disable: "停用", disableCategoryConfirm: "要停用這個分類嗎？既有參照會保留。",
+    edit: "編輯", translate: "翻譯", disable: "停用", disableCategoryConfirm: "要停用這個分類嗎？既有參照會保留。",
     dictionary: "字典", optionalSlug: "選填 Slug", disableValueConfirm: "要停用這個值嗎？既有參照仍然有效。",
     newSpec: "新增規格", preferredUnit: "偏好單位", filterable: "可篩選", newSpecSet: "新增 Spec Set",
     assignSpecSet: "指派分類專屬 Spec Set", category: "分類", specSet: "Spec Set", assign: "指派",
@@ -65,6 +66,7 @@ export function TaxonomyPanel({ locale, onError, onMessage }: Feedback & { local
 	const [specSets, setSpecSets] = useState<SpecSet[]>([]);
 	const [editingCategory, setEditingCategory] = useState<Category>();
 	const [editingDictionary, setEditingDictionary] = useState<DictionaryEntry>();
+	const [translationTarget, setTranslationTarget] = useState<TaxonomyTranslationTarget>();
 	const [categoryImpact, setCategoryImpact] = useState<TaxonomyImpact>();
 	const [dictionaryImpact, setDictionaryImpact] = useState<TaxonomyImpact>();
 	const [taxonomySaving, setTaxonomySaving] = useState(false);
@@ -325,6 +327,7 @@ export function TaxonomyPanel({ locale, onError, onMessage }: Feedback & { local
                       render: (_, row) => row.system_key === "root" ? null : (
                         <Space>
                           <Button size="small" onClick={() => openCategoryEdit(row)}>{text.edit}</Button>
+                          <Button size="small" onClick={() => setTranslationTarget({ type: "category", id: row.id, name: row.name })}>{text.translate}</Button>
                           {!row.system_key && row.status !== "disabled" ? (
                             <Popconfirm title={text.disableCategoryConfirm} onConfirm={() => void disableCategory(row)}>
                               <Button size="small" danger>{text.disable}</Button>
@@ -374,6 +377,7 @@ export function TaxonomyPanel({ locale, onError, onMessage }: Feedback & { local
                       render: (_, row) => (
                         <Space>
                           <Button size="small" onClick={() => openDictionaryEdit(row)}>{text.edit}</Button>
+                          <Button size="small" onClick={() => setTranslationTarget({ type: "dictionary", id: row.id, name: row.name })}>{text.translate}</Button>
                           {row.status !== "disabled" ? (
                             <Popconfirm title={text.disableValueConfirm} onConfirm={() => void disableDictionary(row)}>
                               <Button size="small" danger>{text.disable}</Button>
@@ -487,6 +491,16 @@ export function TaxonomyPanel({ locale, onError, onMessage }: Feedback & { local
       <Button onClick={() => void previewDictionaryEdit()}>{text.previewAffected}</Button>
       {dictionaryImpact ? <ImpactSummary impact={dictionaryImpact} locale={locale} /> : null}
     </Modal>
+    <TaxonomyTranslationsModal
+      target={translationTarget}
+      locale={locale}
+      onClose={() => setTranslationTarget(undefined)}
+      onError={onError}
+      onSaved={() => {
+        void loadCategories();
+        void loadDictionary();
+      }}
+    />
     </>
   );
 }

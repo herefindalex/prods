@@ -11,6 +11,7 @@ import (
 
 	"prods/internal/catalog"
 	"prods/internal/identity"
+	"prods/internal/localization"
 	"prods/internal/publishing"
 	"prods/internal/site"
 )
@@ -68,14 +69,39 @@ func (s *Store) PublicationSource(ctx context.Context, productID string) (publis
 		Scan(&source.SiteEpoch, &routeConfig.ProductPrefix, &routeConfig.Pattern); err != nil {
 		return publishing.Source{}, err
 	}
-	var supportedLocalesJSON string
-	if err := tx.QueryRowContext(ctx, `SELECT v.default_locale,v.enabled_locales_json,v.content_editing_enabled
+	var supportedLocalesJSON, publicCopyOverridesJSON string
+	if err := tx.QueryRowContext(ctx, `SELECT v.default_locale,v.enabled_locales_json,v.content_editing_enabled,v.public_copy_overrides_json
 		FROM public_site_state p JOIN website_versions v ON v.site_epoch=p.active_epoch WHERE p.singleton=1`).Scan(
-		&source.Language, &supportedLocalesJSON, &source.ContentMultilingualEnabled,
+		&source.Language, &supportedLocalesJSON, &source.ContentMultilingualEnabled, &publicCopyOverridesJSON,
 	); err != nil {
 		return publishing.Source{}, err
 	}
 	if err := json.Unmarshal([]byte(supportedLocalesJSON), &source.SupportedLocales); err != nil {
+		return publishing.Source{}, err
+	}
+	if err := json.Unmarshal([]byte(publicCopyOverridesJSON), &source.PublicCopyOverrides); err != nil {
+		return publishing.Source{}, err
+	}
+	source.PublicCopyDefaults = make(map[string]map[string]string)
+	copyRows, err := tx.QueryContext(ctx, `SELECT d.copy_key,d.locale,d.value FROM public_copy_defaults d JOIN public_copy_active a ON a.official_bundle_version=d.official_bundle_version WHERE a.singleton=1 ORDER BY d.copy_key,d.locale`)
+	if err != nil {
+		return publishing.Source{}, err
+	}
+	for copyRows.Next() {
+		var key, locale, value string
+		if err := copyRows.Scan(&key, &locale, &value); err != nil {
+			copyRows.Close()
+			return publishing.Source{}, err
+		}
+		if source.PublicCopyDefaults[key] == nil {
+			source.PublicCopyDefaults[key] = make(map[string]string)
+		}
+		source.PublicCopyDefaults[key][locale] = value
+	}
+	if err := copyRows.Close(); err != nil {
+		return publishing.Source{}, err
+	}
+	if err := copyRows.Err(); err != nil {
 		return publishing.Source{}, err
 	}
 	var sourceLocalesJSON string
@@ -116,16 +142,52 @@ func (s *Store) PublicationSource(ctx context.Context, productID string) (publis
 	if err != nil {
 		return publishing.Source{}, err
 	}
+	source.LabelLocalizations = make(map[string]publishing.LocalizedLabel)
+	for _, category := range source.CategoryTrail {
+		label, err := taxonomyLabelLocalizationQuery(ctx, tx, "category", category.ID, category.Name)
+		if err != nil {
+			return publishing.Source{}, err
+		}
+		source.LabelLocalizations["category."+category.ID+".name"] = label
+		if category.ID == product.CategoryID {
+			source.LabelLocalizations["category.name"] = label
+		}
+	}
 	if product.ManufacturerID != "" {
 		if err := tx.QueryRowContext(ctx, `SELECT slug FROM dictionary_entries WHERE id=?`, product.ManufacturerID).Scan(&source.ManufacturerSlug); err != nil {
 			return publishing.Source{}, err
 		}
+		label, err := taxonomyLabelLocalizationQuery(ctx, tx, "dictionary", product.ManufacturerID, product.Manufacturer)
+		if err != nil {
+			return publishing.Source{}, err
+		}
+		source.LabelLocalizations["manufacturer.name"] = label
 	}
 	if product.BrandID != "" {
 		if err := tx.QueryRowContext(ctx, `SELECT slug FROM dictionary_entries WHERE id=?`, product.BrandID).Scan(&source.BrandSlug); err != nil {
 			return publishing.Source{}, err
 		}
+		label, err := taxonomyLabelLocalizationQuery(ctx, tx, "dictionary", product.BrandID, product.Brand)
+		if err != nil {
+			return publishing.Source{}, err
+		}
+		source.LabelLocalizations["brand.name"] = label
 	}
+	if product.LifecycleID != "" {
+		label, err := taxonomyLabelLocalizationQuery(ctx, tx, "dictionary", product.LifecycleID, product.Lifecycle)
+		if err != nil {
+			return publishing.Source{}, err
+		}
+		source.LabelLocalizations["lifecycle.name"] = label
+	}
+	for _, application := range product.Applications {
+		label, err := taxonomyLabelLocalizationQuery(ctx, tx, "dictionary", application.ID, application.Name)
+		if err != nil {
+			return publishing.Source{}, err
+		}
+		source.LabelLocalizations["application."+application.ID+".name"] = label
+	}
+	source.Product = product
 	var routeReason string
 	source.Route, routeReason = resolvedProductRoute(source, routeConfig)
 	if routeReason != "" {
@@ -200,6 +262,37 @@ func (s *Store) PublicationSource(ctx context.Context, productID string) (publis
 
 type publicationRowQueryer interface {
 	QueryRowContext(context.Context, string, ...any) *sql.Row
+}
+
+func taxonomyLabelLocalizationQuery(ctx context.Context, queryer interface {
+	QueryRowContext(context.Context, string, ...any) *sql.Row
+	QueryContext(context.Context, string, ...any) (*sql.Rows, error)
+}, subjectType, subjectID, sourceValue string) (publishing.LocalizedLabel, error) {
+	var sourceLocale, sourceLocalesJSON string
+	if err := queryer.QueryRowContext(ctx, `SELECT source_locale,source_locales_json FROM taxonomy_content WHERE subject_type=? AND subject_id=?`, subjectType, subjectID).Scan(&sourceLocale, &sourceLocalesJSON); err != nil {
+		return publishing.LocalizedLabel{}, err
+	}
+	var sourceLocales map[string]string
+	if err := json.Unmarshal([]byte(sourceLocalesJSON), &sourceLocales); err != nil {
+		return publishing.LocalizedLabel{}, err
+	}
+	if sourceLocales["name"] != "" {
+		sourceLocale = sourceLocales["name"]
+	}
+	label := publishing.LocalizedLabel{SourceLocale: sourceLocale, Values: map[string]string{sourceLocale: sourceValue}}
+	rows, err := queryer.QueryContext(ctx, `SELECT locale,name FROM taxonomy_translations WHERE subject_type=? AND subject_id=? ORDER BY locale`, subjectType, subjectID)
+	if err != nil {
+		return publishing.LocalizedLabel{}, err
+	}
+	defer rows.Close()
+	for rows.Next() {
+		var locale, value string
+		if err := rows.Scan(&locale, &value); err != nil {
+			return publishing.LocalizedLabel{}, err
+		}
+		label.Values[locale] = value
+	}
+	return label, rows.Err()
 }
 
 func publicCategoryIdentityQuery(ctx context.Context, queryer publicationRowQueryer, categoryID string) (string, string, error) {
@@ -424,6 +517,7 @@ func (s *Store) PrepareSiteRoutes(ctx context.Context, config publishing.SiteRou
 		source.Language = workingLocalization.DefaultLocale
 		source.SupportedLocales = append([]string(nil), workingLocalization.EnabledLocales...)
 		source.ContentMultilingualEnabled = workingLocalization.ContentEditingEnabled
+		source.PublicCopyOverrides = workingLocalization.PublicCopyOverrides
 		route, reason := resolvedProductRoute(source, config)
 		if reason != "" {
 			preview.Missing = append(preview.Missing, publishing.SiteRouteIssue{ProductID: product.ID, PartNumber: product.PartNumber, Reason: reason})
@@ -776,18 +870,31 @@ func (s *Store) ActivePublications(ctx context.Context) ([]publishing.ActivePubl
 }
 
 func (s *Store) attachActiveTranslations(ctx context.Context, activations []publishing.ActivePublication) ([]publishing.ActivePublication, error) {
-	var defaultLocale, supportedJSON string
-	if err := s.db.QueryRowContext(ctx, `SELECT v.default_locale,v.enabled_locales_json FROM public_site_state p
-		JOIN website_versions v ON v.site_epoch=p.active_epoch WHERE p.singleton=1`).Scan(&defaultLocale, &supportedJSON); err != nil {
+	var defaultLocale, supportedJSON, overridesJSON string
+	if err := s.db.QueryRowContext(ctx, `SELECT v.default_locale,v.enabled_locales_json,v.public_copy_overrides_json FROM public_site_state p
+		JOIN website_versions v ON v.site_epoch=p.active_epoch WHERE p.singleton=1`).Scan(&defaultLocale, &supportedJSON, &overridesJSON); err != nil {
 		return nil, err
 	}
 	var supported []string
 	if err := json.Unmarshal([]byte(supportedJSON), &supported); err != nil {
 		return nil, err
 	}
+	var publicCopyOverrides localization.PublicCopyOverrideMap
+	if err := json.Unmarshal([]byte(overridesJSON), &publicCopyOverrides); err != nil {
+		return nil, err
+	}
+	publicCopyDefaults := make(map[string]map[string]string)
+	for _, item := range localization.OfficialPublicCopyCatalog().Defaults {
+		if publicCopyDefaults[item.Key] == nil {
+			publicCopyDefaults[item.Key] = make(map[string]string)
+		}
+		publicCopyDefaults[item.Key][item.Locale] = item.Value
+	}
 	for index := range activations {
 		activations[index].View.DefaultLocale = defaultLocale
 		activations[index].View.SupportedLocales = append([]string(nil), supported...)
+		activations[index].View.PublicCopyDefaults = publicCopyDefaults
+		activations[index].View.PublicCopyOverrides = publicCopyOverrides
 		var sourceLocalesJSON string
 		if err := s.db.QueryRowContext(ctx, `SELECT source_locale,source_locales_json FROM product_content_metadata WHERE product_id=?`, activations[index].ProductID).Scan(
 			&activations[index].View.SourceLocale, &sourceLocalesJSON,
@@ -821,6 +928,40 @@ func (s *Store) attachActiveTranslations(ctx context.Context, activations []publ
 		}
 		if err := rows.Err(); err != nil {
 			return nil, err
+		}
+		view := &activations[index].View
+		view.LabelLocalizations = make(map[string]publishing.LocalizedLabel)
+		for _, category := range view.CategoryTrail {
+			label, err := taxonomyLabelLocalizationQuery(ctx, s.db, "category", category.ID, category.Name)
+			if err != nil {
+				return nil, err
+			}
+			view.LabelLocalizations["category."+category.ID+".name"] = label
+			if category.ID == view.CategoryID {
+				view.LabelLocalizations["category.name"] = label
+			}
+		}
+		dictionaryLabels := []struct{ key, id, value string }{
+			{"manufacturer.name", view.ManufacturerID, view.Manufacturer},
+			{"brand.name", view.BrandID, view.Brand},
+			{"lifecycle.name", view.LifecycleID, view.Lifecycle},
+		}
+		for _, item := range dictionaryLabels {
+			if item.id == "" {
+				continue
+			}
+			label, err := taxonomyLabelLocalizationQuery(ctx, s.db, "dictionary", item.id, item.value)
+			if err != nil {
+				return nil, err
+			}
+			view.LabelLocalizations[item.key] = label
+		}
+		for _, application := range view.Applications {
+			label, err := taxonomyLabelLocalizationQuery(ctx, s.db, "dictionary", application.ID, application.Name)
+			if err != nil {
+				return nil, err
+			}
+			view.LabelLocalizations["application."+application.ID+".name"] = label
 		}
 	}
 	return activations, nil
@@ -865,7 +1006,13 @@ func (s *Store) SearchPublications(ctx context.Context, foldedQuery, projectionV
 		}
 		activations = append(activations, activation)
 	}
-	return activations, rows.Err()
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	return s.attachActiveTranslations(ctx, activations)
 }
 
 func (s *Store) RebuildSearchPublications(ctx context.Context, activations []publishing.ActivePublication) error {
