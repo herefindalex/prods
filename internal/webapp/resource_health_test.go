@@ -193,3 +193,156 @@ func TestDatabaseResourceHardStopChangesReadinessButNotLiveness(t *testing.T) {
 		t.Fatalf("readiness = %d", response.Code)
 	}
 }
+
+func TestResourceHealthWarningDoesNotBlockReadiness(t *testing.T) {
+	root := t.TempDir()
+	databasePath := filepath.Join(root, "prods.db")
+	store, err := sqlite.CreatePOC(databasePath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _ = store.Close() })
+
+	gate := platform.NewResourceGate(func(string) (platform.ResourceStats, error) {
+		return platform.ResourceStats{
+			VolumeID:       "shared-warning-volume",
+			TotalBytes:     10 << 30,
+			FreeBytes:      400 << 20,
+			FreeInodes:     900,
+			SupportsInodes: true,
+		}, nil
+	})
+	app, _, err := New(store, Config{
+		BaseURL:        "http://catalog.example.test",
+		AdminToken:     "test-admin-token",
+		EnablePOCAdmin: true,
+		DatabasePath:   databasePath,
+		AssetDir:       filepath.Join(root, "assets"),
+		WorkDir:        filepath.Join(root, "work"),
+		PublicDir:      filepath.Join(root, "generated"),
+		BackupDir:      filepath.Join(root, "backups"),
+		ResourceGate:   gate,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	server := httptest.NewServer(app)
+	t.Cleanup(server.Close)
+
+	ready, err := http.Get(server.URL + "/health/ready")
+	if err != nil {
+		t.Fatal(err)
+	}
+	_ = ready.Body.Close()
+	if ready.StatusCode != http.StatusOK {
+		t.Fatalf("warning readiness status=%d", ready.StatusCode)
+	}
+
+	jar, err := cookiejar.New(nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	client := &http.Client{Jar: jar}
+	_ = loginAdmin(t, client, server.URL)
+	response, err := client.Get(server.URL + "/admin/api/system/health")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer response.Body.Close()
+	if response.StatusCode != http.StatusOK {
+		t.Fatalf("health status=%d", response.StatusCode)
+	}
+	var body systemHealthResponse
+	if err := json.NewDecoder(response.Body).Decode(&body); err != nil {
+		t.Fatal(err)
+	}
+	if body.Status != "Warning" {
+		t.Fatalf("health status=%q, want Warning", body.Status)
+	}
+	if len(body.Resources) == 0 {
+		t.Fatal("health response has no resources")
+	}
+	for _, resource := range body.Resources {
+		if resource.Status != "Warning" {
+			t.Fatalf("resource %s status=%q, want Warning", resource.Resource, resource.Status)
+		}
+		if resource.AdmissionFloorBytes != resourceByteHeadroom {
+			t.Fatalf("resource %s admission floor=%d", resource.Resource, resource.AdmissionFloorBytes)
+		}
+		if resource.WarningFloorBytes != resourceWarningBytes {
+			t.Fatalf("resource %s warning floor=%d", resource.Resource, resource.WarningFloorBytes)
+		}
+		if resource.RecommendedAction == "" {
+			t.Fatalf("resource %s missing remediation", resource.Resource)
+		}
+	}
+}
+
+func TestResourceWarningAccountsForReservationsAndInodes(t *testing.T) {
+	if !resourceWarning(platform.ResourceSnapshot{ResourceStats: platform.ResourceStats{TotalBytes: 20 << 30, FreeBytes: 2 << 30}, ReservedBytes: 1200 << 20}) {
+		t.Fatal("reserved bytes should cross the warning floor")
+	}
+	if !resourceWarning(platform.ResourceSnapshot{ResourceStats: platform.ResourceStats{TotalBytes: 20 << 30, FreeBytes: 4 << 30, FreeInodes: 1200, SupportsInodes: true}, ReservedInodes: 300}) {
+		t.Fatal("reserved inodes should cross the warning floor")
+	}
+	if resourceWarning(platform.ResourceSnapshot{ResourceStats: platform.ResourceStats{TotalBytes: 20 << 30, FreeBytes: 4 << 30, FreeInodes: 10_000, SupportsInodes: true}}) {
+		t.Fatal("healthy headroom should not warn")
+	}
+}
+
+func TestDatabaseHardStopPrecedesRiskyAdminCommitValidation(t *testing.T) {
+	root := t.TempDir()
+	databasePath := filepath.Join(root, "prods.db")
+	store, err := sqlite.CreatePOC(databasePath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _ = store.Close() })
+
+	gate := platform.NewResourceGate(func(string) (platform.ResourceStats, error) {
+		return platform.ResourceStats{VolumeID: "database-critical", TotalBytes: 1 << 30, FreeBytes: 0}, nil
+	})
+	app, _, err := New(store, Config{
+		BaseURL:        "http://catalog.example.test",
+		AdminToken:     "test-admin-token",
+		EnablePOCAdmin: true,
+		DatabasePath:   databasePath,
+		AssetDir:       filepath.Join(root, "assets"),
+		WorkDir:        filepath.Join(root, "work"),
+		PublicDir:      filepath.Join(root, "generated"),
+		BackupDir:      filepath.Join(root, "backups"),
+		ResourceGate:   gate,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	server := httptest.NewServer(app)
+	t.Cleanup(server.Close)
+	jar, err := cookiejar.New(nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	client := &http.Client{Jar: jar}
+	csrf := loginAdmin(t, client, server.URL)
+
+	for _, path := range []string{
+		"/admin/api/imports/not-a-job/commit",
+		"/admin/api/product-bulk/not-a-run/execute",
+		"/admin/api/website/public-copy/import/commit",
+	} {
+		request, err := http.NewRequest(http.MethodPost, server.URL+path, bytes.NewBufferString("{}"))
+		if err != nil {
+			t.Fatal(err)
+		}
+		request.Header.Set("Content-Type", "application/json")
+		request.Header.Set("X-CSRF-Token", csrf)
+		response, err := client.Do(request)
+		if err != nil {
+			t.Fatal(err)
+		}
+		_ = response.Body.Close()
+		if response.StatusCode != http.StatusInsufficientStorage {
+			t.Fatalf("%s status=%d, want %d", path, response.StatusCode, http.StatusInsufficientStorage)
+		}
+	}
+}

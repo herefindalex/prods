@@ -73,7 +73,7 @@ func TestPublicCopyAdminLifecycleAndPublicationBoundary(t *testing.T) {
 	}
 	var initial editorState
 	decodeResponseJSON(t, response, &initial)
-	if initial.WorkingRevision != 1 || len(initial.Catalog.Definitions) == 0 || len(initial.Catalog.Defaults) == 0 {
+	if initial.WorkingRevision != 1 || len(initial.Catalog.Definitions) == 0 || len(initial.Catalog.Defaults) == 0 || len(initial.Catalog.Definitions[0].WhereUsed) == 0 {
 		t.Fatalf("initial public copy editor state=%+v", initial)
 	}
 

@@ -25,6 +25,9 @@ const labels = {
     operations: "Affected operations",
     checked: "Checked",
     unavailable: "Unavailable",
+    admissionFloor: "hard-stop floor",
+    warningFloor: "warning floor",
+    recommendedAction: "Recommended action",
     configured: "configured",
     notConfigured: "optional / not configured",
     lastSuccess: "last success",
@@ -68,6 +71,9 @@ const labels = {
     operations: "受影響操作",
     checked: "檢查時間",
     unavailable: "無法取得",
+    admissionFloor: "硬性停止下限",
+    warningFloor: "預警下限",
+    recommendedAction: "建議處置",
     configured: "已設定",
     notConfigured: "選填／未設定",
     lastSuccess: "最後成功",
@@ -242,12 +248,17 @@ export function HealthPanel({ locale, onError }: Props) {
     {
       title: text.capacity,
       key: "capacity",
-      render: (_: unknown, item: SystemResourceHealth) => item.reason ? (
+      render: (_: unknown, item: SystemResourceHealth) => (
         <Space direction="vertical" size={0}>
-          <Typography.Text type="danger">{text.unavailable}</Typography.Text>
-          <Typography.Text type="secondary">{item.reason}</Typography.Text>
+          {item.status === "Critical" && <Typography.Text type="danger">{text.unavailable}</Typography.Text>}
+          <span>{`${bytes(item.free_bytes)} free / ${bytes(item.total_bytes)} total (${bytes(item.reserved_bytes)} reserved)`}</span>
+          {item.reason && <Typography.Text type="secondary">{item.reason}</Typography.Text>}
+          <Typography.Text type="secondary">
+            {text.admissionFloor}: {bytes(item.admission_floor_bytes)} · {text.warningFloor}: {bytes(item.warning_floor_bytes)}
+          </Typography.Text>
+          {item.recommended_action && <Typography.Text>{text.recommendedAction}: {item.recommended_action}</Typography.Text>}
         </Space>
-      ) : `${bytes(item.free_bytes)} free / ${bytes(item.total_bytes)} total (${bytes(item.reserved_bytes)} reserved)`,
+      ),
     },
     {
       title: text.operations,

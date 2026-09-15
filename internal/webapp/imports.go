@@ -193,7 +193,7 @@ func (s *Server) processImportJob(ctx context.Context, job importing.Job, upload
 		_ = s.store.FailImportJob(context.Background(), job.ID, "parse", readErr.Error())
 		return
 	}
-	preview, err := s.store.BuildImportPreview(ctx, job.ActorID, workbook, job.TemplateSnapshot.Mappings, job.TemplateSnapshot.IdentityMode)
+	preview, err := s.store.BuildImportPreview(ctx, job.ActorID, workbook, job.TemplateSnapshot.Mappings, job.TemplateSnapshot.IdentityMode, job.TemplateSnapshot.SourceLocaleOverride)
 	if err != nil {
 		_ = s.store.FailImportJob(context.Background(), job.ID, "validate", err.Error())
 		return
@@ -302,6 +302,12 @@ func (s *Server) adminCommitImport(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		return
 	}
+	reservation, err := s.admitResource(r.Context(), "Atomic Product Import commit", s.config.DatabasePath, 16<<20, 8)
+	if err != nil {
+		s.writeResourceError(w, r, err)
+		return
+	}
+	defer reservation.Release()
 	job, err := s.store.ImportJob(r.Context(), r.PathValue("id"))
 	if err != nil {
 		s.writeImportError(w, r, err)

@@ -69,10 +69,11 @@ type Receipt struct {
 }
 
 type TemplateSnapshot struct {
-	Sheet        string          `json:"sheet,omitempty"`
-	HeaderRow    int             `json:"header_row"`
-	IdentityMode IdentityMode    `json:"identity_mode"`
-	Mappings     []ColumnMapping `json:"mappings"`
+	Sheet                string          `json:"sheet,omitempty"`
+	HeaderRow            int             `json:"header_row"`
+	IdentityMode         IdentityMode    `json:"identity_mode"`
+	SourceLocaleOverride string          `json:"source_locale_override,omitempty"`
+	Mappings             []ColumnMapping `json:"mappings"`
 }
 
 type Template struct {

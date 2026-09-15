@@ -8,6 +8,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"maps"
 	"slices"
 	"strings"
 	"time"
@@ -15,9 +16,10 @@ import (
 	"prods/internal/catalog"
 	"prods/internal/identity"
 	"prods/internal/importing"
+	"prods/internal/localization"
 )
 
-func (s *Store) BuildImportPreview(ctx context.Context, actorID string, workbook importing.Workbook, mappings []importing.ColumnMapping, mode importing.IdentityMode) (importing.Preview, error) {
+func (s *Store) BuildImportPreview(ctx context.Context, actorID string, workbook importing.Workbook, mappings []importing.ColumnMapping, mode importing.IdentityMode, sourceLocaleOverride ...string) (importing.Preview, error) {
 	preview := importing.Preview{
 		IdentityMode: mode, Mappings: append([]importing.ColumnMapping(nil), mappings...),
 		FullyScanned: workbook.FullyScanned, CheckedRows: workbook.CheckedRows, TotalRows: len(workbook.Rows),
@@ -29,6 +31,17 @@ func (s *Store) BuildImportPreview(ctx context.Context, actorID string, workbook
 	preview.OperationID = operationID
 	if mode != importing.IdentityPartNumber && mode != importing.IdentityComposite {
 		return preview, importing.ErrInvalidImport
+	}
+	override := ""
+	if len(sourceLocaleOverride) > 0 {
+		override = strings.TrimSpace(sourceLocaleOverride[0])
+	}
+	if override != "" {
+		var valid bool
+		override, valid = localization.NormalizeBuiltinLocale(override)
+		if !valid {
+			preview.Issues = append(preview.Issues, importing.RowIssue{Code: "invalid_source_locale_override", Message: "the import Source Locale override is not supported"})
+		}
 	}
 	for _, issue := range importing.ValidateFinalMapping(workbook.Headers, mappings) {
 		preview.Issues = append(preview.Issues, importing.RowIssue{
@@ -51,6 +64,10 @@ func (s *Store) BuildImportPreview(ctx context.Context, actorID string, workbook
 	}
 	defer tx.Rollback()
 	if err := requireActorCapability(ctx, tx, actorID, identity.CapabilityCatalogImport); err != nil {
+		return preview, err
+	}
+	var siteDefaultLocale string
+	if err := tx.QueryRowContext(ctx, `SELECT v.default_locale FROM public_site_state p JOIN website_versions v ON v.site_epoch=p.active_epoch WHERE p.singleton=1`).Scan(&siteDefaultLocale); err != nil {
 		return preview, err
 	}
 
@@ -129,13 +146,19 @@ func (s *Store) BuildImportPreview(ctx context.Context, actorID string, workbook
 			product.Status = catalog.Hidden
 			product.Revision = 1
 			product.CategoryID = catalog.UncategorizedCategoryID
+			product.SourceLocale = siteDefaultLocale
 		} else {
 			product = matches[0]
 			item.Action = importing.ActionUpdate
 			item.ExistingID = product.ID
 			item.ExpectedRevision = product.Revision
 		}
-		applyMappedValues(&product, input.values, len(matches) != 0)
+		if err := applyMappedValues(&product, input.values, len(matches) != 0, siteDefaultLocale, override); err != nil {
+			preview.Issues = append(preview.Issues, importing.RowIssue{
+				Sheet: workbook.Sheet, Row: input.row.Number, Code: "invalid_clear_or_locale", Message: err.Error(),
+			})
+			continue
+		}
 		if err := product.Prepare(); err != nil {
 			preview.Issues = append(preview.Issues, importing.RowIssue{
 				Sheet: workbook.Sheet, Row: input.row.Number, Code: "invalid_product", Message: err.Error(),
@@ -188,38 +211,125 @@ func currentImportMatches(ctx context.Context, tx *sql.Tx, mode importing.Identi
 		if err != nil {
 			return nil, err
 		}
+		if err := loadImportContentMetadata(ctx, tx, &product); err != nil {
+			return nil, err
+		}
 		products = append(products, product)
 	}
 	return products, rows.Err()
 }
 
-func applyMappedValues(product *catalog.Product, values map[importing.Target]string, preserveBlank bool) {
-	set := func(target importing.Target, destination *string) {
+func applyMappedValues(product *catalog.Product, values map[importing.Target]string, preserveBlank bool, siteDefaultLocale, operationLocale string) error {
+	set := func(target importing.Target, destination *string, clearable bool) error {
 		value, mapped := values[target]
 		if !mapped || (preserveBlank && strings.TrimSpace(value) == "") {
-			return
+			return nil
+		}
+		if strings.TrimSpace(value) == "CLEAR" {
+			if !clearable {
+				return fmt.Errorf("%s cannot be cleared", target)
+			}
+			*destination = ""
+			return nil
 		}
 		*destination = value
+		return nil
 	}
-	set(importing.TargetPartNumber, &product.PartNumber)
-	set(importing.TargetProductName, &product.Name)
-	set(importing.TargetManufacturerID, &product.ManufacturerID)
-	set(importing.TargetBrandID, &product.BrandID)
-	set(importing.TargetCategoryID, &product.CategoryID)
-	set(importing.TargetPackageFormFactor, &product.PackageFormFactor)
-	set(importing.TargetDescription, &product.Description)
-	set(importing.TargetFeatures, &product.Features)
-	set(importing.TargetLifecycleID, &product.LifecycleID)
+	for _, item := range []struct {
+		target    importing.Target
+		value     *string
+		clearable bool
+	}{
+		{importing.TargetPartNumber, &product.PartNumber, false},
+		{importing.TargetProductName, &product.Name, true},
+		{importing.TargetManufacturerID, &product.ManufacturerID, true},
+		{importing.TargetBrandID, &product.BrandID, true},
+		{importing.TargetCategoryID, &product.CategoryID, false},
+		{importing.TargetPackageFormFactor, &product.PackageFormFactor, true},
+		{importing.TargetDescription, &product.Description, true},
+		{importing.TargetFeatures, &product.Features, true},
+		{importing.TargetSpecification, &product.Specification, true},
+		{importing.TargetLifecycleID, &product.LifecycleID, true},
+	} {
+		if err := set(item.target, item.value, item.clearable); err != nil {
+			return err
+		}
+	}
 	if value, mapped := values[importing.TargetApplicationIDs]; mapped && (!preserveBlank || strings.TrimSpace(value) != "") {
-		product.ApplicationIDs = importing.ReferenceIDs(value)
+		if strings.TrimSpace(value) == "CLEAR" {
+			product.ApplicationIDs = nil
+		} else {
+			product.ApplicationIDs = importing.ReferenceIDs(value)
+		}
 	}
+
+	if product.SourceLocale == "" {
+		product.SourceLocale = siteDefaultLocale
+	}
+	if operationLocale != "" {
+		product.SourceLocale = operationLocale
+		product.SourceLocales = nil
+	}
+	if value, mapped := values[importing.TargetSourceLocale]; mapped && (!preserveBlank || strings.TrimSpace(value) != "") {
+		if strings.TrimSpace(value) == "CLEAR" {
+			return fmt.Errorf("%s cannot be cleared", importing.TargetSourceLocale)
+		}
+		product.SourceLocale = value
+		if operationLocale != "" {
+			product.SourceLocales = nil
+		}
+	}
+	normalizedSource, valid := localization.NormalizeBuiltinLocale(product.SourceLocale)
+	if !valid {
+		return fmt.Errorf("unsupported Source Locale %q", product.SourceLocale)
+	}
+	product.SourceLocale = normalizedSource
+	fieldLocales := make(map[string]string, len(product.SourceLocales))
+	for field, value := range product.SourceLocales {
+		fieldLocales[field] = value
+	}
+	if operationLocale != "" {
+		for _, field := range catalog.ProductTranslatableFields {
+			fieldLocales[field] = operationLocale
+		}
+	}
+	for target, field := range map[importing.Target]string{
+		importing.TargetNameSourceLocale:    "name",
+		importing.TargetDescriptionLocale:   "description",
+		importing.TargetFeaturesLocale:      "features",
+		importing.TargetSpecificationLocale: "specification",
+	} {
+		value, mapped := values[target]
+		if !mapped || (preserveBlank && strings.TrimSpace(value) == "") {
+			continue
+		}
+		if strings.TrimSpace(value) == "CLEAR" {
+			return fmt.Errorf("%s cannot be cleared", target)
+		}
+		fieldLocales[field] = value
+	}
+	normalizedFields, err := catalog.NormalizeFieldSourceLocales(fieldLocales, product.SourceLocale, catalog.ProductTranslatableFields)
+	if err != nil {
+		return fmt.Errorf("invalid per-field Source Locale: %w", err)
+	}
+	product.SourceLocales = normalizedFields
+	return nil
 }
 
 func sameImportProduct(left, right catalog.Product) bool {
 	return left.PartNumber == right.PartNumber && left.Name == right.Name && left.ManufacturerID == right.ManufacturerID &&
 		left.BrandID == right.BrandID && left.LifecycleID == right.LifecycleID && left.CategoryID == right.CategoryID &&
 		left.PackageFormFactor == right.PackageFormFactor && left.Description == right.Description && left.Features == right.Features &&
+		left.Specification == right.Specification && left.SourceLocale == right.SourceLocale && maps.Equal(left.SourceLocales, right.SourceLocales) &&
 		slices.Equal(left.ApplicationIDs, right.ApplicationIDs)
+}
+
+func loadImportContentMetadata(ctx context.Context, tx *sql.Tx, product *catalog.Product) error {
+	var encoded string
+	if err := tx.QueryRowContext(ctx, `SELECT source_locale,source_locales_json FROM product_content_metadata WHERE product_id=?`, product.ID).Scan(&product.SourceLocale, &encoded); err != nil {
+		return err
+	}
+	return json.Unmarshal([]byte(encoded), &product.SourceLocales)
 }
 
 func (s *Store) CommitImport(ctx context.Context, actorID string, preview importing.Preview) (importing.Receipt, error) {
@@ -319,12 +429,12 @@ func (s *Store) CommitImport(ctx context.Context, actorID string, preview import
 				newRevision := product.Revision + 1
 				result, err := tx.ExecContext(ctx, `UPDATE products SET
 					category_id=?,part_number=?,identity_part_number=?,name=?,manufacturer_id=?,manufacturer=?,identity_manufacturer=?,
-					brand_id=?,brand=?,lifecycle_id=?,package_form_factor=?,description=?,features=?,revision=?,updated_by=?,
+					brand_id=?,brand=?,lifecycle_id=?,package_form_factor=?,description=?,features=?,specification=?,revision=?,updated_by=?,
 					search_folded=?,search_projection_version=?,updated_at=?
 					WHERE id=? AND revision=? AND record_state='current'`, product.CategoryID, product.PartNumber, product.IdentityPart,
 					product.Name, nullable(product.ManufacturerID), product.Manufacturer, product.IdentityMaker, nullable(product.BrandID),
 					product.Brand, nullable(product.LifecycleID), product.PackageFormFactor, product.Description, product.Features,
-					newRevision, actorID, product.SearchFolded, product.ProjectionVer, now, product.ID, product.Revision)
+					product.Specification, newRevision, actorID, product.SearchFolded, product.ProjectionVer, now, product.ID, product.Revision)
 				if err != nil {
 					return err
 				}
@@ -332,6 +442,13 @@ func (s *Store) CommitImport(ctx context.Context, actorID string, preview import
 					return importing.ErrImportConflict
 				}
 				if err := replaceProductApplications(ctx, tx, product.ID, product.ApplicationIDs); err != nil {
+					return err
+				}
+				sourceLocalesJSON, err := json.Marshal(product.SourceLocales)
+				if err != nil {
+					return err
+				}
+				if _, err := tx.ExecContext(ctx, `UPDATE product_content_metadata SET source_locale=?,source_locales_json=? WHERE product_id=?`, product.SourceLocale, string(sourceLocalesJSON), product.ID); err != nil {
 					return err
 				}
 				if err := reconcileProductSpecValues(ctx, tx, product.ID); err != nil {

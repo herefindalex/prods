@@ -178,12 +178,14 @@ func (s *Store) RecordExportAudit(ctx context.Context, actorID, kind, format str
 	actorID = strings.TrimSpace(actorID)
 	kind = strings.TrimSpace(kind)
 	format = strings.TrimSpace(format)
-	if actorID == "" || rows < 0 || (kind != "product" && kind != "rfq") || (format != "xlsx" && format != "csv") {
+	if actorID == "" || rows < 0 || (kind != "product" && kind != "rfq" && kind != "public_copy") || (format != "xlsx" && format != "csv") {
 		return ErrPermissionDenied
 	}
 	capability := identity.CapabilityCatalogExport
 	if kind == "rfq" {
 		capability = identity.CapabilityRFQExport
+	} else if kind == "public_copy" {
+		capability = identity.CapabilitySystemManage
 	}
 	return s.withWriteTx(ctx, func(tx *sql.Tx) error {
 		if err := requireActorCapability(ctx, tx, actorID, capability); err != nil {

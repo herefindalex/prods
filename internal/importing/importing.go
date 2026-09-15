@@ -19,16 +19,22 @@ var (
 type Target string
 
 const (
-	TargetPartNumber        Target = "part_number"
-	TargetProductName       Target = "product_name"
-	TargetManufacturerID    Target = "manufacturer_id"
-	TargetBrandID           Target = "brand_id"
-	TargetCategoryID        Target = "category_id"
-	TargetPackageFormFactor Target = "package_form_factor"
-	TargetDescription       Target = "description"
-	TargetFeatures          Target = "features"
-	TargetLifecycleID       Target = "lifecycle_id"
-	TargetApplicationIDs    Target = "application_ids"
+	TargetPartNumber          Target = "part_number"
+	TargetProductName         Target = "product_name"
+	TargetManufacturerID      Target = "manufacturer_id"
+	TargetBrandID             Target = "brand_id"
+	TargetCategoryID          Target = "category_id"
+	TargetPackageFormFactor   Target = "package_form_factor"
+	TargetDescription         Target = "description"
+	TargetFeatures            Target = "features"
+	TargetSpecification       Target = "specification"
+	TargetLifecycleID         Target = "lifecycle_id"
+	TargetApplicationIDs      Target = "application_ids"
+	TargetSourceLocale        Target = "source_locale"
+	TargetNameSourceLocale    Target = "name_source_locale"
+	TargetDescriptionLocale   Target = "description_source_locale"
+	TargetFeaturesLocale      Target = "features_source_locale"
+	TargetSpecificationLocale Target = "specification_source_locale"
 )
 
 type Limits struct {
@@ -192,7 +198,8 @@ func ValidateFinalMapping(headers []string, mappings []ColumnMapping) []MappingI
 func validTarget(target Target) bool {
 	switch target {
 	case TargetPartNumber, TargetProductName, TargetManufacturerID, TargetBrandID, TargetCategoryID,
-		TargetPackageFormFactor, TargetDescription, TargetFeatures, TargetLifecycleID, TargetApplicationIDs:
+		TargetPackageFormFactor, TargetDescription, TargetFeatures, TargetSpecification, TargetLifecycleID, TargetApplicationIDs,
+		TargetSourceLocale, TargetNameSourceLocale, TargetDescriptionLocale, TargetFeaturesLocale, TargetSpecificationLocale:
 		return true
 	default:
 		return false

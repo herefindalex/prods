@@ -26,6 +26,41 @@ type PublicCopyDefinition struct {
 	AllowedPlaceholders  []string            `json:"allowed_placeholders"`
 	Sample               map[string]string   `json:"sample,omitempty"`
 	OfficialBundle       string              `json:"official_bundle_version"`
+	WhereUsed            []PublicCopyUsage   `json:"where_used,omitempty"`
+}
+
+type PublicCopyUsage struct {
+	Surface     string `json:"surface"`
+	Section     string `json:"section"`
+	Purpose     string `json:"purpose"`
+	SafeContext string `json:"safe_context"`
+}
+
+func PublicCopyWhereUsed(key string) []PublicCopyUsage {
+	scope := key
+	if index := strings.IndexByte(key, '.'); index >= 0 {
+		scope = key[:index]
+	}
+	usage := PublicCopyUsage{SafeContext: "Admin-only sample preview; no Customer Content or live RFQ data is loaded."}
+	switch scope {
+	case "catalog":
+		usage.Surface, usage.Section, usage.Purpose = "Public catalog", "page heading and empty-state actions", "Catalog navigation and discovery"
+	case "search":
+		usage.Surface, usage.Section, usage.Purpose = "Public search", "query form, results, and no-results", "Search guidance and requested-part conversion"
+	case "product":
+		usage.Surface, usage.Section, usage.Purpose = "Public Product", "semantic Product detail sections", "Field labels and RFQ call to action"
+	case "rfq":
+		usage.Surface, usage.Section, usage.Purpose = "Public RFQ", "request form and completion receipt", "Submission guidance and durable result acknowledgement"
+	case "pagination":
+		usage.Surface, usage.Section, usage.Purpose = "Public lists", "pagination navigation", "Move between bounded result pages"
+	case "footer":
+		usage.Surface, usage.Section, usage.Purpose = "All public pages", "site footer", "Legal and organization navigation"
+	case "locale":
+		usage.Surface, usage.Section, usage.Purpose = "All localized public pages", "language navigation", "Locale selection label"
+	default:
+		usage.Surface, usage.Section, usage.Purpose = "Public interface", scope, "Official interface message"
+	}
+	return []PublicCopyUsage{usage}
 }
 
 type PublicCopyOverride struct {

@@ -269,6 +269,7 @@ export type PublicCopyDefinition = {
   allowed_placeholders: string[];
   sample?: Record<string, string>;
   official_bundle_version: string;
+  where_used?: Array<{ surface: string; section: string; purpose: string; safe_context: string }>;
 };
 
 export type PublicCopyDefault = {
@@ -292,6 +293,37 @@ export type PublicCopyEditorState = {
   enabled_locales: string[];
   overrides: Record<string, Record<string, PublicCopyOverride>>;
   catalog: PublicCopyCatalog;
+};
+export type PublicCopyExchangeRow = {
+  line: number;
+  key: string;
+  locale: string;
+  value: string;
+  action: "upsert" | "reset" | string;
+  definition_version: number;
+  official_bundle_version: string;
+};
+export type PublicCopyExchangeIssue = {
+  line: number;
+  key?: string;
+  locale?: string;
+  code: string;
+  message: string;
+};
+export type PublicCopyExchangeChange = {
+  line: number;
+  key: string;
+  locale: string;
+  action: string;
+  before: string;
+  after: string;
+};
+export type PublicCopyExchangePreview = {
+  working_revision: number;
+  fully_validated: boolean;
+  rows: PublicCopyExchangeRow[];
+  issues: PublicCopyExchangeIssue[];
+  changes: PublicCopyExchangeChange[];
 };
 
 export type WebsiteLocalization = {
@@ -370,6 +402,9 @@ export type SystemResourceHealth = {
   reserved_inodes?: number;
   supports_inodes: boolean;
   affected_operations: string[];
+  admission_floor_bytes: number;
+  warning_floor_bytes: number;
+  recommended_action?: string;
 };
 
 export type SystemComponentHealth = {
@@ -628,6 +663,53 @@ export type ImportPreview = {
   issues: ImportIssue[];
 };
 export type ImportJobResponse = { job: ImportJob; preview?: ImportPreview };
+
+export type ProductBulkAction = "publish" | "hide" | "archive" | "change_category" | "change_lifecycle";
+export type ProductBulkPlanItem = {
+  selection_index: number;
+  product_id: string;
+  part_number: string;
+  expected_revision: number;
+  record_state: string;
+  publishing_state: string;
+  eligible: boolean;
+  message?: string;
+};
+export type ProductBulkPreview = {
+  run_id: string;
+  action: ProductBulkAction;
+  target_id?: string;
+  selection_count: number;
+  eligible_count: number;
+  warning?: string;
+  items: ProductBulkPlanItem[];
+  created_at: string;
+};
+export type ProductBulkItemResult = {
+  selection_index: number;
+  product_id: string;
+  part_number: string;
+  status: "prepared" | "succeeded" | "no_change" | "conflict" | "invalid" | "failed";
+  expected_revision: number;
+  result_revision?: number;
+  message?: string;
+  public_state?: string;
+};
+export type ProductBulkReceipt = {
+  run_id: string;
+  succeeded: number;
+  no_change: number;
+  conflicts: number;
+  invalid: number;
+  failed: number;
+  replay: boolean;
+  results: ProductBulkItemResult[];
+};
+export type ProductBulkRun = {
+  preview: ProductBulkPreview;
+  status: "prepared" | "running" | "completed";
+  receipt?: ProductBulkReceipt;
+};
 
 export type AdminJob = {
   id: string;

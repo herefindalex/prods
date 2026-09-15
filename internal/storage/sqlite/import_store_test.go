@@ -257,3 +257,105 @@ func TestImportJobRestartReconcilesFromDurableCommitReceipt(t *testing.T) {
 		t.Fatalf("interrupted reconciliation = %+v, %v", interruptedAfter, err)
 	}
 }
+
+func TestImportD7SourceLocaleAndD10PreserveClearAndDuplicateTargetRules(t *testing.T) {
+	ctx := context.Background()
+	store, owner := installedStore(t)
+	application, err := store.CreateDictionaryEntry(ctx, owner.ID, catalog.DictionaryEntry{
+		Kind: catalog.DictionaryApplication, Name: "Automation", Slug: "automation",
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	existing, err := store.CreateProduct(ctx, owner.ID, catalog.Product{
+		PartNumber: "D10-1", Name: "Original", Description: "Preserve description",
+		Features: "Clear features", Specification: "Clear specification",
+		ApplicationIDs: []string{application.ID}, SourceLocale: "en-US",
+		SourceLocales: map[string]string{"description": "fr-FR"},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	headers := []string{"Part", "Description", "Features", "Specification", "Applications", "Description locale"}
+	mappings := []importing.ColumnMapping{
+		{SourceIndex: 0, Target: importing.TargetPartNumber},
+		{SourceIndex: 1, Target: importing.TargetDescription},
+		{SourceIndex: 2, Target: importing.TargetFeatures},
+		{SourceIndex: 3, Target: importing.TargetSpecification},
+		{SourceIndex: 4, Target: importing.TargetApplicationIDs},
+		{SourceIndex: 5, Target: importing.TargetDescriptionLocale},
+	}
+	preview, err := store.BuildImportPreview(ctx, owner.ID,
+		importWorkbook(headers, []string{"D10-1", "", "CLEAR", "CLEAR", "", "de-DE"}),
+		mappings, importing.IdentityPartNumber)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !preview.FullyValidated || preview.UpdateCount != 1 || len(preview.Items) != 1 {
+		t.Fatalf("D10 preview=%+v", preview)
+	}
+	planned := preview.Items[0].Product
+	if planned.Description != "Preserve description" || planned.Features != "" || planned.Specification != "" {
+		t.Fatalf("blank/CLEAR semantics planned Product=%+v", planned)
+	}
+	if len(planned.ApplicationIDs) != 1 || planned.ApplicationIDs[0] != application.ID {
+		t.Fatalf("blank multi-value cell did not preserve Applications: %+v", planned.ApplicationIDs)
+	}
+	if planned.SourceLocale != "en-US" || planned.SourceLocales["description"] != "de-DE" {
+		t.Fatalf("per-field Source Locale plan=%+v", planned.SourceLocales)
+	}
+	if _, err := store.CommitImport(ctx, owner.ID, preview); err != nil {
+		t.Fatal(err)
+	}
+	after, err := store.Product(ctx, existing.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	content, err := store.ProductContent(ctx, existing.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if after.Description != "Preserve description" || after.Features != "" || after.Specification != "" || content.SourceLocales["description"] != "de-DE" {
+		t.Fatalf("committed D7/D10 Product=%+v content=%+v", after, content)
+	}
+
+	createdPreview, err := store.BuildImportPreview(ctx, owner.ID,
+		importWorkbook([]string{"Part"}, []string{"D7-NEW"}),
+		[]importing.ColumnMapping{{SourceIndex: 0, Target: importing.TargetPartNumber}},
+		importing.IdentityPartNumber, "ja-JP")
+	if err != nil || !createdPreview.FullyValidated {
+		t.Fatalf("D7 operation override preview=%+v err=%v", createdPreview, err)
+	}
+	if createdPreview.Items[0].Product.SourceLocale != "ja-JP" || createdPreview.Items[0].Product.SourceLocales["name"] != "ja-JP" {
+		t.Fatalf("D7 operation override Product=%+v", createdPreview.Items[0].Product)
+	}
+	if _, err := store.CommitImport(ctx, owner.ID, createdPreview); err != nil {
+		t.Fatal(err)
+	}
+	createdContent, err := store.ProductContent(ctx, createdPreview.Items[0].Product.ID)
+	if err != nil || createdContent.SourceLocale != "ja-JP" || createdContent.SourceLocales["specification"] != "ja-JP" {
+		t.Fatalf("committed D7 Source Locale=%+v err=%v", createdContent, err)
+	}
+
+	duplicate, err := store.BuildImportPreview(ctx, owner.ID,
+		importWorkbook([]string{"Part"}, []string{"D10-1"}, []string{"D10-1"}),
+		[]importing.ColumnMapping{{SourceIndex: 0, Target: importing.TargetPartNumber}},
+		importing.IdentityPartNumber)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if duplicate.FullyValidated || len(duplicate.Issues) != 2 || duplicate.Issues[0].Code != "duplicate_file_identity" {
+		t.Fatalf("duplicate Current target must invalidate whole import: %+v", duplicate)
+	}
+
+	invalidClear, err := store.BuildImportPreview(ctx, owner.ID,
+		importWorkbook([]string{"Part", "Category"}, []string{"D10-1", "CLEAR"}),
+		[]importing.ColumnMapping{{SourceIndex: 0, Target: importing.TargetPartNumber}, {SourceIndex: 1, Target: importing.TargetCategoryID}},
+		importing.IdentityPartNumber)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if invalidClear.FullyValidated || len(invalidClear.Issues) != 1 || invalidClear.Issues[0].Code != "invalid_clear_or_locale" {
+		t.Fatalf("required-field CLEAR must fail validation: %+v", invalidClear)
+	}
+}

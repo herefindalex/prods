@@ -25,6 +25,9 @@ func (s *Server) adminPublicCopy(w http.ResponseWriter, r *http.Request) {
 		s.internalAPIError(w, r, err)
 		return
 	}
+	for index := range catalogValue.Definitions {
+		catalogValue.Definitions[index].WhereUsed = localization.PublicCopyWhereUsed(catalogValue.Definitions[index].Key)
+	}
 	writeJSON(w, http.StatusOK, map[string]any{
 		"working_revision": state.WorkingRevision,
 		"default_locale":   state.WorkingLocalization.DefaultLocale,

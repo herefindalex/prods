@@ -8,6 +8,7 @@ type ImportForm = {
   sheet?: string;
   header_row: number;
   identity_mode: "part_number" | "manufacturer_part_number";
+  source_locale_override?: string;
   mappings: ImportMapping[];
 };
 
@@ -20,9 +21,28 @@ const targets = [
   "package_form_factor",
   "description",
   "features",
+  "specification",
   "lifecycle_id",
-	"application_ids",
+  "application_ids",
+  "source_locale",
+  "name_source_locale",
+  "description_source_locale",
+  "features_source_locale",
+  "specification_source_locale",
 ];
+
+const localeOptions = [
+  "en-US",
+  "zh-TW",
+  "zh-CN",
+  "ja-JP",
+  "ko-KR",
+  "de-DE",
+  "fr-FR",
+  "it-IT",
+  "es-ES",
+  "pt-BR",
+].map((value) => ({ value, label: value }));
 
 const activeStatuses = new Set(["queued", "parsing", "committing"]);
 
@@ -38,6 +58,8 @@ const labels = {
     description: "Validation scans every row and produces the complete error report. Commit rechecks identity, references, and revisions before one all-or-nothing transaction.",
     uploadMapping: "Upload and mapping", workbook: "Workbook", choose: "Choose .xlsx", sheet: "Sheet",
     sheetPlaceholder: "First sheet when blank", headerRow: "Header row", identityMode: "Identity mode",
+    sourceLocaleOverride: "Import Source Locale override",
+    sourceLocaleHelp: "Optional explicit fallback for this operation. Otherwise new content uses the currently Published Website Site Default. Per-row and per-field locale columns take precedence.",
     partNumber: "Part number", manufacturerPart: "Manufacturer + part number", columnIndex: "Column index",
     headerName: "Header name", productField: "Product field", remove: "Remove", addMapping: "Add mapping",
     validate: "Validate workbook", importTitle: (id: string) => `Import ${id}`, refresh: "Refresh", cancel: "Cancel",
@@ -46,7 +68,10 @@ const labels = {
     target: {
       part_number: "Part number", product_name: "Product name", manufacturer_id: "Manufacturer",
       brand_id: "Brand", category_id: "Category", package_form_factor: "Package / form factor",
-      description: "Description", features: "Features", lifecycle_id: "Lifecycle", application_ids: "Applications",
+      description: "Description", features: "Features", specification: "Specification", lifecycle_id: "Lifecycle", application_ids: "Applications",
+      source_locale: "Source Locale", name_source_locale: "Name Source Locale",
+      description_source_locale: "Description Source Locale", features_source_locale: "Features Source Locale",
+      specification_source_locale: "Specification Source Locale",
     } as Record<string, string>,
   },
   "zh-TW": {
@@ -58,6 +83,8 @@ const labels = {
     description: "驗證會掃描每一列並產生完整錯誤報告。提交前會重新檢查識別、參照與修訂，最後以單一全成或全敗交易寫入。",
     uploadMapping: "上傳與欄位映射", workbook: "活頁簿", choose: "選擇 .xlsx", sheet: "工作表",
     sheetPlaceholder: "留空時使用第一個工作表", headerRow: "標題列", identityMode: "識別模式",
+    sourceLocaleOverride: "本次匯入 Source Locale 覆寫",
+    sourceLocaleHelp: "可選的明確整批 fallback；未指定時，新內容使用當時已發布的 Website Site Default。逐列及逐欄語系欄位優先。",
     partNumber: "料號", manufacturerPart: "Manufacturer + 料號", columnIndex: "欄位索引",
     headerName: "標題名稱", productField: "產品欄位", remove: "移除", addMapping: "新增映射",
     validate: "驗證活頁簿", importTitle: (id: string) => `匯入 ${id}`, refresh: "重新整理", cancel: "取消",
@@ -66,7 +93,10 @@ const labels = {
     target: {
       part_number: "料號", product_name: "產品名稱", manufacturer_id: "Manufacturer",
       brand_id: "品牌", category_id: "分類", package_form_factor: "封裝／外型",
-      description: "描述", features: "特色", lifecycle_id: "生命週期", application_ids: "應用",
+      description: "描述", features: "特色", specification: "規格", lifecycle_id: "生命週期", application_ids: "應用",
+      source_locale: "Source Locale", name_source_locale: "名稱 Source Locale",
+      description_source_locale: "描述 Source Locale", features_source_locale: "特色 Source Locale",
+      specification_source_locale: "規格 Source Locale",
     } as Record<string, string>,
   },
 };
@@ -109,6 +139,7 @@ export function ImportPanel({ locale, onError, onMessage }: Feedback & { locale:
         sheet: values.sheet || "",
         header_row: values.header_row,
         identity_mode: values.identity_mode,
+        source_locale_override: values.source_locale_override,
         mappings: values.mappings,
       }));
       body.append("file", file, file.name);
@@ -191,6 +222,9 @@ export function ImportPanel({ locale, onError, onMessage }: Feedback & { locale:
                 { value: "part_number", label: text.partNumber },
                 { value: "manufacturer_part_number", label: text.manufacturerPart },
               ]} />
+            </Form.Item>
+            <Form.Item name="source_locale_override" label={text.sourceLocaleOverride} extra={text.sourceLocaleHelp}>
+              <Select allowClear options={localeOptions} />
             </Form.Item>
           </div>
           <Form.List name="mappings">

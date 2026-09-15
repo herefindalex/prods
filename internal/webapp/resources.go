@@ -15,6 +15,9 @@ const (
 	resourceByteHeadroom   = 64 << 20
 	resourceInodeHeadroom  = 128
 	resourceMinFreePercent = 1
+	resourceWarningBytes   = 512 << 20
+	resourceWarningInodes  = 1024
+	resourceWarningPercent = 5
 )
 
 func (s *Server) admitResource(ctx context.Context, operation, path string, requiredBytes, requiredInodes uint64) (*platform.Reservation, error) {
@@ -39,17 +42,20 @@ func (s *Server) writeResourceError(w http.ResponseWriter, r *http.Request, err 
 }
 
 type systemResourceHealth struct {
-	Resource           string   `json:"resource"`
-	Status             string   `json:"status"`
-	Reason             string   `json:"reason,omitempty"`
-	CheckedUTC         string   `json:"checked_utc"`
-	TotalBytes         uint64   `json:"total_bytes,omitempty"`
-	FreeBytes          uint64   `json:"free_bytes,omitempty"`
-	ReservedBytes      uint64   `json:"reserved_bytes,omitempty"`
-	FreeInodes         uint64   `json:"free_inodes,omitempty"`
-	ReservedInodes     uint64   `json:"reserved_inodes,omitempty"`
-	SupportsInodes     bool     `json:"supports_inodes"`
-	AffectedOperations []string `json:"affected_operations"`
+	Resource            string   `json:"resource"`
+	Status              string   `json:"status"`
+	Reason              string   `json:"reason,omitempty"`
+	CheckedUTC          string   `json:"checked_utc"`
+	TotalBytes          uint64   `json:"total_bytes,omitempty"`
+	FreeBytes           uint64   `json:"free_bytes,omitempty"`
+	ReservedBytes       uint64   `json:"reserved_bytes,omitempty"`
+	FreeInodes          uint64   `json:"free_inodes,omitempty"`
+	ReservedInodes      uint64   `json:"reserved_inodes,omitempty"`
+	SupportsInodes      bool     `json:"supports_inodes"`
+	AffectedOperations  []string `json:"affected_operations"`
+	AdmissionFloorBytes uint64   `json:"admission_floor_bytes"`
+	WarningFloorBytes   uint64   `json:"warning_floor_bytes"`
+	RecommendedAction   string   `json:"recommended_action,omitempty"`
 }
 
 type systemComponentHealth struct {
@@ -106,6 +112,7 @@ func (s *Server) adminSystemHealth(w http.ResponseWriter, r *http.Request) {
 	for _, resource := range resources {
 		item := systemResourceHealth{
 			Resource: resource.name, Status: "Normal", CheckedUTC: checked, AffectedOperations: resource.operations,
+			AdmissionFloorBytes: resourceByteHeadroom, RecommendedAction: resourceRecommendation(resource.name),
 		}
 		snapshot, err := s.config.ResourceGate.Inspect(r.Context(), resource.path)
 		if err == nil {
@@ -115,6 +122,7 @@ func (s *Server) adminSystemHealth(w http.ResponseWriter, r *http.Request) {
 			item.FreeInodes = snapshot.FreeInodes
 			item.ReservedInodes = snapshot.ReservedInodes
 			item.SupportsInodes = snapshot.SupportsInodes
+			item.WarningFloorBytes = resourceWarningFloor(snapshot.TotalBytes)
 			var reservation *platform.Reservation
 			reservation, _, err = s.config.ResourceGate.Admit(r.Context(), platform.ResourceRequest{
 				Operation: "health check " + resource.name, Path: resource.path,
@@ -130,9 +138,57 @@ func (s *Server) adminSystemHealth(w http.ResponseWriter, r *http.Request) {
 			item.Reason = "capacity is unavailable or below the admission floor"
 			raiseHealthStatus(&response.Status, item.Status)
 		}
+		if err == nil && resourceWarning(snapshot) {
+			item.Status = "Warning"
+			item.Reason = "capacity is above the hard stop but below the early-warning floor"
+			raiseHealthStatus(&response.Status, item.Status)
+		}
 		response.Resources = append(response.Resources, item)
 	}
 	writeJSON(w, http.StatusOK, response)
+}
+
+func resourceWarningFloor(total uint64) uint64 {
+	percent := total/100*resourceWarningPercent + (total%100*resourceWarningPercent+99)/100
+	if percent > resourceWarningBytes {
+		return percent
+	}
+	return resourceWarningBytes
+}
+
+func resourceWarning(snapshot platform.ResourceSnapshot) bool {
+	availableBytes := uint64(0)
+	if snapshot.FreeBytes > snapshot.ReservedBytes {
+		availableBytes = snapshot.FreeBytes - snapshot.ReservedBytes
+	}
+	if availableBytes < resourceWarningFloor(snapshot.TotalBytes) {
+		return true
+	}
+	if snapshot.SupportsInodes {
+		availableInodes := uint64(0)
+		if snapshot.FreeInodes > snapshot.ReservedInodes {
+			availableInodes = snapshot.FreeInodes - snapshot.ReservedInodes
+		}
+		return availableInodes < resourceWarningInodes
+	}
+	return false
+}
+
+func resourceRecommendation(resource string) string {
+	switch resource {
+	case "database":
+		return "Free capacity on the database volume before RFQ or Admin writes reach the hard stop."
+	case "assets":
+		return "Free or expand the assets volume; do not delete files that still have valid references."
+	case "generated":
+		return "Free or expand generated storage; already revoked content must remain unavailable."
+	case "work":
+		return "Remove completed temporary jobs through supported cleanup or expand the work volume."
+	case "backups":
+		return "Repair or move the backup destination; keep the last valid restore points."
+	default:
+		return "Restore sufficient capacity before running affected operations."
+	}
 }
 
 func (s *Server) systemComponents(ctx context.Context, checked string) []systemComponentHealth {

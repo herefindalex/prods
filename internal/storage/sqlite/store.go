@@ -1095,7 +1095,31 @@ CREATE TABLE IF NOT EXISTS publication_dirty (
 		cancel_requested INTEGER NOT NULL CHECK(cancel_requested IN (0,1)),
 		created_at TEXT NOT NULL,
 		updated_at TEXT NOT NULL
-	);`
+	);
+	CREATE TABLE IF NOT EXISTS product_bulk_runs (
+		id TEXT PRIMARY KEY,
+		actor_id TEXT NOT NULL REFERENCES users(id),
+		action TEXT NOT NULL CHECK(action IN ('publish','hide','archive','change_category','change_lifecycle')),
+		target_id TEXT NOT NULL DEFAULT '',
+		request_hash TEXT NOT NULL,
+		status TEXT NOT NULL CHECK(status IN ('prepared','running','completed')),
+		plan_json TEXT NOT NULL,
+		receipt_json TEXT NOT NULL DEFAULT '',
+		created_at TEXT NOT NULL,
+		updated_at TEXT NOT NULL
+	);
+	CREATE TABLE IF NOT EXISTS product_bulk_items (
+		run_id TEXT NOT NULL REFERENCES product_bulk_runs(id) ON DELETE CASCADE,
+		product_id TEXT NOT NULL REFERENCES products(id),
+		selection_index INTEGER NOT NULL,
+		expected_revision INTEGER NOT NULL,
+		status TEXT NOT NULL CHECK(status IN ('prepared','succeeded','no_change','conflict','invalid','failed')),
+		result_json TEXT NOT NULL DEFAULT '',
+		completed_at TEXT,
+		PRIMARY KEY(run_id,product_id),
+		UNIQUE(run_id,selection_index)
+	);
+	CREATE INDEX IF NOT EXISTS product_bulk_runs_status_idx ON product_bulk_runs(status,updated_at);`
 	if _, err := s.db.ExecContext(ctx, schema); err != nil {
 		return fmt.Errorf("migrate: %w", err)
 	}

@@ -12,6 +12,7 @@ import { HealthPanel } from "./HealthPanel";
 import { ImportPanel } from "./ImportPanel";
 import { JobsPanel } from "./JobsPanel";
 import { PublicCopyPanel } from "./PublicCopyPanel";
+import { ProductBulkPanel } from "./ProductBulkPanel";
 import { SettingsPanel } from "./SettingsPanel";
 import { TaxonomyPanel } from "./TaxonomyPanel";
 import { TrafficPanel } from "./TrafficPanel";
@@ -29,6 +30,7 @@ const adminText = {
     catalog: "Catalog",
     taxonomy: "Taxonomy",
     imports: "Imports",
+    productBulk: "Product bulk",
     jobs: "Jobs",
     website: "Website",
     publicCopy: "Public copy",
@@ -39,6 +41,8 @@ const adminText = {
     backups: "Backups",
     traffic: "Traffic protection",
     language: "Interface language",
+    healthWarning: "System capacity needs attention",
+    healthWarningDescription: "Normal work remains available, but one or more resources are approaching their admission floor. Open System health for the affected operations and remediation.",
   },
   "zh-TW": {
     subtitle: "型錄營運管理",
@@ -47,6 +51,7 @@ const adminText = {
     catalog: "產品型錄",
     taxonomy: "分類與字典",
     imports: "匯入",
+    productBulk: "Product 批次",
     jobs: "工作",
     website: "網站",
     publicCopy: "公開介面文案",
@@ -57,6 +62,8 @@ const adminText = {
     backups: "備份",
     traffic: "流量保護",
     language: "介面語言",
+    healthWarning: "系統容量需要處理",
+    healthWarningDescription: "一般操作仍可使用，但一項或多項資源已接近准入下限。請開啟系統健康狀態，查看受影響操作與修復建議。",
   },
 } as const;
 
@@ -75,6 +82,7 @@ function AdminApp() {
   const [message, setMessage] = useState<string>();
   const [error, setError] = useState<string>();
   const [activeTab, setActiveTab] = useState("catalog");
+  const [systemHealth, setSystemHealth] = useState<SystemHealth>();
   const text = adminText[locale];
   const showMessage = (next: string) => {
     setError(undefined);
@@ -102,7 +110,9 @@ function AdminApp() {
 		let cancelled = false;
 		void api<SystemHealth>("/admin/api/system/health")
 			.then((health) => {
-				if (!cancelled && health.status === "Critical") setActiveTab("health");
+				if (cancelled) return;
+				setSystemHealth(health);
+				if (health.status === "Critical") setActiveTab("health");
 			})
 			.catch(() => {
 				// The panel exposes the actionable error when the user opens it.
@@ -163,6 +173,15 @@ function AdminApp() {
                 onClose={() => setError(undefined)}
               />
             )}
+            {systemHealth?.status === "Warning" && (
+              <Alert
+                type="warning"
+                showIcon
+                message={text.healthWarning}
+                description={text.healthWarningDescription}
+                action={<Button size="small" onClick={() => setActiveTab("health")}>{text.health}</Button>}
+              />
+            )}
             <Tabs
 			  activeKey={activeTab}
 			  onChange={setActiveTab}
@@ -182,6 +201,11 @@ function AdminApp() {
                   key: "imports",
                   label: text.imports,
                   children: <ImportPanel locale={locale} onError={showError} onMessage={showMessage} />,
+                },
+                {
+                  key: "product-bulk",
+                  label: text.productBulk,
+                  children: <ProductBulkPanel locale={locale} onError={showError} onMessage={showMessage} />,
                 },
                 {
                   key: "jobs",

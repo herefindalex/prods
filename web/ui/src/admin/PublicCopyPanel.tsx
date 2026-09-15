@@ -12,12 +12,16 @@ import {
   Table,
   Tag,
   Typography,
+  Upload,
 } from "antd";
-import { api, putJSON } from "./api";
+import { api, downloadFile, postJSON, putJSON } from "./api";
 import type {
   PublicCopyDefault,
   PublicCopyDefinition,
   PublicCopyEditorState,
+  PublicCopyExchangeChange,
+  PublicCopyExchangeIssue,
+  PublicCopyExchangePreview,
 } from "./types";
 
 type Props = {
@@ -58,6 +62,24 @@ const labels = {
     selectEntry: "Select a copy entry to edit.",
     reviewStatus: "Bundle review status",
     bundleVersion: "Official bundle version",
+    exchangeTitle: "Translation CSV/XLSX exchange",
+    exchangeHelp: "Export a selected locale/scope, edit externally, then validate every row. Import only updates the Website working copy; Preview and Publish remain required. Use action=reset with a blank Value to remove one override.",
+    exportCSV: "Export CSV",
+    exportXLSX: "Export XLSX",
+    chooseExchange: "Choose CSV/XLSX",
+    validateExchange: "Validate import",
+    commitExchange: "Commit validated changes",
+    exchangeDone: (revision: number) => `Translation import committed to Website working revision ${revision}. Preview and Publish are still required.`,
+    line: "Line",
+    action: "Action",
+    before: "Before",
+    after: "After",
+    code: "Code",
+    message: "Message",
+    whereUsed: "Where used",
+    contextPreview: "Safe context preview",
+    desktop: "Desktop",
+    mobile: "Mobile",
   },
   "zh-TW": {
     title: "公開介面文案",
@@ -90,6 +112,24 @@ const labels = {
     selectEntry: "請選擇一個文案項目進行編輯。",
     reviewStatus: "套件審閱狀態",
     bundleVersion: "官方套件版本",
+    exchangeTitle: "翻譯 CSV／XLSX 交換",
+    exchangeHelp: "匯出選定語系／範圍，在外部編輯後逐列完整驗證。匯入只更新 Website 工作副本，仍須預覽與發布。要移除單一覆寫時，使用 action=reset 並將 Value 留白。",
+    exportCSV: "匯出 CSV",
+    exportXLSX: "匯出 XLSX",
+    chooseExchange: "選擇 CSV／XLSX",
+    validateExchange: "驗證匯入",
+    commitExchange: "提交已驗證變更",
+    exchangeDone: (revision: number) => `翻譯已提交到 Website 工作修訂 ${revision}；仍須預覽並發布。`,
+    line: "列",
+    action: "操作",
+    before: "原值",
+    after: "新值",
+    code: "代碼",
+    message: "訊息",
+    whereUsed: "使用位置",
+    contextPreview: "安全情境預覽",
+    desktop: "桌面",
+    mobile: "行動裝置",
   },
 } as const;
 
@@ -114,6 +154,10 @@ export function PublicCopyPanel({ locale, onError, onMessage }: Props) {
   const [selectedKey, setSelectedKey] = useState<string>();
   const [value, setValue] = useState("");
   const [saving, setSaving] = useState(false);
+  const [exchangeFile, setExchangeFile] = useState<File>();
+  const [exchangePreview, setExchangePreview] = useState<PublicCopyExchangePreview>();
+  const [exchangeBusy, setExchangeBusy] = useState(false);
+  const [previewViewport, setPreviewViewport] = useState<"desktop" | "mobile">("desktop");
 
   const load = async () => {
     try {
@@ -201,6 +245,53 @@ export function PublicCopyPanel({ locale, onError, onMessage }: Props) {
   const defaultValue = selectedKey
     ? officialDefault(state?.catalog.defaults ?? [], selectedKey, selectedLocale)?.value
     : undefined;
+  const contextValue = Object.entries(selected?.sample ?? {}).reduce(
+    (message, [name, sample]) => message.replaceAll(`{${name}}`, sample),
+    value,
+  );
+
+  const exportExchange = async (format: "csv" | "xlsx") => {
+    const query = new URLSearchParams({ locales: selectedLocale });
+    if (selectedScope) query.set("scope", selectedScope);
+    try {
+      await downloadFile(`/admin/api/website/public-copy/export/${format}?${query}`, `prods-public-copy.${format}`);
+    } catch (error) {
+      onError(error);
+    }
+  };
+
+  const previewExchange = async () => {
+    if (!exchangeFile) return;
+    setExchangeBusy(true);
+    try {
+      const body = new FormData();
+      body.append("file", exchangeFile, exchangeFile.name);
+      setExchangePreview(await api<PublicCopyExchangePreview>("/admin/api/website/public-copy/import/preview", { method: "POST", body }));
+    } catch (error) {
+      onError(error);
+    } finally {
+      setExchangeBusy(false);
+    }
+  };
+
+  const commitExchange = async () => {
+    if (!exchangePreview?.fully_validated) return;
+    setExchangeBusy(true);
+    try {
+      const updated = await postJSON<{ working_revision: number }>("/admin/api/website/public-copy/import/commit", {
+        expected_working_revision: exchangePreview.working_revision,
+        rows: exchangePreview.rows,
+      });
+      setExchangePreview(undefined);
+      setExchangeFile(undefined);
+      await load();
+      onMessage(text.exchangeDone(updated.working_revision));
+    } catch (error) {
+      onError(error);
+    } finally {
+      setExchangeBusy(false);
+    }
+  };
 
   return (
     <Space direction="vertical" size="middle" className="panel-stack">
@@ -286,6 +377,14 @@ export function PublicCopyPanel({ locale, onError, onMessage }: Props) {
               <Descriptions.Item label={text.official} span={2}>
                 <Typography.Text code>{defaultValue ?? "—"}</Typography.Text>
               </Descriptions.Item>
+              <Descriptions.Item label={text.whereUsed} span={2}>
+                {(selected.where_used ?? []).map((usage) => (
+                  <div key={`${usage.surface}-${usage.section}`}>
+                    <strong>{usage.surface}</strong> · {usage.section} — {usage.purpose}
+                    <br /><Typography.Text type="secondary">{usage.safe_context}</Typography.Text>
+                  </div>
+                ))}
+              </Descriptions.Item>
             </Descriptions>
             {!currentOverride && <Alert type="info" showIcon message={text.noOverride} />}
             <Typography.Text strong>{text.override}</Typography.Text>
@@ -294,6 +393,27 @@ export function PublicCopyPanel({ locale, onError, onMessage }: Props) {
               value={value}
               onChange={(event) => setValue(event.target.value)}
             />
+            <Space>
+              <Typography.Text strong>{text.contextPreview}</Typography.Text>
+              <Select
+                value={previewViewport}
+                onChange={setPreviewViewport}
+                options={[{ value: "desktop", label: text.desktop }, { value: "mobile", label: text.mobile }]}
+              />
+            </Space>
+            <div
+              aria-label={text.contextPreview}
+              style={{
+                width: previewViewport === "mobile" ? 360 : "100%",
+                maxWidth: "100%",
+                padding: 16,
+                border: "1px solid #d9d9d9",
+                borderRadius: 8,
+                background: "#fff",
+              }}
+            >
+              <Typography.Text>{contextValue}</Typography.Text>
+            </div>
             <Space>
               <Button type="primary" loading={saving} onClick={() => void save()}>
                 {text.save}
@@ -309,6 +429,75 @@ export function PublicCopyPanel({ locale, onError, onMessage }: Props) {
           <Empty description={text.selectEntry} />
         </Card>
       )}
+
+      <Card title={text.exchangeTitle}>
+        <Space direction="vertical" size="middle" className="panel-stack">
+          <Typography.Paragraph>{text.exchangeHelp}</Typography.Paragraph>
+          <Space wrap>
+            <Button onClick={() => void exportExchange("csv")}>{text.exportCSV}</Button>
+            <Button onClick={() => void exportExchange("xlsx")}>{text.exportXLSX}</Button>
+            <Upload
+              accept=".csv,.xlsx,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+              maxCount={1}
+              beforeUpload={(file) => { setExchangeFile(file); setExchangePreview(undefined); return false; }}
+              onRemove={() => { setExchangeFile(undefined); setExchangePreview(undefined); }}
+            >
+              <Button>{text.chooseExchange}</Button>
+            </Upload>
+            <Button type="primary" disabled={!exchangeFile} loading={exchangeBusy} onClick={() => void previewExchange()}>
+              {text.validateExchange}
+            </Button>
+            <Button
+              type="primary"
+              disabled={!exchangePreview?.fully_validated}
+              loading={exchangeBusy}
+              onClick={() => void commitExchange()}
+            >
+              {text.commitExchange}
+            </Button>
+          </Space>
+          {exchangePreview && (
+            <>
+              <Alert
+                showIcon
+                type={exchangePreview.fully_validated ? "success" : "error"}
+                message={exchangePreview.fully_validated
+                  ? `${exchangePreview.changes.length} validated change(s)`
+                  : `${exchangePreview.issues.length} validation issue(s)`}
+              />
+              {exchangePreview.issues.length > 0 && (
+                <Table<PublicCopyExchangeIssue>
+                  size="small"
+                  rowKey={(item, index) => `${item.line}-${item.code}-${index}`}
+                  dataSource={exchangePreview.issues}
+                  pagination={false}
+                  columns={[
+                    { title: text.line, dataIndex: "line" },
+                    { title: text.key, dataIndex: "key" },
+                    { title: text.locale, dataIndex: "locale" },
+                    { title: text.code, dataIndex: "code" },
+                    { title: text.message, dataIndex: "message" },
+                  ]}
+                />
+              )}
+              <Table<PublicCopyExchangeChange>
+                size="small"
+                rowKey={(item, index) => `${item.line}-${item.key}-${item.locale}-${index}`}
+                dataSource={exchangePreview.changes}
+                pagination={{ pageSize: 20 }}
+                columns={[
+                  { title: text.line, dataIndex: "line" },
+                  { title: text.key, dataIndex: "key" },
+                  { title: text.locale, dataIndex: "locale" },
+                  { title: text.action, dataIndex: "action" },
+                  { title: text.before, dataIndex: "before", ellipsis: true },
+                  { title: text.after, dataIndex: "after", ellipsis: true },
+                ]}
+              />
+            </>
+          )}
+        </Space>
+      </Card>
     </Space>
   );
 }

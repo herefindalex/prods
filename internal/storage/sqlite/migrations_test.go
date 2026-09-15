@@ -30,6 +30,63 @@ func TestFreshDatabaseRecordsImmutableMigrationHistory(t *testing.T) {
 	}
 }
 
+func TestVersionSeventeenToEighteenAddsDurableProductBulkRuns(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "prods.db")
+	store, err := CreatePOC(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := store.db.Exec(`
+DROP TABLE product_bulk_items;
+DROP TABLE product_bulk_runs;
+DELETE FROM schema_migrations WHERE version=18;
+UPDATE system_state SET schema_version=17 WHERE singleton=1;
+`); err != nil {
+		t.Fatal(err)
+	}
+	if err := store.Close(); err != nil {
+		t.Fatal(err)
+	}
+
+	inspection := Inspect(path)
+	if inspection.State != DatabaseUpgrade || inspection.SchemaVersion != 17 {
+		t.Fatalf("inspection=%+v", inspection)
+	}
+	upgradeStore, err := OpenForUpgrade(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := upgradeStore.Upgrade(t.Context(), "backup-v17"); err != nil {
+		t.Fatal(err)
+	}
+	defer upgradeStore.Close()
+
+	var version int
+	if err := upgradeStore.db.QueryRow(`SELECT schema_version FROM system_state WHERE singleton=1`).Scan(&version); err != nil {
+		t.Fatal(err)
+	}
+	if version != CurrentSchemaVersion {
+		t.Fatalf("schema version=%d, want %d", version, CurrentSchemaVersion)
+	}
+	var tables int
+	if err := upgradeStore.db.QueryRow(`
+SELECT COUNT(*) FROM sqlite_master
+WHERE type='table' AND name IN ('product_bulk_runs','product_bulk_items')
+`).Scan(&tables); err != nil {
+		t.Fatal(err)
+	}
+	if tables != 2 {
+		t.Fatalf("durable Product Bulk tables=%d, want 2", tables)
+	}
+	var receiptBackup string
+	if err := upgradeStore.db.QueryRow(`SELECT backup_id FROM schema_migrations WHERE version=18`).Scan(&receiptBackup); err != nil {
+		t.Fatal(err)
+	}
+	if receiptBackup != "backup-v17" {
+		t.Fatalf("migration receipt backup=%q", receiptBackup)
+	}
+}
+
 func TestVersionOneUpgradeRequiresBackupAndBecomesReady(t *testing.T) {
 	path := filepath.Join(t.TempDir(), "prods.db")
 	store, err := CreatePOC(path)
@@ -74,6 +131,8 @@ func TestVersionOneUpgradeRequiresBackupAndBecomesReady(t *testing.T) {
 		DROP TABLE taxonomy_translations;
 		DROP TABLE taxonomy_content;
 		DROP TABLE locale_registry;
+		DROP TABLE product_bulk_items;
+		DROP TABLE product_bulk_runs;
 		ALTER TABLE website_versions DROP COLUMN public_copy_overrides_json;
 		ALTER TABLE website_versions DROP COLUMN content_editing_enabled;
 		ALTER TABLE website_versions DROP COLUMN enabled_locales_json;
@@ -190,7 +249,7 @@ func TestVersionFourUpgradePreservesRFQAndClassifiesLegacyRecipient(t *testing.T
 		ALTER TABLE site_settings DROP COLUMN content_multilingual_enabled;
 		ALTER TABLE site_settings DROP COLUMN updated_by;
 		ALTER TABLE site_settings DROP COLUMN revision;
-		DELETE FROM schema_migrations WHERE version IN (5,6,7,8,9,10,11,12,13,14,15,16,17);
+		DELETE FROM schema_migrations WHERE version IN (5,6,7,8,9,10,11,12,13,14,15,16,17,18);
 		UPDATE system_state SET schema_version=4 WHERE singleton=1;
 	`, created); err != nil {
 		t.Fatal(err)
@@ -289,6 +348,8 @@ func TestVersionSeventeenUpgradeSeedsPinnedLocalesAndPreservesPublishedLocaleSet
 		DROP TABLE taxonomy_translations;
 		DROP TABLE taxonomy_content;
 		DROP TABLE locale_registry;
+		DROP TABLE product_bulk_items;
+		DROP TABLE product_bulk_runs;
 		ALTER TABLE product_content_metadata DROP COLUMN source_locales_json;
 		ALTER TABLE website_versions DROP COLUMN public_copy_overrides_json;
 		ALTER TABLE website_versions DROP COLUMN content_editing_enabled;
@@ -298,7 +359,7 @@ func TestVersionSeventeenUpgradeSeedsPinnedLocalesAndPreservesPublishedLocaleSet
 		ALTER TABLE website_working DROP COLUMN content_editing_enabled;
 		ALTER TABLE website_working DROP COLUMN enabled_locales_json;
 		ALTER TABLE website_working DROP COLUMN default_locale;
-		DELETE FROM schema_migrations WHERE version=17;
+		DELETE FROM schema_migrations WHERE version IN (17,18);
 		UPDATE system_state SET schema_version=16 WHERE singleton=1;
 	`); err != nil {
 		t.Fatal(err)
