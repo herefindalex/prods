@@ -1,1 +1,13 @@
 .idea
+.agents
+.codex
+
+# Local PoC runtime/build outputs
+/data/
+/prods
+/prods.exe
+/web/ui/node_modules/
+/web/ui/dist/
+/dist/
+*.test
+coverage.out

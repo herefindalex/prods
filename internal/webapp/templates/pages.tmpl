@@ -1,0 +1,71 @@
+{{define "header"}}<!doctype html>
+<html lang="{{.Language}}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="stylesheet" href="/static/system/system.css"><title>{{.Title}}</title></head>
+<body><header><a href="/"><strong>Prods</strong></a><nav><a href="/search">{{.Text.Catalog}}</a> <a href="/rfq">{{.Text.RequestPart}}</a></nav></header><main>{{end}}
+{{define "footer"}}</main><footer>{{.Text.Footer}}</footer></body></html>{{end}}
+
+{{define "public-header"}}<!doctype html>
+<html lang="{{.Language}}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="stylesheet" href="/static/public/public.css">{{if .JSONURL}}<link rel="alternate" type="application/json" href="{{.JSONURL}}">{{end}}{{if .MarkdownURL}}<link rel="alternate" type="text/markdown" href="{{.MarkdownURL}}">{{end}}{{if .Site.Organization.FaviconAsset}}<link rel="icon" href="/assets/{{.Site.Organization.FaviconAsset}}">{{end}}<style>{{.Stylesheet}}</style>{{if .Site.Theme.CustomCSSEnabled}}<link rel="stylesheet" href="/site.css?v={{.SiteEpoch}}">{{end}}<title>{{.Title}}</title></head>
+<body data-site-epoch="{{.SiteEpoch}}"><header><a href="{{.CatalogURL}}"><strong>{{if .Site.Organization.PrimaryLogoAsset}}<img src="/assets/{{.Site.Organization.PrimaryLogoAsset}}" alt="{{.Site.Organization.DisplayName}}">{{else}}{{.Site.Organization.DisplayName}}{{end}}</strong></a><nav aria-label="Primary">{{range .Navigation}}<a href="{{.URL}}"{{if .OpenNewWindow}} target="_blank" rel="noopener noreferrer"{{end}}>{{.Label}}</a> {{end}}</nav>{{if .LanguageOptions}}<nav aria-label="{{.Text.Language}}">{{range .LanguageOptions}}<a href="{{.URL}}" hreflang="{{.Locale}}"{{if .Active}} aria-current="page"{{end}}>{{.Locale}}</a> {{end}}</nav>{{end}}</header><main>{{end}}
+{{define "public-footer"}}</main><footer>{{if .Site.Organization.LegalName}}{{.Site.Organization.LegalName}}{{else}}{{.Site.Organization.DisplayName}}{{end}}{{if .Site.Organization.PrivacyURL}} · <a href="{{.Site.Organization.PrivacyURL}}">{{.Text.Privacy}}</a>{{end}}{{if .Site.Organization.TermsURL}} · <a href="{{.Site.Organization.TermsURL}}">{{.Text.Terms}}</a>{{end}}</footer></body></html>{{end}}
+
+{{define "search"}}{{template "public-header" .}}
+<h1>{{.Title}}</h1>
+<form action="{{.CatalogURL}}" method="get" role="search"><input type="hidden" name="lang" value="{{.Language}}"><label>{{.Text.SearchLabel}} <input name="q" value="{{.Query}}"></label>
+{{if .ManufacturerOptions}}<label>{{.Text.Manufacturer}} <select name="manufacturer_id"><option value="">{{.Text.All}}</option>{{range .ManufacturerOptions}}<option value="{{.Value}}"{{if .Selected}} selected{{end}}>{{.Label}}</option>{{end}}</select></label>{{end}}
+{{if .BrandOptions}}<label>{{.Text.Brand}} <select name="brand_id"><option value="">{{.Text.All}}</option>{{range .BrandOptions}}<option value="{{.Value}}"{{if .Selected}} selected{{end}}>{{.Label}}</option>{{end}}</select></label>{{end}}
+{{if .CategoryOptions}}<label>{{.Text.Category}} <select name="category_id"><option value="">{{.Text.All}}</option>{{range .CategoryOptions}}<option value="{{.Value}}"{{if .Selected}} selected{{end}}>{{.Label}}</option>{{end}}</select></label>{{end}}
+<button>{{.Text.Search}}</button></form>
+{{if .NoResults}}<section class="notice"><h2>{{.Text.NoProducts}}</h2><p>{{.Text.NoProductsPrefix}} <strong>{{.Query}}</strong>.</p>
+<a class="button" href="{{.RequestURL}}">{{.Text.RequestThisPart}}</a></section>{{else}}
+<ul class="products">{{range .Products}}<li><article><h2><a href="{{.CanonicalURL}}">{{.PartNumber}}</a></h2><p>{{.Name}}</p><small>{{.Manufacturer}}</small></article></li>{{end}}</ul>
+<nav aria-label="Pagination">{{if .PreviousURL}}<a href="{{.PreviousURL}}">{{.Text.PreviousPage}}</a>{{end}} {{if .NextURL}}<a href="{{.NextURL}}">{{.Text.NextPage}}</a>{{end}}</nav>{{end}}
+{{template "public-footer" .}}{{end}}
+
+{{define "product"}}{{template "public-header" .}}
+<article itemscope itemtype="https://schema.org/Product" data-product-id="{{.View.ID}}" data-revision="{{.View.Revision}}">
+<p><a href="/search">Catalog</a></p><h1 itemprop="mpn">{{.View.PartNumber}}</h1>
+{{if .View.Name}}<h2 itemprop="name">{{.View.Name}}</h2>{{end}}
+<p>Manufacturer: <span itemprop="manufacturer">{{.View.Manufacturer}}</span></p>
+{{if .View.Description}}<p itemprop="description">{{.View.Description}}</p>{{end}}
+{{if .View.Specification}}<section><h2>Specifications</h2><dl><dt>Operating range</dt><dd>{{.View.Specification}}</dd></dl></section>{{end}}
+{{if .View.Documents}}<section><h2>Documents</h2><ul>{{range .View.Documents}}<li><a href="{{.URL}}" rel="external">{{.Label}}</a></li>{{end}}</ul></section>{{end}}
+<p><a class="button" href="{{.View.RFQURL}}">Request a quote</a></p>
+<div id="rfq-island" data-product-id="{{.View.ID}}" data-part-number="{{.View.PartNumber}}"><noscript>JavaScript is optional; use the Request a quote link.</noscript></div>
+</article><script type="application/ld+json">{{.JSONLD}}</script><script type="module" src="/static/public/public-islands.js"></script>
+{{template "public-footer" .}}{{end}}
+
+{{define "rfq"}}{{template "public-header" .}}
+<h1>{{.Text.RFQTitle}}</h1>{{if .Error}}<p class="error" role="alert">{{.Error}}</p>{{end}}
+<form method="post" action="{{.RFQURL}}"><input type="hidden" name="csrf_token" value="{{.CSRF}}"><input type="hidden" name="submission_key" value="{{.SubmissionKey}}">
+{{if .Product}}<input type="hidden" name="kind" value="catalog"><input type="hidden" name="product_id" value="{{.Product.ID}}"><p>{{.Text.CatalogProduct}}: <strong>{{.Product.PartNumber}}</strong></p>
+{{else}}<input type="hidden" name="kind" value="requested"><input type="hidden" name="raw_query" value="{{.RawQuery}}"><label>{{.Text.RequestedPart}} <input name="requested" value="{{.Requested}}" required></label>{{if .RawQuery}}<p>{{.Text.OriginalSearch}}: <code>{{.RawQuery}}</code></p>{{end}}{{end}}
+<label>{{.Text.Name}} <input name="name" value="{{.Name}}" required></label><label>{{.Text.Email}} <input name="email" type="email" value="{{.Email}}" required></label>
+<label>{{.Text.QuantityOptional}} <input name="quantity" value="{{.Quantity}}"></label><label>{{.Text.Notes}} <textarea name="notes">{{.Notes}}</textarea></label>
+<button type="submit">{{.Text.SubmitRFQ}}</button></form>{{template "public-footer" .}}{{end}}
+
+{{define "receipt"}}{{template "public-header" .}}<h1>{{.Text.RFQReceived}}</h1><p>{{.Receipt.Message}}</p><p>{{.Text.Reference}}: <strong>{{.Receipt.RFQID}}</strong></p>
+{{if .Receipt.Replay}}<p>{{.Text.ReplayNotice}}</p>{{end}}{{template "public-footer" .}}{{end}}
+
+{{define "login"}}{{template "header" .}}<h1>{{.Text.AdminTitle}}</h1>{{if .Error}}<p class="error">{{.Error}}</p>{{end}}
+<form method="post" action="{{.ActionURL}}">{{if .POC}}
+<label>{{.Text.TemporaryToken}} <input name="token" type="password" required></label>
+{{else}}<label>{{.Text.Email}} <input name="email" type="email" value="{{.Email}}" autocomplete="username" required></label>
+<label>{{.Text.Password}} <input name="password" type="password" autocomplete="current-password" required></label>{{end}}
+<button type="submit">{{.Text.SignIn}}</button></form>
+{{if .POC}}<p>{{.Text.POCHelp}}</p>{{end}}{{template "footer" .}}{{end}}
+
+{{define "set-password"}}{{template "header" .}}<h1>{{.Text.SetPasswordTitle}}</h1>
+{{if .Success}}<p>{{.Text.PasswordSaved}} <strong>{{.Email}}</strong>. {{.Text.CanNow}} <a href="{{.LoginURL}}">{{.Text.SignInLink}}</a>.</p>
+{{else}}{{if .Error}}<p class="error" role="alert">{{.Error}}</p>{{end}}
+<form method="post" action="{{.ActionURL}}"><input type="hidden" name="token" value="{{.Token}}">
+<label>{{.Text.NewPassword}} <input name="password" type="password" autocomplete="new-password" required></label>
+<label>{{.Text.ConfirmPassword}} <input name="password_confirmation" type="password" autocomplete="new-password" required></label>
+<p>{{.Text.PasswordRequirements}}</p><button type="submit">{{.Text.SetPassword}}</button></form>{{end}}
+{{template "footer" .}}{{end}}
+
+{{define "admin"}}<!doctype html><html lang="{{.Language}}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="csrf-token" content="{{.CSRF}}"><title>Prods Admin</title><link rel="stylesheet" href="/static/admin/style.css"></head>
+<body><div id="admin-root"><h1>Loading protected Admin…</h1><p>JavaScript is required for the Admin application.</p></div>
+<script type="module" src="/static/admin/admin.js"></script></body></html>{{end}}

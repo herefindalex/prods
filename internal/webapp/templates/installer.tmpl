@@ -1,0 +1,19 @@
+{{define "install-shell"}}<!doctype html>
+<html lang="{{.Lang}}">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>{{.Title}}</title>
+<link rel="stylesheet" href="/static/system/system.css">
+</head>
+<body>
+<div id="system-root" data-mode="installer"></div>
+<noscript><main><h1>{{.Title}}</h1><p>This system workflow requires JavaScript. Enable JavaScript and reload this page.</p></main></noscript>
+<script type="module" src="/static/system/system.js"></script>
+</body>
+</html>{{end}}
+
+{{define "install-claim"}}{{template "install-shell" .}}{{end}}
+{{define "install-claimed"}}{{template "install-shell" .}}{{end}}
+{{define "install-form"}}{{template "install-shell" .}}{{end}}
+{{define "install-complete"}}{{template "install-shell" .}}{{end}}
