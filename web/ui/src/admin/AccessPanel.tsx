@@ -5,15 +5,31 @@ import { capabilities, type Capability, type Role, type User } from "./types";
 
 type Feedback = { onError: (error: unknown) => void; onMessage: (message: string) => void };
 type GrantResponse = { user: User; set_password_url: string; expires_at: string };
+type InvitationMailStatus = "pending" | "accepted" | "failed" | "unknown";
+type InvitationMailAttempt = {
+  id: string;
+  user_id: string;
+  recipient_email: string;
+  status: InvitationMailStatus;
+  error_class?: string;
+  error_message?: string;
+  created_at: string;
+  completed_at?: string;
+};
 
 export function AccessPanel({ onError, onMessage }: Feedback) {
   const [roles, setRoles] = useState<Role[]>([]);
-	const [users, setUsers] = useState<User[]>([]);
-	const [setPasswordURL, setSetPasswordURL] = useState("");
-	const [roleUser, setRoleUser] = useState<User>();
-	const [roleForm] = Form.useForm<{ name: string; capabilities: Capability[] }>();
-	const [userForm] = Form.useForm<{ email: string; display_name: string; role_id: string }>();
-	const [roleEditForm] = Form.useForm<{ role_id: string }>();
+  const [users, setUsers] = useState<User[]>([]);
+  const [visibleGrant, setVisibleGrant] = useState<GrantResponse>();
+  const [invitationAttempt, setInvitationAttempt] = useState<InvitationMailAttempt>();
+  const [sendingInvitation, setSendingInvitation] = useState(false);
+  const [invitationHistoryUser, setInvitationHistoryUser] = useState<User>();
+  const [invitationHistory, setInvitationHistory] = useState<InvitationMailAttempt[]>([]);
+  const [loadingInvitationHistory, setLoadingInvitationHistory] = useState(false);
+  const [roleUser, setRoleUser] = useState<User>();
+  const [roleForm] = Form.useForm<{ name: string; capabilities: Capability[] }>();
+  const [userForm] = Form.useForm<{ email: string; display_name: string; role_id: string }>();
+  const [roleEditForm] = Form.useForm<{ role_id: string }>();
 
   const load = async () => {
     try {
@@ -28,6 +44,16 @@ export function AccessPanel({ onError, onMessage }: Feedback) {
     }
   };
   useEffect(() => void load(), []);
+  const showGrant = (response: GrantResponse) => {
+    setVisibleGrant(response);
+    setInvitationAttempt(undefined);
+  };
+  const dismissGrantFor = (userID: string) => {
+    if (visibleGrant?.user.id === userID) {
+      setVisibleGrant(undefined);
+      setInvitationAttempt(undefined);
+    }
+  };
 
   const createRole = async (values: { name: string; capabilities: Capability[] }) => {
     try {
@@ -43,7 +69,7 @@ export function AccessPanel({ onError, onMessage }: Feedback) {
   const createUser = async (values: { email: string; display_name: string; role_id: string }) => {
     try {
 			const response = await postJSON<GrantResponse>("/admin/api/users", values);
-      setSetPasswordURL(response.set_password_url);
+      showGrant(response);
       userForm.resetFields();
       onMessage(`Created ${response.user.email}. Copy the one-time link now.`);
       await load();
@@ -61,6 +87,7 @@ export function AccessPanel({ onError, onMessage }: Feedback) {
 		if (!roleUser) return;
 		try {
 			const updated = await putJSON<User>(`/admin/api/users/${roleUser.id}/role`, values);
+			dismissGrantFor(updated.id);
 			setRoleUser(undefined);
 			roleEditForm.resetFields();
 			onMessage(`Changed ${updated.email} to ${roles.find((role) => role.id === updated.role_id)?.name ?? updated.role_id}. Existing sessions and unused set-password links were revoked.`);
@@ -74,7 +101,7 @@ export function AccessPanel({ onError, onMessage }: Feedback) {
 	const issueSetPasswordGrant = async (user: User) => {
 		try {
 			const response = await postJSON<GrantResponse>(`/admin/api/users/${user.id}/set-password-grant`, {});
-			setSetPasswordURL(response.set_password_url);
+			showGrant(response);
 			onMessage(`Generated a new one-time set-password link for ${response.user.email}. Earlier unused links are invalid.`);
 		} catch (error) {
 			onError(error);
@@ -84,7 +111,7 @@ export function AccessPanel({ onError, onMessage }: Feedback) {
 	const reactivateUser = async (user: User) => {
 		try {
 			const response = await postJSON<GrantResponse>(`/admin/api/users/${user.id}/reactivate`, {});
-			setSetPasswordURL(response.set_password_url);
+			showGrant(response);
 			onMessage(`Reactivated ${response.user.email}. They must use the new one-time link before signing in.`);
 			await load();
 		} catch (error) {
@@ -96,6 +123,7 @@ export function AccessPanel({ onError, onMessage }: Feedback) {
   const disableUser = async (user: User) => {
     try {
       await postJSON<void>(`/admin/api/users/${user.id}/disable`, {});
+      dismissGrantFor(user.id);
       onMessage(`Disabled ${user.email}; existing sessions and grants were revoked.`);
       await load();
     } catch (error) {
@@ -103,18 +131,86 @@ export function AccessPanel({ onError, onMessage }: Feedback) {
     }
   };
 
+  const sendInvitation = async () => {
+    if (!visibleGrant) return;
+    setSendingInvitation(true);
+    try {
+      const attempt = await postJSON<InvitationMailAttempt>(
+        `/admin/api/users/${visibleGrant.user.id}/send-set-password`,
+        { set_password_url: visibleGrant.set_password_url },
+      );
+      setInvitationAttempt(attempt);
+      if (attempt.status === "accepted") {
+        onMessage(`SMTP accepted the invitation for ${attempt.recipient_email}.`);
+      } else if (attempt.status === "unknown") {
+        onMessage(`SMTP outcome for ${attempt.recipient_email} is unknown. Generate a new password link before sending again.`);
+      } else {
+        onMessage(`Invitation delivery for ${attempt.recipient_email} failed. The durable result is recorded.`);
+      }
+    } catch (error) {
+      onError(error);
+    } finally {
+      setSendingInvitation(false);
+    }
+  };
+
+  const showInvitationHistory = async (user: User) => {
+    setInvitationHistoryUser(user);
+    setLoadingInvitationHistory(true);
+    try {
+      const attempts = await api<InvitationMailAttempt[]>(`/admin/api/users/${user.id}/invitation-mail-attempts`);
+      setInvitationHistory(attempts ?? []);
+    } catch (error) {
+      setInvitationHistoryUser(undefined);
+      onError(error);
+    } finally {
+      setLoadingInvitationHistory(false);
+    }
+  };
+
   return (
     <Space direction="vertical" size="large" className="panel-stack">
-      {setPasswordURL && (
+      {visibleGrant && (
         <Alert
           type="warning"
           showIcon
           message="One-time set-password link"
           description={
             <Space direction="vertical" className="panel-stack">
-              <Typography.Text>This bearer link is displayed only in this response. Share it through an appropriate private channel.</Typography.Text>
-              <Input value={setPasswordURL} readOnly addonAfter={<Button type="link" onClick={() => void navigator.clipboard.writeText(setPasswordURL)}>Copy</Button>} />
-              <Button size="small" onClick={() => setSetPasswordURL("")}>Dismiss</Button>
+              <Typography.Text>
+                This bearer link for {visibleGrant.user.email} is displayed only in this response. Copy it to a private channel, or explicitly send it through the configured SMTP server.
+              </Typography.Text>
+              <Input
+                value={visibleGrant.set_password_url}
+                readOnly
+                addonAfter={<Button type="link" onClick={() => void navigator.clipboard.writeText(visibleGrant.set_password_url)}>Copy</Button>}
+              />
+              {invitationAttempt && (
+                <Alert
+                  showIcon
+                  type={invitationAttempt.status === "accepted" ? "success" : invitationAttempt.status === "failed" ? "error" : "warning"}
+                  message={invitationAttempt.status === "accepted" ? "SMTP accepted the invitation" : invitationAttempt.status === "failed" ? "Invitation delivery failed" : "Invitation outcome is unknown"}
+                  description={invitationAttempt.status === "unknown"
+                    ? "Do not resend this same link. Generate a new password link before another explicit send."
+                    : invitationAttempt.error_message || `Durable result recorded at ${invitationAttempt.completed_at ?? invitationAttempt.created_at}.`}
+                />
+              )}
+              <Space wrap>
+                <Popconfirm
+                  title="Send this bearer link by email?"
+                  description="This is an explicit external SMTP send. Its accepted, failed, or unknown outcome will be recorded durably."
+                  onConfirm={() => void sendInvitation()}
+                >
+                  <Button
+                    type="primary"
+                    loading={sendingInvitation}
+                    disabled={invitationAttempt?.status === "accepted" || invitationAttempt?.status === "unknown"}
+                  >
+                    Send invitation email
+                  </Button>
+                </Popconfirm>
+                <Button size="small" onClick={() => { setVisibleGrant(undefined); setInvitationAttempt(undefined); }}>Dismiss</Button>
+              </Space>
             </Space>
           }
         />
@@ -164,6 +260,7 @@ export function AccessPanel({ onError, onMessage }: Feedback) {
 			  render: (_, user) => (
 				<Space wrap>
 				  <Button size="small" onClick={() => beginRoleChange(user)}>Change role</Button>
+				  <Button size="small" onClick={() => void showInvitationHistory(user)}>Invitation history</Button>
 				  {user.status === "active" ? (
 					<>
 					  <Popconfirm
@@ -191,9 +288,46 @@ export function AccessPanel({ onError, onMessage }: Feedback) {
 			},
           ]}
 		/>
-	  </Card>
+	 </Card>
 
-	  <Modal
+      <Modal
+        open={invitationHistoryUser !== undefined}
+        title={invitationHistoryUser ? `Invitation history for ${invitationHistoryUser.email}` : "Invitation history"}
+        footer={null}
+        width={860}
+        onCancel={() => { setInvitationHistoryUser(undefined); setInvitationHistory([]); }}
+        destroyOnHidden
+      >
+        <Alert
+          className="bottom-gap"
+          type="info"
+          showIcon
+          message="Delivery evidence does not contain the bearer link"
+          description="Accepted means the SMTP server accepted the message. Unknown is never retried automatically; generate a new password link before another send."
+        />
+        <Table<InvitationMailAttempt>
+          rowKey="id"
+          loading={loadingInvitationHistory}
+          dataSource={invitationHistory}
+          pagination={false}
+          locale={{ emptyText: "No invitation email attempts recorded." }}
+          columns={[
+            { title: "Created", render: (_, attempt) => new Date(attempt.created_at).toLocaleString() },
+            { title: "Recipient", dataIndex: "recipient_email" },
+            {
+              title: "Status",
+              render: (_, attempt) => (
+                <Tag color={attempt.status === "accepted" ? "green" : attempt.status === "failed" ? "red" : attempt.status === "unknown" ? "orange" : "blue"}>
+                  {attempt.status}
+                </Tag>
+              ),
+            },
+            { title: "Result", render: (_, attempt) => attempt.error_message || (attempt.completed_at ? "Durably completed" : "In progress") },
+          ]}
+        />
+      </Modal>
+
+	 <Modal
 		open={roleUser !== undefined}
 		title={roleUser ? `Change role for ${roleUser.email}` : "Change role"}
 		okText="Change role"

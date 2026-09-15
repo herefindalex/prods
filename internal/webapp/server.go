@@ -107,6 +107,7 @@ type Server struct {
 	backupManager  *recovery.BackupManager
 	assetGC        *recovery.AssetGCManager
 	mailManager    *maildelivery.Manager
+	mailSender     maildelivery.Sender
 	brandCapturer  BrandCapturer
 	store          *sqlite.Store
 	config         Config
@@ -192,7 +193,8 @@ func New(store *sqlite.Store, config Config) (*Server, string, error) {
 	}
 	server := &Server{
 		store: store, config: config, templates: tmpl, mux: http.NewServeMux(), brandCapturer: config.BrandCapturer,
-		sessions: make(map[string]session), loginAttempts: make(map[string]loginAttempt),
+		mailSender: config.MailSender,
+		sessions:   make(map[string]session), loginAttempts: make(map[string]loginAttempt),
 		rfqLimiter: newRFQRateLimiter(), proxyTrust: proxyPolicy,
 		expectedHost: expectedHost, expectedOrigin: expectedOrigin,
 		importCancels: make(map[string]func()),
@@ -200,6 +202,9 @@ func New(store *sqlite.Store, config Config) (*Server, string, error) {
 	server.maintenance.Store(&maintenance)
 	if err := store.ReconcileImportJobs(context.Background()); err != nil {
 		return nil, "", fmt.Errorf("reconcile import jobs: %w", err)
+	}
+	if err := store.ReconcileUserInvitationMailAttempts(context.Background()); err != nil {
+		return nil, "", fmt.Errorf("reconcile user invitation mail attempts: %w", err)
 	}
 	if !config.EnablePOCAdmin {
 		server.publisher, err = publishing.NewEngine(context.Background(), store, publishing.Config{
@@ -491,6 +496,8 @@ func (s *Server) routes(static fs.FS) {
 	s.mux.HandleFunc("POST /admin/api/users", s.adminCreateUser)
 	s.mux.HandleFunc("PUT /admin/api/users/{id}/role", s.adminChangeUserRole)
 	s.mux.HandleFunc("POST /admin/api/users/{id}/set-password-grant", s.adminIssueSetPasswordGrant)
+	s.mux.HandleFunc("POST /admin/api/users/{id}/send-set-password", s.adminSendSetPasswordInvitation)
+	s.mux.HandleFunc("GET /admin/api/users/{id}/invitation-mail-attempts", s.adminUserInvitationMailAttempts)
 	s.mux.HandleFunc("POST /admin/api/users/{id}/reactivate", s.adminReactivateUser)
 	s.mux.HandleFunc("POST /admin/api/users/{id}/disable", s.adminDisableUser)
 	s.mux.HandleFunc("POST /admin/api/spec-sets", s.adminCreateSpecSet)

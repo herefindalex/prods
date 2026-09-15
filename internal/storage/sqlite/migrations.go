@@ -13,7 +13,7 @@ import (
 
 const (
 	MinimumSupportedSchemaVersion = 1
-	CurrentSchemaVersion          = 14
+	CurrentSchemaVersion          = 15
 )
 
 var (
@@ -309,6 +309,27 @@ CREATE INDEX search_submission_jobs_due_idx ON search_submission_jobs(status,nex
 		Transactional: true,
 		SQL: `ALTER TABLE site_settings ADD COLUMN revision INTEGER NOT NULL DEFAULT 1 CHECK(revision>=1);
 ALTER TABLE site_settings ADD COLUMN updated_by TEXT REFERENCES users(id);`,
+	},
+	{
+		Version:       15,
+		Name:          "durable-user-invitation-mail-attempts",
+		Transactional: true,
+		SQL: `CREATE TABLE user_invitation_mail_attempts (
+ id TEXT PRIMARY KEY,
+ user_id TEXT NOT NULL REFERENCES users(id),
+ auth_revision INTEGER NOT NULL,
+ token_digest TEXT NOT NULL,
+ recipient_email TEXT NOT NULL,
+ content_version TEXT NOT NULL,
+ status TEXT NOT NULL CHECK(status IN ('pending','accepted','failed','unknown')),
+ error_class TEXT NOT NULL DEFAULT '',
+ error_message TEXT NOT NULL DEFAULT '',
+ created_by TEXT NOT NULL REFERENCES users(id),
+ created_at TEXT NOT NULL,
+ completed_at TEXT,
+ CHECK((status='pending' AND completed_at IS NULL) OR (status<>'pending' AND completed_at IS NOT NULL))
+);
+CREATE INDEX user_invitation_mail_attempts_user_idx ON user_invitation_mail_attempts(user_id,created_at DESC,id DESC);`,
 	},
 }
 
