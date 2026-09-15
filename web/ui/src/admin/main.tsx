@@ -189,7 +189,7 @@ function AdminApp() {
                 {
                   key: "access",
                   label: text.access,
-                  children: <AccessPanel onError={showError} onMessage={showMessage} />,
+                  children: <AccessPanel locale={locale} onError={showError} onMessage={showMessage} />,
                 },
                 {
                   key: "activity",
