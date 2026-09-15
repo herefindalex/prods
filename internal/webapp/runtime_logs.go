@@ -28,13 +28,13 @@ func (s *Server) adminRuntimeLog(w http.ResponseWriter, r *http.Request) {
 	if raw := r.URL.Query().Get("generation"); raw != "" {
 		parsed, err := strconv.Atoi(raw)
 		if err != nil {
-			writeJSON(w, http.StatusBadRequest, map[string]string{"error": "runtime log generation must be an integer"})
+			s.writeAPIError(w, r, http.StatusBadRequest, apiCodeValidationFailed)
 			return
 		}
 		generation = parsed
 	}
 	if generation < 0 || generation > s.config.RuntimeLogFiles {
-		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "runtime log generation is outside the configured range"})
+		s.writeAPIError(w, r, http.StatusBadRequest, apiCodeValidationFailed)
 		return
 	}
 	tail, err := platform.ReadRuntimeLogTail(
@@ -47,7 +47,7 @@ func (s *Server) adminRuntimeLog(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if err != nil {
-		s.internalError(w, err)
+		s.internalAPIError(w, r, err)
 		return
 	}
 	writeJSON(w, http.StatusOK, runtimeLogResponse{

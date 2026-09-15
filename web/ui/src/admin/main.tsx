@@ -5,7 +5,7 @@ import enUS from "antd/locale/en_US";
 import zhTW from "antd/locale/zh_TW";
 import { AccessPanel } from "./AccessPanel";
 import { ActivityPanel } from "./ActivityPanel";
-import { api, csrf } from "./api";
+import { api, csrf, setAPILocale } from "./api";
 import { BackupPanel } from "./BackupPanel";
 import { CatalogPanel } from "./CatalogPanel";
 import { HealthPanel } from "./HealthPanel";
@@ -82,13 +82,17 @@ function AdminApp() {
     setError(messageFrom(next));
   };
   const logout = async () => {
-    await fetch("/admin/logout", { method: "POST", headers: { "X-CSRF-Token": csrf } });
+    await fetch("/admin/logout", {
+      method: "POST",
+      headers: { "Accept-Language": locale, "X-CSRF-Token": csrf },
+    });
     window.location.assign(`/admin/login?lang=${encodeURIComponent(locale)}`);
   };
 
   useEffect(() => {
     document.documentElement.lang = locale;
     window.localStorage.setItem("prods-admin-locale", locale);
+    setAPILocale(locale);
   }, [locale]);
 
 	useEffect(() => {

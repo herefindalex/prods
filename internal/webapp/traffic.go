@@ -20,7 +20,7 @@ func (s *Server) adminTrafficSettings(w http.ResponseWriter, r *http.Request) {
 	}
 	settings, err := s.store.TrafficSettings(r.Context())
 	if err != nil {
-		s.internalError(w, err)
+		s.internalAPIError(w, r, err)
 		return
 	}
 	s.writeTrafficSettings(w, settings)
@@ -36,20 +36,20 @@ func (s *Server) adminUpdateTrafficSettings(w http.ResponseWriter, r *http.Reque
 		Settings        sqlite.TrafficSettings `json:"settings"`
 	}
 	if err := decodeJSON(r.Body, &request); err != nil {
-		http.Error(w, "invalid JSON", http.StatusBadRequest)
+		s.writeAPIError(w, r, http.StatusBadRequest, apiCodeInvalidJSON)
 		return
 	}
 	settings, err := s.store.UpdateTrafficSettings(r.Context(), current.UserID, request.ExpectedVersion, request.Settings)
 	if errors.Is(err, catalog.ErrRevisionConflict) {
-		writeJSON(w, http.StatusConflict, map[string]string{"error": err.Error()})
+		s.writeAPIError(w, r, http.StatusConflict, apiCodeRevisionConflict)
 		return
 	}
 	if errors.Is(err, sqlite.ErrInvalidTrafficSettings) {
-		writeJSON(w, http.StatusUnprocessableEntity, map[string]string{"error": err.Error()})
+		s.writeAPIError(w, r, http.StatusUnprocessableEntity, apiCodeValidationFailed)
 		return
 	}
 	if err != nil {
-		s.internalError(w, err)
+		s.internalAPIError(w, r, err)
 		return
 	}
 	s.writeTrafficSettings(w, settings)

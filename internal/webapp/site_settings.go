@@ -15,7 +15,7 @@ func (s *Server) adminSiteSettings(w http.ResponseWriter, r *http.Request) {
 	}
 	settings, err := s.store.SiteSettings(r.Context())
 	if err != nil {
-		s.internalError(w, err)
+		s.internalAPIError(w, r, err)
 		return
 	}
 	writeJSON(w, http.StatusOK, settings)
@@ -31,20 +31,20 @@ func (s *Server) adminUpdateSiteSettings(w http.ResponseWriter, r *http.Request)
 		TimeZone         string `json:"time_zone"`
 	}
 	if err := decodeJSON(r.Body, &request); err != nil {
-		http.Error(w, "invalid JSON", http.StatusBadRequest)
+		s.writeAPIError(w, r, http.StatusBadRequest, apiCodeInvalidJSON)
 		return
 	}
 	settings, err := s.store.UpdateSiteTimeZone(r.Context(), current.UserID, request.ExpectedRevision, request.TimeZone)
 	if err != nil {
 		switch {
 		case errors.Is(err, site.ErrInvalidSettings):
-			writeJSON(w, http.StatusUnprocessableEntity, map[string]string{"error": err.Error()})
+			s.writeAPIError(w, r, http.StatusUnprocessableEntity, apiCodeValidationFailed)
 		case errors.Is(err, site.ErrSettingsConflict):
-			writeJSON(w, http.StatusConflict, map[string]string{"error": err.Error()})
+			s.writeAPIError(w, r, http.StatusConflict, apiCodeRevisionConflict)
 		case errors.Is(err, sqlite.ErrPermissionDenied):
-			http.Error(w, "forbidden", http.StatusForbidden)
+			s.writeAPIError(w, r, http.StatusForbidden, apiCodeForbidden)
 		default:
-			s.internalError(w, err)
+			s.internalAPIError(w, r, err)
 		}
 		return
 	}

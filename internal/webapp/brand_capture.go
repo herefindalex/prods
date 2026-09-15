@@ -24,30 +24,32 @@ func (s *Server) adminCaptureWebsiteBrand(w http.ResponseWriter, r *http.Request
 		SourceURL string `json:"source_url"`
 	}
 	if err := decodeJSON(r.Body, &request); err != nil {
-		http.Error(w, "invalid JSON", http.StatusBadRequest)
+		s.writeAPIError(w, r, http.StatusBadRequest, apiCodeInvalidJSON)
 		return
 	}
 	if s.brandCapturer == nil {
-		http.Error(w, "brand capture unavailable", http.StatusServiceUnavailable)
+		s.writeAPIError(w, r, http.StatusServiceUnavailable, apiCodeServiceUnavailable)
 		return
 	}
 	state, err := s.store.WebsiteState(r.Context())
 	if err != nil {
-		s.internalError(w, err)
+		s.internalAPIError(w, r, err)
 		return
 	}
 	candidate, err := s.brandCapturer.Capture(r.Context(), request.SourceURL)
 	if err != nil {
 		status := http.StatusBadGateway
+		code := apiCodeServiceUnavailable
 		if errors.Is(err, brandcapture.ErrInvalidURL) || errors.Is(err, brandcapture.ErrNonPublicDestination) {
 			status = http.StatusUnprocessableEntity
+			code = apiCodeValidationFailed
 		}
-		writeJSON(w, status, map[string]string{"error": err.Error()})
+		s.writeAPIError(w, r, status, code)
 		return
 	}
 	proposed, diff, err := brandcapture.BuildProposal(state.Working, candidate)
 	if err != nil {
-		writeJSON(w, http.StatusUnprocessableEntity, map[string]string{"error": err.Error()})
+		s.writeAPIError(w, r, http.StatusUnprocessableEntity, apiCodeValidationFailed)
 		return
 	}
 	writeJSON(w, http.StatusOK, brandCaptureResponse{

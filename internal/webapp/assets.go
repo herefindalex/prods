@@ -26,14 +26,14 @@ func (s *Server) adminUploadProductAsset(w http.ResponseWriter, r *http.Request)
 	}
 	reservation, err := s.admitResource(r.Context(), "product asset upload", s.config.AssetDir, uint64(maxProductDocumentBytes), 3)
 	if err != nil {
-		s.writeResourceError(w, err)
+		s.writeResourceError(w, r, err)
 		return
 	}
 	defer reservation.Release()
 	r.Body = http.MaxBytesReader(w, r.Body, maxProductDocumentBytes+(1<<20))
 	reader, err := r.MultipartReader()
 	if err != nil {
-		http.Error(w, "multipart upload required", http.StatusBadRequest)
+		s.writeAPIError(w, r, http.StatusBadRequest, apiCodeUnsupportedMediaType)
 		return
 	}
 
@@ -45,7 +45,7 @@ func (s *Server) adminUploadProductAsset(w http.ResponseWriter, r *http.Request)
 			break
 		}
 		if nextErr != nil {
-			http.Error(w, "invalid multipart upload", http.StatusBadRequest)
+			s.writeAPIError(w, r, http.StatusBadRequest, apiCodeValidationFailed)
 			return
 		}
 		if part.FormName() == "file" && part.FileName() != "" && upload == nil {
@@ -58,26 +58,26 @@ func (s *Server) adminUploadProductAsset(w http.ResponseWriter, r *http.Request)
 	extension := strings.ToLower(filepath.Ext(filename))
 	mimeType, canonicalExtension, limit := productAssetType(extension)
 	if upload == nil || filename == "." || mimeType == "" {
-		http.Error(w, "one PDF, JPEG, PNG, or WebP file is required", http.StatusUnprocessableEntity)
+		s.writeAPIError(w, r, http.StatusUnprocessableEntity, apiCodeUnsupportedMediaType)
 		return
 	}
 	defer upload.Close()
 
 	assetToken, err := secureToken(24)
 	if err != nil {
-		s.internalError(w, err)
+		s.internalAPIError(w, r, err)
 		return
 	}
 	assetID := "ast_" + assetToken
 	stagingRoot := filepath.Join(s.config.AssetDir, ".staging")
 	if err := os.MkdirAll(stagingRoot, 0o700); err != nil {
-		s.internalError(w, err)
+		s.internalAPIError(w, r, err)
 		return
 	}
 	temporaryPath := filepath.Join(stagingRoot, assetID+".upload")
 	temporary, err := os.OpenFile(temporaryPath, os.O_CREATE|os.O_EXCL|os.O_RDWR, 0o600)
 	if err != nil {
-		s.internalError(w, err)
+		s.internalAPIError(w, r, err)
 		return
 	}
 	keepTemporary := true
@@ -93,58 +93,58 @@ func (s *Server) adminUploadProductAsset(w http.ResponseWriter, r *http.Request)
 	if err != nil {
 		var maxBytesError *http.MaxBytesError
 		if errors.As(err, &maxBytesError) {
-			http.Error(w, "product asset exceeds the upload limit", http.StatusRequestEntityTooLarge)
+			s.writeAPIError(w, r, http.StatusRequestEntityTooLarge, apiCodeRequestTooLarge)
 			return
 		}
-		s.internalError(w, err)
+		s.internalAPIError(w, r, err)
 		return
 	}
 	if size == 0 || size > limit {
-		http.Error(w, "product asset is empty or exceeds the upload limit", http.StatusRequestEntityTooLarge)
+		s.writeAPIError(w, r, http.StatusRequestEntityTooLarge, apiCodeRequestTooLarge)
 		return
 	}
 	if _, err := temporary.Seek(0, io.SeekStart); err != nil {
-		s.internalError(w, err)
+		s.internalAPIError(w, r, err)
 		return
 	}
 	if mimeType == "application/pdf" {
 		prefix := make([]byte, 512)
 		prefixLength, err := temporary.Read(prefix)
 		if err != nil && !errors.Is(err, io.EOF) {
-			s.internalError(w, err)
+			s.internalAPIError(w, r, err)
 			return
 		}
 		prefix = prefix[:prefixLength]
 		if !bytes.HasPrefix(prefix, []byte("%PDF-")) || http.DetectContentType(prefix) != "application/pdf" {
-			http.Error(w, "file content is not a PDF", http.StatusUnprocessableEntity)
+			s.writeAPIError(w, r, http.StatusUnprocessableEntity, apiCodeUnsupportedMediaType)
 			return
 		}
 	} else if err := validateAndSanitizeWebsiteImage(temporary, extension, mimeType); err != nil {
-		writeJSON(w, http.StatusUnprocessableEntity, map[string]string{"error": err.Error()})
+		s.writeAPIError(w, r, http.StatusUnprocessableEntity, apiCodeValidationFailed)
 		return
 	}
 	if err := temporary.Sync(); err != nil {
-		s.internalError(w, err)
+		s.internalAPIError(w, r, err)
 		return
 	}
 	if err := temporary.Close(); err != nil {
-		s.internalError(w, err)
+		s.internalAPIError(w, r, err)
 		return
 	}
 
 	storagePath := filepath.Join("product", r.PathValue("id"), assetID, "content"+canonicalExtension)
 	destination := filepath.Join(s.config.AssetDir, storagePath)
 	if err := os.MkdirAll(filepath.Dir(destination), 0o700); err != nil {
-		s.internalError(w, err)
+		s.internalAPIError(w, r, err)
 		return
 	}
 	if err := os.Rename(temporaryPath, destination); err != nil {
-		s.internalError(w, err)
+		s.internalAPIError(w, r, err)
 		return
 	}
 	keepTemporary = false
 	if err := syncDirectory(filepath.Dir(destination)); err != nil {
-		s.internalError(w, err)
+		s.internalAPIError(w, r, err)
 		return
 	}
 
@@ -159,7 +159,7 @@ func (s *Server) adminUploadProductAsset(w http.ResponseWriter, r *http.Request)
 		Checksum:         hex.EncodeToString(hasher.Sum(nil)),
 	})
 	if err != nil {
-		s.writeCatalogError(w, err)
+		s.writeCatalogError(w, r, err)
 		return
 	}
 	writeJSON(w, http.StatusCreated, asset)
@@ -188,7 +188,7 @@ func (s *Server) adminProductImages(w http.ResponseWriter, r *http.Request) {
 	}
 	images, err := s.store.ProductImages(r.Context(), r.PathValue("id"))
 	if err != nil {
-		s.writeCatalogError(w, err)
+		s.writeCatalogError(w, r, err)
 		return
 	}
 	writeJSON(w, http.StatusOK, images)
@@ -206,13 +206,13 @@ func (s *Server) adminAddProductImage(w http.ResponseWriter, r *http.Request) {
 	}
 	var request productImageRequest
 	if err := decodeJSON(r.Body, &request); err != nil {
-		http.Error(w, "invalid JSON", http.StatusBadRequest)
+		s.writeAPIError(w, r, http.StatusBadRequest, apiCodeInvalidJSON)
 		return
 	}
 	request.Image.ProductID = r.PathValue("id")
 	image, err := s.store.AddProductImage(r.Context(), current.UserID, request.ExpectedRevision, request.Image)
 	if err != nil {
-		s.writeCatalogError(w, err)
+		s.writeCatalogError(w, r, err)
 		return
 	}
 	writeJSON(w, http.StatusCreated, image)
@@ -225,14 +225,14 @@ func (s *Server) adminUpdateProductImage(w http.ResponseWriter, r *http.Request)
 	}
 	var request productImageRequest
 	if err := decodeJSON(r.Body, &request); err != nil {
-		http.Error(w, "invalid JSON", http.StatusBadRequest)
+		s.writeAPIError(w, r, http.StatusBadRequest, apiCodeInvalidJSON)
 		return
 	}
 	request.Image.ID = r.PathValue("image_id")
 	request.Image.ProductID = r.PathValue("id")
 	image, err := s.store.UpdateProductImage(r.Context(), current.UserID, request.ExpectedRevision, request.Image)
 	if err != nil {
-		s.writeCatalogError(w, err)
+		s.writeCatalogError(w, r, err)
 		return
 	}
 	writeJSON(w, http.StatusOK, image)
@@ -247,11 +247,11 @@ func (s *Server) adminDeleteProductImage(w http.ResponseWriter, r *http.Request)
 		ExpectedRevision int64 `json:"expected_revision"`
 	}
 	if err := decodeJSON(r.Body, &request); err != nil {
-		http.Error(w, "invalid JSON", http.StatusBadRequest)
+		s.writeAPIError(w, r, http.StatusBadRequest, apiCodeInvalidJSON)
 		return
 	}
 	if err := s.store.DeleteProductImage(r.Context(), current.UserID, r.PathValue("id"), r.PathValue("image_id"), request.ExpectedRevision); err != nil {
-		s.writeCatalogError(w, err)
+		s.writeCatalogError(w, r, err)
 		return
 	}
 	w.WriteHeader(http.StatusNoContent)

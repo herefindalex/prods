@@ -137,7 +137,7 @@ func TestUserProvisioningCapabilityAndDisableFlow(t *testing.T) {
 
 	lastOwnerResponse := postAdminJSON(t, ownerClient,
 		server.URL+"/admin/api/users/"+owner.ID+"/disable", ownerCSRF, `{}`)
-	if body := responseBody(t, lastOwnerResponse); lastOwnerResponse.StatusCode != http.StatusConflict || !strings.Contains(body, "active Owner") {
+	if body := responseBody(t, lastOwnerResponse); lastOwnerResponse.StatusCode != http.StatusConflict || !strings.Contains(body, `"code":"last_active_owner"`) {
 		t.Fatalf("last Owner disable status=%d body=%s", lastOwnerResponse.StatusCode, body)
 	}
 }

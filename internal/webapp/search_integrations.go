@@ -23,7 +23,7 @@ func (s *Server) adminSearchIntegrations(w http.ResponseWriter, r *http.Request)
 	}
 	settings, err := s.store.SearchIntegrationSettings(r.Context())
 	if err != nil {
-		s.internalError(w, err)
+		s.internalAPIError(w, r, err)
 		return
 	}
 	writeJSON(w, http.StatusOK, s.searchIntegrationsResponse(settings))
@@ -36,28 +36,28 @@ func (s *Server) adminUpdateSearchIntegrations(w http.ResponseWriter, r *http.Re
 	}
 	var request searchnotify.Settings
 	if err := decodeJSON(r.Body, &request); err != nil {
-		http.Error(w, "invalid JSON", http.StatusBadRequest)
+		s.writeAPIError(w, r, http.StatusBadRequest, apiCodeInvalidJSON)
 		return
 	}
 	if request.IndexNowEnabled && (s.searchManager == nil || !s.searchManager.IndexNowAvailable()) {
-		writeJSON(w, http.StatusUnprocessableEntity, map[string]string{"error": "IndexNow requires a public HTTPS Base URL"})
+		s.writeAPIError(w, r, http.StatusUnprocessableEntity, apiCodeValidationFailed)
 		return
 	}
 	if request.GoogleEnabled && (s.searchManager == nil || !s.searchManager.GoogleAvailable()) {
-		writeJSON(w, http.StatusUnprocessableEntity, map[string]string{"error": "Google Search Console requires a public HTTPS Base URL and host OAuth credentials"})
+		s.writeAPIError(w, r, http.StatusUnprocessableEntity, apiCodeValidationFailed)
 		return
 	}
 	updated, err := s.store.UpdateSearchIntegrationSettings(r.Context(), current.UserID, request.Revision, request)
 	if err != nil {
 		switch {
 		case errors.Is(err, searchnotify.ErrSettingsConflict):
-			writeJSON(w, http.StatusConflict, map[string]string{"error": err.Error()})
+			s.writeAPIError(w, r, http.StatusConflict, apiCodeRevisionConflict)
 		case errors.Is(err, searchnotify.ErrInvalidSettings):
-			writeJSON(w, http.StatusUnprocessableEntity, map[string]string{"error": err.Error()})
+			s.writeAPIError(w, r, http.StatusUnprocessableEntity, apiCodeValidationFailed)
 		case errors.Is(err, sqlite.ErrPermissionDenied):
-			http.Error(w, http.StatusText(http.StatusForbidden), http.StatusForbidden)
+			s.writeAPIError(w, r, http.StatusForbidden, apiCodeForbidden)
 		default:
-			s.internalError(w, err)
+			s.internalAPIError(w, r, err)
 		}
 		return
 	}
@@ -109,11 +109,11 @@ func (s *Server) adminRetrySearchSubmission(w http.ResponseWriter, r *http.Reque
 	if err != nil {
 		switch {
 		case errors.Is(err, searchnotify.ErrJobNotRetryable):
-			writeJSON(w, http.StatusConflict, map[string]string{"error": err.Error()})
+			s.writeAPIError(w, r, http.StatusConflict, apiCodeJobNotRetryable)
 		case errors.Is(err, sqlite.ErrPermissionDenied):
-			http.Error(w, http.StatusText(http.StatusForbidden), http.StatusForbidden)
+			s.writeAPIError(w, r, http.StatusForbidden, apiCodeForbidden)
 		default:
-			s.internalError(w, err)
+			s.internalAPIError(w, r, err)
 		}
 		return
 	}

@@ -32,12 +32,12 @@ func (s *Server) adminCreateImportJob(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if s.config.EnablePOCAdmin || current.UserID == "" {
-		http.Error(w, "formal import is unavailable in PoC fixture mode", http.StatusForbidden)
+		s.writeAPIError(w, r, http.StatusForbidden, apiCodeForbidden)
 		return
 	}
 	reservation, err := s.admitResource(r.Context(), "import upload and preview", s.config.WorkDir, uint64(maxImportUploadBytes)*4, 8)
 	if err != nil {
-		s.writeResourceError(w, err)
+		s.writeResourceError(w, r, err)
 		return
 	}
 	defer func() {
@@ -47,12 +47,12 @@ func (s *Server) adminCreateImportJob(w http.ResponseWriter, r *http.Request) {
 	}()
 	err = os.MkdirAll(s.config.WorkDir, 0o700)
 	if err != nil {
-		s.internalError(w, err)
+		s.internalAPIError(w, r, err)
 		return
 	}
 	temporaryDir, err := os.MkdirTemp(s.config.WorkDir, "import-upload-")
 	if err != nil {
-		s.internalError(w, err)
+		s.internalAPIError(w, r, err)
 		return
 	}
 	keepTemporary := false
@@ -65,30 +65,30 @@ func (s *Server) adminCreateImportJob(w http.ResponseWriter, r *http.Request) {
 	r.Body = http.MaxBytesReader(w, r.Body, maxImportUploadBytes+maxTemplateBytes+(1<<20))
 	reader, err := r.MultipartReader()
 	if err != nil {
-		http.Error(w, "multipart form required", http.StatusBadRequest)
+		s.writeAPIError(w, r, http.StatusBadRequest, apiCodeUnsupportedMediaType)
 		return
 	}
 	uploadPath := filepath.Join(temporaryDir, "upload.xlsx")
 	filename, checksum, snapshot, err := readImportMultipart(reader, uploadPath)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusUnprocessableEntity)
+		s.writeAPIError(w, r, http.StatusUnprocessableEntity, apiCodeValidationFailed)
 		return
 	}
 	job, err := s.store.CreateImportJob(r.Context(), current.UserID, filename, checksum, snapshot)
 	if err != nil {
-		s.writeImportError(w, err)
+		s.writeImportError(w, r, err)
 		return
 	}
 	jobsRoot := filepath.Join(s.config.WorkDir, "jobs")
 	if err := os.MkdirAll(jobsRoot, 0o700); err != nil {
 		_ = s.store.FailImportJob(r.Context(), job.ID, "upload", "could not prepare the private job directory")
-		s.internalError(w, err)
+		s.internalAPIError(w, r, err)
 		return
 	}
 	jobDir := filepath.Join(jobsRoot, job.ID)
 	if err := os.Rename(temporaryDir, jobDir); err != nil {
 		_ = s.store.FailImportJob(r.Context(), job.ID, "upload", "could not activate the private upload")
-		s.internalError(w, err)
+		s.internalAPIError(w, r, err)
 		return
 	}
 	keepTemporary = true
@@ -98,7 +98,7 @@ func (s *Server) adminCreateImportJob(w http.ResponseWriter, r *http.Request) {
 		s.importMu.Unlock()
 		cancel()
 		_ = s.store.FailImportJob(context.Background(), job.ID, "shutdown", "server is shutting down")
-		http.Error(w, "server is shutting down", http.StatusServiceUnavailable)
+		s.writeAPIError(w, r, http.StatusServiceUnavailable, apiCodeServiceUnavailable)
 		return
 	}
 	s.importCancels[job.ID] = cancel
@@ -263,7 +263,7 @@ func (s *Server) adminImportJob(w http.ResponseWriter, r *http.Request) {
 	}
 	job, err := s.store.ImportJob(r.Context(), r.PathValue("id"))
 	if err != nil {
-		s.writeImportError(w, err)
+		s.writeImportError(w, r, err)
 		return
 	}
 	response := struct {
@@ -285,12 +285,12 @@ func (s *Server) adminImportReport(w http.ResponseWriter, r *http.Request) {
 	}
 	job, err := s.store.ImportJob(r.Context(), r.PathValue("id"))
 	if err != nil {
-		s.writeImportError(w, err)
+		s.writeImportError(w, r, err)
 		return
 	}
 	path, err := s.safeJobPath(job.ReportPath)
 	if err != nil {
-		http.NotFound(w, r)
+		s.writeAPIError(w, r, http.StatusNotFound, apiCodeNotFound)
 		return
 	}
 	w.Header().Set("Content-Disposition", `attachment; filename="import-errors.csv"`)
@@ -304,22 +304,22 @@ func (s *Server) adminCommitImport(w http.ResponseWriter, r *http.Request) {
 	}
 	job, err := s.store.ImportJob(r.Context(), r.PathValue("id"))
 	if err != nil {
-		s.writeImportError(w, err)
+		s.writeImportError(w, r, err)
 		return
 	}
 	var preview importing.Preview
 	if err := s.readPrivateJobJSON(job.PreviewPath, &preview); err != nil {
-		http.Error(w, "import preview is unavailable", http.StatusConflict)
+		s.writeAPIError(w, r, http.StatusConflict, apiCodeConflict)
 		return
 	}
 	if err := s.store.BeginImportCommit(r.Context(), current.UserID, job.ID); err != nil {
-		s.writeImportError(w, err)
+		s.writeImportError(w, r, err)
 		return
 	}
 	receipt, err := s.store.CommitImport(r.Context(), current.UserID, preview)
 	if err != nil {
 		_ = s.store.FailImportJob(context.Background(), job.ID, "final_commit", err.Error())
-		s.writeImportError(w, err)
+		s.writeImportError(w, r, err)
 		return
 	}
 	writeJSON(w, http.StatusOK, receipt)
@@ -331,7 +331,7 @@ func (s *Server) adminCancelImport(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if err := s.store.RequestImportCancel(r.Context(), current.UserID, r.PathValue("id")); err != nil {
-		s.writeImportError(w, err)
+		s.writeImportError(w, r, err)
 		return
 	}
 	s.importMu.Lock()
@@ -353,12 +353,12 @@ func (s *Server) adminSaveImportTemplate(w http.ResponseWriter, r *http.Request)
 		Template        importing.Template `json:"template"`
 	}
 	if err := decodeJSON(r.Body, &request); err != nil {
-		http.Error(w, "invalid JSON", http.StatusBadRequest)
+		s.writeAPIError(w, r, http.StatusBadRequest, apiCodeInvalidJSON)
 		return
 	}
 	template, err := s.store.SaveImportTemplate(r.Context(), current.UserID, request.ExpectedVersion, request.Template)
 	if err != nil {
-		s.writeImportError(w, err)
+		s.writeImportError(w, r, err)
 		return
 	}
 	writeJSON(w, http.StatusOK, template)
@@ -371,7 +371,7 @@ func (s *Server) adminImportTemplate(w http.ResponseWriter, r *http.Request) {
 	version, _ := strconv.ParseInt(r.URL.Query().Get("version"), 10, 64)
 	template, err := s.store.ImportTemplate(r.Context(), r.PathValue("id"), version)
 	if err != nil {
-		s.writeImportError(w, err)
+		s.writeImportError(w, r, err)
 		return
 	}
 	writeJSON(w, http.StatusOK, template)
@@ -409,16 +409,20 @@ func (s *Server) safeJobPath(path string) (string, error) {
 	return resolved, nil
 }
 
-func (s *Server) writeImportError(w http.ResponseWriter, err error) {
+func (s *Server) writeImportError(w http.ResponseWriter, r *http.Request, err error) {
 	switch {
 	case errors.Is(err, os.ErrNotExist), errors.Is(err, sql.ErrNoRows):
-		http.Error(w, "import not found", http.StatusNotFound)
-	case errors.Is(err, catalog.ErrRevisionConflict), errors.Is(err, importing.ErrImportConflict),
+		s.writeAPIError(w, r, http.StatusNotFound, apiCodeNotFound)
+	case errors.Is(err, catalog.ErrRevisionConflict):
+		s.writeAPIError(w, r, http.StatusConflict, apiCodeRevisionConflict)
+	case errors.Is(err, importing.ErrImportConflict),
 		errors.Is(err, importing.ErrImportReceiptConflict), errors.Is(err, importing.ErrInvalidImport):
-		writeJSON(w, http.StatusConflict, map[string]string{"error": err.Error()})
-	case errors.Is(err, catalog.ErrInvalidProduct), errors.Is(err, catalog.ErrInvalidDictionary), errors.Is(err, importing.ErrInvalidMapping):
-		writeJSON(w, http.StatusUnprocessableEntity, map[string]string{"error": err.Error()})
+		s.writeAPIError(w, r, http.StatusConflict, apiCodeImportConflict)
+	case errors.Is(err, importing.ErrInvalidMapping):
+		s.writeAPIError(w, r, http.StatusUnprocessableEntity, apiCodeInvalidImportMapping)
+	case errors.Is(err, catalog.ErrInvalidProduct), errors.Is(err, catalog.ErrInvalidDictionary):
+		s.writeAPIError(w, r, http.StatusUnprocessableEntity, apiCodeValidationFailed)
 	default:
-		s.internalError(w, err)
+		s.internalAPIError(w, r, err)
 	}
 }

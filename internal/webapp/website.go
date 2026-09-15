@@ -25,7 +25,7 @@ func (s *Server) adminSiteRoutes(w http.ResponseWriter, r *http.Request) {
 	}
 	epoch, config, err := s.store.PublicSiteRouteConfig(r.Context())
 	if err != nil {
-		s.internalError(w, err)
+		s.internalAPIError(w, r, err)
 		return
 	}
 	writeJSON(w, http.StatusOK, siteRouteState{CurrentEpoch: epoch, Config: config})
@@ -36,21 +36,22 @@ func (s *Server) adminPreviewSiteRoutes(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 	if s.publisher == nil {
-		http.Error(w, "public architecture unavailable", http.StatusServiceUnavailable)
+		s.writeAPIError(w, r, http.StatusServiceUnavailable, apiCodeServiceUnavailable)
 		return
 	}
 	var config publishing.SiteRouteConfig
 	if err := decodeJSON(r.Body, &config); err != nil {
-		http.Error(w, "invalid JSON", http.StatusBadRequest)
+		s.writeAPIError(w, r, http.StatusBadRequest, apiCodeInvalidJSON)
 		return
 	}
 	preview, err := s.publisher.PreviewSiteRoutes(r.Context(), config)
 	if err != nil {
 		if errors.Is(err, publishing.ErrSiteRouteInvalid) {
-			writeJSON(w, http.StatusUnprocessableEntity, map[string]any{"error": err.Error(), "preview": preview})
+			failure := s.localizedAPIError(w, r, apiCodeInvalidSiteRoute)
+			writeJSON(w, http.StatusUnprocessableEntity, map[string]any{"code": failure.Code, "error": failure.Error, "preview": preview})
 			return
 		}
-		s.internalError(w, err)
+		s.internalAPIError(w, r, err)
 		return
 	}
 	writeJSON(w, http.StatusOK, preview)
@@ -62,11 +63,11 @@ func (s *Server) adminPublishSiteRoutes(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 	if !current.can(identity.CapabilityCatalogPublish) {
-		http.Error(w, "forbidden", http.StatusForbidden)
+		s.writeAPIError(w, r, http.StatusForbidden, apiCodeForbidden)
 		return
 	}
 	if s.publisher == nil {
-		http.Error(w, "public architecture unavailable", http.StatusServiceUnavailable)
+		s.writeAPIError(w, r, http.StatusServiceUnavailable, apiCodeServiceUnavailable)
 		return
 	}
 	var request struct {
@@ -75,7 +76,7 @@ func (s *Server) adminPublishSiteRoutes(w http.ResponseWriter, r *http.Request) 
 		Config                  publishing.SiteRouteConfig `json:"config"`
 	}
 	if err := decodeJSON(r.Body, &request); err != nil {
-		http.Error(w, "invalid JSON", http.StatusBadRequest)
+		s.writeAPIError(w, r, http.StatusBadRequest, apiCodeInvalidJSON)
 		return
 	}
 	preview, err := s.publisher.PublishSiteRoutes(r.Context(), publishing.SiteRouteRequest{
@@ -84,10 +85,11 @@ func (s *Server) adminPublishSiteRoutes(w http.ResponseWriter, r *http.Request) 
 	})
 	if err != nil {
 		if errors.Is(err, publishing.ErrSiteRouteInvalid) {
-			writeJSON(w, http.StatusConflict, map[string]any{"error": err.Error(), "preview": preview})
+			failure := s.localizedAPIError(w, r, apiCodeInvalidSiteRoute)
+			writeJSON(w, http.StatusConflict, map[string]any{"code": failure.Code, "error": failure.Error, "preview": preview})
 			return
 		}
-		s.internalError(w, err)
+		s.internalAPIError(w, r, err)
 		return
 	}
 	writeJSON(w, http.StatusOK, preview)
@@ -99,7 +101,7 @@ func (s *Server) adminWebsiteConfiguration(w http.ResponseWriter, r *http.Reques
 	}
 	state, err := s.store.WebsiteState(r.Context())
 	if err != nil {
-		s.internalError(w, err)
+		s.internalAPIError(w, r, err)
 		return
 	}
 	writeJSON(w, http.StatusOK, state)
@@ -115,24 +117,24 @@ func (s *Server) adminSaveWebsiteConfiguration(w http.ResponseWriter, r *http.Re
 		Configuration    site.Configuration `json:"configuration"`
 	}
 	if err := decodeJSON(r.Body, &request); err != nil {
-		http.Error(w, "invalid JSON", http.StatusBadRequest)
+		s.writeAPIError(w, r, http.StatusBadRequest, apiCodeInvalidJSON)
 		return
 	}
 	if err := request.Configuration.Prepare(); err != nil {
-		writeJSON(w, http.StatusUnprocessableEntity, map[string]string{"error": err.Error()})
+		s.writeAPIError(w, r, http.StatusUnprocessableEntity, apiCodeValidationFailed)
 		return
 	}
 	state, err := s.store.SaveWebsiteWorking(r.Context(), current.UserID, request.ExpectedRevision, request.Configuration)
 	if err != nil {
 		if errors.Is(err, catalog.ErrRevisionConflict) {
-			writeJSON(w, http.StatusConflict, map[string]string{"error": err.Error()})
+			s.writeAPIError(w, r, http.StatusConflict, apiCodeRevisionConflict)
 			return
 		}
 		if errors.Is(err, catalog.ErrInvalidAsset) {
-			writeJSON(w, http.StatusUnprocessableEntity, map[string]string{"error": err.Error()})
+			s.writeAPIError(w, r, http.StatusUnprocessableEntity, apiCodeValidationFailed)
 			return
 		}
-		s.internalError(w, err)
+		s.internalAPIError(w, r, err)
 		return
 	}
 	writeJSON(w, http.StatusOK, state)
@@ -144,7 +146,7 @@ func (s *Server) adminWebsiteVersions(w http.ResponseWriter, r *http.Request) {
 	}
 	versions, err := s.store.WebsiteVersions(r.Context(), 50)
 	if err != nil {
-		s.internalError(w, err)
+		s.internalAPIError(w, r, err)
 		return
 	}
 	writeJSON(w, http.StatusOK, versions)
@@ -160,18 +162,18 @@ func (s *Server) adminRestoreWebsiteVersion(w http.ResponseWriter, r *http.Reque
 		Version                 int64 `json:"version"`
 	}
 	if err := decodeJSON(r.Body, &request); err != nil {
-		http.Error(w, "invalid JSON", http.StatusBadRequest)
+		s.writeAPIError(w, r, http.StatusBadRequest, apiCodeInvalidJSON)
 		return
 	}
 	state, err := s.store.RestoreWebsiteVersion(r.Context(), current.UserID, request.ExpectedWorkingRevision, request.Version)
 	if err != nil {
 		switch {
 		case errors.Is(err, catalog.ErrRevisionConflict):
-			writeJSON(w, http.StatusConflict, map[string]string{"error": err.Error()})
+			s.writeAPIError(w, r, http.StatusConflict, apiCodeRevisionConflict)
 		case errors.Is(err, sql.ErrNoRows):
-			http.NotFound(w, r)
+			s.writeAPIError(w, r, http.StatusNotFound, apiCodeNotFound)
 		default:
-			s.internalError(w, err)
+			s.internalAPIError(w, r, err)
 		}
 		return
 	}
@@ -184,7 +186,7 @@ func (s *Server) adminCreateWebsitePreview(w http.ResponseWriter, r *http.Reques
 	}
 	reservation, err := s.admitResource(r.Context(), "website preview", s.config.WorkDir, maxProductPreviewBytes, 2)
 	if err != nil {
-		s.writeResourceError(w, err)
+		s.writeResourceError(w, r, err)
 		return
 	}
 	defer reservation.Release()
@@ -192,21 +194,21 @@ func (s *Server) adminCreateWebsitePreview(w http.ResponseWriter, r *http.Reques
 		ExpectedWorkingRevision int64 `json:"expected_working_revision"`
 	}
 	if err := decodeJSON(r.Body, &request); err != nil {
-		http.Error(w, "invalid JSON", http.StatusBadRequest)
+		s.writeAPIError(w, r, http.StatusBadRequest, apiCodeInvalidJSON)
 		return
 	}
 	state, err := s.store.WebsiteState(r.Context())
 	if err != nil {
-		s.internalError(w, err)
+		s.internalAPIError(w, r, err)
 		return
 	}
 	if state.WorkingRevision != request.ExpectedWorkingRevision {
-		writeJSON(w, http.StatusConflict, map[string]string{"error": catalog.ErrRevisionConflict.Error()})
+		s.writeAPIError(w, r, http.StatusConflict, apiCodeRevisionConflict)
 		return
 	}
 	locale, err := s.store.DefaultLocale(r.Context())
 	if err != nil {
-		s.internalError(w, err)
+		s.internalAPIError(w, r, err)
 		return
 	}
 	body, err := publishing.HTML(publishing.PublicView{
@@ -215,7 +217,7 @@ func (s *Server) adminCreateWebsitePreview(w http.ResponseWriter, r *http.Reques
 		Language: locale, Site: state.Working,
 	})
 	if err != nil {
-		s.internalError(w, err)
+		s.internalAPIError(w, r, err)
 		return
 	}
 	if customCSS := state.Working.CustomStylesheet(); customCSS != "" {
@@ -228,7 +230,7 @@ func (s *Server) adminCreateWebsitePreview(w http.ResponseWriter, r *http.Reques
 	}
 	token, expiresAt, err := s.savePrivatePreviewHTML(body)
 	if err != nil {
-		s.internalError(w, err)
+		s.internalAPIError(w, r, err)
 		return
 	}
 	writeJSON(w, http.StatusCreated, map[string]any{"url": "/admin/previews/website/" + token, "expires_at": expiresAt})
@@ -253,27 +255,27 @@ func (s *Server) adminSetWebsiteCustomCSSState(w http.ResponseWriter, r *http.Re
 		return
 	}
 	if s.publisher == nil {
-		http.Error(w, "public architecture unavailable", http.StatusServiceUnavailable)
+		s.writeAPIError(w, r, http.StatusServiceUnavailable, apiCodeServiceUnavailable)
 		return
 	}
 	var request struct {
 		Disabled bool `json:"disabled"`
 	}
 	if err := decodeJSON(r.Body, &request); err != nil {
-		http.Error(w, "invalid JSON", http.StatusBadRequest)
+		s.writeAPIError(w, r, http.StatusBadRequest, apiCodeInvalidJSON)
 		return
 	}
 	if err := s.store.SetWebsiteCustomCSSDisabled(r.Context(), current.UserID, request.Disabled, s.publisher); err != nil {
 		if errors.Is(err, sqlite.ErrPermissionDenied) {
-			http.Error(w, "forbidden", http.StatusForbidden)
+			s.writeAPIError(w, r, http.StatusForbidden, apiCodeForbidden)
 			return
 		}
-		s.internalError(w, err)
+		s.internalAPIError(w, r, err)
 		return
 	}
 	state, err := s.store.WebsiteState(r.Context())
 	if err != nil {
-		s.internalError(w, err)
+		s.internalAPIError(w, r, err)
 		return
 	}
 	writeJSON(w, http.StatusOK, state)

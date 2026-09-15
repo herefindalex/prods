@@ -1209,7 +1209,7 @@ func (s *Server) rfqJSON(w http.ResponseWriter, r *http.Request) {
 	}
 	var request rfqJSONRequest
 	if err := decodeJSON(r.Body, &request); err != nil {
-		http.Error(w, "invalid JSON", http.StatusBadRequest)
+		s.writeAPIError(w, r, http.StatusBadRequest, apiCodeInvalidJSON)
 		return
 	}
 	receipt, err := s.submitPublicRFQ(r, request.SubmissionKey, request.Submission)
@@ -1224,7 +1224,7 @@ func (s *Server) rfqJSON(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if errors.Is(err, platform.ErrResourceCritical) || errors.Is(err, platform.ErrResourceUnavailable) {
-		s.writeResourceError(w, err)
+		s.writeResourceError(w, r, err)
 		return
 	}
 	if err != nil {
@@ -1378,11 +1378,11 @@ func loginKey(email string) string {
 func (s *Server) adminLogout(w http.ResponseWriter, r *http.Request) {
 	id, current, ok := s.readSession(r)
 	if !ok || !current.Admin {
-		http.Error(w, "unauthorized", http.StatusUnauthorized)
+		s.writeAPIError(w, r, http.StatusUnauthorized, apiCodeUnauthorized)
 		return
 	}
 	if !s.validCSRF(r.FormValue("csrf_token"), current.CSRF) && !s.validCSRF(r.Header.Get("X-CSRF-Token"), current.CSRF) {
-		http.Error(w, "invalid CSRF token", http.StatusForbidden)
+		s.writeAPIError(w, r, http.StatusForbidden, apiCodeInvalidCSRF)
 		return
 	}
 	if s.config.EnablePOCAdmin {
@@ -1390,7 +1390,7 @@ func (s *Server) adminLogout(w http.ResponseWriter, r *http.Request) {
 		delete(s.sessions, id)
 		s.sessionsMu.Unlock()
 	} else if err := s.store.RevokeAdminSession(r.Context(), id); err != nil {
-		s.internalError(w, err)
+		s.internalAPIError(w, r, err)
 		return
 	}
 	http.SetCookie(w, &http.Cookie{Name: "prods_admin", Value: "", Path: "/", HttpOnly: true, SameSite: http.SameSiteStrictMode, Secure: s.config.SecureCookies, MaxAge: -1})
@@ -1420,7 +1420,7 @@ func (s *Server) adminRFQs(w http.ResponseWriter, r *http.Request) {
 	}
 	items, err := s.store.ListRFQs(r.Context())
 	if err != nil {
-		s.internalError(w, err)
+		s.internalAPIError(w, r, err)
 		return
 	}
 	writeJSON(w, http.StatusOK, items)
@@ -1432,7 +1432,7 @@ func (s *Server) adminAudit(w http.ResponseWriter, r *http.Request) {
 	}
 	entries, err := s.store.ListAudit(r.Context(), 100)
 	if err != nil {
-		s.internalError(w, err)
+		s.internalAPIError(w, r, err)
 		return
 	}
 	writeJSON(w, http.StatusOK, entries)
@@ -1445,7 +1445,7 @@ func (s *Server) adminCreateProduct(w http.ResponseWriter, r *http.Request) {
 	}
 	var product catalog.Product
 	if err := decodeJSON(r.Body, &product); err != nil {
-		http.Error(w, "invalid JSON", http.StatusBadRequest)
+		s.writeAPIError(w, r, http.StatusBadRequest, apiCodeInvalidJSON)
 		return
 	}
 	var err error
@@ -1458,7 +1458,7 @@ func (s *Server) adminCreateProduct(w http.ResponseWriter, r *http.Request) {
 		product, err = s.store.CreateProduct(r.Context(), current.UserID, product)
 	}
 	if err != nil {
-		s.writeCatalogError(w, err)
+		s.writeCatalogError(w, r, err)
 		return
 	}
 	writeJSON(w, http.StatusCreated, product)
@@ -1470,11 +1470,11 @@ func (s *Server) adminProduct(w http.ResponseWriter, r *http.Request) {
 	}
 	product, err := s.store.Product(r.Context(), r.PathValue("id"))
 	if errors.Is(err, sql.ErrNoRows) {
-		http.NotFound(w, r)
+		s.writeAPIError(w, r, http.StatusNotFound, apiCodeNotFound)
 		return
 	}
 	if err != nil {
-		s.internalError(w, err)
+		s.internalAPIError(w, r, err)
 		return
 	}
 	writeJSON(w, http.StatusOK, product)
@@ -1492,28 +1492,28 @@ func (s *Server) adminUpdateProduct(w http.ResponseWriter, r *http.Request) {
 	}
 	var request productUpdateRequest
 	if err := decodeJSON(r.Body, &request); err != nil {
-		http.Error(w, "invalid JSON", http.StatusBadRequest)
+		s.writeAPIError(w, r, http.StatusBadRequest, apiCodeInvalidJSON)
 		return
 	}
 	if request.Product.ID != "" && request.Product.ID != r.PathValue("id") {
-		http.Error(w, "product id does not match route", http.StatusUnprocessableEntity)
+		s.writeAPIError(w, r, http.StatusUnprocessableEntity, apiCodeValidationFailed)
 		return
 	}
 	request.Product.ID = r.PathValue("id")
 	if s.publisher != nil {
 		stored, err := s.store.Product(r.Context(), request.Product.ID)
 		if err != nil {
-			s.writeCatalogError(w, err)
+			s.writeCatalogError(w, r, err)
 			return
 		}
 		if stored.Status == catalog.Published && request.Product.Status == catalog.Hidden {
-			writeJSON(w, http.StatusConflict, map[string]string{"error": "use the Hide action for synchronous public revocation"})
+			s.writeAPIError(w, r, http.StatusConflict, apiCodeUseHideAction)
 			return
 		}
 	}
 	product, err := s.store.UpdateProduct(r.Context(), current.UserID, request.ExpectedRevision, request.Product)
 	if err != nil {
-		s.writeCatalogError(w, err)
+		s.writeCatalogError(w, r, err)
 		return
 	}
 	writeJSON(w, http.StatusOK, product)
@@ -1530,12 +1530,12 @@ func (s *Server) adminUpdateProductURL(w http.ResponseWriter, r *http.Request) {
 		CustomPath       string `json:"custom_path"`
 	}
 	if err := decodeJSON(r.Body, &request); err != nil {
-		http.Error(w, "invalid JSON", http.StatusBadRequest)
+		s.writeAPIError(w, r, http.StatusBadRequest, apiCodeInvalidJSON)
 		return
 	}
 	product, err := s.store.UpdateProductURL(r.Context(), current.UserID, r.PathValue("id"), request.ExpectedRevision, request.Slug, request.CustomPath)
 	if err != nil {
-		s.writeCatalogError(w, err)
+		s.writeCatalogError(w, r, err)
 		return
 	}
 	writeJSON(w, http.StatusOK, product)
@@ -1548,7 +1548,7 @@ func (s *Server) adminHideProduct(w http.ResponseWriter, r *http.Request) {
 	}
 	if s.config.EnablePOCAdmin {
 		if err := s.store.HideProduct(r.Context(), r.PathValue("id")); err != nil {
-			http.Error(w, "product not found", http.StatusNotFound)
+			s.writeAPIError(w, r, http.StatusNotFound, apiCodeNotFound)
 			return
 		}
 		w.WriteHeader(http.StatusNoContent)
@@ -1558,17 +1558,17 @@ func (s *Server) adminHideProduct(w http.ResponseWriter, r *http.Request) {
 		ExpectedRevision int64 `json:"expected_revision"`
 	}
 	if err := decodeJSON(r.Body, &request); err != nil {
-		http.Error(w, "invalid JSON", http.StatusBadRequest)
+		s.writeAPIError(w, r, http.StatusBadRequest, apiCodeInvalidJSON)
 		return
 	}
 	if s.publisher == nil {
-		http.Error(w, "public architecture unavailable", http.StatusServiceUnavailable)
+		s.writeAPIError(w, r, http.StatusServiceUnavailable, apiCodeServiceUnavailable)
 		return
 	}
 	if err := s.publisher.Revoke(r.Context(), publishing.RevokeRequest{
 		ActorID: current.UserID, ProductID: r.PathValue("id"), ExpectedRevision: request.ExpectedRevision,
 	}); err != nil {
-		s.writeCatalogError(w, err)
+		s.writeCatalogError(w, r, err)
 		return
 	}
 	w.WriteHeader(http.StatusNoContent)
@@ -1583,17 +1583,17 @@ func (s *Server) adminArchiveProduct(w http.ResponseWriter, r *http.Request) {
 		ExpectedRevision int64 `json:"expected_revision"`
 	}
 	if err := decodeJSON(r.Body, &request); err != nil {
-		http.Error(w, "invalid JSON", http.StatusBadRequest)
+		s.writeAPIError(w, r, http.StatusBadRequest, apiCodeInvalidJSON)
 		return
 	}
 	if s.publisher == nil {
-		http.Error(w, "public architecture unavailable", http.StatusServiceUnavailable)
+		s.writeAPIError(w, r, http.StatusServiceUnavailable, apiCodeServiceUnavailable)
 		return
 	}
 	if err := s.publisher.Revoke(r.Context(), publishing.RevokeRequest{
 		ActorID: current.UserID, ProductID: r.PathValue("id"), ExpectedRevision: request.ExpectedRevision, Archive: true,
 	}); err != nil {
-		s.writeCatalogError(w, err)
+		s.writeCatalogError(w, r, err)
 		return
 	}
 	w.WriteHeader(http.StatusNoContent)
@@ -1602,37 +1602,44 @@ func (s *Server) adminArchiveProduct(w http.ResponseWriter, r *http.Request) {
 func (s *Server) requireCapability(w http.ResponseWriter, r *http.Request, capability identity.Capability, csrf bool) (session, bool) {
 	_, current, ok := s.readSession(r)
 	if !ok || !current.Admin {
-		http.Error(w, "unauthorized", http.StatusUnauthorized)
+		s.writeAPIError(w, r, http.StatusUnauthorized, apiCodeUnauthorized)
 		return session{}, false
 	}
 	if !current.can(capability) {
-		http.Error(w, "forbidden", http.StatusForbidden)
+		s.writeAPIError(w, r, http.StatusForbidden, apiCodeForbidden)
 		return session{}, false
 	}
 	if csrf && !s.validCSRF(r.Header.Get("X-CSRF-Token"), current.CSRF) {
-		http.Error(w, "invalid CSRF token", http.StatusForbidden)
+		s.writeAPIError(w, r, http.StatusForbidden, apiCodeInvalidCSRF)
 		return session{}, false
 	}
 	return current, true
 }
 
-func (s *Server) writeCatalogError(w http.ResponseWriter, err error) {
+func (s *Server) writeCatalogError(w http.ResponseWriter, r *http.Request, err error) {
 	switch {
 	case errors.Is(err, sql.ErrNoRows):
-		http.Error(w, "product not found", http.StatusNotFound)
-	case errors.Is(err, catalog.ErrRevisionConflict), errors.Is(err, catalog.ErrIdentityConflict),
-		errors.Is(err, catalog.ErrRouteConflict), errors.Is(err, catalog.ErrCategoryCycle), errors.Is(err, catalog.ErrManualNormalization), sqlite.IsUniqueViolation(err):
-		writeJSON(w, http.StatusConflict, map[string]string{"error": err.Error()})
+		s.writeAPIError(w, r, http.StatusNotFound, apiCodeNotFound)
+	case errors.Is(err, catalog.ErrRevisionConflict):
+		s.writeAPIError(w, r, http.StatusConflict, apiCodeRevisionConflict)
+	case errors.Is(err, catalog.ErrCategoryCycle):
+		s.writeAPIError(w, r, http.StatusConflict, apiCodeCategoryCycle)
+	case errors.Is(err, catalog.ErrIdentityConflict),
+		errors.Is(err, catalog.ErrRouteConflict), errors.Is(err, catalog.ErrManualNormalization), sqlite.IsUniqueViolation(err):
+		s.writeAPIError(w, r, http.StatusConflict, apiCodeConflict)
 	case errors.Is(err, sqlite.ErrPermissionDenied):
-		http.Error(w, "forbidden", http.StatusForbidden)
+		s.writeAPIError(w, r, http.StatusForbidden, apiCodeForbidden)
+	case errors.Is(err, catalog.ErrDisabledReference):
+		s.writeAPIError(w, r, http.StatusUnprocessableEntity, apiCodeDisabledReference)
+	case errors.Is(err, publishing.ErrSiteRouteInvalid):
+		s.writeAPIError(w, r, http.StatusUnprocessableEntity, apiCodeInvalidSiteRoute)
 	case errors.Is(err, catalog.ErrArchivedProduct), errors.Is(err, catalog.ErrInvalidProduct),
 		errors.Is(err, catalog.ErrInvalidCategory), errors.Is(err, catalog.ErrSystemCategory),
-		errors.Is(err, catalog.ErrInvalidDictionary), errors.Is(err, catalog.ErrDisabledReference),
-		errors.Is(err, catalog.ErrInvalidSpec), errors.Is(err, catalog.ErrInvalidDocument), errors.Is(err, catalog.ErrInvalidAsset),
-		errors.Is(err, publishing.ErrSiteRouteInvalid):
-		writeJSON(w, http.StatusUnprocessableEntity, map[string]string{"error": err.Error()})
+		errors.Is(err, catalog.ErrInvalidDictionary),
+		errors.Is(err, catalog.ErrInvalidSpec), errors.Is(err, catalog.ErrInvalidDocument), errors.Is(err, catalog.ErrInvalidAsset):
+		s.writeAPIError(w, r, http.StatusUnprocessableEntity, apiCodeValidationFailed)
 	default:
-		s.internalError(w, err)
+		s.internalAPIError(w, r, err)
 	}
 }
 

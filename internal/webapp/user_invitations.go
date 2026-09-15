@@ -19,7 +19,7 @@ func (s *Server) adminSendSetPasswordInvitation(w http.ResponseWriter, r *http.R
 		return
 	}
 	if s.mailSender == nil {
-		writeJSON(w, http.StatusConflict, map[string]string{"error": "SMTP is not configured"})
+		s.writeAPIError(w, r, http.StatusConflict, apiCodeSMTPNotConfigured)
 		return
 	}
 
@@ -27,22 +27,22 @@ func (s *Server) adminSendSetPasswordInvitation(w http.ResponseWriter, r *http.R
 		SetPasswordURL string `json:"set_password_url"`
 	}
 	if err := decodeJSON(r.Body, &request); err != nil {
-		http.Error(w, "invalid JSON", http.StatusBadRequest)
+		s.writeAPIError(w, r, http.StatusBadRequest, apiCodeInvalidJSON)
 		return
 	}
 	rawToken, ok := s.invitationToken(request.SetPasswordURL)
 	if !ok {
-		writeJSON(w, http.StatusUnprocessableEntity, map[string]string{"error": "invalid set-password URL"})
+		s.writeAPIError(w, r, http.StatusUnprocessableEntity, apiCodeValidationFailed)
 		return
 	}
 
 	attempt, err := s.store.CreateUserInvitationMailAttempt(r.Context(), current.UserID, r.PathValue("id"), rawToken)
 	if err != nil {
 		if errors.Is(err, sqlite.ErrInvitationMailInFlight) || errors.Is(err, sqlite.ErrInvitationMailUnknown) {
-			writeJSON(w, http.StatusConflict, map[string]string{"error": err.Error()})
+			s.writeAPIError(w, r, http.StatusConflict, apiCodeConflict)
 			return
 		}
-		s.writeUserError(w, err)
+		s.writeUserError(w, r, err)
 		return
 	}
 	setPasswordURL := strings.TrimRight(s.config.BaseURL, "/") + "/set-password?token=" + url.QueryEscape(rawToken)
@@ -65,7 +65,7 @@ func (s *Server) adminSendSetPasswordInvitation(w http.ResponseWriter, r *http.R
 		deliveryContext, attempt.ID, status, result.ErrorClass, result.ErrorMessage,
 	)
 	if err != nil {
-		s.internalError(w, err)
+		s.internalAPIError(w, r, err)
 		return
 	}
 	writeJSON(w, http.StatusOK, attempt)
@@ -77,7 +77,7 @@ func (s *Server) adminUserInvitationMailAttempts(w http.ResponseWriter, r *http.
 	}
 	attempts, err := s.store.ListUserInvitationMailAttempts(r.Context(), r.PathValue("id"), 20)
 	if err != nil {
-		s.internalError(w, err)
+		s.internalAPIError(w, r, err)
 		return
 	}
 	if attempts == nil {

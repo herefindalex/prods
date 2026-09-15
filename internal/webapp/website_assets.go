@@ -34,19 +34,19 @@ func (s *Server) adminUploadWebsiteAsset(w http.ResponseWriter, r *http.Request)
 	}
 	reservation, err := s.admitResource(r.Context(), "website asset upload", s.config.AssetDir, uint64(maxWebsiteImageBytes), 3)
 	if err != nil {
-		s.writeResourceError(w, err)
+		s.writeResourceError(w, r, err)
 		return
 	}
 	defer reservation.Release()
 	r.Body = http.MaxBytesReader(w, r.Body, maxWebsiteImageBytes+(1<<20))
 	reader, err := r.MultipartReader()
 	if err != nil {
-		http.Error(w, "multipart upload required", http.StatusBadRequest)
+		s.writeAPIError(w, r, http.StatusBadRequest, apiCodeUnsupportedMediaType)
 		return
 	}
 	part, err := reader.NextPart()
 	if err != nil || part.FormName() != "file" || part.FileName() == "" {
-		http.Error(w, "one file field is required", http.StatusBadRequest)
+		s.writeAPIError(w, r, http.StatusBadRequest, apiCodeValidationFailed)
 		return
 	}
 	defer part.Close()
@@ -54,24 +54,24 @@ func (s *Server) adminUploadWebsiteAsset(w http.ResponseWriter, r *http.Request)
 	extension := strings.ToLower(filepath.Ext(filename))
 	mimeType, canonicalExtension, limit := websiteImageType(extension)
 	if mimeType == "" {
-		http.Error(w, "website image must be JPEG, PNG, WebP, or safe SVG", http.StatusUnprocessableEntity)
+		s.writeAPIError(w, r, http.StatusUnprocessableEntity, apiCodeUnsupportedMediaType)
 		return
 	}
 
 	assetID, err := secureToken(24)
 	if err != nil {
-		s.internalError(w, err)
+		s.internalAPIError(w, r, err)
 		return
 	}
 	stagingRoot := filepath.Join(s.config.AssetDir, ".staging")
 	if err := os.MkdirAll(stagingRoot, 0o700); err != nil {
-		s.internalError(w, err)
+		s.internalAPIError(w, r, err)
 		return
 	}
 	temporaryPath := filepath.Join(stagingRoot, assetID+".upload")
 	temporary, err := os.OpenFile(temporaryPath, os.O_CREATE|os.O_EXCL|os.O_RDWR, 0o600)
 	if err != nil {
-		s.internalError(w, err)
+		s.internalAPIError(w, r, err)
 		return
 	}
 	keepTemporary := true
@@ -85,56 +85,56 @@ func (s *Server) adminUploadWebsiteAsset(w http.ResponseWriter, r *http.Request)
 	if err != nil {
 		var tooLarge *http.MaxBytesError
 		if errors.As(err, &tooLarge) {
-			http.Error(w, "website image exceeds upload limit", http.StatusRequestEntityTooLarge)
+			s.writeAPIError(w, r, http.StatusRequestEntityTooLarge, apiCodeRequestTooLarge)
 			return
 		}
-		s.internalError(w, err)
+		s.internalAPIError(w, r, err)
 		return
 	}
 	if size == 0 || size > limit {
-		http.Error(w, "website image is empty or exceeds upload limit", http.StatusRequestEntityTooLarge)
+		s.writeAPIError(w, r, http.StatusRequestEntityTooLarge, apiCodeRequestTooLarge)
 		return
 	}
 	if err := validateAndSanitizeWebsiteImage(temporary, extension, mimeType); err != nil {
-		writeJSON(w, http.StatusUnprocessableEntity, map[string]string{"error": err.Error()})
+		s.writeAPIError(w, r, http.StatusUnprocessableEntity, apiCodeValidationFailed)
 		return
 	}
 	info, err := temporary.Stat()
 	if err != nil {
-		s.internalError(w, err)
+		s.internalAPIError(w, r, err)
 		return
 	}
 	size = info.Size()
 	if _, err := temporary.Seek(0, io.SeekStart); err != nil {
-		s.internalError(w, err)
+		s.internalAPIError(w, r, err)
 		return
 	}
 	hasher := sha256.New()
 	if _, err := io.Copy(hasher, temporary); err != nil {
-		s.internalError(w, err)
+		s.internalAPIError(w, r, err)
 		return
 	}
 	if err := temporary.Sync(); err != nil {
-		s.internalError(w, err)
+		s.internalAPIError(w, r, err)
 		return
 	}
 	if err := temporary.Close(); err != nil {
-		s.internalError(w, err)
+		s.internalAPIError(w, r, err)
 		return
 	}
 	storagePath := filepath.Join("website", assetID, "content"+canonicalExtension)
 	destination := filepath.Join(s.config.AssetDir, storagePath)
 	if err := os.MkdirAll(filepath.Dir(destination), 0o700); err != nil {
-		s.internalError(w, err)
+		s.internalAPIError(w, r, err)
 		return
 	}
 	if err := os.Rename(temporaryPath, destination); err != nil {
-		s.internalError(w, err)
+		s.internalAPIError(w, r, err)
 		return
 	}
 	keepTemporary = false
 	if err := syncDirectory(filepath.Dir(destination)); err != nil {
-		s.internalError(w, err)
+		s.internalAPIError(w, r, err)
 		return
 	}
 	asset, err := s.store.CreateAsset(r.Context(), current.UserID, catalog.Asset{
@@ -143,7 +143,7 @@ func (s *Server) adminUploadWebsiteAsset(w http.ResponseWriter, r *http.Request)
 		Checksum: hex.EncodeToString(hasher.Sum(nil)),
 	})
 	if err != nil {
-		s.writeCatalogError(w, err)
+		s.writeCatalogError(w, r, err)
 		return
 	}
 	writeJSON(w, http.StatusCreated, asset)
@@ -160,12 +160,12 @@ func (s *Server) adminWebsiteAsset(w http.ResponseWriter, r *http.Request) {
 	}
 	root, err := filepath.Abs(s.config.AssetDir)
 	if err != nil {
-		s.internalError(w, err)
+		s.internalAPIError(w, r, err)
 		return
 	}
 	resolvedRoot, err := filepath.EvalSymlinks(root)
 	if err != nil {
-		s.internalError(w, err)
+		s.internalAPIError(w, r, err)
 		return
 	}
 	path, err := filepath.EvalSymlinks(filepath.Join(root, filepath.Clean(asset.StoragePath)))
@@ -195,7 +195,7 @@ func (s *Server) adminWebsiteAsset(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if _, err := file.Seek(0, io.SeekStart); err != nil {
-		s.internalError(w, err)
+		s.internalAPIError(w, r, err)
 		return
 	}
 	w.Header().Set("Cache-Control", "private, no-store")

@@ -86,7 +86,7 @@ func (s *Server) adminRoles(w http.ResponseWriter, r *http.Request) {
 	}
 	roles, err := s.store.ListRoles(r.Context())
 	if err != nil {
-		s.internalError(w, err)
+		s.internalAPIError(w, r, err)
 		return
 	}
 	writeJSON(w, http.StatusOK, roles)
@@ -99,12 +99,12 @@ func (s *Server) adminCreateRole(w http.ResponseWriter, r *http.Request) {
 	}
 	var role identity.Role
 	if err := decodeJSON(r.Body, &role); err != nil {
-		http.Error(w, "invalid JSON", http.StatusBadRequest)
+		s.writeAPIError(w, r, http.StatusBadRequest, apiCodeInvalidJSON)
 		return
 	}
 	role, err := s.store.CreateRole(r.Context(), current.UserID, role)
 	if err != nil {
-		s.writeUserError(w, err)
+		s.writeUserError(w, r, err)
 		return
 	}
 	writeJSON(w, http.StatusCreated, role)
@@ -116,7 +116,7 @@ func (s *Server) adminUsers(w http.ResponseWriter, r *http.Request) {
 	}
 	users, err := s.store.ListUsers(r.Context())
 	if err != nil {
-		s.internalError(w, err)
+		s.internalAPIError(w, r, err)
 		return
 	}
 	writeJSON(w, http.StatusOK, users)
@@ -133,12 +133,12 @@ func (s *Server) adminCreateUser(w http.ResponseWriter, r *http.Request) {
 		RoleID      string `json:"role_id"`
 	}
 	if err := decodeJSON(r.Body, &request); err != nil {
-		http.Error(w, "invalid JSON", http.StatusBadRequest)
+		s.writeAPIError(w, r, http.StatusBadRequest, apiCodeInvalidJSON)
 		return
 	}
 	grant, err := s.store.CreateUser(r.Context(), current.UserID, request.Email, request.DisplayName, request.RoleID, 24*time.Hour)
 	if err != nil {
-		s.writeUserError(w, err)
+		s.writeUserError(w, r, err)
 		return
 	}
 	base := strings.TrimRight(s.config.BaseURL, "/")
@@ -155,7 +155,7 @@ func (s *Server) adminDisableUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if err := s.store.DisableUser(r.Context(), current.UserID, r.PathValue("id")); err != nil {
-		s.writeUserError(w, err)
+		s.writeUserError(w, r, err)
 		return
 	}
 	w.WriteHeader(http.StatusNoContent)
@@ -170,12 +170,12 @@ func (s *Server) adminChangeUserRole(w http.ResponseWriter, r *http.Request) {
 		RoleID string `json:"role_id"`
 	}
 	if err := decodeJSON(r.Body, &request); err != nil {
-		http.Error(w, "invalid JSON", http.StatusBadRequest)
+		s.writeAPIError(w, r, http.StatusBadRequest, apiCodeInvalidJSON)
 		return
 	}
 	user, err := s.store.ChangeUserRole(r.Context(), current.UserID, r.PathValue("id"), request.RoleID)
 	if err != nil {
-		s.writeUserError(w, err)
+		s.writeUserError(w, r, err)
 		return
 	}
 	writeJSON(w, http.StatusOK, user)
@@ -188,7 +188,7 @@ func (s *Server) adminIssueSetPasswordGrant(w http.ResponseWriter, r *http.Reque
 	}
 	grant, err := s.store.IssueSetPasswordGrant(r.Context(), current.UserID, r.PathValue("id"), 24*time.Hour)
 	if err != nil {
-		s.writeUserError(w, err)
+		s.writeUserError(w, r, err)
 		return
 	}
 	s.writeSetPasswordGrant(w, http.StatusCreated, grant)
@@ -201,7 +201,7 @@ func (s *Server) adminReactivateUser(w http.ResponseWriter, r *http.Request) {
 	}
 	grant, err := s.store.ReactivateUser(r.Context(), current.UserID, r.PathValue("id"), 24*time.Hour)
 	if err != nil {
-		s.writeUserError(w, err)
+		s.writeUserError(w, r, err)
 		return
 	}
 	s.writeSetPasswordGrant(w, http.StatusOK, grant)
@@ -216,15 +216,17 @@ func (s *Server) writeSetPasswordGrant(w http.ResponseWriter, status int, grant 
 	}{grant.User, base + "/set-password?token=" + url.QueryEscape(grant.Token), grant.ExpiresAt})
 }
 
-func (s *Server) writeUserError(w http.ResponseWriter, err error) {
+func (s *Server) writeUserError(w http.ResponseWriter, r *http.Request, err error) {
 	switch {
-	case errors.Is(err, sqlite.ErrLastActiveOwner), errors.Is(err, sqlite.ErrInvalidGrant), errors.Is(err, sqlite.ErrUserState), sqlite.IsUniqueViolation(err):
-		writeJSON(w, http.StatusConflict, map[string]string{"error": err.Error()})
+	case errors.Is(err, sqlite.ErrLastActiveOwner):
+		s.writeAPIError(w, r, http.StatusConflict, apiCodeLastActiveOwner)
+	case errors.Is(err, sqlite.ErrInvalidGrant), errors.Is(err, sqlite.ErrUserState), sqlite.IsUniqueViolation(err):
+		s.writeAPIError(w, r, http.StatusConflict, apiCodeConflict)
 	case errors.Is(err, sqlite.ErrInvalidCredentials):
-		writeJSON(w, http.StatusUnprocessableEntity, map[string]string{"error": err.Error()})
+		s.writeAPIError(w, r, http.StatusUnprocessableEntity, apiCodeValidationFailed)
 	case errors.Is(err, sqlite.ErrPermissionDenied):
-		http.Error(w, "forbidden", http.StatusForbidden)
+		s.writeAPIError(w, r, http.StatusForbidden, apiCodeForbidden)
 	default:
-		s.internalError(w, err)
+		s.internalAPIError(w, r, err)
 	}
 }

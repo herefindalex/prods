@@ -27,22 +27,22 @@ func (s *Server) adminBackupStatus(w http.ResponseWriter, r *http.Request) {
 	}
 	settings, err := s.store.BackupSettings(r.Context())
 	if err != nil {
-		s.internalError(w, err)
+		s.internalAPIError(w, r, err)
 		return
 	}
 	runs, err := s.store.RecentBackupRuns(r.Context(), 20)
 	if err != nil {
-		s.internalError(w, err)
+		s.internalAPIError(w, r, err)
 		return
 	}
 	next, due, err := recovery.BackupScheduleState(time.Now(), settings, runs)
 	if err != nil {
-		s.internalError(w, err)
+		s.internalAPIError(w, r, err)
 		return
 	}
 	retention, err := recovery.EvaluateBackupRetention(r.Context(), s.config.BackupDir, settings, time.Now())
 	if err != nil {
-		s.internalError(w, err)
+		s.internalAPIError(w, r, err)
 		return
 	}
 	writeJSON(w, http.StatusOK, backupStatusResponse{
@@ -61,20 +61,20 @@ func (s *Server) adminUpdateBackupSettings(w http.ResponseWriter, r *http.Reques
 		Settings        sqlite.BackupSettings `json:"settings"`
 	}
 	if err := decodeJSON(r.Body, &request); err != nil {
-		http.Error(w, "invalid JSON", http.StatusBadRequest)
+		s.writeAPIError(w, r, http.StatusBadRequest, apiCodeInvalidJSON)
 		return
 	}
 	settings, err := s.store.UpdateBackupSettings(r.Context(), current.UserID, request.ExpectedVersion, request.Settings)
 	if errors.Is(err, catalog.ErrRevisionConflict) {
-		writeJSON(w, http.StatusConflict, map[string]string{"error": err.Error()})
+		s.writeAPIError(w, r, http.StatusConflict, apiCodeRevisionConflict)
 		return
 	}
 	if errors.Is(err, sqlite.ErrInvalidBackupState) {
-		writeJSON(w, http.StatusUnprocessableEntity, map[string]string{"error": err.Error()})
+		s.writeAPIError(w, r, http.StatusUnprocessableEntity, apiCodeValidationFailed)
 		return
 	}
 	if err != nil {
-		s.internalError(w, err)
+		s.internalAPIError(w, r, err)
 		return
 	}
 	writeJSON(w, http.StatusOK, settings)
@@ -85,16 +85,16 @@ func (s *Server) adminRunBackup(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if s.backupManager == nil {
-		writeJSON(w, http.StatusServiceUnavailable, map[string]string{"error": "backup manager is unavailable"})
+		s.writeAPIError(w, r, http.StatusServiceUnavailable, apiCodeServiceUnavailable)
 		return
 	}
 	run, err := s.backupManager.RunManual(r.Context())
 	if err != nil {
 		if errors.Is(err, recovery.ErrBackupManagerClosed) {
-			writeJSON(w, http.StatusServiceUnavailable, map[string]string{"error": "backup manager is shutting down"})
+			s.writeAPIError(w, r, http.StatusServiceUnavailable, apiCodeServiceUnavailable)
 			return
 		}
-		s.writeResourceError(w, err)
+		s.writeResourceError(w, r, err)
 		return
 	}
 	writeJSON(w, http.StatusCreated, run)

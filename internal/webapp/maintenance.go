@@ -16,7 +16,7 @@ func (s *Server) adminProducts(w http.ResponseWriter, r *http.Request) {
 	}
 	products, err := s.store.ListProducts(r.Context(), r.URL.Query().Get("include_archived") == "true", 500)
 	if err != nil {
-		s.internalError(w, err)
+		s.internalAPIError(w, r, err)
 		return
 	}
 	writeJSON(w, http.StatusOK, products)
@@ -28,7 +28,7 @@ func (s *Server) adminCategories(w http.ResponseWriter, r *http.Request) {
 	}
 	categories, err := s.store.ListCategories(r.Context())
 	if err != nil {
-		s.internalError(w, err)
+		s.internalAPIError(w, r, err)
 		return
 	}
 	writeJSON(w, http.StatusOK, categories)
@@ -41,7 +41,7 @@ func (s *Server) adminDictionaries(w http.ResponseWriter, r *http.Request) {
 	kind := catalog.DictionaryKind(strings.TrimSpace(r.URL.Query().Get("kind")))
 	entries, err := s.store.ListDictionaryEntries(r.Context(), kind)
 	if err != nil {
-		s.internalError(w, err)
+		s.internalAPIError(w, r, err)
 		return
 	}
 	writeJSON(w, http.StatusOK, entries)
@@ -53,7 +53,7 @@ func (s *Server) adminSpecs(w http.ResponseWriter, r *http.Request) {
 	}
 	specs, err := s.store.ListSpecDefinitions(r.Context())
 	if err != nil {
-		s.internalError(w, err)
+		s.internalAPIError(w, r, err)
 		return
 	}
 	writeJSON(w, http.StatusOK, specs)
@@ -65,7 +65,7 @@ func (s *Server) adminSpecSets(w http.ResponseWriter, r *http.Request) {
 	}
 	sets, err := s.store.ListSpecSets(r.Context())
 	if err != nil {
-		s.internalError(w, err)
+		s.internalAPIError(w, r, err)
 		return
 	}
 	writeJSON(w, http.StatusOK, sets)
@@ -77,11 +77,11 @@ func (s *Server) adminCategorySpecSet(w http.ResponseWriter, r *http.Request) {
 	}
 	set, err := s.store.CategorySpecSet(r.Context(), r.PathValue("id"))
 	if errors.Is(err, sql.ErrNoRows) {
-		http.NotFound(w, r)
+		s.writeAPIError(w, r, http.StatusNotFound, apiCodeNotFound)
 		return
 	}
 	if err != nil {
-		s.internalError(w, err)
+		s.internalAPIError(w, r, err)
 		return
 	}
 	writeJSON(w, http.StatusOK, set)
@@ -93,11 +93,11 @@ func (s *Server) adminProductSpecValues(w http.ResponseWriter, r *http.Request) 
 	}
 	values, err := s.store.ProductSpecValues(r.Context(), r.PathValue("id"))
 	if errors.Is(err, sql.ErrNoRows) {
-		http.NotFound(w, r)
+		s.writeAPIError(w, r, http.StatusNotFound, apiCodeNotFound)
 		return
 	}
 	if err != nil {
-		s.internalError(w, err)
+		s.internalAPIError(w, r, err)
 		return
 	}
 	writeJSON(w, http.StatusOK, values)
@@ -113,12 +113,12 @@ func (s *Server) adminCloneProduct(w http.ResponseWriter, r *http.Request) {
 		Product          catalog.Product `json:"product"`
 	}
 	if err := decodeJSON(r.Body, &request); err != nil {
-		http.Error(w, "invalid JSON", http.StatusBadRequest)
+		s.writeAPIError(w, r, http.StatusBadRequest, apiCodeInvalidJSON)
 		return
 	}
 	product, err := s.store.CloneProduct(r.Context(), current.UserID, r.PathValue("id"), request.ExpectedRevision, request.Product)
 	if err != nil {
-		s.writeCatalogError(w, err)
+		s.writeCatalogError(w, r, err)
 		return
 	}
 	writeJSON(w, http.StatusCreated, product)
@@ -131,12 +131,12 @@ func (s *Server) adminCreateCategory(w http.ResponseWriter, r *http.Request) {
 	}
 	var category catalog.Category
 	if err := decodeJSON(r.Body, &category); err != nil {
-		http.Error(w, "invalid JSON", http.StatusBadRequest)
+		s.writeAPIError(w, r, http.StatusBadRequest, apiCodeInvalidJSON)
 		return
 	}
 	category, err := s.store.CreateCategory(r.Context(), current.UserID, category)
 	if err != nil {
-		s.writeCatalogError(w, err)
+		s.writeCatalogError(w, r, err)
 		return
 	}
 	writeJSON(w, http.StatusCreated, category)
@@ -152,11 +152,11 @@ func (s *Server) adminMoveCategory(w http.ResponseWriter, r *http.Request) {
 		ParentID         string `json:"parent_id"`
 	}
 	if err := decodeJSON(r.Body, &request); err != nil {
-		http.Error(w, "invalid JSON", http.StatusBadRequest)
+		s.writeAPIError(w, r, http.StatusBadRequest, apiCodeInvalidJSON)
 		return
 	}
 	if err := s.store.MoveCategory(r.Context(), current.UserID, r.PathValue("id"), request.ParentID, request.ExpectedRevision); err != nil {
-		s.writeCatalogError(w, err)
+		s.writeCatalogError(w, r, err)
 		return
 	}
 	w.WriteHeader(http.StatusNoContent)
@@ -176,14 +176,14 @@ func (s *Server) adminPreviewCategoryUpdate(w http.ResponseWriter, r *http.Reque
 	}
 	var request categoryUpdateRequest
 	if err := decodeJSON(r.Body, &request); err != nil {
-		http.Error(w, "invalid JSON", http.StatusBadRequest)
+		s.writeAPIError(w, r, http.StatusBadRequest, apiCodeInvalidJSON)
 		return
 	}
 	impact, err := s.store.PreviewCategoryUpdate(r.Context(), current.UserID, r.PathValue("id"), request.ExpectedRevision, catalog.Category{
 		ParentID: request.ParentID, Name: request.Name, Slug: request.Slug,
 	})
 	if err != nil {
-		s.writeCatalogError(w, err)
+		s.writeCatalogError(w, r, err)
 		return
 	}
 	writeJSON(w, http.StatusOK, impact)
@@ -196,14 +196,14 @@ func (s *Server) adminUpdateCategory(w http.ResponseWriter, r *http.Request) {
 	}
 	var request categoryUpdateRequest
 	if err := decodeJSON(r.Body, &request); err != nil {
-		http.Error(w, "invalid JSON", http.StatusBadRequest)
+		s.writeAPIError(w, r, http.StatusBadRequest, apiCodeInvalidJSON)
 		return
 	}
 	category, impact, err := s.store.UpdateCategory(r.Context(), current.UserID, r.PathValue("id"), request.ExpectedRevision, catalog.Category{
 		ParentID: request.ParentID, Name: request.Name, Slug: request.Slug,
 	})
 	if err != nil {
-		s.writeCatalogError(w, err)
+		s.writeCatalogError(w, r, err)
 		return
 	}
 	writeJSON(w, http.StatusOK, struct {
@@ -221,11 +221,11 @@ func (s *Server) adminDisableCategory(w http.ResponseWriter, r *http.Request) {
 		ExpectedRevision int64 `json:"expected_revision"`
 	}
 	if err := decodeJSON(r.Body, &request); err != nil {
-		http.Error(w, "invalid JSON", http.StatusBadRequest)
+		s.writeAPIError(w, r, http.StatusBadRequest, apiCodeInvalidJSON)
 		return
 	}
 	if err := s.store.DisableCategory(r.Context(), current.UserID, r.PathValue("id"), request.ExpectedRevision); err != nil {
-		s.writeCatalogError(w, err)
+		s.writeCatalogError(w, r, err)
 		return
 	}
 	w.WriteHeader(http.StatusNoContent)
@@ -238,12 +238,12 @@ func (s *Server) adminCreateDictionary(w http.ResponseWriter, r *http.Request) {
 	}
 	var entry catalog.DictionaryEntry
 	if err := decodeJSON(r.Body, &entry); err != nil {
-		http.Error(w, "invalid JSON", http.StatusBadRequest)
+		s.writeAPIError(w, r, http.StatusBadRequest, apiCodeInvalidJSON)
 		return
 	}
 	entry, err := s.store.CreateDictionaryEntry(r.Context(), current.UserID, entry)
 	if err != nil {
-		s.writeCatalogError(w, err)
+		s.writeCatalogError(w, r, err)
 		return
 	}
 	writeJSON(w, http.StatusCreated, entry)
@@ -258,11 +258,11 @@ func (s *Server) adminDisableDictionary(w http.ResponseWriter, r *http.Request) 
 		ExpectedRevision int64 `json:"expected_revision"`
 	}
 	if err := decodeJSON(r.Body, &request); err != nil {
-		http.Error(w, "invalid JSON", http.StatusBadRequest)
+		s.writeAPIError(w, r, http.StatusBadRequest, apiCodeInvalidJSON)
 		return
 	}
 	if err := s.store.DisableDictionaryEntry(r.Context(), current.UserID, r.PathValue("id"), request.ExpectedRevision); err != nil {
-		s.writeCatalogError(w, err)
+		s.writeCatalogError(w, r, err)
 		return
 	}
 	w.WriteHeader(http.StatusNoContent)
@@ -281,12 +281,12 @@ func (s *Server) adminPreviewDictionaryUpdate(w http.ResponseWriter, r *http.Req
 	}
 	var request dictionaryUpdateRequest
 	if err := decodeJSON(r.Body, &request); err != nil {
-		http.Error(w, "invalid JSON", http.StatusBadRequest)
+		s.writeAPIError(w, r, http.StatusBadRequest, apiCodeInvalidJSON)
 		return
 	}
 	impact, err := s.store.PreviewDictionaryUpdate(r.Context(), current.UserID, r.PathValue("id"), request.ExpectedRevision, catalog.DictionaryEntry{Name: request.Name, Slug: request.Slug})
 	if err != nil {
-		s.writeCatalogError(w, err)
+		s.writeCatalogError(w, r, err)
 		return
 	}
 	writeJSON(w, http.StatusOK, impact)
@@ -299,12 +299,12 @@ func (s *Server) adminUpdateDictionary(w http.ResponseWriter, r *http.Request) {
 	}
 	var request dictionaryUpdateRequest
 	if err := decodeJSON(r.Body, &request); err != nil {
-		http.Error(w, "invalid JSON", http.StatusBadRequest)
+		s.writeAPIError(w, r, http.StatusBadRequest, apiCodeInvalidJSON)
 		return
 	}
 	entry, impact, err := s.store.UpdateDictionaryEntry(r.Context(), current.UserID, r.PathValue("id"), request.ExpectedRevision, catalog.DictionaryEntry{Name: request.Name, Slug: request.Slug})
 	if err != nil {
-		s.writeCatalogError(w, err)
+		s.writeCatalogError(w, r, err)
 		return
 	}
 	writeJSON(w, http.StatusOK, struct {
@@ -320,12 +320,12 @@ func (s *Server) adminCreateSpec(w http.ResponseWriter, r *http.Request) {
 	}
 	var spec catalog.SpecDefinition
 	if err := decodeJSON(r.Body, &spec); err != nil {
-		http.Error(w, "invalid JSON", http.StatusBadRequest)
+		s.writeAPIError(w, r, http.StatusBadRequest, apiCodeInvalidJSON)
 		return
 	}
 	spec, err := s.store.CreateSpecDefinition(r.Context(), current.UserID, spec)
 	if err != nil {
-		s.writeCatalogError(w, err)
+		s.writeCatalogError(w, r, err)
 		return
 	}
 	writeJSON(w, http.StatusCreated, spec)
@@ -338,12 +338,12 @@ func (s *Server) adminCreateSpecSet(w http.ResponseWriter, r *http.Request) {
 	}
 	var set catalog.SpecSet
 	if err := decodeJSON(r.Body, &set); err != nil {
-		http.Error(w, "invalid JSON", http.StatusBadRequest)
+		s.writeAPIError(w, r, http.StatusBadRequest, apiCodeInvalidJSON)
 		return
 	}
 	set, err := s.store.CreateSpecSet(r.Context(), current.UserID, set)
 	if err != nil {
-		s.writeCatalogError(w, err)
+		s.writeCatalogError(w, r, err)
 		return
 	}
 	writeJSON(w, http.StatusCreated, set)
@@ -359,11 +359,11 @@ func (s *Server) adminSetCategorySpecSet(w http.ResponseWriter, r *http.Request)
 		SpecSetID        string `json:"spec_set_id"`
 	}
 	if err := decodeJSON(r.Body, &request); err != nil {
-		http.Error(w, "invalid JSON", http.StatusBadRequest)
+		s.writeAPIError(w, r, http.StatusBadRequest, apiCodeInvalidJSON)
 		return
 	}
 	if err := s.store.SetCategorySpecSet(r.Context(), current.UserID, r.PathValue("id"), request.SpecSetID, request.ExpectedRevision); err != nil {
-		s.writeCatalogError(w, err)
+		s.writeCatalogError(w, r, err)
 		return
 	}
 	w.WriteHeader(http.StatusNoContent)
@@ -381,13 +381,13 @@ func (s *Server) adminSaveSpecValue(w http.ResponseWriter, r *http.Request) {
 		SourceLocale     string `json:"source_locale"`
 	}
 	if err := decodeJSON(r.Body, &request); err != nil {
-		http.Error(w, "invalid JSON", http.StatusBadRequest)
+		s.writeAPIError(w, r, http.StatusBadRequest, apiCodeInvalidJSON)
 		return
 	}
 	value, err := s.store.SaveSpecValue(r.Context(), current.UserID, r.PathValue("id"), request.SpecID,
 		request.RawValue, request.SourceLocale, request.ExpectedRevision)
 	if err != nil {
-		s.writeCatalogError(w, err)
+		s.writeCatalogError(w, r, err)
 		return
 	}
 	writeJSON(w, http.StatusOK, value)
@@ -400,17 +400,17 @@ func (s *Server) adminSaveNormalizedValue(w http.ResponseWriter, r *http.Request
 	}
 	var normalized catalog.NormalizedValue
 	if err := decodeJSON(r.Body, &normalized); err != nil {
-		http.Error(w, "invalid JSON", http.StatusBadRequest)
+		s.writeAPIError(w, r, http.StatusBadRequest, apiCodeInvalidJSON)
 		return
 	}
 	if normalized.SpecValueID != "" && normalized.SpecValueID != r.PathValue("id") {
-		http.Error(w, "spec value id does not match route", http.StatusUnprocessableEntity)
+		s.writeAPIError(w, r, http.StatusUnprocessableEntity, apiCodeValidationFailed)
 		return
 	}
 	normalized.SpecValueID = r.PathValue("id")
 	normalized, err := s.store.SaveNormalizedValue(r.Context(), current.UserID, normalized)
 	if err != nil {
-		s.writeCatalogError(w, err)
+		s.writeCatalogError(w, r, err)
 		return
 	}
 	writeJSON(w, http.StatusCreated, normalized)
@@ -422,7 +422,7 @@ func (s *Server) adminProductDocuments(w http.ResponseWriter, r *http.Request) {
 	}
 	documents, err := s.store.ProductDocuments(r.Context(), r.PathValue("id"))
 	if err != nil {
-		s.writeCatalogError(w, err)
+		s.writeCatalogError(w, r, err)
 		return
 	}
 	writeJSON(w, http.StatusOK, documents)
@@ -438,17 +438,17 @@ func (s *Server) adminAddProductDocument(w http.ResponseWriter, r *http.Request)
 		Document         catalog.ProductDocument `json:"document"`
 	}
 	if err := decodeJSON(r.Body, &request); err != nil {
-		http.Error(w, "invalid JSON", http.StatusBadRequest)
+		s.writeAPIError(w, r, http.StatusBadRequest, apiCodeInvalidJSON)
 		return
 	}
 	if request.Document.ProductID != "" && request.Document.ProductID != r.PathValue("id") {
-		http.Error(w, "product id does not match route", http.StatusUnprocessableEntity)
+		s.writeAPIError(w, r, http.StatusUnprocessableEntity, apiCodeValidationFailed)
 		return
 	}
 	request.Document.ProductID = r.PathValue("id")
 	document, err := s.store.AddProductDocument(r.Context(), current.UserID, request.ExpectedRevision, request.Document)
 	if err != nil {
-		s.writeCatalogError(w, err)
+		s.writeCatalogError(w, r, err)
 		return
 	}
 	writeJSON(w, http.StatusCreated, document)

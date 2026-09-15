@@ -73,7 +73,7 @@ func (s *Server) adminUpdateSiteMaintenance(w http.ResponseWriter, r *http.Reque
 		Message          string `json:"message"`
 	}
 	if err := decodeJSON(r.Body, &request); err != nil {
-		http.Error(w, "invalid JSON", http.StatusBadRequest)
+		s.writeAPIError(w, r, http.StatusBadRequest, apiCodeInvalidJSON)
 		return
 	}
 
@@ -86,11 +86,11 @@ func (s *Server) adminUpdateSiteMaintenance(w http.ResponseWriter, r *http.Reque
 	if err != nil {
 		switch {
 		case errors.Is(err, site.ErrMaintenanceConflict):
-			writeJSON(w, http.StatusConflict, map[string]string{"error": err.Error()})
+			s.writeAPIError(w, r, http.StatusConflict, apiCodeRevisionConflict)
 		case errors.Is(err, site.ErrInvalidMaintenance):
-			writeJSON(w, http.StatusUnprocessableEntity, map[string]string{"error": err.Error()})
+			s.writeAPIError(w, r, http.StatusUnprocessableEntity, apiCodeValidationFailed)
 		default:
-			s.internalError(w, err)
+			s.internalAPIError(w, r, err)
 		}
 		return
 	}

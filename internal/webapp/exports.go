@@ -36,39 +36,39 @@ func (s *Server) generateExport(w http.ResponseWriter, r *http.Request, actorID,
 	generate func(string) (int, error)) {
 	reservation, err := s.admitResource(r.Context(), kind+" export", s.config.WorkDir, 64<<20, 16)
 	if err != nil {
-		s.writeResourceError(w, err)
+		s.writeResourceError(w, r, err)
 		return
 	}
 	defer reservation.Release()
 	if err := os.MkdirAll(s.config.WorkDir, 0o700); err != nil {
-		s.internalError(w, err)
+		s.internalAPIError(w, r, err)
 		return
 	}
 	directory, err := os.MkdirTemp(s.config.WorkDir, "export-")
 	if err != nil {
-		s.internalError(w, err)
+		s.internalAPIError(w, r, err)
 		return
 	}
 	defer os.RemoveAll(directory)
 	path := filepath.Join(directory, filename)
 	rows, err := generate(path)
 	if err != nil {
-		s.writeCatalogError(w, err)
+		s.writeCatalogError(w, r, err)
 		return
 	}
 	if err := s.store.RecordExportAudit(r.Context(), actorID, kind, format, rows); err != nil {
-		s.writeCatalogError(w, err)
+		s.writeCatalogError(w, r, err)
 		return
 	}
 	file, err := os.Open(path)
 	if err != nil {
-		s.internalError(w, err)
+		s.internalAPIError(w, r, err)
 		return
 	}
 	defer file.Close()
 	info, err := file.Stat()
 	if err != nil {
-		s.internalError(w, err)
+		s.internalAPIError(w, r, err)
 		return
 	}
 	w.Header().Set("Content-Type", contentType)

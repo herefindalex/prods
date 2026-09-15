@@ -29,7 +29,7 @@ func (s *Server) adminJobs(w http.ResponseWriter, r *http.Request) {
 	if raw := r.URL.Query().Get("limit"); raw != "" {
 		parsed, err := strconv.Atoi(raw)
 		if err != nil || parsed < 1 || parsed > 100 {
-			http.Error(w, "limit must be between 1 and 100", http.StatusBadRequest)
+			s.writeAPIError(w, r, http.StatusBadRequest, apiCodeValidationFailed)
 			return
 		}
 		limit = parsed
@@ -42,7 +42,7 @@ func (s *Server) adminJobs(w http.ResponseWriter, r *http.Request) {
 		Search:      current.can(identity.CapabilitySystemManage),
 	}, limit)
 	if err != nil {
-		s.internalError(w, err)
+		s.internalAPIError(w, r, err)
 		return
 	}
 	writeJSON(w, http.StatusOK, adminJobsResponse{
@@ -61,18 +61,18 @@ func (s *Server) adminRetryPublicationJob(w http.ResponseWriter, r *http.Request
 		return
 	}
 	if s.publisher == nil {
-		http.Error(w, "public architecture unavailable", http.StatusServiceUnavailable)
+		s.writeAPIError(w, r, http.StatusServiceUnavailable, apiCodeServiceUnavailable)
 		return
 	}
 	job, err := s.store.RetryPublicationJob(r.Context(), current.UserID, r.PathValue("id"))
 	if err != nil {
 		switch {
 		case errors.Is(err, sqlite.ErrJobNotRetryable):
-			writeJSON(w, http.StatusConflict, map[string]string{"error": err.Error()})
+			s.writeAPIError(w, r, http.StatusConflict, apiCodeJobNotRetryable)
 		case errors.Is(err, sqlite.ErrPermissionDenied):
-			http.Error(w, "forbidden", http.StatusForbidden)
+			s.writeAPIError(w, r, http.StatusForbidden, apiCodeForbidden)
 		default:
-			s.internalError(w, err)
+			s.internalAPIError(w, r, err)
 		}
 		return
 	}

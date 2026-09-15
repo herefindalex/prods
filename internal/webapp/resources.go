@@ -30,14 +30,12 @@ func (s *Server) admitResource(ctx context.Context, operation, path string, requ
 	return reservation, err
 }
 
-func (s *Server) writeResourceError(w http.ResponseWriter, err error) {
+func (s *Server) writeResourceError(w http.ResponseWriter, r *http.Request, err error) {
 	if errors.Is(err, platform.ErrResourceCritical) || errors.Is(err, platform.ErrResourceUnavailable) {
-		writeJSON(w, http.StatusInsufficientStorage, map[string]string{
-			"error": "the required storage resource is unavailable; no data was accepted",
-		})
+		s.writeAPIError(w, r, http.StatusInsufficientStorage, apiCodeResourceUnavailable)
 		return
 	}
-	s.internalError(w, err)
+	s.internalAPIError(w, r, err)
 }
 
 type systemResourceHealth struct {

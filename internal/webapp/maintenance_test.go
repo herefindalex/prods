@@ -57,7 +57,7 @@ func TestMaintenanceAPIPreservesCategoryAndDisabledReferenceContracts(t *testing
 
 	cycle := postAdminJSON(t, client, server.URL+"/admin/api/categories/cat_power/move", csrf,
 		`{"expected_revision":1,"parent_id":"cat_regulators"}`)
-	if body := responseBody(t, cycle); cycle.StatusCode != http.StatusConflict || !strings.Contains(body, "cycle") {
+	if body := responseBody(t, cycle); cycle.StatusCode != http.StatusConflict || !strings.Contains(body, `"code":"category_cycle"`) {
 		t.Fatalf("category cycle status=%d body=%s", cycle.StatusCode, body)
 	}
 
@@ -163,7 +163,7 @@ func TestMaintenanceAPIPreservesCategoryAndDisabledReferenceContracts(t *testing
 
 	newReference := postAdminJSON(t, client, server.URL+"/admin/api/products", csrf,
 		`{"part_number":"ACME-2","manufacturer_id":"dic_acme","category_id":"cat_regulators","status":"hidden"}`)
-	if body := responseBody(t, newReference); newReference.StatusCode != http.StatusUnprocessableEntity || !strings.Contains(body, "disabled") {
+	if body := responseBody(t, newReference); newReference.StatusCode != http.StatusUnprocessableEntity || !strings.Contains(body, `"code":"disabled_reference"`) {
 		t.Fatalf("disabled new reference status=%d body=%s", newReference.StatusCode, body)
 	}
 
