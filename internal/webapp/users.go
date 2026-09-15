@@ -161,9 +161,64 @@ func (s *Server) adminDisableUser(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNoContent)
 }
 
+func (s *Server) adminChangeUserRole(w http.ResponseWriter, r *http.Request) {
+	current, ok := s.requireCapability(w, r, identity.CapabilityUsersManage, true)
+	if !ok {
+		return
+	}
+	var request struct {
+		RoleID string `json:"role_id"`
+	}
+	if err := decodeJSON(r.Body, &request); err != nil {
+		http.Error(w, "invalid JSON", http.StatusBadRequest)
+		return
+	}
+	user, err := s.store.ChangeUserRole(r.Context(), current.UserID, r.PathValue("id"), request.RoleID)
+	if err != nil {
+		s.writeUserError(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, user)
+}
+
+func (s *Server) adminIssueSetPasswordGrant(w http.ResponseWriter, r *http.Request) {
+	current, ok := s.requireCapability(w, r, identity.CapabilityUsersManage, true)
+	if !ok {
+		return
+	}
+	grant, err := s.store.IssueSetPasswordGrant(r.Context(), current.UserID, r.PathValue("id"), 24*time.Hour)
+	if err != nil {
+		s.writeUserError(w, err)
+		return
+	}
+	s.writeSetPasswordGrant(w, http.StatusCreated, grant)
+}
+
+func (s *Server) adminReactivateUser(w http.ResponseWriter, r *http.Request) {
+	current, ok := s.requireCapability(w, r, identity.CapabilityUsersManage, true)
+	if !ok {
+		return
+	}
+	grant, err := s.store.ReactivateUser(r.Context(), current.UserID, r.PathValue("id"), 24*time.Hour)
+	if err != nil {
+		s.writeUserError(w, err)
+		return
+	}
+	s.writeSetPasswordGrant(w, http.StatusOK, grant)
+}
+
+func (s *Server) writeSetPasswordGrant(w http.ResponseWriter, status int, grant identity.SetPasswordGrant) {
+	base := strings.TrimRight(s.config.BaseURL, "/")
+	writeJSON(w, status, struct {
+		User           identity.User `json:"user"`
+		SetPasswordURL string        `json:"set_password_url"`
+		ExpiresAt      time.Time     `json:"expires_at"`
+	}{grant.User, base + "/set-password?token=" + url.QueryEscape(grant.Token), grant.ExpiresAt})
+}
+
 func (s *Server) writeUserError(w http.ResponseWriter, err error) {
 	switch {
-	case errors.Is(err, sqlite.ErrLastActiveOwner), errors.Is(err, sqlite.ErrInvalidGrant), sqlite.IsUniqueViolation(err):
+	case errors.Is(err, sqlite.ErrLastActiveOwner), errors.Is(err, sqlite.ErrInvalidGrant), errors.Is(err, sqlite.ErrUserState), sqlite.IsUniqueViolation(err):
 		writeJSON(w, http.StatusConflict, map[string]string{"error": err.Error()})
 	case errors.Is(err, sqlite.ErrInvalidCredentials):
 		writeJSON(w, http.StatusUnprocessableEntity, map[string]string{"error": err.Error()})

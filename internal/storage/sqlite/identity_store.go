@@ -13,6 +13,7 @@ import (
 var (
 	ErrLastActiveOwner = errors.New("at least one active Owner with a usable password must remain")
 	ErrInvalidGrant    = errors.New("set-password grant is invalid, expired, or already used")
+	ErrUserState       = errors.New("user state does not allow this operation")
 )
 
 func (s *Store) CreateRole(ctx context.Context, actorID string, role identity.Role) (identity.Role, error) {
@@ -223,6 +224,180 @@ func (s *Store) DisableUser(ctx context.Context, actorID, userID string) error {
 		}
 		return appendAudit(ctx, tx, actorID, "user.disabled", "user", userID, map[string]any{"previous_role_id": roleID})
 	})
+}
+
+func (s *Store) ChangeUserRole(ctx context.Context, actorID, userID, roleID string) (identity.User, error) {
+	roleID = strings.TrimSpace(roleID)
+	if roleID == "" {
+		return identity.User{}, ErrInvalidCredentials
+	}
+
+	var user identity.User
+	err := s.withWriteTx(ctx, func(tx *sql.Tx) error {
+		if err := requireActorCapability(ctx, tx, actorID, identity.CapabilityUsersManage); err != nil {
+			return err
+		}
+		var passwordHash string
+		if err := tx.QueryRowContext(ctx, `SELECT id,email,display_name,role,status,COALESCE(password_hash,''),auth_revision
+			FROM users WHERE id=?`, userID).Scan(
+			&user.ID, &user.Email, &user.DisplayName, &user.Role, &user.Status, &passwordHash, &user.AuthRevision,
+		); err != nil {
+			if errors.Is(err, sql.ErrNoRows) {
+				return ErrInvalidCredentials
+			}
+			return err
+		}
+		var roleActive int
+		if err := tx.QueryRowContext(ctx, `SELECT 1 FROM roles WHERE id=? AND status='active'`, roleID).Scan(&roleActive); err != nil {
+			return ErrPermissionDenied
+		}
+		if user.Role == roleID {
+			return nil
+		}
+		if user.Role == identity.RoleOwner && roleID != identity.RoleOwner && user.Status == identity.UserActive && passwordHash != "" {
+			var otherOwners int
+			if err := tx.QueryRowContext(ctx, `SELECT COUNT(*) FROM users
+				WHERE id<>? AND role=? AND status='active' AND password_hash IS NOT NULL`, userID, identity.RoleOwner).Scan(&otherOwners); err != nil {
+				return err
+			}
+			if otherOwners == 0 {
+				return ErrLastActiveOwner
+			}
+		}
+
+		previousRoleID := user.Role
+		now := time.Now().UTC().Format(time.RFC3339Nano)
+		result, err := tx.ExecContext(ctx, `UPDATE users SET role=?,auth_revision=auth_revision+1,updated_at=?
+			WHERE id=? AND role=? AND auth_revision=?`, roleID, now, user.ID, previousRoleID, user.AuthRevision)
+		if err != nil {
+			return err
+		}
+		if changed, _ := result.RowsAffected(); changed != 1 {
+			return ErrInvalidCredentials
+		}
+		if _, err := tx.ExecContext(ctx, `UPDATE admin_sessions SET revoked_at=? WHERE user_id=? AND revoked_at IS NULL`, now, user.ID); err != nil {
+			return err
+		}
+		if _, err := tx.ExecContext(ctx, `UPDATE set_password_tokens SET used_at=? WHERE user_id=? AND used_at IS NULL`, now, user.ID); err != nil {
+			return err
+		}
+		user.Role = roleID
+		user.AuthRevision++
+		return appendAudit(ctx, tx, actorID, "user.role_changed", "user", user.ID, map[string]any{
+			"previous_role_id": previousRoleID,
+			"role_id":          roleID,
+			"auth_revision":    user.AuthRevision,
+		})
+	})
+	user.PasswordHash = ""
+	return user, err
+}
+
+func (s *Store) IssueSetPasswordGrant(ctx context.Context, actorID, userID string, ttl time.Duration) (identity.SetPasswordGrant, error) {
+	if ttl <= 0 {
+		ttl = 24 * time.Hour
+	}
+	rawToken, err := identity.NewToken(32)
+	if err != nil {
+		return identity.SetPasswordGrant{}, err
+	}
+	now := time.Now().UTC()
+	expiresAt := now.Add(ttl)
+	var user identity.User
+	err = s.withWriteTx(ctx, func(tx *sql.Tx) error {
+		if err := requireActorCapability(ctx, tx, actorID, identity.CapabilityUsersManage); err != nil {
+			return err
+		}
+		if err := tx.QueryRowContext(ctx, `SELECT id,email,display_name,role,status,auth_revision FROM users WHERE id=?`, userID).Scan(
+			&user.ID, &user.Email, &user.DisplayName, &user.Role, &user.Status, &user.AuthRevision,
+		); err != nil {
+			if errors.Is(err, sql.ErrNoRows) {
+				return ErrInvalidCredentials
+			}
+			return err
+		}
+		if user.Status != identity.UserActive {
+			return ErrUserState
+		}
+		stamp := now.Format(time.RFC3339Nano)
+		if _, err := tx.ExecContext(ctx, `UPDATE set_password_tokens SET used_at=? WHERE user_id=? AND used_at IS NULL`, stamp, user.ID); err != nil {
+			return err
+		}
+		if _, err := tx.ExecContext(ctx, `INSERT INTO set_password_tokens(
+			token_digest,user_id,auth_revision,expires_at,used_at,created_by,created_at
+		) VALUES(?,?,?,?,NULL,?,?)`, identity.TokenDigest(rawToken), user.ID, user.AuthRevision,
+			expiresAt.Format(time.RFC3339Nano), actorID, stamp); err != nil {
+			return err
+		}
+		return appendAudit(ctx, tx, actorID, "user.set_password_grant_created", "user", user.ID, map[string]any{
+			"auth_revision": user.AuthRevision,
+			"expires_at":    expiresAt.Format(time.RFC3339Nano),
+		})
+	})
+	return identity.SetPasswordGrant{User: user, Token: rawToken, ExpiresAt: expiresAt}, err
+}
+
+func (s *Store) ReactivateUser(ctx context.Context, actorID, userID string, ttl time.Duration) (identity.SetPasswordGrant, error) {
+	if ttl <= 0 {
+		ttl = 24 * time.Hour
+	}
+	rawToken, err := identity.NewToken(32)
+	if err != nil {
+		return identity.SetPasswordGrant{}, err
+	}
+	now := time.Now().UTC()
+	expiresAt := now.Add(ttl)
+	var user identity.User
+	err = s.withWriteTx(ctx, func(tx *sql.Tx) error {
+		if err := requireActorCapability(ctx, tx, actorID, identity.CapabilityUsersManage); err != nil {
+			return err
+		}
+		if err := tx.QueryRowContext(ctx, `SELECT id,email,display_name,role,status,auth_revision FROM users WHERE id=?`, userID).Scan(
+			&user.ID, &user.Email, &user.DisplayName, &user.Role, &user.Status, &user.AuthRevision,
+		); err != nil {
+			if errors.Is(err, sql.ErrNoRows) {
+				return ErrInvalidCredentials
+			}
+			return err
+		}
+		if user.Status != identity.UserDisabled {
+			return ErrUserState
+		}
+		var roleActive int
+		if err := tx.QueryRowContext(ctx, `SELECT 1 FROM roles WHERE id=? AND status='active'`, user.Role).Scan(&roleActive); err != nil {
+			return ErrPermissionDenied
+		}
+
+		stamp := now.Format(time.RFC3339Nano)
+		result, err := tx.ExecContext(ctx, `UPDATE users SET status='active',password_hash=NULL,auth_revision=auth_revision+1,updated_at=?
+			WHERE id=? AND status='disabled' AND auth_revision=?`, stamp, user.ID, user.AuthRevision)
+		if err != nil {
+			return err
+		}
+		if changed, _ := result.RowsAffected(); changed != 1 {
+			return ErrUserState
+		}
+		if _, err := tx.ExecContext(ctx, `UPDATE admin_sessions SET revoked_at=? WHERE user_id=? AND revoked_at IS NULL`, stamp, user.ID); err != nil {
+			return err
+		}
+		if _, err := tx.ExecContext(ctx, `UPDATE set_password_tokens SET used_at=? WHERE user_id=? AND used_at IS NULL`, stamp, user.ID); err != nil {
+			return err
+		}
+		user.Status = identity.UserActive
+		user.AuthRevision++
+		if _, err := tx.ExecContext(ctx, `INSERT INTO set_password_tokens(
+			token_digest,user_id,auth_revision,expires_at,used_at,created_by,created_at
+		) VALUES(?,?,?,?,NULL,?,?)`, identity.TokenDigest(rawToken), user.ID, user.AuthRevision,
+			expiresAt.Format(time.RFC3339Nano), actorID, stamp); err != nil {
+			return err
+		}
+		return appendAudit(ctx, tx, actorID, "user.reactivated", "user", user.ID, map[string]any{
+			"role_id":       user.Role,
+			"auth_revision": user.AuthRevision,
+			"expires_at":    expiresAt.Format(time.RFC3339Nano),
+		})
+	})
+	return identity.SetPasswordGrant{User: user, Token: rawToken, ExpiresAt: expiresAt}, err
 }
 
 func (s *Store) ListRoles(ctx context.Context) ([]identity.Role, error) {

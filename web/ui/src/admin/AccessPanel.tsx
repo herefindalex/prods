@@ -1,16 +1,19 @@
 import { useEffect, useState } from "react";
-import { Alert, Button, Card, Form, Input, Popconfirm, Select, Space, Table, Tag, Typography } from "antd";
-import { api, postJSON } from "./api";
+import { Alert, Button, Card, Form, Input, Modal, Popconfirm, Select, Space, Table, Tag, Typography } from "antd";
+import { api, postJSON, putJSON } from "./api";
 import { capabilities, type Capability, type Role, type User } from "./types";
 
 type Feedback = { onError: (error: unknown) => void; onMessage: (message: string) => void };
+type GrantResponse = { user: User; set_password_url: string; expires_at: string };
 
 export function AccessPanel({ onError, onMessage }: Feedback) {
   const [roles, setRoles] = useState<Role[]>([]);
-  const [users, setUsers] = useState<User[]>([]);
-  const [setPasswordURL, setSetPasswordURL] = useState("");
-  const [roleForm] = Form.useForm<{ name: string; capabilities: Capability[] }>();
-  const [userForm] = Form.useForm<{ email: string; display_name: string; role_id: string }>();
+	const [users, setUsers] = useState<User[]>([]);
+	const [setPasswordURL, setSetPasswordURL] = useState("");
+	const [roleUser, setRoleUser] = useState<User>();
+	const [roleForm] = Form.useForm<{ name: string; capabilities: Capability[] }>();
+	const [userForm] = Form.useForm<{ email: string; display_name: string; role_id: string }>();
+	const [roleEditForm] = Form.useForm<{ role_id: string }>();
 
   const load = async () => {
     try {
@@ -39,7 +42,7 @@ export function AccessPanel({ onError, onMessage }: Feedback) {
 
   const createUser = async (values: { email: string; display_name: string; role_id: string }) => {
     try {
-      const response = await postJSON<{ user: User; set_password_url: string; expires_at: string }>("/admin/api/users", values);
+			const response = await postJSON<GrantResponse>("/admin/api/users", values);
       setSetPasswordURL(response.set_password_url);
       userForm.resetFields();
       onMessage(`Created ${response.user.email}. Copy the one-time link now.`);
@@ -47,7 +50,48 @@ export function AccessPanel({ onError, onMessage }: Feedback) {
     } catch (error) {
       onError(error);
     }
-  };
+	};
+
+	const beginRoleChange = (user: User) => {
+		setRoleUser(user);
+		roleEditForm.setFieldsValue({ role_id: user.role_id });
+	};
+
+	const changeRole = async (values: { role_id: string }) => {
+		if (!roleUser) return;
+		try {
+			const updated = await putJSON<User>(`/admin/api/users/${roleUser.id}/role`, values);
+			setRoleUser(undefined);
+			roleEditForm.resetFields();
+			onMessage(`Changed ${updated.email} to ${roles.find((role) => role.id === updated.role_id)?.name ?? updated.role_id}. Existing sessions and unused set-password links were revoked.`);
+			await load();
+		} catch (error) {
+			onError(error);
+			await load();
+		}
+	};
+
+	const issueSetPasswordGrant = async (user: User) => {
+		try {
+			const response = await postJSON<GrantResponse>(`/admin/api/users/${user.id}/set-password-grant`, {});
+			setSetPasswordURL(response.set_password_url);
+			onMessage(`Generated a new one-time set-password link for ${response.user.email}. Earlier unused links are invalid.`);
+		} catch (error) {
+			onError(error);
+		}
+	};
+
+	const reactivateUser = async (user: User) => {
+		try {
+			const response = await postJSON<GrantResponse>(`/admin/api/users/${user.id}/reactivate`, {});
+			setSetPasswordURL(response.set_password_url);
+			onMessage(`Reactivated ${response.user.email}. They must use the new one-time link before signing in.`);
+			await load();
+		} catch (error) {
+			onError(error);
+			await load();
+		}
+	};
 
   const disableUser = async (user: User) => {
     try {
@@ -115,17 +159,61 @@ export function AccessPanel({ onError, onMessage }: Feedback) {
             { title: "Role", render: (_, user) => roles.find((role) => role.id === user.role_id)?.name ?? user.role_id },
             { title: "Status", render: (_, user) => <Tag color={user.status === "active" ? "green" : "default"}>{user.status}</Tag> },
             { title: "Auth revision", dataIndex: "auth_revision" },
-            {
-              title: "Actions",
-              render: (_, user) => user.status !== "active" ? null : (
-                <Popconfirm title="Disable this user and revoke all sessions and grants?" onConfirm={() => void disableUser(user)}>
-                  <Button size="small" danger>Disable</Button>
-                </Popconfirm>
-              ),
-            },
+			{
+			  title: "Actions",
+			  render: (_, user) => (
+				<Space wrap>
+				  <Button size="small" onClick={() => beginRoleChange(user)}>Change role</Button>
+				  {user.status === "active" ? (
+					<>
+					  <Popconfirm
+						title="Generate a new set-password link?"
+						description="Every earlier unused set-password link for this user will become invalid."
+						onConfirm={() => void issueSetPasswordGrant(user)}
+					  >
+						<Button size="small">New password link</Button>
+					  </Popconfirm>
+					  <Popconfirm title="Disable this user and revoke all sessions and grants?" onConfirm={() => void disableUser(user)}>
+						<Button size="small" danger>Disable</Button>
+					  </Popconfirm>
+					</>
+				  ) : (
+					<Popconfirm
+					  title="Reactivate this user?"
+					  description="A new one-time set-password link will be required; the old password stays unusable."
+					  onConfirm={() => void reactivateUser(user)}
+					>
+					  <Button size="small" type="primary">Reactivate</Button>
+					</Popconfirm>
+				  )}
+				</Space>
+			  ),
+			},
           ]}
-        />
-      </Card>
-    </Space>
+		/>
+	  </Card>
+
+	  <Modal
+		open={roleUser !== undefined}
+		title={roleUser ? `Change role for ${roleUser.email}` : "Change role"}
+		okText="Change role"
+		onOk={() => roleEditForm.submit()}
+		onCancel={() => { setRoleUser(undefined); roleEditForm.resetFields(); }}
+		destroyOnHidden
+	  >
+		<Alert
+		  className="bottom-gap"
+		  type="warning"
+		  showIcon
+		  message="Access changes immediately"
+		  description="Changing a role revokes this user's current sessions and unused set-password links. The last usable Active Owner cannot be downgraded."
+		/>
+		<Form form={roleEditForm} layout="vertical" onFinish={(values) => void changeRole(values)}>
+		  <Form.Item name="role_id" label="Role" rules={[{ required: true }]}>
+			<Select options={roles.filter((role) => role.status === "active").map((role) => ({ value: role.id, label: role.name }))} />
+		  </Form.Item>
+		</Form>
+	  </Modal>
+	</Space>
   );
 }
