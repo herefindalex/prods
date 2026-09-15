@@ -20,7 +20,11 @@ import (
 	"prods/internal/site"
 )
 
-const maxPublicCopyExchangeBytes = 8 << 20
+const (
+	maxPublicCopyExchangeBytes    = 8 << 20
+	maxPublicCopyExchangeUnzip    = 64 << 20
+	maxPublicCopyExchangeXMLUnzip = 32 << 20
+)
 
 type publicCopyExchangeRow struct {
 	Line              int    `json:"line"`
@@ -415,7 +419,11 @@ func parsePublicCopyCSV(data []byte) ([]publicCopyExchangeRow, error) {
 }
 
 func parsePublicCopyXLSX(data []byte) ([]publicCopyExchangeRow, error) {
-	workbook, err := excelize.OpenReader(bytes.NewReader(data), excelize.Options{RawCellValue: true})
+	workbook, err := excelize.OpenReader(bytes.NewReader(data), excelize.Options{
+		RawCellValue:      true,
+		UnzipSizeLimit:    maxPublicCopyExchangeUnzip,
+		UnzipXMLSizeLimit: maxPublicCopyExchangeXMLUnzip,
+	})
 	if err != nil {
 		return nil, err
 	}

@@ -127,6 +127,40 @@ func TestPublicCopyCSVXLSXExchangeValidatesPreviewsAndCommitsWorkingOnly(t *test
 		t.Fatalf("duplicate exchange preview=%+v", duplicate)
 	}
 
+	invalidCSV := fmt.Sprintf("Key,Locale,Value,Action,Definition Version,Official Bundle Version\n"+
+		"unknown.key,en-US,Value,upsert,1,%s\n"+
+		"catalog.title,xx-XX,Value,upsert,1,%s\n"+
+		"catalog.title,fr-FR,Value,upsert,1,%s\n"+
+		"catalog.title,en-US,<b>unsafe</b>,upsert,999,old-bundle\n"+
+		"rfq.title,en-US,Value,unsupported,1,%s\n"+
+		"rfq.title,de-DE,Must be blank,reset,1,%s\n",
+		catalogValue.OfficialBundle, catalogValue.OfficialBundle, catalogValue.OfficialBundle,
+		catalogValue.OfficialBundle, catalogValue.OfficialBundle)
+	invalidResponse := uploadPublicCopyExchange(t, client, server.URL, csrf, "invalid.csv", []byte(invalidCSV))
+	if invalidResponse.StatusCode != http.StatusOK {
+		t.Fatalf("invalid preview status=%d body=%s", invalidResponse.StatusCode, responseBody(t, invalidResponse))
+	}
+	var invalid publicCopyExchangePreview
+	decodeResponseJSON(t, invalidResponse, &invalid)
+	wantedIssueCodes := map[string]bool{
+		"unknown_key": false, "unknown_locale": false, "disabled_locale": false,
+		"resource_version_mismatch": false, "invalid_value": false,
+		"invalid_action": false, "reset_value_present": false,
+	}
+	for _, issue := range invalid.Issues {
+		if _, tracked := wantedIssueCodes[issue.Code]; tracked {
+			wantedIssueCodes[issue.Code] = true
+		}
+	}
+	if invalid.FullyValidated {
+		t.Fatal("multi-error exchange unexpectedly validated")
+	}
+	for code, found := range wantedIssueCodes {
+		if !found {
+			t.Fatalf("aggregated exchange issues missing %q: %+v", code, invalid.Issues)
+		}
+	}
+
 	stalePreviewResponse := uploadPublicCopyExchange(t, client, server.URL, csrf, "stale.csv", []byte(validCSV))
 	var stalePreview publicCopyExchangePreview
 	decodeResponseJSON(t, stalePreviewResponse, &stalePreview)
