@@ -28,7 +28,10 @@ import (
 	"prods/internal/webapp"
 )
 
-var applicationVersion = "dev"
+var (
+	applicationVersion = "dev"
+	sourceRevision     = "unknown"
+)
 
 func main() {
 	serviceProcess, detectionErr := platform.IsServiceProcess()
@@ -69,7 +72,7 @@ func runWithStop(stop <-chan struct{}) (returnErr error) {
 		return err
 	}
 	if options.Version {
-		fmt.Printf("Prods %s\nGo %s\n", applicationVersion, runtime.Version())
+		fmt.Printf("Prods %s\nSource %s\nGo %s\n", applicationVersion, sourceRevision, runtime.Version())
 		return nil
 	}
 	if options.UninstallService {

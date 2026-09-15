@@ -15,8 +15,17 @@ repo_root=$(CDPATH= cd -- "$script_dir/.." && pwd)
 required_go=go1.27.1
 actual_go=$(go env GOVERSION)
 if [ "$actual_go" != "$required_go" ]; then
-  echo "release build requires $required_go; found $actual_go" >&2
-  exit 1
+	echo "release build requires $required_go; found $actual_go" >&2
+	exit 1
+fi
+
+if ! source_revision=$(git -C "$repo_root" rev-parse --verify HEAD 2>/dev/null); then
+	echo "release build requires a git source revision" >&2
+	exit 1
+fi
+if [ -n "$(git -C "$repo_root" status --porcelain --untracked-files=normal)" ]; then
+	echo "release build requires a clean tracked working tree" >&2
+	exit 1
 fi
 
 dist_root="$repo_root/dist"
@@ -38,15 +47,24 @@ trap cleanup EXIT HUP INT TERM
 
 cd "$repo_root"
 pnpm --dir web/ui build
+if [ -n "$(git status --porcelain --untracked-files=normal)" ]; then
+	echo "web build changed tracked files; commit generated assets before a release build" >&2
+	exit 1
+fi
 
-ldflags="-s -w -X main.applicationVersion=$version"
+ldflags="-s -w -X main.applicationVersion=$version -X main.sourceRevision=$source_revision"
 CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -trimpath -ldflags "$ldflags" -o "$staging/prods-linux-amd64" ./cmd/prods
 CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build -trimpath -ldflags "$ldflags" -o "$staging/prods-windows-amd64.exe" ./cmd/prods
 cp LICENSE README.md THIRD_PARTY_NOTICES.md "$staging/"
+{
+	printf 'Version: %s\n' "$version"
+	printf 'Source revision: %s\n' "$source_revision"
+	printf 'Go: %s\n' "$actual_go"
+} > "$staging/BUILD_INFO.txt"
 
 (
-  cd "$staging"
-  sha256sum LICENSE README.md THIRD_PARTY_NOTICES.md prods-linux-amd64 prods-windows-amd64.exe > SHA256SUMS
+	cd "$staging"
+	sha256sum BUILD_INFO.txt LICENSE README.md THIRD_PARTY_NOTICES.md prods-linux-amd64 prods-windows-amd64.exe > SHA256SUMS
 )
 mv "$staging" "$destination"
 trap - EXIT HUP INT TERM

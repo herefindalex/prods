@@ -31,7 +31,7 @@ Important boundaries:
 
 ## Run a binary
 
-Download the binary for the target platform together with `LICENSE`, `THIRD_PARTY_NOTICES.md`, and `SHA256SUMS`.
+Download the binary for the target platform together with `BUILD_INFO.txt`, `LICENSE`, `THIRD_PARTY_NOTICES.md`, and `SHA256SUMS`.
 
 Linux:
 
@@ -153,7 +153,7 @@ The output is written under `dist/<version>/`. A Windows cross-build proves comp
 
 ## License and contributions
 
-Prods Community is licensed under the [GNU Affero General Public License v3.0 only](LICENSE), identified as `AGPL-3.0-only`. Network users are entitled to the corresponding source for the running version under that license. Release artifacts must remain associated with the exact source revision from which they were built.
+Prods Community is licensed under the [GNU Affero General Public License v3.0 only](LICENSE), identified as `AGPL-3.0-only`. Network users are entitled to the corresponding source for the running version under that license. Release builds require a clean tracked working tree. `BUILD_INFO.txt` and `prods --version` record the exact source revision from which the artifacts were built.
 
 Third-party components retain their own licenses and notices; see [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md). Product data, images, datasheets, RFQs, backups, and other customer content are not automatically relicensed as Prods source code.
 
