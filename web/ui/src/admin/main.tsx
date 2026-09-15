@@ -11,6 +11,7 @@ import { CatalogPanel } from "./CatalogPanel";
 import { HealthPanel } from "./HealthPanel";
 import { ImportPanel } from "./ImportPanel";
 import { JobsPanel } from "./JobsPanel";
+import { LoginPage } from "./LoginPage";
 import { PublicCopyPanel } from "./PublicCopyPanel";
 import { ProductBulkPanel } from "./ProductBulkPanel";
 import { SettingsPanel } from "./SettingsPanel";
@@ -263,3 +264,5 @@ function AdminApp() {
 
 const root = document.getElementById("admin-root");
 if (root) createRoot(root).render(<AdminApp />);
+const loginRoot = document.getElementById("admin-login-root");
+if (loginRoot) createRoot(loginRoot).render(<LoginPage root={loginRoot} />);

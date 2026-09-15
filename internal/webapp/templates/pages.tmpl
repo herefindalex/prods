@@ -48,13 +48,10 @@
 {{define "receipt"}}{{template "public-header" .}}<h1>{{.Text.RFQReceived}}</h1><p>{{.Receipt.Message}}</p><p>{{.Text.Reference}}: <strong>{{.Receipt.RFQID}}</strong></p>
 {{if .Receipt.Replay}}<p>{{.Text.ReplayNotice}}</p>{{end}}{{template "public-footer" .}}{{end}}
 
-{{define "login"}}{{template "header" .}}<h1>{{.Text.AdminTitle}}</h1>{{if .Error}}<p class="error">{{.Error}}</p>{{end}}
-<form method="post" action="{{.ActionURL}}">{{if .POC}}
-<label>{{.Text.TemporaryToken}} <input name="token" type="password" required></label>
-{{else}}<label>{{.Text.Email}} <input name="email" type="email" value="{{.Email}}" autocomplete="username" required></label>
-<label>{{.Text.Password}} <input name="password" type="password" autocomplete="current-password" required></label>{{end}}
-<button type="submit">{{.Text.SignIn}}</button></form>
-{{if .POC}}<p>{{.Text.POCHelp}}</p>{{end}}{{template "footer" .}}{{end}}
+{{define "login"}}<!doctype html><html lang="{{.Language}}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>{{.Title}}</title><link rel="stylesheet" href="/static/admin/style.css"></head><body>
+<div id="admin-login-root" data-language="{{.Language}}" data-action="{{.ActionURL}}" data-title="{{.Text.AdminTitle}}" data-email-label="{{.Text.Email}}" data-password-label="{{.Text.Password}}" data-token-label="{{.Text.TemporaryToken}}" data-sign-in="{{.Text.SignIn}}" data-catalog="{{.Text.Catalog}}" data-request-part="{{.Text.RequestPart}}" data-footer="{{.Text.Footer}}" data-poc-help="{{.Text.POCHelp}}" data-email="{{.Email}}" data-error="{{.Error}}" data-poc="{{if .POC}}true{{else}}false{{end}}"><noscript>JavaScript is required for Prods Admin.</noscript></div>
+<script type="module" src="/static/admin/admin.js"></script></body></html>{{end}}
 
 {{define "set-password"}}{{template "header" .}}<h1>{{.Text.SetPasswordTitle}}</h1>
 {{if .Success}}<p>{{.Text.PasswordSaved}} <strong>{{.Email}}</strong>. {{.Text.CanNow}} <a href="{{.LoginURL}}">{{.Text.SignInLink}}</a>.</p>

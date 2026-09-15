@@ -50,7 +50,10 @@ func TestLoginAndSetPasswordRespectConfiguredInterfaceLanguage(t *testing.T) {
 
 	login := authPageRequest(app, http.MethodGet, "/admin/login?lang=zh-TW", nil, "")
 	if login.Code != http.StatusOK || !strings.Contains(login.Body.String(), "Prods 管理後台") ||
-		!strings.Contains(login.Body.String(), "電子郵件") || !strings.Contains(login.Body.String(), "/admin/login?lang=zh-TW") {
+		!strings.Contains(login.Body.String(), "data-email-label=\"電子郵件\"") ||
+		!strings.Contains(login.Body.String(), "id=\"admin-login-root\"") ||
+		!strings.Contains(login.Body.String(), "/static/admin/admin.js") ||
+		!strings.Contains(login.Body.String(), "/admin/login?lang=zh-TW") {
 		t.Fatalf("localized login status=%d body=%s", login.Code, login.Body.String())
 	}
 	negotiated := authPageRequest(app, http.MethodGet, "/admin/login", nil, "zh-TW, en;q=0.8")
