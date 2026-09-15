@@ -35,13 +35,16 @@ const (
 )
 
 type Category struct {
-	ID        string      `json:"id"`
-	ParentID  string      `json:"parent_id,omitempty"`
-	SystemKey string      `json:"system_key,omitempty"`
-	Name      string      `json:"name"`
-	Slug      string      `json:"slug"`
-	Status    EntryStatus `json:"status"`
-	Revision  int64       `json:"revision"`
+	ID            string            `json:"id"`
+	ParentID      string            `json:"parent_id,omitempty"`
+	SystemKey     string            `json:"system_key,omitempty"`
+	Name          string            `json:"name"`
+	Description   string            `json:"description,omitempty"`
+	SourceLocale  string            `json:"source_locale,omitempty"`
+	SourceLocales map[string]string `json:"source_locales,omitempty"`
+	Slug          string            `json:"slug"`
+	Status        EntryStatus       `json:"status"`
+	Revision      int64             `json:"revision"`
 }
 
 func (c *Category) Prepare() error {
@@ -49,6 +52,8 @@ func (c *Category) Prepare() error {
 	c.ParentID = strings.TrimSpace(c.ParentID)
 	c.SystemKey = strings.TrimSpace(c.SystemKey)
 	c.Name = strings.TrimSpace(c.Name)
+	c.Description = strings.TrimSpace(c.Description)
+	c.SourceLocale = strings.TrimSpace(c.SourceLocale)
 	c.Slug = strings.TrimSpace(c.Slug)
 	if c.ID == "" || c.Name == "" || c.Slug == "" || !ValidSlug(c.Slug) {
 		return ErrInvalidCategory
@@ -66,12 +71,34 @@ func (c *Category) Prepare() error {
 }
 
 type DictionaryEntry struct {
-	ID       string         `json:"id"`
-	Kind     DictionaryKind `json:"kind"`
-	Name     string         `json:"name"`
-	Slug     string         `json:"slug,omitempty"`
-	Status   EntryStatus    `json:"status"`
-	Revision int64          `json:"revision"`
+	ID            string            `json:"id"`
+	Kind          DictionaryKind    `json:"kind"`
+	Name          string            `json:"name"`
+	Description   string            `json:"description,omitempty"`
+	SourceLocale  string            `json:"source_locale,omitempty"`
+	SourceLocales map[string]string `json:"source_locales,omitempty"`
+	Slug          string            `json:"slug,omitempty"`
+	Status        EntryStatus       `json:"status"`
+	Revision      int64             `json:"revision"`
+}
+
+type TaxonomyTranslation struct {
+	Locale      string `json:"locale"`
+	Name        string `json:"name,omitempty"`
+	Description string `json:"description,omitempty"`
+	Revision    int64  `json:"revision"`
+	UpdatedBy   string `json:"updated_by,omitempty"`
+	UpdatedAt   string `json:"updated_at,omitempty"`
+}
+
+type TaxonomyContent struct {
+	SubjectType     string                `json:"subject_type"`
+	SubjectID       string                `json:"subject_id"`
+	SubjectRevision int64                 `json:"subject_revision"`
+	SourceLocale    string                `json:"source_locale"`
+	SourceLocales   map[string]string     `json:"source_locales"`
+	Description     string                `json:"description,omitempty"`
+	Translations    []TaxonomyTranslation `json:"translations"`
 }
 
 // TaxonomyProductImpact describes a Product whose public representation may
@@ -93,6 +120,8 @@ type TaxonomyImpact struct {
 func (e *DictionaryEntry) Prepare() error {
 	e.ID = strings.TrimSpace(e.ID)
 	e.Name = strings.TrimSpace(e.Name)
+	e.Description = strings.TrimSpace(e.Description)
+	e.SourceLocale = strings.TrimSpace(e.SourceLocale)
 	e.Slug = strings.TrimSpace(e.Slug)
 	if e.ID == "" || e.Name == "" || !validDictionaryKind(e.Kind) {
 		return ErrInvalidDictionary

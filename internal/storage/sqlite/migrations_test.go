@@ -67,6 +67,21 @@ func TestVersionOneUpgradeRequiresBackupAndBecomesReady(t *testing.T) {
 		DROP TABLE user_invitation_mail_attempts;
 		DROP TABLE product_translations;
 		DROP TABLE product_content_metadata;
+		DROP TABLE public_copy_defaults;
+		DROP TABLE public_copy_definitions;
+		DROP TABLE public_copy_active;
+		DROP TABLE public_copy_bundles;
+		DROP TABLE taxonomy_translations;
+		DROP TABLE taxonomy_content;
+		DROP TABLE locale_registry;
+		ALTER TABLE website_versions DROP COLUMN public_copy_overrides_json;
+		ALTER TABLE website_versions DROP COLUMN content_editing_enabled;
+		ALTER TABLE website_versions DROP COLUMN enabled_locales_json;
+		ALTER TABLE website_versions DROP COLUMN default_locale;
+		ALTER TABLE website_working DROP COLUMN public_copy_overrides_json;
+		ALTER TABLE website_working DROP COLUMN content_editing_enabled;
+		ALTER TABLE website_working DROP COLUMN enabled_locales_json;
+		ALTER TABLE website_working DROP COLUMN default_locale;
 		ALTER TABLE site_settings DROP COLUMN content_multilingual_enabled;
 		ALTER TABLE site_settings DROP COLUMN updated_by;
 		ALTER TABLE site_settings DROP COLUMN revision;
@@ -157,10 +172,25 @@ func TestVersionFourUpgradePreservesRFQAndClassifiesLegacyRecipient(t *testing.T
 		DROP TABLE user_invitation_mail_attempts;
 		DROP TABLE product_translations;
 		DROP TABLE product_content_metadata;
+		DROP TABLE public_copy_defaults;
+		DROP TABLE public_copy_definitions;
+		DROP TABLE public_copy_active;
+		DROP TABLE public_copy_bundles;
+		DROP TABLE taxonomy_translations;
+		DROP TABLE taxonomy_content;
+		DROP TABLE locale_registry;
+		ALTER TABLE website_versions DROP COLUMN public_copy_overrides_json;
+		ALTER TABLE website_versions DROP COLUMN content_editing_enabled;
+		ALTER TABLE website_versions DROP COLUMN enabled_locales_json;
+		ALTER TABLE website_versions DROP COLUMN default_locale;
+		ALTER TABLE website_working DROP COLUMN public_copy_overrides_json;
+		ALTER TABLE website_working DROP COLUMN content_editing_enabled;
+		ALTER TABLE website_working DROP COLUMN enabled_locales_json;
+		ALTER TABLE website_working DROP COLUMN default_locale;
 		ALTER TABLE site_settings DROP COLUMN content_multilingual_enabled;
 		ALTER TABLE site_settings DROP COLUMN updated_by;
 		ALTER TABLE site_settings DROP COLUMN revision;
-		DELETE FROM schema_migrations WHERE version IN (5,6,7,8,9,10,11,12,13,14,15,16);
+		DELETE FROM schema_migrations WHERE version IN (5,6,7,8,9,10,11,12,13,14,15,16,17);
 		UPDATE system_state SET schema_version=4 WHERE singleton=1;
 	`, created); err != nil {
 		t.Fatal(err)
@@ -239,6 +269,93 @@ func TestOpenReadyRejectsMigrationReceiptTampering(t *testing.T) {
 	}
 	if _, err := OpenReady(path); !errors.Is(err, ErrDatabaseNotReady) {
 		t.Fatalf("OpenReady error = %v", err)
+	}
+}
+
+func TestVersionSeventeenUpgradeSeedsPinnedLocalesAndPreservesPublishedLocaleSettings(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "prods.db")
+	store, err := CreatePOC(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := store.db.Exec(`
+		UPDATE site_settings SET default_locale='zh-TW',supported_locales_json='["en-US","zh-TW","fr-FR"]',content_multilingual_enabled=1 WHERE singleton=1;
+		INSERT INTO product_translations(product_id,locale,name,description,features,specification,revision,updated_at)
+		SELECT id,'zh-TW','保留的翻譯','','','',1,'2026-09-15T00:00:00Z' FROM products ORDER BY id LIMIT 1;
+		DROP TABLE public_copy_defaults;
+		DROP TABLE public_copy_definitions;
+		DROP TABLE public_copy_active;
+		DROP TABLE public_copy_bundles;
+		DROP TABLE taxonomy_translations;
+		DROP TABLE taxonomy_content;
+		DROP TABLE locale_registry;
+		ALTER TABLE product_content_metadata DROP COLUMN source_locales_json;
+		ALTER TABLE website_versions DROP COLUMN public_copy_overrides_json;
+		ALTER TABLE website_versions DROP COLUMN content_editing_enabled;
+		ALTER TABLE website_versions DROP COLUMN enabled_locales_json;
+		ALTER TABLE website_versions DROP COLUMN default_locale;
+		ALTER TABLE website_working DROP COLUMN public_copy_overrides_json;
+		ALTER TABLE website_working DROP COLUMN content_editing_enabled;
+		ALTER TABLE website_working DROP COLUMN enabled_locales_json;
+		ALTER TABLE website_working DROP COLUMN default_locale;
+		DELETE FROM schema_migrations WHERE version=17;
+		UPDATE system_state SET schema_version=16 WHERE singleton=1;
+	`); err != nil {
+		t.Fatal(err)
+	}
+	if err := store.Close(); err != nil {
+		t.Fatal(err)
+	}
+
+	upgradeStore, err := OpenForUpgrade(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer upgradeStore.Close()
+	if err := upgradeStore.Upgrade(t.Context(), "backup-v16"); err != nil {
+		t.Fatal(err)
+	}
+
+	var localeCount int
+	if err := upgradeStore.db.QueryRow(`SELECT COUNT(*) FROM locale_registry`).Scan(&localeCount); err != nil {
+		t.Fatal(err)
+	}
+	if localeCount != 10 {
+		t.Fatalf("locale registry count = %d, want 10", localeCount)
+	}
+	var workingDefault, workingEnabled, workingOverrides string
+	var workingEditing bool
+	if err := upgradeStore.db.QueryRow(`SELECT default_locale,enabled_locales_json,content_editing_enabled,public_copy_overrides_json FROM website_working WHERE singleton=1`).Scan(
+		&workingDefault, &workingEnabled, &workingEditing, &workingOverrides,
+	); err != nil {
+		t.Fatal(err)
+	}
+	if workingDefault != "zh-TW" || workingEnabled != `["en-US","zh-TW","fr-FR"]` || !workingEditing || workingOverrides != "{}" {
+		t.Fatalf("working localization = %q %q %v %q", workingDefault, workingEnabled, workingEditing, workingOverrides)
+	}
+	var activeDefault, activeEnabled string
+	var activeEditing bool
+	if err := upgradeStore.db.QueryRow(`SELECT default_locale,enabled_locales_json,content_editing_enabled FROM website_versions ORDER BY version DESC LIMIT 1`).Scan(
+		&activeDefault, &activeEnabled, &activeEditing,
+	); err != nil {
+		t.Fatal(err)
+	}
+	if activeDefault != workingDefault || activeEnabled != workingEnabled || activeEditing != workingEditing {
+		t.Fatalf("active localization = %q %q %v", activeDefault, activeEnabled, activeEditing)
+	}
+	var taxonomyRows int
+	if err := upgradeStore.db.QueryRow(`SELECT COUNT(*) FROM taxonomy_content`).Scan(&taxonomyRows); err != nil {
+		t.Fatal(err)
+	}
+	if taxonomyRows == 0 {
+		t.Fatal("taxonomy source provenance was not seeded")
+	}
+	var preservedTranslation string
+	if err := upgradeStore.db.QueryRow(`SELECT name FROM product_translations WHERE locale='zh-TW' LIMIT 1`).Scan(&preservedTranslation); err != nil {
+		t.Fatal(err)
+	}
+	if preservedTranslation != "保留的翻譯" {
+		t.Fatalf("preserved translation = %q", preservedTranslation)
 	}
 }
 

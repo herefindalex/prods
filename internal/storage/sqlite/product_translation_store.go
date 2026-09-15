@@ -16,8 +16,18 @@ var ErrContentLocaleUnavailable = errors.New("content locale unavailable")
 
 func (s *Store) ProductContent(ctx context.Context, productID string) (catalog.ProductContent, error) {
 	content := catalog.ProductContent{ProductID: productID}
-	if err := s.db.QueryRowContext(ctx, `SELECT m.source_locale,p.revision FROM product_content_metadata m JOIN products p ON p.id=m.product_id WHERE m.product_id=?`, productID).Scan(&content.SourceLocale, &content.ProductRevision); err != nil {
+	var sourceLocalesJSON string
+	if err := s.db.QueryRowContext(ctx, `SELECT m.source_locale,m.source_locales_json,p.revision
+		FROM product_content_metadata m JOIN products p ON p.id=m.product_id WHERE m.product_id=?`, productID).Scan(
+		&content.SourceLocale, &sourceLocalesJSON, &content.ProductRevision,
+	); err != nil {
 		return content, err
+	}
+	if err := json.Unmarshal([]byte(sourceLocalesJSON), &content.SourceLocales); err != nil {
+		return content, err
+	}
+	if len(content.SourceLocales) == 0 {
+		content.SourceLocales, _ = catalog.NormalizeFieldSourceLocales(nil, content.SourceLocale, catalog.ProductTranslatableFields)
 	}
 	rows, err := s.db.QueryContext(ctx, `SELECT locale,name,description,features,specification,revision,COALESCE(updated_by,''),updated_at
 		FROM product_translations WHERE product_id=? ORDER BY locale`, productID)

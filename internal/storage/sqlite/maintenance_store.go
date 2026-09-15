@@ -46,6 +46,9 @@ func (s *Store) CreateCategory(ctx context.Context, actorID string, category cat
 		if err != nil {
 			return fmt.Errorf("create category: %w", err)
 		}
+		if err := insertTaxonomySource(ctx, tx, "category", category.ID, category.SourceLocale, category.Description, category.SourceLocales); err != nil {
+			return err
+		}
 		if err := appendAudit(ctx, tx, actorID, "category.created", "category", category.ID, map[string]any{
 			"parent_id": category.ParentID, "slug": category.Slug,
 		}); err != nil {
@@ -57,8 +60,13 @@ func (s *Store) CreateCategory(ctx context.Context, actorID string, category cat
 }
 
 func (s *Store) Category(ctx context.Context, id string) (catalog.Category, error) {
-	return scanCategory(s.db.QueryRowContext(ctx, `SELECT id,COALESCE(parent_id,''),COALESCE(system_key,''),name,slug,status,revision
+	category, err := scanCategory(s.db.QueryRowContext(ctx, `SELECT id,COALESCE(parent_id,''),COALESCE(system_key,''),name,slug,status,revision
 		FROM categories WHERE id=?`, id))
+	if err != nil {
+		return category, err
+	}
+	category.SourceLocale, category.Description, category.SourceLocales, err = taxonomySource(ctx, s.db, "category", id)
+	return category, err
 }
 
 func scanCategory(scanner interface{ Scan(...any) error }) (catalog.Category, error) {
@@ -82,7 +90,19 @@ func (s *Store) ListCategories(ctx context.Context) ([]catalog.Category, error) 
 		}
 		categories = append(categories, category)
 	}
-	return categories, rows.Err()
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	for index := range categories {
+		categories[index].SourceLocale, categories[index].Description, categories[index].SourceLocales, err = taxonomySource(ctx, s.db, "category", categories[index].ID)
+		if err != nil {
+			return nil, err
+		}
+	}
+	return categories, nil
 }
 
 func (s *Store) MoveCategory(ctx context.Context, actorID, id, newParentID string, expectedRevision int64) error {
@@ -208,6 +228,9 @@ func (s *Store) CreateDictionaryEntry(ctx context.Context, actorID string, entry
 		if err != nil {
 			return err
 		}
+		if err := insertTaxonomySource(ctx, tx, "dictionary", entry.ID, entry.SourceLocale, entry.Description, entry.SourceLocales); err != nil {
+			return err
+		}
 		if err := appendAudit(ctx, tx, actorID, "dictionary.created", string(entry.Kind), entry.ID, map[string]any{"name": entry.Name}); err != nil {
 			return err
 		}
@@ -264,7 +287,19 @@ func (s *Store) ListDictionaryEntries(ctx context.Context, kind catalog.Dictiona
 		}
 		entries = append(entries, entry)
 	}
-	return entries, rows.Err()
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	for index := range entries {
+		entries[index].SourceLocale, entries[index].Description, entries[index].SourceLocales, err = taxonomySource(ctx, s.db, "dictionary", entries[index].ID)
+		if err != nil {
+			return nil, err
+		}
+	}
+	return entries, nil
 }
 
 func affectedProductIDs(ctx context.Context, tx *sql.Tx, entityType, entityID string) ([]string, error) {
@@ -394,6 +429,10 @@ func applyCategoryUpdateTx(ctx context.Context, tx *sql.Tx, actorID, id string, 
 	if err != nil {
 		return catalog.Category{}, err
 	}
+	current.SourceLocale, current.Description, current.SourceLocales, err = taxonomySource(ctx, tx, "category", id)
+	if err != nil {
+		return catalog.Category{}, err
+	}
 	if current.Revision != expectedRevision {
 		return catalog.Category{}, catalog.ErrRevisionConflict
 	}
@@ -401,6 +440,7 @@ func applyCategoryUpdateTx(ctx context.Context, tx *sql.Tx, actorID, id string, 
 	candidate.SystemKey = current.SystemKey
 	candidate.Status = current.Status
 	candidate.Revision = current.Revision + 1
+	candidate.SourceLocale = current.SourceLocale
 	if candidate.ParentID == "" {
 		candidate.ParentID = current.ParentID
 	}
@@ -440,6 +480,9 @@ func applyCategoryUpdateTx(ctx context.Context, tx *sql.Tx, actorID, id string, 
 	}
 	if changed, _ := result.RowsAffected(); changed != 1 {
 		return catalog.Category{}, catalog.ErrRevisionConflict
+	}
+	if _, err := tx.ExecContext(ctx, `UPDATE taxonomy_content SET description=? WHERE subject_type='category' AND subject_id=?`, candidate.Description, candidate.ID); err != nil {
+		return catalog.Category{}, err
 	}
 	return candidate, nil
 }
@@ -496,6 +539,10 @@ func applyDictionaryUpdateTx(ctx context.Context, tx *sql.Tx, actorID, id string
 	if err != nil {
 		return catalog.DictionaryEntry{}, err
 	}
+	current.SourceLocale, current.Description, current.SourceLocales, err = taxonomySource(ctx, tx, "dictionary", id)
+	if err != nil {
+		return catalog.DictionaryEntry{}, err
+	}
 	if current.Revision != expectedRevision {
 		return catalog.DictionaryEntry{}, catalog.ErrRevisionConflict
 	}
@@ -503,6 +550,7 @@ func applyDictionaryUpdateTx(ctx context.Context, tx *sql.Tx, actorID, id string
 	candidate.Kind = current.Kind
 	candidate.Status = current.Status
 	candidate.Revision = current.Revision + 1
+	candidate.SourceLocale = current.SourceLocale
 	if candidate.Slug == "" && routeBearingDictionary(candidate.Kind) {
 		candidate.Slug = catalog.SuggestedSlug(candidate.Name, candidate.ID)
 	}
@@ -523,6 +571,9 @@ func applyDictionaryUpdateTx(ctx context.Context, tx *sql.Tx, actorID, id string
 	}
 	if changed, _ := result.RowsAffected(); changed != 1 {
 		return catalog.DictionaryEntry{}, catalog.ErrRevisionConflict
+	}
+	if _, err := tx.ExecContext(ctx, `UPDATE taxonomy_content SET description=? WHERE subject_type='dictionary' AND subject_id=?`, candidate.Description, candidate.ID); err != nil {
+		return catalog.DictionaryEntry{}, err
 	}
 	switch candidate.Kind {
 	case catalog.DictionaryManufacturer:

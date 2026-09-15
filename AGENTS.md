@@ -2,7 +2,7 @@
 
 ## Source of truth and repository boundary
 
-- Read `docs/internal/Prods_PRD_v0.5.zh-TW.md` and `docs/internal/Prods_Architecture_v0.1.zh-TW.md` before design or implementation. This file is a concise guardrail summary, not the authoritative specification.
+- Read `docs/internal/Prods_PRD_v0.6.zh-TW.md` and `docs/internal/Prods_Architecture_v0.1.zh-TW.md` before design or implementation. This file is a concise guardrail summary, not the authoritative specification.
 - Product requirements and approved decisions take precedence over proposals. Architecture `P` inherits the cited PRD's confirmed/suggested/pending status; `E` and `D` are approved constraints; unapproved `A` remains a proposal. See Architecture §0.1 and §2.1.
 - If documents conflict, report the exact sections before choosing an interpretation. Do not change requirements to suit a framework, ORM, router, builder, or driver.
 - Internal documents and their rendered equivalents stay local and outside source history: never stage, force-add, commit, copy their contents into tracked deliverables, or change ignore rules to include them. Report any unexpectedly tracked internal document; do not rewrite history.
@@ -17,7 +17,7 @@
 - Stable opaque domain IDs are independent of row IDs, URLs and paths. No DB unique/partial-unique constraint for Manufacturer + Part Number; controlled writes recheck Current identity and expected revision inside the admitted transaction. All writes share bounded writer admission; Atomic Import stays all-or-nothing and cannot promise zero RFQ wait. See §6–8.
 - Public output uses an explicit `PublicView` allowlist, never an Admin DTO/DB model. No-results preserves raw query and requires a user-initiated Requested Part action; RFQ does not create Products, auto-send SMTP, or require quantity/price/availability. See §9.1 and §12.
 
-## Approved D1–D6: summary and authoritative sections
+## Approved D1–D10: summary and authoritative sections
 
 - **D1 — Product publication unit:** activate core representations, route and public revision together. Aggregates may converge only with safe visibility/links or temporary unavailability; Website/global URL Pattern/prefix changes remain site-wide atomic. Source: Architecture §10.2, §10.4–10.5.
 - **D2 — Revocation admission:** after Hide/Archive succeeds, deny new access authorized by the revoked Product, before ETag/Range handling; previously admitted transfers may finish. Preserve other valid shared-asset references. Source: §10.3–10.4 and §13.3.
@@ -25,6 +25,19 @@
 - **D4 — RFQ receipt:** high-entropy key plus canonical payload hash, RFQ ID and replayable receipt commit in one transaction. Same key/same payload replays; different payload returns 409 and preserves edits. Do not hash raw JSON; keep CSRF, session and idempotency separate. Source: §7.4 and §12.3.
 - **D5 — Restore:** durable journal; before `prepared` safe abandonment, after it only same-operation roll-forward with per-root evidence. Complete cross-root verification before Normal; returning to an old point is a later explicit Restore. Source: §4.5 and §15.2.
 - **D6 — Search:** application-generated, rebuildable, versioned Unicode-folded projection; query uses the same pinned rule. Preserve case-sensitive identity, escape literal LIKE wildcards, do not strip diacritics or add SQLite ICU. Source: §11.3.
+- **D7 — Source-locale default:** a create/import operation defaults source locale from the then-current Site Default, may override it once for the operation, and may correct individual fields through advanced controls. Never infer customer-content provenance from Admin UI locale. Source: Architecture §2.2 and PRD §15.3–15.4.
+- **D8 — Initial ten-language resources:** complete Codex-produced defaults may ship after key/placeholder/plural/format/layout checks, but release evidence must say they have not received professional native-language, legal, or marketing review. Keep official definitions/defaults versioned and customer overrides separate. Source: Architecture §2.2 and PRD §15.1, §15.15.
+- **D9 — Blank manufacturer identity:** blank Manufacturer and a named Manufacturer are distinct identity domains and may each have a Current Product with the same Part Number. Assigning a named Manufacturer later must recheck the target Current identity and expected revision in the admitted transaction. Source: Architecture §2.2, §6 and PRD §4.1.
+- **D10 — Import empty/duplicate contract:** missing columns and blank cells preserve existing values; only explicit `CLEAR` clears optional values. Multiple rows resolving to one Current Product are a whole-import validation error, never first/last-row-wins. Source: Architecture §2.2 and PRD §11.5.
+
+## PRD v0.6 multilingual and bulk guardrails
+
+- V1 has exactly ten built-in locales: `en-US`, `zh-TW`, `zh-CN`, `ja-JP`, `ko-KR`, `de-DE`, `fr-FR`, `it-IT`, `es-ES`, `pt-BR`. Initial Site Default is `en-US`; each Admin user's UI locale is independent of public locale enablement.
+- Closing multilingual content editing only hides editing controls. It must not unpublish translations. Locale enable/disable, Site Default, Public Copy, Navigation, Theme, Organization and related SEO belong to Website working/preview/publish; disabled locales retain data but never participate in public resolution after activation.
+- Customer Content resolves each translatable value through Requested → Site Default → that value's Source Locale → field fallback/absence, skipping every disabled candidate. Public Copy uses its separate override/default chain. Public representations report actual provenance and share one published `PublicView`/model.
+- Public Copy has versioned official definitions/defaults and Website-revision customer overrides. Stable semantic keys define editability, typed allowed/required placeholders, plural/select branches and samples. Reset removes one working `key + locale` override and never publishes immediately.
+- Product Bulk supports Publish, Hide, Archive, Change Category and Change Lifecycle with per-product atomic transactions and batch partial success. Retry only unresolved items after a fresh preflight and confirmation. Product Excel Import remains whole-batch atomic.
+- V1 keeps Domain Truth, Public Copy, future Customer Content Blocks and Layout separate; it stays same-origin and does not implement a page builder, generic CMS pages, configurable CORS, external write tokens, arbitrary templates/JS, or Enterprise per-item layout overrides. Source: PRD §28 and Architecture §2.2.
 
 ## Reliability, files and security
 

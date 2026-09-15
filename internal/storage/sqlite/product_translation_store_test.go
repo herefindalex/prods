@@ -23,9 +23,19 @@ func TestProductTranslationsPreserveSourceRevisionAndDisabledLocaleData(t *testi
 	if err != nil {
 		t.Fatal(err)
 	}
-	product, err := store.CreateProduct(t.Context(), owner.ID, catalog.Product{PartNumber: "ML-1", Name: "Source name", Description: "Source description"})
+	product, err := store.CreateProduct(t.Context(), owner.ID, catalog.Product{
+		PartNumber: "ML-1", Name: "Source name", Description: "Source description",
+		SourceLocales: map[string]string{"description": "ja-JP"},
+	})
 	if err != nil {
 		t.Fatal(err)
+	}
+	initialContent, err := store.ProductContent(t.Context(), product.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if initialContent.SourceLocales["name"] != "en-US" || initialContent.SourceLocales["description"] != "ja-JP" {
+		t.Fatalf("per-field source locales = %+v", initialContent.SourceLocales)
 	}
 	zhSource, err := store.CreateProduct(t.Context(), owner.ID, catalog.Product{PartNumber: "ML-ZH", Name: "中文原文", SourceLocale: "zh-TW"})
 	if err != nil {
@@ -35,7 +45,7 @@ func TestProductTranslationsPreserveSourceRevisionAndDisabledLocaleData(t *testi
 	if err != nil || zhContent.SourceLocale != "zh-TW" {
 		t.Fatalf("zh source content=%+v err=%v", zhContent, err)
 	}
-	if _, err := store.CreateProduct(t.Context(), owner.ID, catalog.Product{PartNumber: "ML-BAD", SourceLocale: "fr-FR"}); !errors.Is(err, catalog.ErrInvalidProduct) {
+	if _, err := store.CreateProduct(t.Context(), owner.ID, catalog.Product{PartNumber: "ML-BAD", SourceLocale: "nl-NL"}); !errors.Is(err, catalog.ErrInvalidProduct) {
 		t.Fatalf("invalid source locale error=%v", err)
 	}
 	if _, err = store.SaveProductTranslation(t.Context(), owner.ID, product.ID, product.Revision, catalog.ProductTranslation{Locale: "zh-TW", Name: "翻譯名稱"}); !errors.Is(err, ErrContentLocaleUnavailable) {

@@ -35,36 +35,37 @@ const (
 )
 
 type Product struct {
-	ID                string        `json:"id"`
-	Slug              string        `json:"slug"`
-	CustomPath        string        `json:"custom_path,omitempty"`
-	PartNumber        string        `json:"part_number"`
-	Name              string        `json:"name"`
-	SourceLocale      string        `json:"source_locale,omitempty"`
-	ManufacturerID    string        `json:"manufacturer_id,omitempty"`
-	Manufacturer      string        `json:"manufacturer,omitempty"`
-	BrandID           string        `json:"brand_id,omitempty"`
-	Brand             string        `json:"brand,omitempty"`
-	LifecycleID       string        `json:"lifecycle_id,omitempty"`
-	Lifecycle         string        `json:"lifecycle,omitempty"`
-	ApplicationIDs    []string      `json:"application_ids,omitempty"`
-	Applications      []Application `json:"applications,omitempty"`
-	CategoryID        string        `json:"category_id"`
-	PackageFormFactor string        `json:"package_form_factor,omitempty"`
-	Description       string        `json:"description"`
-	Features          string        `json:"features,omitempty"`
-	Specification     string        `json:"specification"`
-	DocumentURL       string        `json:"document_url"`
-	RecordState       RecordState   `json:"record_state"`
-	Status            Status        `json:"status"`
-	Revision          int64         `json:"revision"`
-	ClonedFromID      string        `json:"cloned_from_id,omitempty"`
-	CreatedBy         string        `json:"created_by,omitempty"`
-	UpdatedBy         string        `json:"updated_by,omitempty"`
-	SearchFolded      string        `json:"-"`
-	ProjectionVer     string        `json:"-"`
-	IdentityPart      string        `json:"-"`
-	IdentityMaker     string        `json:"-"`
+	ID                string            `json:"id"`
+	Slug              string            `json:"slug"`
+	CustomPath        string            `json:"custom_path,omitempty"`
+	PartNumber        string            `json:"part_number"`
+	Name              string            `json:"name"`
+	SourceLocale      string            `json:"source_locale,omitempty"`
+	SourceLocales     map[string]string `json:"source_locales,omitempty"`
+	ManufacturerID    string            `json:"manufacturer_id,omitempty"`
+	Manufacturer      string            `json:"manufacturer,omitempty"`
+	BrandID           string            `json:"brand_id,omitempty"`
+	Brand             string            `json:"brand,omitempty"`
+	LifecycleID       string            `json:"lifecycle_id,omitempty"`
+	Lifecycle         string            `json:"lifecycle,omitempty"`
+	ApplicationIDs    []string          `json:"application_ids,omitempty"`
+	Applications      []Application     `json:"applications,omitempty"`
+	CategoryID        string            `json:"category_id"`
+	PackageFormFactor string            `json:"package_form_factor,omitempty"`
+	Description       string            `json:"description"`
+	Features          string            `json:"features,omitempty"`
+	Specification     string            `json:"specification"`
+	DocumentURL       string            `json:"document_url"`
+	RecordState       RecordState       `json:"record_state"`
+	Status            Status            `json:"status"`
+	Revision          int64             `json:"revision"`
+	ClonedFromID      string            `json:"cloned_from_id,omitempty"`
+	CreatedBy         string            `json:"created_by,omitempty"`
+	UpdatedBy         string            `json:"updated_by,omitempty"`
+	SearchFolded      string            `json:"-"`
+	ProjectionVer     string            `json:"-"`
+	IdentityPart      string            `json:"-"`
+	IdentityMaker     string            `json:"-"`
 }
 
 type Application struct {
@@ -88,6 +89,7 @@ type ProductContent struct {
 	ProductID       string               `json:"product_id"`
 	ProductRevision int64                `json:"product_revision"`
 	SourceLocale    string               `json:"source_locale"`
+	SourceLocales   map[string]string    `json:"source_locales"`
 	Translations    []ProductTranslation `json:"translations"`
 }
 
@@ -98,6 +100,14 @@ func (p *Product) Prepare() error {
 	p.IdentityPart = strings.TrimSpace(p.PartNumber)
 	p.Name = strings.TrimSpace(p.Name)
 	p.SourceLocale = strings.TrimSpace(p.SourceLocale)
+	for field, locale := range p.SourceLocales {
+		trimmedField := strings.TrimSpace(field)
+		trimmedLocale := strings.TrimSpace(locale)
+		if trimmedField == "" || trimmedLocale == "" || trimmedField != field {
+			return ErrInvalidProduct
+		}
+		p.SourceLocales[field] = trimmedLocale
+	}
 	p.ManufacturerID = strings.TrimSpace(p.ManufacturerID)
 	p.BrandID = strings.TrimSpace(p.BrandID)
 	p.Brand = strings.TrimSpace(p.Brand)

@@ -72,21 +72,24 @@ type Configuration struct {
 }
 
 type State struct {
-	WorkingRevision   int64         `json:"working_revision"`
-	ActiveVersion     int64         `json:"active_version"`
-	ActiveEpoch       int64         `json:"active_epoch"`
-	CustomCSSDisabled bool          `json:"custom_css_disabled"`
-	RuntimeGeneration int64         `json:"runtime_generation"`
-	Working           Configuration `json:"working"`
-	Active            Configuration `json:"active"`
+	WorkingRevision     int64               `json:"working_revision"`
+	ActiveVersion       int64               `json:"active_version"`
+	ActiveEpoch         int64               `json:"active_epoch"`
+	CustomCSSDisabled   bool                `json:"custom_css_disabled"`
+	RuntimeGeneration   int64               `json:"runtime_generation"`
+	Working             Configuration       `json:"working"`
+	Active              Configuration       `json:"active"`
+	WorkingLocalization WebsiteLocalization `json:"working_localization"`
+	ActiveLocalization  WebsiteLocalization `json:"active_localization"`
 }
 
 type Version struct {
-	Version               int64         `json:"version"`
-	SourceWorkingRevision int64         `json:"source_working_revision"`
-	SiteEpoch             int64         `json:"site_epoch"`
-	Configuration         Configuration `json:"configuration"`
-	CreatedAt             time.Time     `json:"created_at"`
+	Version               int64               `json:"version"`
+	SourceWorkingRevision int64               `json:"source_working_revision"`
+	SiteEpoch             int64               `json:"site_epoch"`
+	Configuration         Configuration       `json:"configuration"`
+	Localization          WebsiteLocalization `json:"localization"`
+	CreatedAt             time.Time           `json:"created_at"`
 }
 
 func DefaultConfiguration() Configuration {

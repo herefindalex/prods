@@ -370,6 +370,19 @@ func (s *Store) CompleteInstallation(ctx context.Context, installation Installat
 	) VALUES(1,?,?,?,1,?,?,?)`, installation.DefaultLocale, string(encodedLocales), installation.TimeZone, ownerID, now, now); err != nil {
 		return identity.User{}, fmt.Errorf("create site settings: %w", err)
 	}
+	if _, err := tx.ExecContext(ctx, `UPDATE website_working SET default_locale=?,enabled_locales_json=? WHERE singleton=1`, installation.DefaultLocale, string(encodedLocales)); err != nil {
+		return identity.User{}, fmt.Errorf("initialize working website locales: %w", err)
+	}
+	if _, err := tx.ExecContext(ctx, `UPDATE website_versions SET default_locale=?,enabled_locales_json=?
+		WHERE site_epoch=(SELECT active_epoch FROM public_site_state WHERE singleton=1)`, installation.DefaultLocale, string(encodedLocales)); err != nil {
+		return identity.User{}, fmt.Errorf("initialize active website locales: %w", err)
+	}
+	if _, err := tx.ExecContext(ctx, `INSERT INTO taxonomy_content(subject_type,subject_id,source_locale) SELECT 'category',id,? FROM categories`, installation.DefaultLocale); err != nil {
+		return identity.User{}, fmt.Errorf("create system category content: %w", err)
+	}
+	if _, err := tx.ExecContext(ctx, `INSERT INTO taxonomy_content(subject_type,subject_id,source_locale) SELECT 'dictionary',id,? FROM dictionary_entries`, installation.DefaultLocale); err != nil {
+		return identity.User{}, fmt.Errorf("create default dictionary content: %w", err)
+	}
 	if _, err := tx.ExecContext(ctx, `INSERT INTO admin_log(
 		id,actor_id,action,target_type,target_id,result,details_json,created_at
 	) VALUES(?,?,?,?,?,?,?,?)`, logID, ownerID, "installation.completed", "installation", "site", "success", `{}`, now); err != nil {

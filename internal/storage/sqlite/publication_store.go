@@ -435,8 +435,12 @@ func (s *Store) ActivateSiteRoutes(ctx context.Context, request publishing.SiteR
 			return publishing.ErrSiteRouteInvalid
 		}
 		var workingRevision int64
-		var workingJSON string
-		if err := tx.QueryRowContext(ctx, `SELECT revision,config_json FROM website_working WHERE singleton=1`).Scan(&workingRevision, &workingJSON); err != nil {
+		var workingJSON, workingDefaultLocale, workingLocalesJSON, workingOverridesJSON string
+		var workingContentEditingEnabled bool
+		if err := tx.QueryRowContext(ctx, `SELECT revision,config_json,default_locale,enabled_locales_json,content_editing_enabled,public_copy_overrides_json
+			FROM website_working WHERE singleton=1`).Scan(
+			&workingRevision, &workingJSON, &workingDefaultLocale, &workingLocalesJSON, &workingContentEditingEnabled, &workingOverridesJSON,
+		); err != nil {
 			return err
 		}
 		if workingRevision != request.ExpectedWorkingRevision {
@@ -451,6 +455,19 @@ func (s *Store) ActivateSiteRoutes(ctx context.Context, request publishing.SiteR
 		}
 		normalizedWorking, err := json.Marshal(working)
 		if err != nil {
+			return err
+		}
+		workingLocalization := site.WebsiteLocalization{
+			DefaultLocale:         workingDefaultLocale,
+			ContentEditingEnabled: workingContentEditingEnabled,
+		}
+		if err := json.Unmarshal([]byte(workingLocalesJSON), &workingLocalization.EnabledLocales); err != nil {
+			return err
+		}
+		if err := json.Unmarshal([]byte(workingOverridesJSON), &workingLocalization.PublicCopyOverrides); err != nil {
+			return err
+		}
+		if err := workingLocalization.Prepare(); err != nil {
 			return err
 		}
 		candidateEpoch := currentEpoch + 1
@@ -531,8 +548,9 @@ func (s *Store) ActivateSiteRoutes(ctx context.Context, request publishing.SiteR
 			return err
 		}
 		if _, err := tx.ExecContext(ctx, `INSERT INTO website_versions(
-			source_working_revision,site_epoch,config_json,created_by,created_at
-		) VALUES(?,?,?,?,?)`, workingRevision, candidateEpoch, string(normalizedWorking), request.ActorID, now); err != nil {
+			source_working_revision,site_epoch,config_json,default_locale,enabled_locales_json,content_editing_enabled,public_copy_overrides_json,created_by,created_at
+		) VALUES(?,?,?,?,?,?,?,?,?)`, workingRevision, candidateEpoch, string(normalizedWorking), workingDefaultLocale,
+			workingLocalesJSON, workingContentEditingEnabled, workingOverridesJSON, request.ActorID, now); err != nil {
 			return err
 		}
 		if _, err := tx.ExecContext(ctx, `UPDATE public_site_state SET active_epoch=?,product_prefix=?,url_pattern=?,updated_at=? WHERE singleton=1 AND active_epoch=?`,

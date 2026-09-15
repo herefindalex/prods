@@ -13,7 +13,7 @@ import (
 
 const (
 	MinimumSupportedSchemaVersion = 1
-	CurrentSchemaVersion          = 16
+	CurrentSchemaVersion          = 17
 )
 
 var (
@@ -355,6 +355,102 @@ CREATE TABLE product_translations (
  PRIMARY KEY(product_id,locale)
 );
 CREATE INDEX product_translations_locale_idx ON product_translations(locale,product_id);`,
+	},
+	{
+		Version: 17, Name: "v06-localization-public-copy-and-taxonomy", Transactional: true,
+		SQL: `CREATE TABLE locale_registry (
+ locale TEXT PRIMARY KEY,
+ sort_order INTEGER NOT NULL UNIQUE,
+ native_name TEXT NOT NULL,
+ official_bundle_version TEXT NOT NULL
+);
+INSERT INTO locale_registry(locale,sort_order,native_name,official_bundle_version) VALUES
+ ('en-US',10,'English (United States)','v1'),
+ ('zh-TW',20,'繁體中文','v1'),
+ ('zh-CN',30,'简体中文','v1'),
+ ('ja-JP',40,'日本語','v1'),
+ ('ko-KR',50,'한국어','v1'),
+ ('de-DE',60,'Deutsch','v1'),
+ ('fr-FR',70,'Français','v1'),
+ ('it-IT',80,'Italiano','v1'),
+ ('es-ES',90,'Español','v1'),
+ ('pt-BR',100,'Português (Brasil)','v1');
+
+ALTER TABLE website_working ADD COLUMN default_locale TEXT NOT NULL DEFAULT 'en-US';
+ALTER TABLE website_working ADD COLUMN enabled_locales_json TEXT NOT NULL DEFAULT '["en-US"]';
+ALTER TABLE website_working ADD COLUMN content_editing_enabled INTEGER NOT NULL DEFAULT 0 CHECK(content_editing_enabled IN (0,1));
+ALTER TABLE website_working ADD COLUMN public_copy_overrides_json TEXT NOT NULL DEFAULT '{}';
+ALTER TABLE website_versions ADD COLUMN default_locale TEXT NOT NULL DEFAULT 'en-US';
+ALTER TABLE website_versions ADD COLUMN enabled_locales_json TEXT NOT NULL DEFAULT '["en-US"]';
+ALTER TABLE website_versions ADD COLUMN content_editing_enabled INTEGER NOT NULL DEFAULT 0 CHECK(content_editing_enabled IN (0,1));
+ALTER TABLE website_versions ADD COLUMN public_copy_overrides_json TEXT NOT NULL DEFAULT '{}';
+UPDATE website_working SET
+ default_locale=COALESCE((SELECT default_locale FROM site_settings WHERE singleton=1),'en-US'),
+ enabled_locales_json=COALESCE((SELECT supported_locales_json FROM site_settings WHERE singleton=1),'["en-US"]'),
+ content_editing_enabled=COALESCE((SELECT content_multilingual_enabled FROM site_settings WHERE singleton=1),0);
+UPDATE website_versions SET
+ default_locale=COALESCE((SELECT default_locale FROM site_settings WHERE singleton=1),'en-US'),
+ enabled_locales_json=COALESCE((SELECT supported_locales_json FROM site_settings WHERE singleton=1),'["en-US"]'),
+ content_editing_enabled=COALESCE((SELECT content_multilingual_enabled FROM site_settings WHERE singleton=1),0);
+
+ALTER TABLE product_content_metadata ADD COLUMN source_locales_json TEXT NOT NULL DEFAULT '{}';
+CREATE TABLE taxonomy_content (
+ subject_type TEXT NOT NULL CHECK(subject_type IN ('category','dictionary')),
+ subject_id TEXT NOT NULL,
+ source_locale TEXT NOT NULL,
+ source_locales_json TEXT NOT NULL DEFAULT '{}',
+ description TEXT NOT NULL DEFAULT '',
+ PRIMARY KEY(subject_type,subject_id)
+);
+INSERT INTO taxonomy_content(subject_type,subject_id,source_locale)
+SELECT 'category',c.id,s.default_locale FROM categories c CROSS JOIN site_settings s WHERE s.singleton=1;
+INSERT INTO taxonomy_content(subject_type,subject_id,source_locale)
+SELECT 'dictionary',d.id,s.default_locale FROM dictionary_entries d CROSS JOIN site_settings s WHERE s.singleton=1;
+CREATE TABLE taxonomy_translations (
+ subject_type TEXT NOT NULL CHECK(subject_type IN ('category','dictionary')),
+ subject_id TEXT NOT NULL,
+ locale TEXT NOT NULL,
+ name TEXT NOT NULL DEFAULT '',
+ description TEXT NOT NULL DEFAULT '',
+ revision INTEGER NOT NULL CHECK(revision>=1),
+ updated_by TEXT REFERENCES users(id),
+ updated_at TEXT NOT NULL,
+ PRIMARY KEY(subject_type,subject_id,locale)
+);
+CREATE INDEX taxonomy_translations_locale_idx ON taxonomy_translations(locale,subject_type,subject_id);
+
+CREATE TABLE public_copy_bundles (
+ version TEXT PRIMARY KEY,
+ source TEXT NOT NULL CHECK(source='official'),
+ review_status TEXT NOT NULL,
+ installed_at TEXT NOT NULL
+);
+CREATE TABLE public_copy_active (
+ singleton INTEGER PRIMARY KEY CHECK(singleton=1),
+ official_bundle_version TEXT NOT NULL REFERENCES public_copy_bundles(version),
+ activated_at TEXT NOT NULL
+);
+CREATE TABLE public_copy_definitions (
+ copy_key TEXT NOT NULL,
+	definition_version INTEGER NOT NULL CHECK(definition_version>=1),
+	description TEXT NOT NULL,
+	value_kind TEXT NOT NULL CHECK(value_kind IN ('plain','rich','plural','select')),
+	required_placeholders_json TEXT NOT NULL DEFAULT '[]',
+	allowed_placeholders_json TEXT NOT NULL DEFAULT '[]',
+	sample_json TEXT NOT NULL DEFAULT '{}',
+	official_bundle_version TEXT NOT NULL REFERENCES public_copy_bundles(version),
+	PRIMARY KEY(copy_key,official_bundle_version)
+);
+CREATE TABLE public_copy_defaults (
+	copy_key TEXT NOT NULL,
+	locale TEXT NOT NULL REFERENCES locale_registry(locale),
+	value TEXT NOT NULL,
+	definition_version INTEGER NOT NULL CHECK(definition_version>=1),
+	official_bundle_version TEXT NOT NULL REFERENCES public_copy_bundles(version),
+	PRIMARY KEY(copy_key,locale,official_bundle_version),
+	FOREIGN KEY(copy_key,official_bundle_version) REFERENCES public_copy_definitions(copy_key,official_bundle_version) ON DELETE CASCADE
+);
+CREATE INDEX public_copy_defaults_locale_idx ON public_copy_defaults(locale,copy_key);`,
 	},
 }
 
