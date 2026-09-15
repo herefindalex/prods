@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"prods/internal/catalog"
+	"prods/internal/site"
 )
 
 func TestTaxonomyContentPersistsPerFieldSourceLocales(t *testing.T) {
@@ -39,6 +40,16 @@ func TestTaxonomyTranslationsAreDurableWhenEditingOrLocaleIsDisabled(t *testing.
 	if err != nil {
 		t.Fatal(err)
 	}
+	website, err := store.WebsiteState(t.Context())
+	if err != nil {
+		t.Fatal(err)
+	}
+	website, err = store.SaveWebsiteLocalization(t.Context(), owner.ID, website.WorkingRevision, site.WebsiteLocalization{
+		DefaultLocale: "en-US", EnabledLocales: []string{"en-US", "zh-TW"}, ContentEditingEnabled: true,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
 	content, err := store.SaveTaxonomyTranslation(t.Context(), owner.ID, "category", category.ID, category.Revision, catalog.TaxonomyTranslation{
 		Locale: "zh-TW", Name: "電源", Description: "電源產品",
 	})
@@ -47,6 +58,11 @@ func TestTaxonomyTranslationsAreDurableWhenEditingOrLocaleIsDisabled(t *testing.
 	}
 	settings, err = store.UpdateContentLocalization(t.Context(), owner.ID, settings.Revision, false, []string{"en-US"})
 	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := store.SaveWebsiteLocalization(t.Context(), owner.ID, website.WorkingRevision, site.WebsiteLocalization{
+		DefaultLocale: "en-US", EnabledLocales: []string{"en-US"}, ContentEditingEnabled: false,
+	}); err != nil {
 		t.Fatal(err)
 	}
 	if _, err := store.SaveTaxonomyTranslation(t.Context(), owner.ID, "category", category.ID, content.SubjectRevision, catalog.TaxonomyTranslation{Locale: "zh-TW", Name: "不可寫"}); !errors.Is(err, ErrContentLocaleUnavailable) {

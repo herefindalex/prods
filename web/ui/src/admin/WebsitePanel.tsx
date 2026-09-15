@@ -26,9 +26,23 @@ import type {
   SiteRoutePreview,
   SiteRouteState,
   SearchIntegrationSettings,
+  WebsiteLocalization,
   WebsiteState,
   WebsiteVersion,
 } from "./types";
+
+const websiteLocaleOptions = [
+  "en-US",
+  "zh-TW",
+  "zh-CN",
+  "ja-JP",
+  "ko-KR",
+  "de-DE",
+  "fr-FR",
+  "it-IT",
+  "es-ES",
+  "pt-BR",
+].map((value) => ({ value, label: value }));
 
 type Props = {
   locale: "en-US" | "zh-TW";
@@ -48,7 +62,9 @@ const labels = {
     applied: "Applied the candidate to this browser form only. Save working copy, Preview, and Publish are still required.",
     searchSaved: "Search integration settings saved. External submissions run independently.",
     cssState: (disabled: boolean) => disabled ? "Custom CSS Safe Mode is active for all new public requests." : "Custom CSS was re-enabled for new public requests.",
-    workingConfiguration: "Website working configuration", workingRevision: "Working revision", activeVersion: "Active version", activeEpoch: "Active site epoch",
+workingConfiguration: "Website working configuration", workingRevision: "Working revision", activeVersion: "Active version", activeEpoch: "Active site epoch",
+localization: "Languages and content editing", localizationHelp: "These are Website working settings. Public languages change only after Preview and Publish; disabling editing never unpublishes saved translations.",
+defaultLocale: "Site default locale", enabledLocales: "Published locales after next Publish", contentEditingEnabled: "Enable Customer Content translation editing", activeLocales: "Currently public locales", saveLocalization: "Save language working copy", localizationSaved: (revision: number) => `Saved Website language working revision ${revision}. The public site is unchanged.`,
     cssSafeMode: "Custom CSS Safe Mode is active", cssSafeDescription: "Public requests cannot retrieve the active custom stylesheet. Admin and system pages are unaffected.",
     reenableCSS: "Re-enable Custom CSS", disableCSSConfirm: "Immediately stop serving Custom CSS to new public requests?", disableCSS: "Disable Custom CSS now",
     workingHelp: "Save changes into the durable working copy. Preview is private. Only Publish changes the public Website and Product artifacts.",
@@ -94,7 +110,9 @@ const labels = {
     applied: "候選內容只套用到目前瀏覽器表單；仍須儲存工作副本、預覽及發布。",
     searchSaved: "已儲存搜尋整合設定；外部提交會獨立執行。",
     cssState: (disabled: boolean) => disabled ? "所有新的公開請求已啟用 Custom CSS 安全模式。" : "新的公開請求已重新啟用 Custom CSS。",
-    workingConfiguration: "Website 工作設定", workingRevision: "工作修訂", activeVersion: "啟用版本", activeEpoch: "啟用站點 epoch",
+workingConfiguration: "Website 工作設定", workingRevision: "工作修訂", activeVersion: "啟用版本", activeEpoch: "啟用站點 epoch",
+localization: "語系與內容翻譯編輯", localizationHelp: "這些是 Website 工作設定。公開語系只會在預覽並發布後改變；停用翻譯編輯不會取消已儲存翻譯的公開狀態。",
+defaultLocale: "站點預設語系", enabledLocales: "下次發布後的公開語系", contentEditingEnabled: "啟用 Customer Content 翻譯編輯", activeLocales: "目前公開語系", saveLocalization: "儲存語系工作副本", localizationSaved: (revision: number) => `已儲存 Website 語系工作修訂 ${revision}；公開網站未變更。`,
     cssSafeMode: "Custom CSS 安全模式已啟用", cssSafeDescription: "公開請求無法取得啟用中的自訂樣式；Admin 與系統頁面不受影響。",
     reenableCSS: "重新啟用 Custom CSS", disableCSSConfirm: "要立即停止向新的公開請求提供 Custom CSS 嗎？", disableCSS: "立即停用 Custom CSS",
     workingHelp: "先將變更儲存到持久工作副本。預覽是私有的；只有發布才會變更公開 Website 與 Product artifacts。",
@@ -156,6 +174,7 @@ export function WebsitePanel({ locale, onError, onMessage }: Props) {
   const [loading, setLoading] = useState(false);
   const [routeForm] = Form.useForm<SiteRouteConfig>();
   const [websiteForm] = Form.useForm<SiteConfiguration>();
+  const [localizationForm] = Form.useForm<WebsiteLocalization>();
   const [searchForm] = Form.useForm<SearchIntegrationSettings>();
 
   const load = async () => {
@@ -173,6 +192,7 @@ export function WebsitePanel({ locale, onError, onMessage }: Props) {
       setSearchIntegrations(integrations);
       routeForm.setFieldsValue(routes.config);
       websiteForm.setFieldsValue(website.working);
+      localizationForm.setFieldsValue(website.working_localization);
       searchForm.setFieldsValue(integrations);
       setRoutePreview(undefined);
 		setBrandCapture(undefined);
@@ -200,11 +220,39 @@ export function WebsitePanel({ locale, onError, onMessage }: Props) {
       });
       setWebsiteState(next);
       websiteForm.setFieldsValue(next.working);
+      localizationForm.setFieldsValue(next.working_localization);
       setRoutePreview(undefined);
 		setBrandCapture(undefined);
 		setBrandRightsConfirmed(false);
 		setWebsiteFormDirty(false);
       onMessage(text.saved(next.working_revision));
+    } catch (error) {
+      onError(error);
+      await load();
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const saveLocalization = async (localization: WebsiteLocalization) => {
+    if (!websiteState) return;
+    setLoading(true);
+    try {
+      const next = await putJSON<WebsiteState>(
+        "/admin/api/website/localization",
+        {
+          expected_working_revision: websiteState.working_revision,
+          localization: {
+            ...localization,
+            public_copy_overrides:
+              websiteState.working_localization.public_copy_overrides ?? {},
+          },
+        },
+      );
+      setWebsiteState(next);
+      localizationForm.setFieldsValue(next.working_localization);
+      setRoutePreview(undefined);
+      onMessage(text.localizationSaved(next.working_revision));
     } catch (error) {
       onError(error);
       await load();
@@ -290,6 +338,7 @@ export function WebsitePanel({ locale, onError, onMessage }: Props) {
       });
       setWebsiteState(next);
       websiteForm.setFieldsValue(next.working);
+      localizationForm.setFieldsValue(next.working_localization);
       setRoutePreview(undefined);
 		setBrandCapture(undefined);
 		setBrandRightsConfirmed(false);
@@ -414,6 +463,51 @@ export function WebsitePanel({ locale, onError, onMessage }: Props) {
         <Typography.Paragraph type="secondary">
           {text.workingHelp}
         </Typography.Paragraph>
+		<Form
+			form={localizationForm}
+			layout="vertical"
+			onFinish={(values) => void saveLocalization(values)}
+		>
+			<Card size="small" title={text.localization}>
+				<Alert
+					className="bottom-gap"
+					type="info"
+					showIcon
+					message={text.localizationHelp}
+					description={`${text.activeLocales}: ${websiteState?.active_localization.enabled_locales.join(", ") ?? ""}`}
+				/>
+				<Form.Item
+					name="default_locale"
+					label={text.defaultLocale}
+					rules={[{ required: true }]}
+				>
+					<Select options={websiteLocaleOptions} />
+				</Form.Item>
+				<Form.Item
+					name="enabled_locales"
+					label={text.enabledLocales}
+					dependencies={["default_locale"]}
+					rules={[
+						{ required: true },
+						({ getFieldValue }) => ({
+							validator: async (_, value: string[]) => {
+								if (!value?.includes(getFieldValue("default_locale"))) {
+									throw new Error(`${text.defaultLocale}: ${getFieldValue("default_locale")}`);
+								}
+							},
+						}),
+					]}
+				>
+					<Select mode="multiple" options={websiteLocaleOptions} />
+				</Form.Item>
+				<Form.Item name="content_editing_enabled" valuePropName="checked">
+					<Checkbox>{text.contentEditingEnabled}</Checkbox>
+				</Form.Item>
+				<Button type="primary" htmlType="submit" loading={loading}>
+					{text.saveLocalization}
+				</Button>
+			</Card>
+		</Form>
 			<Card size="small" title={text.captureTitle}>
 			<Typography.Paragraph type="secondary">
 					{text.captureHelp}

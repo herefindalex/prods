@@ -231,6 +231,20 @@ export type SiteConfiguration = {
   };
 };
 
+export type PublicCopyOverride = {
+  key: string;
+  locale: string;
+  value: string;
+  definition_version: number;
+};
+
+export type WebsiteLocalization = {
+  default_locale: string;
+  enabled_locales: string[];
+  content_editing_enabled: boolean;
+  public_copy_overrides?: Record<string, Record<string, PublicCopyOverride>>;
+};
+
 export type WebsiteState = {
   working_revision: number;
   active_version: number;
@@ -239,6 +253,8 @@ export type WebsiteState = {
   runtime_generation: number;
   working: SiteConfiguration;
   active: SiteConfiguration;
+  working_localization: WebsiteLocalization;
+  active_localization: WebsiteLocalization;
 };
 
 export type WebsiteVersion = {
@@ -246,6 +262,7 @@ export type WebsiteVersion = {
   source_working_revision: number;
   site_epoch: number;
   configuration: SiteConfiguration;
+  localization: WebsiteLocalization;
   created_at: string;
 };
 

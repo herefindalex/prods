@@ -278,7 +278,7 @@ func TestPublicationRestartFailsClosedAndRepairsCorruptActiveUnit(t *testing.T) 
 	}
 }
 
-func TestDisabledContentLanguageCannotReplayTranslatedETagOrRange(t *testing.T) {
+func TestContentEditingAndLegacyLocaleSettingsDoNotBypassWebsitePublish(t *testing.T) {
 	root := t.TempDir()
 	store, err := sqlite.Create(filepath.Join(root, "prods.db"))
 	if err != nil {
@@ -305,15 +305,24 @@ func TestDisabledContentLanguageCannotReplayTranslatedETagOrRange(t *testing.T) 
 	if body := responseBody(t, enable); enable.StatusCode != http.StatusOK {
 		t.Fatalf("enable=%d %s", enable.StatusCode, body)
 	}
+	websiteEnable := adminJSONMethod(t, client, http.MethodPut, server.URL+"/admin/api/website/localization", csrf, `{"expected_working_revision":1,"localization":{"default_locale":"en-US","enabled_locales":["en-US","zh-TW"],"content_editing_enabled":true}}`)
+	if body := responseBody(t, websiteEnable); websiteEnable.StatusCode != http.StatusOK {
+		t.Fatalf("enable website localization=%d %s", websiteEnable.StatusCode, body)
+	}
 	created := postAdminJSON(t, client, server.URL+"/admin/api/products", csrf, `{"part_number":"ML-PUB-1","name":"Source name","description":"Source description","status":"published"}`)
 	if created.StatusCode != http.StatusCreated {
 		t.Fatalf("create=%d %s", created.StatusCode, responseBody(t, created))
 	}
 	var product catalog.Product
 	decodeResponseJSON(t, created, &product)
-	saved := adminJSONMethod(t, client, http.MethodPut, server.URL+"/admin/api/products/"+product.ID+"/translations/zh-TW", csrf, fmt.Sprintf(`{"expected_revision":%d,"translation":{"name":"翻譯名稱","description":"翻譯說明","features":"localizedneedle"}}`, product.Revision))
+	saved := adminJSONMethod(t, client, http.MethodPut, server.URL+"/admin/api/products/"+product.ID+"/translations/zh-TW", csrf, fmt.Sprintf(`{"expected_revision":%d,"translation":{"name":"localizedneedle 翻譯名稱","description":"翻譯說明","features":"translated features"}}`, product.Revision))
 	if body := responseBody(t, saved); saved.StatusCode != http.StatusOK {
 		t.Fatalf("translation=%d %s", saved.StatusCode, body)
+	}
+	published := postAdminJSON(t, client, server.URL+"/admin/api/website/routes/publish", csrf,
+		`{"expected_epoch":1,"expected_working_revision":2,"config":{"product_prefix":"/products","url_pattern":"compact"}}`)
+	if body := responseBody(t, published); published.StatusCode != http.StatusOK {
+		t.Fatalf("publish website localization=%d %s", published.StatusCode, body)
 	}
 	baseProductURL := server.URL + "/products/" + product.Slug
 	localizedURLs := []string{baseProductURL + "?lang=zh-TW", baseProductURL + ".json?lang=zh-TW", baseProductURL + ".md?lang=zh-TW"}
@@ -339,8 +348,8 @@ func TestDisabledContentLanguageCannotReplayTranslatedETagOrRange(t *testing.T) 
 	if err != nil {
 		t.Fatal(err)
 	}
-	if body := responseBody(t, disabledSearch); strings.Contains(body, "翻譯名稱") || strings.Contains(body, "/products/"+product.Slug) {
-		t.Fatalf("disabled search residue status=%d body=%s", disabledSearch.StatusCode, body)
+	if body := responseBody(t, disabledSearch); !strings.Contains(body, "翻譯名稱") || !strings.Contains(body, "/products/"+product.Slug) {
+		t.Fatalf("editing toggle unexpectedly unpublished content status=%d body=%s", disabledSearch.StatusCode, body)
 	}
 	for _, productURL := range localizedURLs {
 		for _, headers := range []map[string]string{{"If-None-Match": etags[productURL]}, {"Range": "bytes=0-80", "If-Range": etags[productURL]}} {
@@ -350,11 +359,8 @@ func TestDisabledContentLanguageCannotReplayTranslatedETagOrRange(t *testing.T) 
 				t.Fatal(err)
 			}
 			body := responseBody(t, response)
-			if response.StatusCode == http.StatusNotModified || strings.Contains(body, "翻譯名稱") || strings.Contains(body, "翻譯說明") {
-				t.Fatalf("disabled translation status=%d body=%s", response.StatusCode, body)
-			}
-			if !strings.Contains(body, "Source name") && !strings.Contains(body, "Source description") {
-				t.Fatalf("missing source fallback status=%d body=%s", response.StatusCode, body)
+			if response.StatusCode != http.StatusNotModified && response.StatusCode != http.StatusPartialContent {
+				t.Fatalf("editing toggle changed published representation status=%d body=%s", response.StatusCode, body)
 			}
 		}
 	}
@@ -367,8 +373,8 @@ func TestDisabledContentLanguageCannotReplayTranslatedETagOrRange(t *testing.T) 
 	if err != nil {
 		t.Fatal(err)
 	}
-	if body := responseBody(t, response); response.StatusCode != http.StatusBadRequest || strings.Contains(body, "翻譯") {
-		t.Fatalf("removed locale status=%d body=%s", response.StatusCode, body)
+	if body := responseBody(t, response); response.StatusCode != http.StatusNotModified {
+		t.Fatalf("unpublished working locale change status=%d body=%s", response.StatusCode, body)
 	}
 }
 

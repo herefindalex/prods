@@ -107,6 +107,36 @@ func (s *Server) adminWebsiteConfiguration(w http.ResponseWriter, r *http.Reques
 	writeJSON(w, http.StatusOK, state)
 }
 
+func (s *Server) adminSaveWebsiteLocalization(w http.ResponseWriter, r *http.Request) {
+	current, ok := s.requireCapability(w, r, identity.CapabilitySystemManage, true)
+	if !ok {
+		return
+	}
+	var request struct {
+		ExpectedWorkingRevision int64                    `json:"expected_working_revision"`
+		Localization            site.WebsiteLocalization `json:"localization"`
+	}
+	if err := decodeJSON(r.Body, &request); err != nil {
+		s.writeAPIError(w, r, http.StatusBadRequest, apiCodeInvalidJSON)
+		return
+	}
+	state, err := s.store.SaveWebsiteLocalization(r.Context(), current.UserID, request.ExpectedWorkingRevision, request.Localization)
+	if err != nil {
+		switch {
+		case errors.Is(err, site.ErrInvalidSettings):
+			s.writeAPIError(w, r, http.StatusUnprocessableEntity, apiCodeValidationFailed)
+		case errors.Is(err, catalog.ErrRevisionConflict):
+			s.writeAPIError(w, r, http.StatusConflict, apiCodeRevisionConflict)
+		case errors.Is(err, sqlite.ErrPermissionDenied):
+			s.writeAPIError(w, r, http.StatusForbidden, apiCodeForbidden)
+		default:
+			s.internalAPIError(w, r, err)
+		}
+		return
+	}
+	writeJSON(w, http.StatusOK, state)
+}
+
 func (s *Server) adminSaveWebsiteConfiguration(w http.ResponseWriter, r *http.Request) {
 	current, ok := s.requireCapability(w, r, identity.CapabilitySystemManage, true)
 	if !ok {

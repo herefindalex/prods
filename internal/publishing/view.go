@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"prods/internal/catalog"
+	"prods/internal/localization"
 	"prods/internal/site"
 )
 
@@ -40,36 +41,46 @@ type Image struct {
 }
 
 type PublicView struct {
-	ID               string                      `json:"id"`
-	Revision         int64                       `json:"revision"`
-	SiteEpoch        int64                       `json:"site_epoch"`
-	PartNumber       string                      `json:"part_number"`
-	Name             string                      `json:"name,omitempty"`
-	Manufacturer     string                      `json:"manufacturer"`
-	ManufacturerID   string                      `json:"manufacturer_id,omitempty"`
-	ManufacturerURL  string                      `json:"manufacturer_url,omitempty"`
-	Brand            string                      `json:"brand,omitempty"`
-	BrandID          string                      `json:"brand_id,omitempty"`
-	BrandURL         string                      `json:"brand_url,omitempty"`
-	Category         string                      `json:"category,omitempty"`
-	CategoryID       string                      `json:"category_id,omitempty"`
-	CategoryURL      string                      `json:"category_url,omitempty"`
-	CategoryTrail    []CategoryRef               `json:"category_trail,omitempty"`
-	Lifecycle        string                      `json:"lifecycle,omitempty"`
-	LifecycleID      string                      `json:"lifecycle_id,omitempty"`
-	Applications     []Application               `json:"applications,omitempty"`
-	Images           []Image                     `json:"images,omitempty"`
-	Description      string                      `json:"description,omitempty"`
-	Features         string                      `json:"features,omitempty"`
-	Specification    string                      `json:"specification,omitempty"`
-	Specifications   []Specification             `json:"specifications,omitempty"`
-	Documents        []Document                  `json:"documents,omitempty"`
-	CanonicalURL     string                      `json:"canonical_url"`
-	Language         string                      `json:"language"`
-	SupportedLocales []string                    `json:"supported_locales,omitempty"`
-	RFQURL           string                      `json:"rfq_url"`
-	Site             site.Configuration          `json:"site"`
-	Localizations    map[string]LocalizedContent `json:"-"`
+	ID                string                       `json:"id"`
+	Revision          int64                        `json:"revision"`
+	SiteEpoch         int64                        `json:"site_epoch"`
+	PartNumber        string                       `json:"part_number"`
+	Name              string                       `json:"name,omitempty"`
+	Manufacturer      string                       `json:"manufacturer"`
+	ManufacturerID    string                       `json:"manufacturer_id,omitempty"`
+	ManufacturerURL   string                       `json:"manufacturer_url,omitempty"`
+	Brand             string                       `json:"brand,omitempty"`
+	BrandID           string                       `json:"brand_id,omitempty"`
+	BrandURL          string                       `json:"brand_url,omitempty"`
+	Category          string                       `json:"category,omitempty"`
+	CategoryID        string                       `json:"category_id,omitempty"`
+	CategoryURL       string                       `json:"category_url,omitempty"`
+	CategoryTrail     []CategoryRef                `json:"category_trail,omitempty"`
+	Lifecycle         string                       `json:"lifecycle,omitempty"`
+	LifecycleID       string                       `json:"lifecycle_id,omitempty"`
+	Applications      []Application                `json:"applications,omitempty"`
+	Images            []Image                      `json:"images,omitempty"`
+	Description       string                       `json:"description,omitempty"`
+	Features          string                       `json:"features,omitempty"`
+	Specification     string                       `json:"specification,omitempty"`
+	Specifications    []Specification              `json:"specifications,omitempty"`
+	Documents         []Document                   `json:"documents,omitempty"`
+	CanonicalURL      string                       `json:"canonical_url"`
+	Language          string                       `json:"language"`
+	DefaultLocale     string                       `json:"default_locale,omitempty"`
+	SupportedLocales  []string                     `json:"supported_locales,omitempty"`
+	FieldLocalization map[string]FieldLocalization `json:"field_localization,omitempty"`
+	RFQURL            string                       `json:"rfq_url"`
+	Site              site.Configuration           `json:"site"`
+	Localizations     map[string]LocalizedContent  `json:"-"`
+	SourceLocale      string                       `json:"-"`
+	SourceLocales     map[string]string            `json:"-"`
+}
+
+type FieldLocalization struct {
+	RequestedLocale string                  `json:"requested_locale"`
+	EffectiveLocale string                  `json:"effective_locale,omitempty"`
+	Provenance      localization.Provenance `json:"provenance"`
 }
 
 type LocalizedContent struct {
@@ -80,19 +91,46 @@ type LocalizedContent struct {
 }
 
 func (v PublicView) ForLocale(locale string) PublicView {
+	defaultLocale := v.DefaultLocale
+	if defaultLocale == "" && len(v.SupportedLocales) > 0 {
+		defaultLocale = v.SupportedLocales[0]
+	}
+	if defaultLocale == "" {
+		defaultLocale = v.SourceLocale
+	}
 	v.Language = locale
-	if item, ok := v.Localizations[locale]; ok {
-		if item.Name != "" {
-			v.Name = item.Name
+	v.FieldLocalization = make(map[string]FieldLocalization, len(catalog.ProductTranslatableFields))
+	fields := map[string]*string{
+		"name": &v.Name, "description": &v.Description, "features": &v.Features, "specification": &v.Specification,
+	}
+	for field, target := range fields {
+		values := make(map[string]string, len(v.Localizations)+1)
+		sourceLocale := v.SourceLocales[field]
+		if sourceLocale == "" {
+			sourceLocale = v.SourceLocale
 		}
-		if item.Description != "" {
-			v.Description = item.Description
+		if sourceLocale == "" {
+			sourceLocale = defaultLocale
 		}
-		if item.Features != "" {
-			v.Features = item.Features
+		values[sourceLocale] = *target
+		for translationLocale, item := range v.Localizations {
+			switch field {
+			case "name":
+				values[translationLocale] = item.Name
+			case "description":
+				values[translationLocale] = item.Description
+			case "features":
+				values[translationLocale] = item.Features
+			case "specification":
+				values[translationLocale] = item.Specification
+			}
 		}
-		if item.Specification != "" {
-			v.Specification = item.Specification
+		resolved := localization.ResolveCustomerValue(locale, defaultLocale, sourceLocale, v.SupportedLocales, values)
+		*target = resolved.Value
+		v.FieldLocalization[field] = FieldLocalization{
+			RequestedLocale: resolved.RequestedLocale,
+			EffectiveLocale: resolved.EffectiveLocale,
+			Provenance:      resolved.Provenance,
 		}
 	}
 	return v
@@ -116,7 +154,10 @@ func FromProduct(product catalog.Product, baseURL string) (PublicView, error) {
 		Brand: product.Brand, Lifecycle: product.Lifecycle, LifecycleID: product.LifecycleID,
 		Description: product.Description, Features: product.Features,
 		Specification: product.Specification,
-		CanonicalURL:  canonical, Language: "en-US", SupportedLocales: []string{"en-US"},
+		CanonicalURL:  canonical, Language: "en-US", DefaultLocale: "en-US", SupportedLocales: []string{"en-US"},
+		SourceLocale: "en-US", SourceLocales: map[string]string{
+			"name": "en-US", "description": "en-US", "features": "en-US", "specification": "en-US",
+		},
 		RFQURL: "/rfq?product_id=" + product.ID,
 	}
 	if product.DocumentURL != "" {

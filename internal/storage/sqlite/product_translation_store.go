@@ -10,6 +10,7 @@ import (
 
 	"prods/internal/catalog"
 	"prods/internal/identity"
+	"prods/internal/localization"
 )
 
 var ErrContentLocaleUnavailable = errors.New("content locale unavailable")
@@ -69,13 +70,12 @@ func (s *Store) SaveProductTranslation(ctx context.Context, actorID, productID s
 		if revision != expectedProductRevision {
 			return catalog.ErrRevisionConflict
 		}
-		var sourceLocale, supportedJSON string
 		var enabled bool
-		if err := tx.QueryRowContext(ctx, `SELECT m.source_locale,s.supported_locales_json,s.content_multilingual_enabled
-			FROM product_content_metadata m CROSS JOIN site_settings s WHERE m.product_id=? AND s.singleton=1`, productID).Scan(&sourceLocale, &supportedJSON, &enabled); err != nil {
+		if err := tx.QueryRowContext(ctx, `SELECT w.content_editing_enabled
+			FROM product_content_metadata m CROSS JOIN website_working w WHERE m.product_id=? AND w.singleton=1`, productID).Scan(&enabled); err != nil {
 			return err
 		}
-		if !enabled || item.Locale == sourceLocale || !localeInJSON(supportedJSON, item.Locale) {
+		if _, supported := localization.NormalizeBuiltinLocale(item.Locale); !enabled || !supported {
 			return ErrContentLocaleUnavailable
 		}
 		now := time.Now().UTC().Format(time.RFC3339Nano)

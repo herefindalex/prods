@@ -5,9 +5,7 @@ import {
   Card,
   Form,
   Input,
-  Select,
   Space,
-  Switch,
   Typography,
 } from "antd";
 import { api, putJSON } from "./api";
@@ -18,10 +16,6 @@ type Props = {
   onError(error: unknown): void;
   onMessage(message: string): void;
 };
-const localeOptions = ["en-US", "zh-TW"].map((value) => ({
-  value,
-  label: value,
-}));
 const labels = {
   "en-US": {
     title: "Site settings",
@@ -82,10 +76,6 @@ export function SettingsPanel({ locale, onError, onMessage }: Props) {
   const [settings, setSettings] = useState<SiteSettings>();
   const [loading, setLoading] = useState(false);
   const [timeForm] = Form.useForm<{ time_zone: string }>();
-  const [contentForm] = Form.useForm<{
-    enabled: boolean;
-    supported_locales: string[];
-  }>();
   const onErrorRef = useRef(onError);
   const onMessageRef = useRef(onMessage);
   onErrorRef.current = onError;
@@ -96,16 +86,12 @@ export function SettingsPanel({ locale, onError, onMessage }: Props) {
       const next = await api<SiteSettings>("/admin/api/system/settings");
       setSettings(next);
       timeForm.setFieldsValue({ time_zone: next.time_zone });
-      contentForm.setFieldsValue({
-        enabled: next.content_multilingual_enabled,
-        supported_locales: next.supported_locales,
-      });
     } catch (error) {
       onErrorRef.current(error);
     } finally {
       setLoading(false);
     }
-  }, [contentForm, timeForm]);
+  }, [timeForm]);
   useEffect(() => {
     void load();
   }, [load]);
@@ -122,33 +108,6 @@ export function SettingsPanel({ locale, onError, onMessage }: Props) {
       );
       setSettings(updated);
       onMessageRef.current(text.saved);
-    } catch (error) {
-      onErrorRef.current(error);
-    } finally {
-      setLoading(false);
-    }
-  };
-  const saveContent = async (values: {
-    enabled: boolean;
-    supported_locales: string[];
-  }) => {
-    if (!settings) return;
-    setLoading(true);
-    try {
-      const updated = await putJSON<SiteSettings>(
-        "/admin/api/system/settings/content-localization",
-        {
-          expected_revision: settings.revision,
-          enabled: values.enabled,
-          supported_locales: values.supported_locales,
-        },
-      );
-      setSettings(updated);
-      contentForm.setFieldsValue({
-        enabled: updated.content_multilingual_enabled,
-        supported_locales: updated.supported_locales,
-      });
-      onMessageRef.current(text.contentSaved);
     } catch (error) {
       onErrorRef.current(error);
     } finally {
@@ -210,47 +169,6 @@ export function SettingsPanel({ locale, onError, onMessage }: Props) {
             </Typography.Text>
           )}
         </Space>
-      </Card>
-      <Card title={text.contentTitle}>
-        <Form
-          form={contentForm}
-          layout="vertical"
-          onFinish={(v) => void saveContent(v)}
-        >
-          <Alert
-            className="bottom-gap"
-            type="info"
-            showIcon
-            message={text.contentHelp}
-          />
-          <Form.Item
-            name="enabled"
-            label={text.contentEnabled}
-            valuePropName="checked"
-          >
-            <Switch />
-          </Form.Item>
-          <Form.Item
-            name="supported_locales"
-            label={text.supportedLocales}
-            rules={[
-              { required: true },
-              {
-                validator: async (_, v: string[]) => {
-                  if (!v?.includes(settings?.default_locale ?? ""))
-                    throw new Error(
-                      `${text.defaultLocale}: ${settings?.default_locale}`,
-                    );
-                },
-              },
-            ]}
-          >
-            <Select mode="multiple" options={localeOptions} />
-          </Form.Item>
-          <Button type="primary" htmlType="submit" loading={loading}>
-            {text.saveContent}
-          </Button>
-        </Form>
       </Card>
     </Space>
   );

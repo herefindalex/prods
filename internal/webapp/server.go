@@ -527,6 +527,7 @@ func (s *Server) routes(static fs.FS) {
 	s.mux.HandleFunc("POST /admin/api/website/routes/preview", s.adminPreviewSiteRoutes)
 	s.mux.HandleFunc("POST /admin/api/website/routes/publish", s.adminPublishSiteRoutes)
 	s.mux.HandleFunc("GET /admin/api/website/configuration", s.adminWebsiteConfiguration)
+	s.mux.HandleFunc("PUT /admin/api/website/localization", s.adminSaveWebsiteLocalization)
 	s.mux.HandleFunc("POST /admin/api/website/capture", s.adminCaptureWebsiteBrand)
 	s.mux.HandleFunc("PUT /admin/api/website/configuration", s.adminSaveWebsiteConfiguration)
 	s.mux.HandleFunc("GET /admin/api/website/versions", s.adminWebsiteVersions)

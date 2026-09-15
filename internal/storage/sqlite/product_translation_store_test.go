@@ -7,6 +7,7 @@ import (
 
 	"prods/internal/catalog"
 	"prods/internal/identity"
+	"prods/internal/site"
 )
 
 func TestProductTranslationsPreserveSourceRevisionAndDisabledLocaleData(t *testing.T) {
@@ -59,6 +60,16 @@ func TestProductTranslationsPreserveSourceRevisionAndDisabledLocaleData(t *testi
 	if err != nil {
 		t.Fatal(err)
 	}
+	website, err := store.WebsiteState(t.Context())
+	if err != nil {
+		t.Fatal(err)
+	}
+	website, err = store.SaveWebsiteLocalization(t.Context(), owner.ID, website.WorkingRevision, site.WebsiteLocalization{
+		DefaultLocale: "en-US", EnabledLocales: []string{"en-US", "zh-TW"}, ContentEditingEnabled: true,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
 	content, err := store.SaveProductTranslation(t.Context(), owner.ID, product.ID, product.Revision, catalog.ProductTranslation{Locale: "zh-TW", Name: "翻譯名稱", Description: "翻譯說明"})
 	if err != nil {
 		t.Fatal(err)
@@ -79,6 +90,11 @@ func TestProductTranslationsPreserveSourceRevisionAndDisabledLocaleData(t *testi
 	}
 	settings, err = store.UpdateContentLocalization(t.Context(), owner.ID, settings.Revision, true, []string{"en-US"})
 	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := store.SaveWebsiteLocalization(t.Context(), owner.ID, website.WorkingRevision, site.WebsiteLocalization{
+		DefaultLocale: "en-US", EnabledLocales: []string{"en-US"}, ContentEditingEnabled: false,
+	}); err != nil {
 		t.Fatal(err)
 	}
 	if _, err = store.SaveProductTranslation(t.Context(), owner.ID, product.ID, content.ProductRevision, catalog.ProductTranslation{Locale: "zh-TW", Name: "不可公開"}); !errors.Is(err, ErrContentLocaleUnavailable) {

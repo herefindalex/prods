@@ -69,14 +69,26 @@ func (s *Store) PublicationSource(ctx context.Context, productID string) (publis
 		return publishing.Source{}, err
 	}
 	var supportedLocalesJSON string
-	if err := tx.QueryRowContext(ctx, `SELECT default_locale,supported_locales_json,content_multilingual_enabled FROM site_settings WHERE singleton=1`).Scan(&source.Language, &supportedLocalesJSON, &source.ContentMultilingualEnabled); err != nil {
+	if err := tx.QueryRowContext(ctx, `SELECT v.default_locale,v.enabled_locales_json,v.content_editing_enabled
+		FROM public_site_state p JOIN website_versions v ON v.site_epoch=p.active_epoch WHERE p.singleton=1`).Scan(
+		&source.Language, &supportedLocalesJSON, &source.ContentMultilingualEnabled,
+	); err != nil {
 		return publishing.Source{}, err
 	}
 	if err := json.Unmarshal([]byte(supportedLocalesJSON), &source.SupportedLocales); err != nil {
 		return publishing.Source{}, err
 	}
-	if err := tx.QueryRowContext(ctx, `SELECT source_locale FROM product_content_metadata WHERE product_id=?`, productID).Scan(&source.SourceLocale); err != nil {
+	var sourceLocalesJSON string
+	if err := tx.QueryRowContext(ctx, `SELECT source_locale,source_locales_json FROM product_content_metadata WHERE product_id=?`, productID).Scan(
+		&source.SourceLocale, &sourceLocalesJSON,
+	); err != nil {
 		return publishing.Source{}, err
+	}
+	if err := json.Unmarshal([]byte(sourceLocalesJSON), &source.SourceLocales); err != nil {
+		return publishing.Source{}, err
+	}
+	if len(source.SourceLocales) == 0 {
+		source.SourceLocales, _ = catalog.NormalizeFieldSourceLocales(nil, source.SourceLocale, catalog.ProductTranslatableFields)
 	}
 	translationRows, err := tx.QueryContext(ctx, `SELECT locale,name,description,features,specification,revision,COALESCE(updated_by,''),updated_at FROM product_translations WHERE product_id=? ORDER BY locale`, productID)
 	if err != nil {
@@ -357,14 +369,26 @@ func (s *Store) PrepareSiteRoutes(ctx context.Context, config publishing.SiteRou
 		return preview, nil, err
 	}
 	var working site.Configuration
-	var workingJSON string
-	if err := s.db.QueryRowContext(ctx, `SELECT revision,config_json FROM website_working WHERE singleton=1`).Scan(&preview.WorkingRevision, &workingJSON); err != nil {
+	var workingLocalization site.WebsiteLocalization
+	var workingJSON, workingLocalesJSON, workingOverridesJSON string
+	if err := s.db.QueryRowContext(ctx, `SELECT revision,config_json,default_locale,enabled_locales_json,content_editing_enabled,public_copy_overrides_json
+		FROM website_working WHERE singleton=1`).Scan(&preview.WorkingRevision, &workingJSON,
+		&workingLocalization.DefaultLocale, &workingLocalesJSON, &workingLocalization.ContentEditingEnabled, &workingOverridesJSON); err != nil {
 		return preview, nil, err
 	}
 	if err := json.Unmarshal([]byte(workingJSON), &working); err != nil {
 		return preview, nil, err
 	}
 	if err := working.Prepare(); err != nil {
+		return preview, nil, err
+	}
+	if err := json.Unmarshal([]byte(workingLocalesJSON), &workingLocalization.EnabledLocales); err != nil {
+		return preview, nil, err
+	}
+	if err := json.Unmarshal([]byte(workingOverridesJSON), &workingLocalization.PublicCopyOverrides); err != nil {
+		return preview, nil, err
+	}
+	if err := workingLocalization.Prepare(); err != nil {
 		return preview, nil, err
 	}
 	preview.CandidateEpoch = preview.CurrentEpoch + 1
@@ -397,6 +421,9 @@ func (s *Store) PrepareSiteRoutes(ctx context.Context, config publishing.SiteRou
 		}
 		source.SiteEpoch = preview.CandidateEpoch
 		source.Site = working
+		source.Language = workingLocalization.DefaultLocale
+		source.SupportedLocales = append([]string(nil), workingLocalization.EnabledLocales...)
+		source.ContentMultilingualEnabled = workingLocalization.ContentEditingEnabled
 		route, reason := resolvedProductRoute(source, config)
 		if reason != "" {
 			preview.Missing = append(preview.Missing, publishing.SiteRouteIssue{ProductID: product.ID, PartNumber: product.PartNumber, Reason: reason})
@@ -749,15 +776,30 @@ func (s *Store) ActivePublications(ctx context.Context) ([]publishing.ActivePubl
 }
 
 func (s *Store) attachActiveTranslations(ctx context.Context, activations []publishing.ActivePublication) ([]publishing.ActivePublication, error) {
-	var enabled bool
-	var supportedJSON string
-	if err := s.db.QueryRowContext(ctx, `SELECT content_multilingual_enabled,supported_locales_json FROM site_settings WHERE singleton=1`).Scan(&enabled, &supportedJSON); err != nil {
+	var defaultLocale, supportedJSON string
+	if err := s.db.QueryRowContext(ctx, `SELECT v.default_locale,v.enabled_locales_json FROM public_site_state p
+		JOIN website_versions v ON v.site_epoch=p.active_epoch WHERE p.singleton=1`).Scan(&defaultLocale, &supportedJSON); err != nil {
 		return nil, err
 	}
-	if !enabled {
-		return activations, nil
+	var supported []string
+	if err := json.Unmarshal([]byte(supportedJSON), &supported); err != nil {
+		return nil, err
 	}
 	for index := range activations {
+		activations[index].View.DefaultLocale = defaultLocale
+		activations[index].View.SupportedLocales = append([]string(nil), supported...)
+		var sourceLocalesJSON string
+		if err := s.db.QueryRowContext(ctx, `SELECT source_locale,source_locales_json FROM product_content_metadata WHERE product_id=?`, activations[index].ProductID).Scan(
+			&activations[index].View.SourceLocale, &sourceLocalesJSON,
+		); err != nil {
+			return nil, err
+		}
+		if err := json.Unmarshal([]byte(sourceLocalesJSON), &activations[index].View.SourceLocales); err != nil {
+			return nil, err
+		}
+		if len(activations[index].View.SourceLocales) == 0 {
+			activations[index].View.SourceLocales, _ = catalog.NormalizeFieldSourceLocales(nil, activations[index].View.SourceLocale, catalog.ProductTranslatableFields)
+		}
 		rows, err := s.db.QueryContext(ctx, `SELECT locale,name,description,features,specification FROM product_translations WHERE product_id=? ORDER BY locale`, activations[index].ProductID)
 		if err != nil {
 			return nil, err
@@ -1018,39 +1060,16 @@ func (s *Store) RevokeProduct(ctx context.Context, request publishing.RevokeRequ
 
 func upsertPublicSearchProjection(ctx context.Context, tx *sql.Tx, activation publishing.ActivePublication, generation int64, now string) error {
 	view := activation.View
+	defaultView := view.ForLocale(view.DefaultLocale)
 	partNumber := catalog.FoldSearch(view.PartNumber)
-	productName := catalog.FoldSearch(view.Name)
+	productName := catalog.FoldSearch(defaultView.Name)
 	manufacturer := catalog.FoldSearch(view.Manufacturer)
 	brand := catalog.FoldSearch(view.Brand)
 	category := catalog.FoldSearch(view.Category)
-	searchValues := []string{view.PartNumber, view.Name, view.Manufacturer, view.Brand, view.Category, view.Lifecycle, publishingApplicationNames(view.Applications)}
-	var enabled bool
-	var supportedJSON string
-	if err := tx.QueryRowContext(ctx, `SELECT content_multilingual_enabled,supported_locales_json FROM site_settings WHERE singleton=1`).Scan(&enabled, &supportedJSON); err != nil {
-		return err
-	}
-	if enabled {
-		rows, err := tx.QueryContext(ctx, `SELECT locale,name,description,features,specification FROM product_translations WHERE product_id=?`, activation.ProductID)
-		if err != nil {
-			return err
-		}
-		for rows.Next() {
-			var locale string
-			var values [4]string
-			if err := rows.Scan(&locale, &values[0], &values[1], &values[2], &values[3]); err != nil {
-				rows.Close()
-				return err
-			}
-			if localeInJSON(supportedJSON, locale) {
-				searchValues = append(searchValues, values[:]...)
-			}
-		}
-		if err := rows.Close(); err != nil {
-			return err
-		}
-		if err := rows.Err(); err != nil {
-			return err
-		}
+	searchValues := []string{view.PartNumber, view.Manufacturer, view.Brand, view.Category, view.Lifecycle, publishingApplicationNames(view.Applications)}
+	for _, locale := range view.SupportedLocales {
+		localized := view.ForLocale(locale)
+		searchValues = append(searchValues, localized.Name)
 	}
 	all := catalog.FoldSearch(strings.Join(searchValues, " "))
 	_, err := tx.ExecContext(ctx, `INSERT INTO public_search_projection(

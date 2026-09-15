@@ -67,6 +67,7 @@ type Source struct {
 	Product                    catalog.Product
 	Translations               []catalog.ProductTranslation
 	SourceLocale               string
+	SourceLocales              map[string]string
 	ContentMultilingualEnabled bool
 	Site                       site.Configuration
 	Category                   string
@@ -488,10 +489,10 @@ func (e *Engine) InstallVisibility(ctx context.Context) error { return e.install
 func (e *Engine) UnlockVisibility() { e.gate.Unlock() }
 
 func (e *Engine) SetContentLanguagePolicy(locales []string, enabled bool) {
-	e.gate.Lock()
-	defer e.gate.Unlock()
-	e.contentLocales = append([]string(nil), locales...)
-	e.contentMultilingualEnabled = enabled
+	// Kept as a compatibility hook for older Admin clients. Public language
+	// admission comes only from the active Website revision on each PublicView.
+	_ = locales
+	_ = enabled
 }
 
 func (e *Engine) installLocked(ctx context.Context) error {
@@ -583,18 +584,15 @@ func (e *Engine) viewFromSource(source Source) PublicView {
 		Lifecycle: source.Product.Lifecycle, LifecycleID: source.Product.LifecycleID,
 		Category: source.Category, CategoryID: source.Product.CategoryID, Description: source.Product.Description,
 		Features: source.Product.Features, Specification: source.Product.Specification,
-		CanonicalURL: e.baseURL + source.Route, Language: source.Language,
+		CanonicalURL: e.baseURL + source.Route, Language: source.Language, DefaultLocale: source.Language,
 		SupportedLocales: append([]string(nil), source.SupportedLocales...),
 		RFQURL:           "/rfq?product_id=" + source.Product.ID,
 		Localizations:    make(map[string]LocalizedContent),
+		SourceLocale:     source.SourceLocale,
+		SourceLocales:    source.SourceLocales,
 	}
-	if source.SourceLocale != "" {
-		view.Language = source.SourceLocale
-	}
-	if source.ContentMultilingualEnabled {
-		for _, item := range source.Translations {
-			view.Localizations[item.Locale] = LocalizedContent{Name: item.Name, Description: item.Description, Features: item.Features, Specification: item.Specification}
-		}
+	for _, item := range source.Translations {
+		view.Localizations[item.Locale] = LocalizedContent{Name: item.Name, Description: item.Description, Features: item.Features, Specification: item.Specification}
 	}
 	if source.CategoryPath != "" {
 		view.CategoryURL = e.baseURL + "/categories/" + source.CategoryPath
@@ -954,13 +952,7 @@ func (e *Engine) ServePath(w http.ResponseWriter, r *http.Request) bool {
 	locale := lease.Publication.View.Language
 	if explicit := r.URL.Query().Get("lang"); explicit != "" {
 		supported := publicSupportedLocales(lease.Publication.View)
-		e.gate.RLock()
-		if len(e.contentLocales) > 0 {
-			supported = append([]string(nil), e.contentLocales...)
-		}
-		multilingualEnabled := e.contentMultilingualEnabled
-		e.gate.RUnlock()
-		resolvedLocale, resolveErr := localization.Resolve(lease.Publication.View.Language, supported, explicit, "")
+		resolvedLocale, resolveErr := localization.ResolvePublishedLocale(lease.Publication.View.DefaultLocale, supported, explicit, "")
 		err = resolveErr
 		if err != nil {
 			lease.File.Close()
@@ -974,11 +966,7 @@ func (e *Engine) ServePath(w http.ResponseWriter, r *http.Request) bool {
 			http.Error(w, "public representation temporarily unavailable", http.StatusServiceUnavailable)
 			return true
 		}
-		if multilingualEnabled {
-			lease.Name = localizedArtifactName(locale, lease.Name)
-		} else {
-			lease.Name = fallbackLocalizedArtifactName(locale, lease.Name)
-		}
+		lease.Name = localizedArtifactName(locale, lease.Name)
 		lease.File, err = os.Open(filepath.Join(directory, lease.Name))
 		if err != nil {
 			http.Error(w, "public representation temporarily unavailable", http.StatusServiceUnavailable)
@@ -1106,12 +1094,8 @@ func (e *Engine) Views() ([]PublicView, error) {
 }
 
 func (e *Engine) admittedViewLocked(view PublicView) PublicView {
-	if !e.contentMultilingualEnabled {
-		view.Localizations = nil
-		return view
-	}
-	allowed := make(map[string]struct{}, len(e.contentLocales))
-	for _, locale := range e.contentLocales {
+	allowed := make(map[string]struct{}, len(view.SupportedLocales))
+	for _, locale := range view.SupportedLocales {
 		allowed[locale] = struct{}{}
 	}
 	filtered := make(map[string]LocalizedContent)
@@ -1155,11 +1139,11 @@ func (e *Engine) Search(ctx context.Context, query string) ([]PublicView, error)
 		}
 		haystack := catalog.FoldSearch(strings.Join([]string{
 			current.View.PartNumber, current.View.Name, current.View.Manufacturer, current.View.Brand,
-			current.View.Category, current.View.Lifecycle, applicationNames(current.View.Applications), current.View.Description, current.View.Features,
+			current.View.Category, current.View.Lifecycle, applicationNames(current.View.Applications),
 		}, " "))
 		admittedView := e.admittedViewLocked(current.View)
 		for _, localized := range admittedView.Localizations {
-			haystack += " " + catalog.FoldSearch(strings.Join([]string{localized.Name, localized.Description, localized.Features, localized.Specification}, " "))
+			haystack += " " + catalog.FoldSearch(localized.Name)
 		}
 		if strings.Contains(haystack, folded) {
 			views = append(views, admittedView)

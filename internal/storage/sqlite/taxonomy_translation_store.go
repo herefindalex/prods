@@ -121,12 +121,11 @@ func (s *Store) SaveTaxonomyTranslation(ctx context.Context, actorID, subjectTyp
 		if revision != expectedRevision {
 			return catalog.ErrRevisionConflict
 		}
-		var sourceLocale, supportedJSON string
 		var enabled bool
-		if err := tx.QueryRowContext(ctx, `SELECT tc.source_locale,s.supported_locales_json,s.content_multilingual_enabled FROM taxonomy_content tc CROSS JOIN site_settings s WHERE tc.subject_type=? AND tc.subject_id=? AND s.singleton=1`, subjectType, subjectID).Scan(&sourceLocale, &supportedJSON, &enabled); err != nil {
+		if err := tx.QueryRowContext(ctx, `SELECT w.content_editing_enabled FROM taxonomy_content tc CROSS JOIN website_working w WHERE tc.subject_type=? AND tc.subject_id=? AND w.singleton=1`, subjectType, subjectID).Scan(&enabled); err != nil {
 			return err
 		}
-		if !enabled || item.Locale == sourceLocale || !localeInJSON(supportedJSON, item.Locale) {
+		if _, supported := localization.NormalizeBuiltinLocale(item.Locale); !enabled || !supported {
 			return ErrContentLocaleUnavailable
 		}
 		now := time.Now().UTC().Format(time.RFC3339Nano)
