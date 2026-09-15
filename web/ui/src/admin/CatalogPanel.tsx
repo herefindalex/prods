@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import {
+  Alert,
   Button,
   Card,
   Checkbox,
@@ -42,6 +43,7 @@ export function CatalogPanel({ onError, onMessage }: Feedback) {
   const [loading, setLoading] = useState(false);
   const [exporting, setExporting] = useState(false);
   const [editing, setEditing] = useState<Product>();
+  const [cloning, setCloning] = useState<Product>();
   const [dataProduct, setDataProduct] = useState<Product>();
   const [formOpen, setFormOpen] = useState(false);
   const [form] = Form.useForm<ProductForm>();
@@ -96,12 +98,14 @@ export function CatalogPanel({ onError, onMessage }: Feedback) {
 
   const beginCreate = () => {
     setEditing(undefined);
+    setCloning(undefined);
     form.setFieldsValue(blankProduct);
     setFormOpen(true);
   };
 
   const beginEdit = (product: Product) => {
     setEditing(product);
+	setCloning(undefined);
 	form.setFieldsValue({
 		slug: product.slug,
 		custom_path: product.custom_path,
@@ -124,9 +128,40 @@ export function CatalogPanel({ onError, onMessage }: Feedback) {
     setFormOpen(true);
   };
 
+	const beginClone = (product: Product) => {
+		setEditing(undefined);
+		setCloning(product);
+		form.setFieldsValue({
+			slug: "",
+			custom_path: "",
+			part_number: "",
+			name: product.name,
+			manufacturer_id: product.manufacturer_id,
+			manufacturer: product.manufacturer,
+			brand_id: product.brand_id,
+			brand: product.brand,
+			application_ids: product.application_ids ?? [],
+			lifecycle_id: product.lifecycle_id,
+			category_id: product.category_id,
+			package_form_factor: product.package_form_factor,
+			description: product.description,
+			features: product.features,
+			specification: product.specification,
+			document_url: product.document_url,
+			status: "hidden",
+		});
+		setFormOpen(true);
+	};
+
 	const save = async (values: ProductForm) => {
     try {
-		if (editing) {
+		if (cloning) {
+			const created = await postJSON<Product>(`/admin/api/products/${cloning.id}/clone`, {
+				expected_revision: cloning.revision,
+				product: { ...values, status: "hidden" },
+			});
+			onMessage(`Cloned ${cloning.part_number} as ${created.part_number}. The clone is Hidden.`);
+		} else if (editing) {
 		  let updated = await putJSON<Product>(`/admin/api/products/${editing.id}`, {
 			expected_revision: editing.revision,
 			product: { ...editing, ...values },
@@ -144,6 +179,7 @@ export function CatalogPanel({ onError, onMessage }: Feedback) {
         onMessage(`Created ${created.part_number} as Hidden.`);
       }
       setEditing(undefined);
+		setCloning(undefined);
       setFormOpen(false);
       form.resetFields();
       await load();
@@ -182,7 +218,21 @@ export function CatalogPanel({ onError, onMessage }: Feedback) {
       onError(error);
       await load();
     }
-  };
+	};
+
+	const publish = async (product: Product) => {
+		try {
+			const updated = await putJSON<Product>(`/admin/api/products/${product.id}`, {
+				expected_revision: product.revision,
+				product: { ...product, status: "published" },
+			});
+			onMessage(`${updated.part_number} publication was queued at revision ${updated.revision}.`);
+			await load();
+		} catch (error) {
+			onError(error);
+			await load();
+		}
+	};
 
   return (
     <Space direction="vertical" size="large" className="panel-stack">
@@ -227,6 +277,16 @@ export function CatalogPanel({ onError, onMessage }: Feedback) {
                 <Space>
                   <Button size="small" disabled={row.record_state === "archived"} onClick={() => beginEdit(row)}>Edit</Button>
                   <Button size="small" disabled={row.record_state === "archived"} onClick={() => setDataProduct(row)}>Data</Button>
+				  <Button size="small" onClick={() => beginClone(row)}>Clone</Button>
+				  {row.record_state !== "archived" && row.status === "hidden" && (
+					<Popconfirm
+					  title="Publish this product?"
+					  description="The complete Product publication unit will become public after activation."
+					  onConfirm={() => void publish(row)}
+					>
+					  <Button size="small" type="primary">Publish</Button>
+					</Popconfirm>
+				  )}
                   {row.record_state !== "archived" && row.status === "published" && (
                     <Popconfirm title="Hide this product from new public requests?" onConfirm={() => void mutate(row, "hide")}>
                       <Button size="small">Hide</Button>
@@ -246,14 +306,32 @@ export function CatalogPanel({ onError, onMessage }: Feedback) {
 
       <Modal
         open={formOpen}
-        title={editing ? `Edit ${editing.part_number}` : "New product"}
-        okText={editing ? "Save" : "Create Hidden product"}
+		title={editing ? `Edit ${editing.part_number}` : cloning ? `Clone ${cloning.part_number}` : "New product"}
+		okText={editing ? "Save" : cloning ? "Create Hidden clone" : "Create Hidden product"}
         onOk={() => form.submit()}
-        onCancel={() => { setEditing(undefined); setFormOpen(false); form.resetFields(); }}
+		onCancel={() => { setEditing(undefined); setCloning(undefined); setFormOpen(false); form.resetFields(); }}
         width={760}
         destroyOnHidden
       >
         <Form form={form} layout="vertical" onFinish={(values) => void save(values)} initialValues={blankProduct}>
+		  {editing?.status === "published" ? (
+			<Alert
+			  className="bottom-gap"
+			  type="warning"
+			  showIcon
+			  message="This Product is currently public"
+			  description="Saving creates a new public revision. The current revision remains available until the complete replacement publication unit activates."
+			/>
+		  ) : null}
+		  {cloning ? (
+			<Alert
+			  className="bottom-gap"
+			  type="info"
+			  showIcon
+			  message="Create an independent Hidden clone"
+			  description="Enter a new Part Number. Product data and valid asset, image, document, specification, and application references are copied from the source."
+			/>
+		  ) : null}
 		  <div className="form-grid">
 			<Form.Item name="part_number" label="Part number" rules={[{ required: true }]}><Input /></Form.Item>
 			<Form.Item name="slug" label="URL slug" extra={editing ? "Changing this changes the public URL." : "Leave blank to generate a stable suggestion once."}><Input placeholder="auto-generated" /></Form.Item>
@@ -266,7 +344,7 @@ export function CatalogPanel({ onError, onMessage }: Feedback) {
             <Form.Item name="category_id" label="Category" rules={[{ required: true }]}><Select showSearch optionFilterProp="label" options={categoryOptions} /></Form.Item>
             <Form.Item name="package_form_factor" label="Package / form factor"><Input /></Form.Item>
             <Form.Item name="status" label="Visibility" rules={[{ required: true }]}>
-              <Select disabled={editing?.status === "published"} options={[{ value: "hidden", label: "Hidden" }, { value: "published", label: "Published" }]} />
+              <Select disabled={Boolean(cloning) || editing?.status === "published"} options={[{ value: "hidden", label: "Hidden" }, { value: "published", label: "Published" }]} />
             </Form.Item>
             <Form.Item name="document_url" label="Legacy document URL"><Input type="url" /></Form.Item>
           </div>

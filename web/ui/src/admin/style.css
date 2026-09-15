@@ -56,6 +56,10 @@ body,
   margin-top: 20px;
 }
 
+.bottom-gap {
+  margin-bottom: 20px;
+}
+
 @media (max-width: 760px) {
   .content {
     width: min(100% - 20px, 1240px);
