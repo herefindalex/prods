@@ -424,10 +424,6 @@ func LoadManifest(backupPath string) (Manifest, error) {
 	return manifest, nil
 }
 
-func validManifestFile(file ManifestFile) bool {
-	return safeRelativePath(file.Path) && validManifestFileMetadata(file)
-}
-
 func validManifestFileMetadata(file ManifestFile) bool {
 	if len(file.SHA256) != sha256.Size*2 || file.Size < 0 {
 		return false

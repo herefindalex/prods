@@ -8,7 +8,7 @@ import (
 	"sync"
 )
 
-var ErrAlreadyOwned = errors.New("Prods data is already owned by another process")
+var ErrAlreadyOwned = errors.New("prods data is already owned by another process")
 
 type Ownership struct {
 	path string

@@ -612,13 +612,10 @@ func (e *Engine) viewFromSource(source Source) PublicView {
 		})
 	}
 	if view.Language == "" {
-		view.Language = "en"
+		view.Language = "en-US"
 	}
 	for _, spec := range source.Specs {
-		view.Specifications = append(view.Specifications, Specification{
-			ID: spec.ID, Name: spec.Name, RawValue: spec.RawValue,
-			PreferredUnit: spec.PreferredUnit, Language: spec.Language,
-		})
+		view.Specifications = append(view.Specifications, Specification(spec))
 	}
 	for _, document := range source.Documents {
 		location := document.URL

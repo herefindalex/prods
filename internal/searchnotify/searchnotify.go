@@ -226,7 +226,7 @@ func (m *Manager) submit(ctx context.Context, settings Settings, job Job) (int, 
 		})
 	case ProviderGoogle:
 		if !settings.GoogleEnabled || m.config.Google == nil {
-			return 0, "Google Search Console integration is disabled or unavailable", false, errors.New("Google Search Console unavailable")
+			return 0, "Google Search Console integration is disabled or unavailable", false, errors.New("integration with Google Search Console is unavailable")
 		}
 		return m.config.Google.SubmitSitemap(ctx, settings.GoogleSiteURL, job.Subject)
 	default:

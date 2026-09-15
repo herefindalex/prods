@@ -439,11 +439,11 @@ func (resolver Resolver) Resolve() (Options, error) {
 	googleSearchConfigured := options.GoogleSearchClientID != "" || options.GoogleSearchClientSecretFile != "" || options.GoogleSearchRefreshTokenFile != ""
 	if googleSearchConfigured {
 		if options.GoogleSearchClientID == "" || options.GoogleSearchClientSecretFile == "" || options.GoogleSearchRefreshTokenFile == "" {
-			return Options{}, errors.New("Google Search Console requires client ID, client secret file, and refresh token file together")
+			return Options{}, errors.New("configuration for Google Search Console requires client ID, client secret file, and refresh token file together")
 		}
 		secretsRoot := filepath.Join(options.DataDir, "secrets")
 		if !pathWithin(secretsRoot, options.GoogleSearchClientSecretFile) || !pathWithin(secretsRoot, options.GoogleSearchRefreshTokenFile) {
-			return Options{}, errors.New("Google Search Console secret files must be inside data_dir/secrets so backup and restore include them")
+			return Options{}, errors.New("secret files for Google Search Console must be inside data_dir/secrets so backup and restore include them")
 		}
 	}
 	if options.InstallService && (options.POCFixtures || options.RestoreBackup != "" ||

@@ -29,7 +29,7 @@ func InstallService(ctx context.Context, spec ServiceSpec) error {
 		return err
 	}
 	if strings.TrimSpace(spec.User) == "" {
-		return errors.New("Linux service installation requires --service-user")
+		return errors.New("service installation on Linux requires --service-user")
 	}
 	if _, err := user.Lookup(spec.User); err != nil {
 		return fmt.Errorf("look up service user %q: %w", spec.User, err)

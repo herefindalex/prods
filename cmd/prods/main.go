@@ -174,7 +174,7 @@ func runWithStop(stop <-chan struct{}) (returnErr error) {
 	)
 	if *recoverOwner != "" {
 		if inspection.State != sqlite.DatabaseReady || inspection.Kind != sqlite.DatabaseKindSite {
-			return fmt.Errorf("Owner recovery requires a completed site database; current state=%s kind=%s", inspection.State, inspection.Kind)
+			return fmt.Errorf("owner recovery requires a completed site database; current state=%s kind=%s", inspection.State, inspection.Kind)
 		}
 		store, err := sqlite.OpenReady(dbPath)
 		if err != nil {
@@ -773,18 +773,6 @@ func validateBaseURL(raw string) (bool, error) {
 		return false, fmt.Errorf("invalid canonical public base URL %q", raw)
 	}
 	return location.Scheme == "https", nil
-}
-
-func serve(address string, handler http.Handler, completed <-chan struct{}) error {
-	return serveWithStop(address, handler, completed, nil)
-}
-
-func serveWithStop(address string, handler http.Handler, completed <-chan struct{}, stop <-chan struct{}) error {
-	listener, err := net.Listen("tcp", address)
-	if err != nil {
-		return fmt.Errorf("listen on %s: %w; choose another --listen address or stop the conflicting process", address, err)
-	}
-	return serveListenerWithStop(listener, handler, completed, 10*time.Second, stop)
 }
 
 func serveListener(listener net.Listener, handler http.Handler, completed <-chan struct{}, shutdownTimeout time.Duration) error {

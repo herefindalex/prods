@@ -370,7 +370,7 @@ func newPreparedRestoreRecoveryPlan(options hostconfig.Options, journalPath stri
 		return preparedRestoreRecoveryPlan{}, fmt.Errorf("load prepared restore for Recovery UI: %w", err)
 	}
 	if journal.Phase != recovery.RestorePrepared {
-		return preparedRestoreRecoveryPlan{}, errors.New("Recovery UI may only resume a prepared restore")
+		return preparedRestoreRecoveryPlan{}, errors.New("recovery UI may only resume a prepared restore")
 	}
 	if resume == nil {
 		return preparedRestoreRecoveryPlan{}, errors.New("prepared restore resume function is required")
@@ -397,7 +397,7 @@ func runPreparedRestoreRecoveryUI(ctx context.Context, options hostconfig.Option
 func serveRecoveryUI(ctx context.Context, options hostconfig.Options, diagnostic string, stop <-chan struct{},
 	allowedBackupID string, restore func(context.Context, string) error) error {
 	if stop != nil {
-		return errors.New("Recovery Required: stop the Prods service and run the same binary interactively to receive a one-time recovery URL")
+		return errors.New("recovery required: stop the Prods service and run the same binary interactively to receive a one-time recovery URL")
 	}
 	listener, err := net.Listen("tcp", options.Listen)
 	if err != nil {

@@ -69,7 +69,7 @@ func (logger *RuntimeLog) Write(body []byte) (int, error) {
 		return written, err
 	}
 	if written != len(body) {
-		return written, ioErrShortWrite
+		return written, errIOShortWrite
 	}
 	return originalLength, nil
 }
@@ -175,4 +175,4 @@ func replaceRename(source, target string) error {
 	return os.Rename(source, target)
 }
 
-var ioErrShortWrite = errors.New("short runtime log write")
+var errIOShortWrite = errors.New("short runtime log write")

@@ -34,7 +34,7 @@ func NewGoogleSearchConsoleClient(config GoogleOAuthConfig) (*GoogleSearchConsol
 	config.ClientSecret = strings.TrimSpace(config.ClientSecret)
 	config.RefreshToken = strings.TrimSpace(config.RefreshToken)
 	if config.ClientID == "" || config.ClientSecret == "" || config.RefreshToken == "" {
-		return nil, errors.New("Google Search Console OAuth client ID, client secret, and refresh token are required")
+		return nil, errors.New("configuration for Google Search Console OAuth requires client ID, client secret, and refresh token")
 	}
 	if config.TokenURL == "" {
 		config.TokenURL = "https://oauth2.googleapis.com/token"
@@ -45,7 +45,7 @@ func NewGoogleSearchConsoleClient(config GoogleOAuthConfig) (*GoogleSearchConsol
 	for _, endpoint := range []string{config.TokenURL, config.APIBaseURL} {
 		parsed, err := url.Parse(endpoint)
 		if err != nil || parsed.Scheme != "https" || parsed.Host == "" {
-			return nil, errors.New("Google Search Console endpoints must be absolute HTTPS URLs")
+			return nil, errors.New("endpoints for Google Search Console must be absolute HTTPS URLs")
 		}
 	}
 	if config.Client == nil {
@@ -82,7 +82,7 @@ func (client *GoogleSearchConsoleClient) SubmitSitemap(ctx context.Context, site
 		return response.StatusCode, message, false, nil
 	}
 	retryable := response.StatusCode == http.StatusTooManyRequests || response.StatusCode >= 500
-	return response.StatusCode, message, retryable, fmt.Errorf("Google Search Console returned HTTP %d", response.StatusCode)
+	return response.StatusCode, message, retryable, fmt.Errorf("request to Google Search Console returned HTTP %d", response.StatusCode)
 }
 
 func (client *GoogleSearchConsoleClient) token(ctx context.Context) (string, error) {
@@ -112,7 +112,7 @@ func (client *GoogleSearchConsoleClient) token(ctx context.Context) (string, err
 		return "", err
 	}
 	if response.StatusCode != http.StatusOK {
-		return "", fmt.Errorf("Google OAuth token endpoint returned HTTP %d", response.StatusCode)
+		return "", fmt.Errorf("token endpoint for Google OAuth returned HTTP %d", response.StatusCode)
 	}
 	var token struct {
 		AccessToken string `json:"access_token"`
@@ -120,10 +120,10 @@ func (client *GoogleSearchConsoleClient) token(ctx context.Context) (string, err
 		TokenType   string `json:"token_type"`
 	}
 	if err := json.Unmarshal(body, &token); err != nil {
-		return "", errors.New("Google OAuth token response was invalid")
+		return "", errors.New("token response from Google OAuth was invalid")
 	}
 	if strings.TrimSpace(token.AccessToken) == "" || !strings.EqualFold(token.TokenType, "Bearer") {
-		return "", errors.New("Google OAuth token response did not contain a bearer access token")
+		return "", errors.New("token response from Google OAuth did not contain a bearer access token")
 	}
 	if token.ExpiresIn <= 0 {
 		token.ExpiresIn = 300

@@ -165,10 +165,6 @@ func (s *Store) PublicationSource(ctx context.Context, productID string) (publis
 	return source, nil
 }
 
-func (s *Store) publicCategoryIdentity(ctx context.Context, categoryID string) (string, string, error) {
-	return publicCategoryIdentityQuery(ctx, s.db, categoryID)
-}
-
 type publicationRowQueryer interface {
 	QueryRowContext(context.Context, string, ...any) *sql.Row
 }
