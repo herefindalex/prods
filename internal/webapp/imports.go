@@ -322,10 +322,6 @@ func (s *Server) adminCommitImport(w http.ResponseWriter, r *http.Request) {
 		s.writeImportError(w, err)
 		return
 	}
-	if err := s.store.FinishImportJob(r.Context(), job.ID); err != nil {
-		s.internalError(w, err)
-		return
-	}
 	writeJSON(w, http.StatusOK, receipt)
 }
 

@@ -247,7 +247,7 @@ func (s *Store) CommitImport(ctx context.Context, actorID string, preview import
 				return err
 			}
 			receipt.Replay = true
-			return nil
+			return completeImportJobFromReceipt(ctx, tx, preview.OperationID, time.Now().UTC().Format(time.RFC3339Nano))
 		}
 		if !errors.Is(err, sql.ErrNoRows) {
 			return err
@@ -353,11 +353,21 @@ func (s *Store) CommitImport(ctx context.Context, actorID string, preview import
 			preview.CreateCount, preview.UpdateCount, preview.NoChangeCount, string(receiptBytes), now, now); err != nil {
 			return err
 		}
+		if err := completeImportJobFromReceipt(ctx, tx, preview.OperationID, now); err != nil {
+			return err
+		}
 		return appendAudit(ctx, tx, actorID, "import.committed", "import", preview.OperationID, map[string]any{
 			"total_rows": preview.TotalRows, "created": preview.CreateCount, "updated": preview.UpdateCount, "no_change": preview.NoChangeCount,
 		})
 	})
 	return receipt, err
+}
+
+func completeImportJobFromReceipt(ctx context.Context, tx *sql.Tx, id, now string) error {
+	_, err := tx.ExecContext(ctx, `UPDATE import_jobs
+		SET status='committed',phase='completed',error_message='',updated_at=?
+		WHERE id=? AND status='committing'`, now, id)
+	return err
 }
 
 func (s *Store) SaveImportTemplate(ctx context.Context, actorID string, expectedVersion int64, template importing.Template) (importing.Template, error) {

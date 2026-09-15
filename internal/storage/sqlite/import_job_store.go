@@ -99,10 +99,17 @@ func (s *Store) BeginImportCommit(ctx context.Context, actorID, id string) error
 		if err != nil {
 			return err
 		}
-		if changed, _ := result.RowsAffected(); changed != 1 {
+		if changed, _ := result.RowsAffected(); changed == 1 {
+			return nil
+		}
+		var receiptStatus string
+		err = tx.QueryRowContext(ctx, `SELECT r.status
+			FROM import_jobs j JOIN import_runs r ON r.id=j.id
+			WHERE j.id=? AND j.status='committed' AND r.status='committed'`, id).Scan(&receiptStatus)
+		if errors.Is(err, sql.ErrNoRows) {
 			return importing.ErrImportConflict
 		}
-		return nil
+		return err
 	})
 }
 
