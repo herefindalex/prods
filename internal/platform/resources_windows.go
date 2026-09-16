@@ -11,9 +11,12 @@ import (
 )
 
 func probeResourceVolume(path string) (ResourceStats, error) {
-	existing, _, err := nearestExistingPath(path)
+	existing, info, err := nearestExistingPath(path)
 	if err != nil {
 		return ResourceStats{}, err
+	}
+	if !info.IsDir() {
+		existing = filepath.Dir(existing)
 	}
 	volume := filepath.VolumeName(existing)
 	if volume == "" {
