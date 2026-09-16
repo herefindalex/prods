@@ -1,6 +1,7 @@
 .idea
 .agents
 .codex
+.gstack
 
 # Local PoC runtime/build outputs
 /data/
