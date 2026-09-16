@@ -10,6 +10,7 @@ Prods itself is licensed separately under AGPL-3.0-only; see `LICENSE`.
 | --- | --- | --- |
 | github.com/dustin/go-humanize | v1.0.1 | MIT — Copyright (c) 2005-2008 Dustin Sallings |
 | github.com/google/uuid | v1.6.0 | BSD-3-Clause — Copyright (c) 2009, 2014 Google Inc. |
+| github.com/ncruces/go-strftime | v1.0.0 | MIT — Copyright (c) 2022 Nuno Cruces |
 | github.com/remyoudompheng/bigfft | 24d4a6f8daec | BSD-3-Clause — Copyright (c) 2012 The Go Authors |
 | github.com/richardlehane/mscfb | v1.0.7 | Apache-2.0 |
 | github.com/richardlehane/msoleps | v1.0.6 | Apache-2.0 |
@@ -19,6 +20,7 @@ Prods itself is licensed separately under AGPL-3.0-only; see `LICENSE`.
 | github.com/xuri/nfp | 2ddeb826f9a9 | BSD-3-Clause — Copyright (c) 2022-2025 Ri Xu |
 | golang.org/x/crypto | v0.53.0 | BSD-3-Clause — Copyright 2009 The Go Authors |
 | golang.org/x/image | v0.45.0 | BSD-3-Clause — Copyright 2009 The Go Authors |
+| golang.org/x/mod | v0.38.0 | BSD-3-Clause — Copyright 2009 The Go Authors |
 | golang.org/x/net | v0.56.0 | BSD-3-Clause — Copyright 2009 The Go Authors |
 | golang.org/x/sys | v0.47.0 | BSD-3-Clause — Copyright 2009 The Go Authors |
 | golang.org/x/text | v0.41.0 | BSD-3-Clause — Copyright 2009 The Go Authors |
@@ -670,3 +672,351 @@ NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
 LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
 OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+## Refine Admin dependency notices
+
+The following pinned production dependencies were added for the headless Admin integration. This inventory conservatively includes transitive packages even where the production build removes unused code. Type-only and build-only tools remain excluded.
+
+| Package | Version | License |
+| --- | --- | --- |
+| @refinedev/core | 5.0.12 | MIT |
+| @refinedev/devtools-internal | 2.0.2 | MIT |
+| @refinedev/devtools-shared | 2.0.2 | MIT |
+| @refinedev/react-router | 2.0.4 | MIT |
+| @tanstack/query-core | 5.102.8 | MIT |
+| @tanstack/react-query | 5.102.8 | MIT |
+| @types/react | 19.3.0 | MIT |
+| @types/react-dom | 19.3.0 | MIT |
+| call-bind-apply-helpers | 1.0.2 | MIT |
+| call-bound | 1.0.4 | MIT |
+| cookie | 1.1.1 | MIT |
+| dunder-proto | 1.0.1 | MIT |
+| error-stack-parser | 2.1.4 | MIT |
+| es-define-property | 1.0.1 | MIT |
+| es-errors | 1.3.0 | MIT |
+| es-object-atoms | 1.1.2 | MIT |
+| function-bind | 1.1.2 | MIT |
+| get-intrinsic | 1.3.0 | MIT |
+| get-proto | 1.0.1 | MIT |
+| gopd | 1.2.0 | MIT |
+| has-symbols | 1.1.0 | MIT |
+| hasown | 2.0.4 | MIT |
+| lodash | 4.18.1 | MIT |
+| lodash-es | 4.18.1 | MIT |
+| math-intrinsics | 1.1.0 | MIT |
+| object-inspect | 1.13.4 | MIT |
+| papaparse | 5.7.0 | MIT |
+| pluralize | 8.0.0 | MIT |
+| react-router | 7.18.4 | MIT |
+| set-cookie-parser | 2.7.2 | MIT |
+| side-channel | 1.1.1 | MIT |
+| side-channel-list | 1.0.1 | MIT |
+| side-channel-map | 1.0.1 | MIT |
+| side-channel-weakmap | 1.0.2 | MIT |
+| stackframe | 1.3.4 | MIT |
+| warn-once | 0.1.1 | MIT |
+| qs | 6.16.0 | BSD-3-Clause |
+| tslib | 2.8.1 | 0BSD |
+
+MIT notices below use the MIT permission and warranty text in this file. Other licenses and the Lodash additional notice are retained in full.
+
+### @refinedev/core, @refinedev/react-router
+
+```text
+MIT License
+
+Copyright (c) 2022 Refine Development Inc.
+```
+
+### @refinedev/devtools-internal, @refinedev/devtools-shared
+
+```text
+MIT License
+
+Copyright (c) 2022 Refine Dev Corporation
+```
+
+### @tanstack/query-core, @tanstack/react-query
+
+```text
+MIT License
+
+Copyright (c) 2021-present Tanner Linsley
+```
+
+### call-bind-apply-helpers, call-bound, es-define-property, es-errors, es-object-atoms, side-channel-list, side-channel-map
+
+```text
+MIT License
+
+Copyright (c) 2024 Jordan Harband
+```
+
+### cookie
+
+```text
+(The MIT License)
+
+Copyright (c) 2012-2014 Roman Shtylman <shtylman@gmail.com>
+Copyright (c) 2015 Douglas Christopher Wilson <doug@somethingdoug.com>
+```
+
+### dunder-proto, math-intrinsics
+
+```text
+MIT License
+
+Copyright (c) 2024 ECMAScript Shims
+```
+
+### error-stack-parser, stackframe
+
+```text
+Copyright (c) 2017 Eric Wendelin and other contributors
+```
+
+### function-bind
+
+```text
+Copyright (c) 2013 Raynos.
+```
+
+### get-intrinsic
+
+```text
+MIT License
+
+Copyright (c) 2020 Jordan Harband
+```
+
+### get-proto
+
+```text
+MIT License
+
+Copyright (c) 2025 Jordan Harband
+```
+
+### gopd
+
+```text
+MIT License
+
+Copyright (c) 2022 Jordan Harband
+```
+
+### has-symbols
+
+```text
+MIT License
+
+Copyright (c) 2016 Jordan Harband
+```
+
+### hasown
+
+```text
+MIT License
+
+Copyright (c) Jordan Harband and contributors
+```
+
+### lodash, lodash-es
+
+```text
+Copyright OpenJS Foundation and other contributors <https://openjsf.org/>
+
+Based on Underscore.js, copyright Jeremy Ashkenas,
+DocumentCloud and Investigative Reporters & Editors <http://underscorejs.org/>
+
+This software consists of voluntary contributions made by many
+individuals. For exact contribution history, see the revision history
+available at https://github.com/lodash/lodash
+
+The following license applies to all parts of this software except as
+documented below:
+
+====
+
+Permission is hereby granted, free of charge, to any person obtaining
+a copy of this software and associated documentation files (the
+"Software"), to deal in the Software without restriction, including
+without limitation the rights to use, copy, modify, merge, publish,
+distribute, sublicense, and/or sell copies of the Software, and to
+permit persons to whom the Software is furnished to do so, subject to
+the following conditions:
+
+The above copyright notice and this permission notice shall be
+included in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
+LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
+OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
+WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+====
+
+Copyright and related rights for sample code are waived via CC0. Sample
+code is defined as all source code displayed within the prose of the
+documentation.
+
+CC0: http://creativecommons.org/publicdomain/zero/1.0/
+
+====
+
+Files located in the node_modules and vendor directories are externally
+maintained libraries used by this software which have their own
+licenses; we recommend you read them, as their terms may differ from the
+terms above.
+```
+
+### object-inspect
+
+```text
+MIT License
+
+Copyright (c) 2013 James Halliday
+```
+
+### papaparse
+
+```text
+The MIT License (MIT)
+
+Copyright (c) 2015 Matthew Holt
+```
+
+### pluralize
+
+```text
+The MIT License (MIT)
+
+Copyright (c) 2013 Blake Embrey (hello@blakeembrey.com)
+```
+
+### react-router
+
+```text
+MIT License
+
+Copyright (c) React Training LLC 2015-2019
+Copyright (c) Remix Software Inc. 2020-2021
+Copyright (c) Shopify Inc. 2022-2023
+```
+
+### set-cookie-parser
+
+```text
+The MIT License (MIT)
+
+Copyright (c) 2015 Nathan Friedly <nathan@nfriedly.com> (http://nfriedly.com/)
+```
+
+### side-channel, side-channel-weakmap
+
+```text
+MIT License
+
+Copyright (c) 2019 Jordan Harband
+```
+
+### warn-once
+
+```text
+MIT License
+
+Copyright (c) 2022 Satyajit Sahoo
+```
+
+### qs
+
+```text
+BSD 3-Clause License
+
+Copyright (c) 2014, Nathan LaFreniere and other [contributors](https://github.com/ljharb/qs/graphs/contributors)
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+1. Redistributions of source code must retain the above copyright notice, this
+   list of conditions and the following disclaimer.
+
+2. Redistributions in binary form must reproduce the above copyright notice,
+   this list of conditions and the following disclaimer in the documentation
+   and/or other materials provided with the distribution.
+
+3. Neither the name of the copyright holder nor the names of its
+   contributors may be used to endorse or promote products derived from
+   this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+```
+
+### tslib
+
+```text
+Copyright (c) Microsoft Corporation.
+
+Permission to use, copy, modify, and/or distribute this software for any
+purpose with or without fee is hereby granted.
+
+THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH
+REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT,
+INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR
+OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+PERFORMANCE OF THIS SOFTWARE.
+```
+
+## Console UI dependency notices
+
+The following pinned packages provide the interactive Bubble Tea host console. All are distributed under the MIT license; the common MIT permission and warranty text appears earlier in this file.
+
+| Package | Version | License |
+| --- | --- | --- |
+| github.com/charmbracelet/bubbletea | 1.3.10 | MIT |
+| github.com/charmbracelet/lipgloss | 1.1.0 | MIT |
+| github.com/charmbracelet/x/ansi | 0.10.1 | MIT |
+| github.com/charmbracelet/colorprofile | 0.2.3-0.20250311203215-f60798e515dc | MIT |
+| github.com/charmbracelet/x/cellbuf | 0.0.13-0.20250311204145-2c3ea96c31dd | MIT |
+| github.com/charmbracelet/x/term | 0.2.1 | MIT |
+| github.com/aymanbagabas/go-osc52/v2 | 2.0.1 | MIT |
+| github.com/erikgeiser/coninput | 0.0.0-20211004153227-1c3628e74d0f | MIT |
+| github.com/lucasb-eyer/go-colorful | 1.2.0 | MIT |
+| github.com/mattn/go-isatty | 0.0.20 | MIT |
+| github.com/mattn/go-localereader | 0.0.1 | MIT |
+| github.com/mattn/go-runewidth | 0.0.16 | MIT |
+| github.com/muesli/ansi | 0.0.0-20230316100256-276c6243b2f6 | MIT |
+| github.com/muesli/cancelreader | 0.2.2 | MIT |
+| github.com/muesli/termenv | 0.16.0 | MIT |
+| github.com/rivo/uniseg | 0.4.7 | MIT |
+| github.com/xo/terminfo | 0.0.0-20220910002029-abceb7e1c41e | MIT |
+
+Copyright notices:
+
+- Bubble Tea: Copyright (c) 2020-2025 Charmbracelet, Inc.
+- Lip Gloss: Copyright (c) 2021-2023 Charmbracelet, Inc.
+- Charmbracelet ansi, cellbuf and term: Copyright (c) 2023 Charmbracelet, Inc.
+- Charmbracelet colorprofile: Copyright (c) 2020-2024 Charmbracelet, Inc.
+- go-osc52: Copyright (c) 2022 Ayman Bagabas.
+- coninput: Copyright (c) 2021 Erik G.
+- go-colorful: Copyright (c) 2013 Lucas Beyer.
+- go-isatty, go-localereader and go-runewidth: Copyright (c) Yasuhiro Matsumoto and their respective contributors.
+- muesli/ansi and termenv: Copyright (c) Christian Muehlhaeuser and their respective contributors.
+- muesli/cancelreader: Copyright (c) 2022 Erik Geiser and Christian Muehlhaeuser.
+- uniseg: Copyright (c) 2019 Oliver Kuederle.
+- terminfo: Copyright (c) 2016 Anmol Sethi.

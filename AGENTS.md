@@ -2,7 +2,7 @@
 
 ## Source of truth and repository boundary
 
-- Read `docs/internal/Prods_PRD_v0.6.zh-TW.md` and `docs/internal/Prods_Architecture_v0.1.zh-TW.md` before design or implementation. This file is a concise guardrail summary, not the authoritative specification.
+- Read `docs/internal/Prods_PRD_v0.6.zh-TW.md`, its A01 addendum, and `docs/internal/Prods_Architecture_v0.2.zh-TW.md` before design or implementation. For Admin work also read `docs/internal/Prods_ADR_015_Refine_Admin_Console.zh-TW.md` and `docs/internal/Admin_Frontend_Technical_Design.zh-TW.md`. Architecture v0.1 remains historical context. This file is a concise guardrail summary, not the authoritative specification.
 - Product requirements and approved decisions take precedence over proposals. Architecture `P` inherits the cited PRD's confirmed/suggested/pending status; `E` and `D` are approved constraints; unapproved `A` remains a proposal. See Architecture §0.1 and §2.1.
 - If documents conflict, report the exact sections before choosing an interpretation. Do not change requirements to suit a framework, ORM, router, builder, or driver.
 - Internal documents and their rendered equivalents stay local and outside source history: never stage, force-add, commit, copy their contents into tracked deliverables, or change ignore rules to include them. Report any unexpectedly tracked internal document; do not rewrite history.
@@ -12,7 +12,7 @@
 ## Fixed implementation boundaries
 
 - One Go process and platform-specific binary for Windows/Linux; SQLite is the long-term primary DB with SQL-first thin repositories and binary-managed migrations. Node.js is build-only, not a user runtime dependency. No required database server, Docker, Hugo, external renderer, queue, or search service. See Architecture §2–3 and §7.
-- Admin is React + Ant Design v6 with embedded build output; Public does not load Ant Design. Go produces complete semantic HTML. React may enhance isolated roots, never require whole-page hydration or remove the only usable core content/search/pagination/document/basic RFQ path. See §9.
+- Admin is React + Refine + Ant Design v6 with embedded build output. Use headless Core with native antd v6 for the first integration slice; do not assume `@refinedev/antd` supports v6. Resource providers and named command adapters share the session/CSRF transport; no optimistic write success or automatic mutation retries. Public loads neither Refine nor Ant Design. Go produces complete semantic HTML. React may enhance isolated roots, never require whole-page hydration or remove the only usable core content/search/pagination/document/basic RFQ path. See §3.4 and §9.
 - Keep V1 a modular monolith and preserve the PRD's explicit deferred scope; do not add commerce, CRM, external write tokens, arbitrary custom JS, or a page-builder/workflow engine. See PRD §2.3 and Architecture §21.
 - Stable opaque domain IDs are independent of row IDs, URLs and paths. No DB unique/partial-unique constraint for Manufacturer + Part Number; controlled writes recheck Current identity and expected revision inside the admitted transaction. All writes share bounded writer admission; Atomic Import stays all-or-nothing and cannot promise zero RFQ wait. See §6–8.
 - Public output uses an explicit `PublicView` allowlist, never an Admin DTO/DB model. No-results preserves raw query and requires a user-initiated Requested Part action; RFQ does not create Products, auto-send SMTP, or require quantity/price/availability. See §9.1 and §12.

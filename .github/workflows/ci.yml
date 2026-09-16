@@ -1,0 +1,107 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    name: Validate and cross-build
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: 1.27.1
+          cache: true
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.28.1
+          run_install: false
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+          cache-dependency-path: web/ui/pnpm-lock.yaml
+
+      - name: Install frontend dependencies
+        run: pnpm --dir web/ui install --frozen-lockfile
+
+      - name: Verify dependency license policy
+        run: python3 scripts/check-license-policy.py
+
+      - name: Validate frontend
+        run: |
+          pnpm --dir web/ui typecheck
+          pnpm --dir web/ui test
+          pnpm --dir web/ui build
+
+      - name: Verify embedded frontend is current
+        run: git diff --exit-code
+
+      - name: Test Go packages
+        run: |
+          go test ./... -count=1
+          go test -tags poc ./... -count=1 -timeout=5m
+          go vet ./...
+
+      - name: Verify release-bound sample data
+        run: |
+          sample_dir="$(mktemp -d)"
+          go run ./cmd/prods-sample \
+            -release-version v0.0.0-ci \
+            -output "$sample_dir/prods-sample-data-v1.json"
+          (
+            cd "$sample_dir"
+            sha256sum prods-sample-data-v1.json > prods-sample-data-v1.json.sha256
+            sha256sum --check prods-sample-data-v1.json.sha256
+          )
+          python3 - "$sample_dir/prods-sample-data-v1.json" <<'PY'
+          import json
+          import sys
+
+          with open(sys.argv[1], encoding="utf-8") as source:
+              payload = json.load(source)
+          assert payload["schema_version"] == 1
+          assert payload["release_version"] == "v0.0.0-ci"
+          assert len(payload["categories"]) == 58
+          assert len(payload["products"]) == 1200
+          PY
+
+      - name: Cross-build release binaries
+        env:
+          SOURCE_REVISION: ${{ github.sha }}
+        run: |
+          mkdir -p artifacts
+          build_flags="-s -w -X main.applicationVersion=v0.0.0-ci -X main.sourceRevision=$SOURCE_REVISION"
+          CGO_ENABLED=0 GOOS=linux GOARCH=amd64 \
+            go build -trimpath -ldflags "$build_flags" \
+            -o artifacts/prods-linux-amd64 ./cmd/prods
+          CGO_ENABLED=0 GOOS=windows GOARCH=amd64 \
+            go build -trimpath -ldflags "$build_flags" \
+            -o artifacts/prods-windows-amd64.exe ./cmd/prods
+          sha256sum artifacts/* > artifacts/SHA256SUMS
+
+      - name: Upload cross-build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: prods-${{ github.sha }}
+          path: artifacts/
+          if-no-files-found: error
+          retention-days: 14
