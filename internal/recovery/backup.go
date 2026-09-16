@@ -14,6 +14,7 @@ import (
 	"os"
 	pathpkg "path"
 	"path/filepath"
+	"runtime"
 	"sort"
 	"strings"
 	"time"
@@ -612,6 +613,11 @@ func writeDurableFile(path string, body []byte, mode fs.FileMode) error {
 }
 
 func syncDirectory(path string) error {
+	if runtime.GOOS == "windows" {
+		// Windows does not support flushing directory handles. Callers sync
+		// every durable file before the rename that reaches this boundary.
+		return nil
+	}
 	directory, err := os.Open(path)
 	if err != nil {
 		return err
