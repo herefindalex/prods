@@ -219,7 +219,7 @@ The frontend build writes embedded assets under `internal/webapp/static/`; commi
 Build a complete Linux amd64, Windows amd64, macOS Intel, and macOS Apple Silicon release with an embedded version, matching sample data, source metadata, notices, and checksums:
 
 ```sh
-./scripts/build-release.sh v0.6.6
+./scripts/build-release.sh v0.6.7
 ```
 
 Output is written to `dist/<version>/`. Root [`VERSION`](VERSION) is the release source of truth; the script rejects any different argument, and GitHub Actions rejects a different tag. The same version is embedded in every binary, written into the sample payload and `BUILD_INFO.txt`, and used for the artifact directory and GitHub Release tag. Cross-builds prove compilation only. Windows must be tested on Windows before claiming Windows runtime verification; both macOS artifacts remain explicitly untested until native macOS acceptance is recorded.

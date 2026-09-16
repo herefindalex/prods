@@ -11,7 +11,7 @@ All referenced IDs must exist in the same payload, IDs must be unique, category 
 Generate a payload locally:
 
 ```sh
-go run ./cmd/prods-sample -release-version v0.6.6 -output /tmp/prods-sample-data-v1.json
+go run ./cmd/prods-sample -release-version v0.6.7 -output /tmp/prods-sample-data-v1.json
 ```
 
 Before publishing, `scripts/build-release.sh` regenerates the payload and checksum, then compares them byte-for-byte with the files in this directory. It also regenerates deterministic gzip bytes and compares them with the file embedded by the Go package. A stale payload, schema, checksum, embedded gzip, version, or nondeterministic generator stops the release.

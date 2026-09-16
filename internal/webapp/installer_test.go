@@ -29,7 +29,7 @@ func TestInstallerUsesEmbeddedMatchingVersionSampleData(t *testing.T) {
 	defer store.Close()
 	installer, _, err := NewInstaller(store, InstallerConfig{
 		BootstrapToken: "bootstrap", DataDir: filepath.Join(root, "data"), BackupDir: filepath.Join(root, "backups"),
-		DefaultLocale: "en-US", DefaultTimeZone: "UTC", ApplicationVersion: "v0.6.6",
+		DefaultLocale: "en-US", DefaultTimeZone: "UTC", ApplicationVersion: "v0.6.7",
 	})
 	if err != nil {
 		t.Fatal(err)
@@ -40,7 +40,7 @@ func TestInstallerUsesEmbeddedMatchingVersionSampleData(t *testing.T) {
 	if err := json.Unmarshal(claim.Body.Bytes(), &state); err != nil {
 		t.Fatal(err)
 	}
-	if !state.SampleDataAvailable || state.ApplicationVersion != "v0.6.6" {
+	if !state.SampleDataAvailable || state.ApplicationVersion != "v0.6.7" {
 		t.Fatalf("installer sample state = %+v", state)
 	}
 	complete := formRequestWithCookies(installer, http.MethodPost, "/install/complete", url.Values{
@@ -97,7 +97,7 @@ func TestInstallerEmbeddedSampleVersionMismatchStillCompletesBlankInstallation(t
 }
 
 func TestInstallerCommitsCompleteEmbeddedSampleData(t *testing.T) {
-	const version = "v0.6.6"
+	const version = "v0.6.7"
 	sample, err := sampledata.Generate(version)
 	if err != nil {
 		t.Fatal(err)
