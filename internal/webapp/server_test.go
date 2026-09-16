@@ -544,6 +544,15 @@ func TestConfiguredHostOriginAndSecureCookieBoundary(t *testing.T) {
 	if badOriginResponse.Code != http.StatusForbidden {
 		t.Fatalf("bad Origin status=%d", badOriginResponse.Code)
 	}
+	nullOrigin := httptest.NewRequest(http.MethodPost, "/admin/login", strings.NewReader("token=test-token"))
+	nullOrigin.Host = "catalog.example.test"
+	nullOrigin.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	nullOrigin.Header.Set("Origin", "null")
+	nullOriginResponse := httptest.NewRecorder()
+	app.ServeHTTP(nullOriginResponse, nullOrigin)
+	if nullOriginResponse.Code != http.StatusForbidden {
+		t.Fatalf("null Origin status=%d", nullOriginResponse.Code)
+	}
 
 	login := httptest.NewRequest(http.MethodPost, "/admin/login", strings.NewReader("token=test-token"))
 	login.Host = "catalog.example.test"
@@ -576,6 +585,14 @@ func TestLoopbackAliasesShareConfiguredHostAndOriginBoundary(t *testing.T) {
 		t.Fatal(err)
 	}
 	defer app.Close()
+
+	page := httptest.NewRequest(http.MethodGet, "/admin/login?lang=en-US", nil)
+	page.Host = "127.0.0.1:8080"
+	pageResponse := httptest.NewRecorder()
+	app.ServeHTTP(pageResponse, page)
+	if pageResponse.Code != http.StatusOK || pageResponse.Header().Get("Referrer-Policy") != "same-origin" {
+		t.Fatalf("loopback login page status=%d referrer-policy=%q", pageResponse.Code, pageResponse.Header().Get("Referrer-Policy"))
+	}
 
 	login := httptest.NewRequest(http.MethodPost, "/admin/login?lang=en-US", strings.NewReader("token=test-token"))
 	login.Host = "127.0.0.1:8080"
