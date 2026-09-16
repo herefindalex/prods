@@ -24,7 +24,7 @@ var productTemplate = template.Must(template.New("product").Parse(`<!doctype htm
 {{if .View.Site.Theme.CustomCSSEnabled}}<link rel="stylesheet" href="/site.css?v={{.View.SiteEpoch}}">{{end}}
 </head>
 <body>
-<header><a href="{{.CatalogURL}}">{{if .View.Site.Organization.PrimaryLogoAsset}}<img src="/assets/{{.View.Site.Organization.PrimaryLogoAsset}}" alt="{{.View.Site.Organization.DisplayName}}">{{else}}{{.View.Site.Organization.DisplayName}}{{end}}</a><nav aria-label="Primary">{{range .Navigation}}<a href="{{.URL}}"{{if .OpenNewWindow}} target="_blank" rel="noopener noreferrer"{{end}}>{{.Label}}</a> {{end}}</nav>{{if .LanguageLinks}}<nav aria-label="{{.Text.Language}}">{{range .LanguageLinks}}<a href="{{.URL}}" hreflang="{{.Locale}}"{{if .Active}} aria-current="page"{{end}}>{{.Locale}}</a> {{end}}</nav>{{end}}</header>
+<header><a href="{{.CatalogURL}}">{{if .View.Site.Organization.PrimaryLogoAsset}}<img src="/assets/{{.View.Site.Organization.PrimaryLogoAsset}}" alt="{{.View.Site.Organization.DisplayName}}">{{else}}{{.View.Site.Organization.DisplayName}}{{end}}</a><nav aria-label="Primary">{{range .Navigation}}<a href="{{.URL}}"{{if .OpenNewWindow}} target="_blank" rel="noopener noreferrer"{{end}}>{{.Label}}</a> {{end}}</nav>{{if .LanguageLinks}}<details class="language-menu"><summary>{{range .LanguageLinks}}{{if .Active}}{{.Name}}{{end}}{{end}}</summary><nav aria-label="{{.Text.Language}}">{{range .LanguageLinks}}<a href="{{.URL}}" hreflang="{{.Locale}}"{{if .Active}} aria-current="page"{{end}}>{{.Name}}</a>{{end}}</nav></details>{{end}}</header>
 <main>
 <article data-product-id="{{.View.ID}}" data-public-revision="{{.View.Revision}}" data-site-epoch="{{.View.SiteEpoch}}">
 <h1>{{if .View.Name}}{{.View.Name}}{{else}}{{.View.PartNumber}}{{end}}</h1>
@@ -52,6 +52,7 @@ var productTemplate = template.Must(template.New("product").Parse(`<!doctype htm
 
 type languageLink struct {
 	Locale string
+	Name   string
 	URL    string
 	Active bool
 }
@@ -109,7 +110,10 @@ func renderHTML(view PublicView, locale string, explicit bool) ([]byte, error) {
 	}
 	for _, supported := range view.SupportedLocales {
 		data.LanguageLinks = append(data.LanguageLinks, languageLink{
-			Locale: supported, URL: localizedURL(view.CanonicalURL, supported, true), Active: supported == locale,
+			Locale: supported,
+			Name:   localization.BuiltinLocaleName(supported),
+			URL:    localizedURL(view.CanonicalURL, supported, true),
+			Active: supported == locale,
 		})
 	}
 	var out bytes.Buffer

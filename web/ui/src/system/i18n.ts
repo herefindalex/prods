@@ -13,9 +13,9 @@ export const systemLocaleCodes = ["en-US", "zh-TW", "zh-CN", "ja-JP", "ko-KR", "
 export type SystemLocale = (typeof systemLocaleCodes)[number];
 
 export const systemLocaleOptions = [
-  { value: "en-US", label: "English (United States)" },
-  { value: "zh-TW", label: "繁體中文" },
-  { value: "zh-CN", label: "简体中文" },
+  { value: "en-US", label: "English" },
+  { value: "zh-TW", label: "繁中" },
+  { value: "zh-CN", label: "简中" },
   { value: "ja-JP", label: "日本語" },
   { value: "ko-KR", label: "한국어" },
   { value: "de-DE", label: "Deutsch" },

@@ -45814,9 +45814,9 @@ function UF() {
 }
 var WF = /* @__PURE__ */ UF();
 const kF = /* @__PURE__ */ no(WF), p1 = ["en-US", "zh-TW", "zh-CN", "ja-JP", "ko-KR", "de-DE", "fr-FR", "it-IT", "es-ES", "pt-BR"], h1 = [
-  { value: "en-US", label: "English (United States)" },
-  { value: "zh-TW", label: "繁體中文" },
-  { value: "zh-CN", label: "简体中文" },
+  { value: "en-US", label: "English" },
+  { value: "zh-TW", label: "繁中" },
+  { value: "zh-CN", label: "简中" },
   { value: "ja-JP", label: "日本語" },
   { value: "ko-KR", label: "한국어" },
   { value: "de-DE", label: "Deutsch" },

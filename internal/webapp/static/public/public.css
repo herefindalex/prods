@@ -24,6 +24,49 @@ nav a {
   margin-right: 1rem;
 }
 
+.language-menu {
+  position: relative;
+}
+
+.language-menu summary {
+  padding: 0.55rem 0.75rem;
+  border: 1px solid #cbd9df;
+  border-radius: 0.45rem;
+  background: #f8fbfc;
+  cursor: pointer;
+  list-style: none;
+}
+
+.language-menu summary::-webkit-details-marker {
+  display: none;
+}
+
+.language-menu nav {
+  position: absolute;
+  z-index: 10;
+  right: 0;
+  display: grid;
+  min-width: 12rem;
+  margin-top: 0.35rem;
+  padding: 0.4rem;
+  border: 1px solid #cbd9df;
+  border-radius: 0.45rem;
+  background: white;
+  box-shadow: 0 12px 30px rgba(24, 48, 68, 0.16);
+}
+
+.language-menu nav a {
+  margin: 0;
+  padding: 0.55rem 0.65rem;
+  border-radius: 0.3rem;
+  text-decoration: none;
+}
+
+.language-menu nav a:hover,
+.language-menu nav a[aria-current="page"] {
+  background: #eaf4f5;
+}
+
 main {
   padding: 2rem 0;
 }
@@ -109,8 +152,10 @@ code {
 .catalog-table { width: 100%; min-width: 880px; border-collapse: collapse; font-size: 0.92rem; }
 .catalog-table th, .catalog-table td { padding: 0.75rem; text-align: left; vertical-align: top; border-bottom: 1px solid #e4ebef; }
 .catalog-table th { position: sticky; top: 0; color: #334b5b; background: #eef4f6; white-space: nowrap; }
+.catalog-table tbody tr:nth-child(odd) { background: #ffffff; }
+.catalog-table tbody tr:nth-child(even) { background: #f5f8fa; }
 .catalog-table tbody tr:last-child td { border-bottom: 0; }
-.catalog-table tbody tr:hover { background: #f7fafb; }
+.catalog-table tbody tr:hover { background: #eaf4f5; }
 .document-links { margin: 0; padding-left: 1rem; }
 .compact-action { white-space: nowrap; }
 .pagination { display: flex; justify-content: center; gap: 1rem; margin: 1.25rem 0; }
@@ -128,6 +173,16 @@ code {
     align-items: flex-start;
     flex-direction: column;
     gap: 0.75rem;
+  }
+
+  .language-menu,
+  .language-menu summary {
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  .language-menu nav {
+    position: static;
   }
 
   .catalog-search, .catalog-filters, .listing-toolbar form { align-items: stretch; flex-direction: column; }

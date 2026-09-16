@@ -1,8 +1,6 @@
 import { useEffect, useState } from "react";
 import { createRoot } from "react-dom/client";
 import { Alert, Button, ConfigProvider, Layout, Select, Space, Tabs, Typography } from "antd";
-import enUS from "antd/locale/en_US";
-import zhTW from "antd/locale/zh_TW";
 import { AccessPanel } from "./AccessPanel";
 import { ActivityPanel } from "./ActivityPanel";
 import { api, csrf, setAPILocale } from "./api";
@@ -12,6 +10,14 @@ import { HealthPanel } from "./HealthPanel";
 import { ImportPanel } from "./ImportPanel";
 import { JobsPanel } from "./JobsPanel";
 import { LoginPage } from "./LoginPage";
+import {
+  ADMIN_LOCALE_OPTIONS,
+  antDesignLocale,
+  implementedAdminMessageLocale,
+  isAdminLocale,
+  normalizeAdminLocale,
+  type AdminLocale,
+} from "./locales";
 import { ListingProfilesPanel } from "./ListingProfilesPanel";
 import { PublicCopyPanel } from "./PublicCopyPanel";
 import { ProductBulkPanel } from "./ProductBulkPanel";
@@ -21,8 +27,6 @@ import { TrafficPanel } from "./TrafficPanel";
 import { WebsitePanel } from "./WebsitePanel";
 import type { SystemHealth } from "./types";
 import "./style.css";
-
-type AdminLocale = "en-US" | "zh-TW";
 
 const adminText = {
   "en-US": {
@@ -77,8 +81,8 @@ function messageFrom(error: unknown): string {
 
 function initialLocale(): AdminLocale {
   const saved = window.localStorage.getItem("prods-admin-locale");
-  if (saved === "en-US" || saved === "zh-TW") return saved;
-  return document.documentElement.lang.toLowerCase().startsWith("zh") ? "zh-TW" : "en-US";
+  if (isAdminLocale(saved)) return saved;
+  return normalizeAdminLocale(document.documentElement.lang);
 }
 
 function AdminApp() {
@@ -87,7 +91,8 @@ function AdminApp() {
   const [error, setError] = useState<string>();
   const [activeTab, setActiveTab] = useState("catalog");
   const [systemHealth, setSystemHealth] = useState<SystemHealth>();
-  const text = adminText[locale];
+  const messageLocale = implementedAdminMessageLocale(locale);
+  const text = adminText[messageLocale];
   const showMessage = (next: string) => {
     setError(undefined);
     setMessage(next);
@@ -128,7 +133,7 @@ function AdminApp() {
 
   return (
     <ConfigProvider
-      locale={locale === "zh-TW" ? zhTW : enUS}
+      locale={antDesignLocale(locale)}
       theme={{
         token: {
           colorPrimary: "#147985",
@@ -151,10 +156,7 @@ function AdminApp() {
                 aria-label={text.language}
                 value={locale}
                 onChange={setLocale}
-                options={[
-                  { value: "en-US", label: "English" },
-                  { value: "zh-TW", label: "繁體中文" },
-                ]}
+                options={[...ADMIN_LOCALE_OPTIONS]}
               />
               <Button ghost onClick={() => void logout()}>
                 {text.signOut}
@@ -194,72 +196,72 @@ function AdminApp() {
                 {
                   key: "catalog",
                   label: text.catalog,
-                  children: <CatalogPanel locale={locale} onError={showError} onMessage={showMessage} />,
+                  children: <CatalogPanel locale={messageLocale} onError={showError} onMessage={showMessage} />,
                 },
                 {
                   key: "taxonomy",
                   label: text.taxonomy,
-                  children: <TaxonomyPanel locale={locale} onError={showError} onMessage={showMessage} />,
+                  children: <TaxonomyPanel locale={messageLocale} onError={showError} onMessage={showMessage} />,
                 },
                 {
                   key: "imports",
                   label: text.imports,
-                  children: <ImportPanel locale={locale} onError={showError} onMessage={showMessage} />,
+                  children: <ImportPanel locale={messageLocale} onError={showError} onMessage={showMessage} />,
                 },
                 {
                   key: "product-bulk",
                   label: text.productBulk,
-                  children: <ProductBulkPanel locale={locale} onError={showError} onMessage={showMessage} />,
+                  children: <ProductBulkPanel locale={messageLocale} onError={showError} onMessage={showMessage} />,
                 },
                 {
                   key: "jobs",
                   label: text.jobs,
-                  children: <JobsPanel locale={locale} onError={showError} onMessage={showMessage} />,
+                  children: <JobsPanel locale={messageLocale} onError={showError} onMessage={showMessage} />,
                 },
                 {
                   key: "website",
                   label: text.website,
-                  children: <WebsitePanel locale={locale} onError={showError} onMessage={showMessage} />,
+                  children: <WebsitePanel locale={messageLocale} onError={showError} onMessage={showMessage} />,
                 },
                 {
                   key: "listing-profiles",
                   label: text.listingProfiles,
-                  children: <ListingProfilesPanel locale={locale} onError={showError} onMessage={showMessage} />,
+                  children: <ListingProfilesPanel locale={messageLocale} onError={showError} onMessage={showMessage} />,
                 },
                 {
                   key: "public-copy",
                   label: text.publicCopy,
-                  children: <PublicCopyPanel locale={locale} onError={showError} onMessage={showMessage} />,
+                  children: <PublicCopyPanel locale={messageLocale} onError={showError} onMessage={showMessage} />,
                 },
                 {
                   key: "access",
                   label: text.access,
-                  children: <AccessPanel locale={locale} onError={showError} onMessage={showMessage} />,
+                  children: <AccessPanel locale={messageLocale} onError={showError} onMessage={showMessage} />,
                 },
                 {
                   key: "activity",
                   label: text.activity,
-                  children: <ActivityPanel locale={locale} onError={showError} />,
+                  children: <ActivityPanel locale={messageLocale} onError={showError} />,
                 },
 				{
 					key: "settings",
 					label: text.settings,
-					children: <SettingsPanel locale={locale} onError={showError} onMessage={showMessage} />,
+                  children: <SettingsPanel locale={messageLocale} onError={showError} onMessage={showMessage} />,
 				},
 				{
 					key: "health",
 				  label: text.health,
-				  children: <HealthPanel locale={locale} onError={showError} />,
+                  children: <HealthPanel locale={messageLocale} onError={showError} />,
 				},
 				{
 				  key: "backups",
 				  label: text.backups,
-				  children: <BackupPanel locale={locale} onError={showError} onMessage={showMessage} />,
+                  children: <BackupPanel locale={messageLocale} onError={showError} onMessage={showMessage} />,
 				},
 				{
 				  key: "traffic",
 				  label: text.traffic,
-				  children: <TrafficPanel locale={locale} onError={showError} onMessage={showMessage} />,
+                  children: <TrafficPanel locale={messageLocale} onError={showError} onMessage={showMessage} />,
 				},
               ]}
             />

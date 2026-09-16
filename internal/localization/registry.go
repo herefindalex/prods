@@ -16,9 +16,9 @@ type LocaleDefinition struct {
 }
 
 var builtinLocaleRegistry = []LocaleDefinition{
-	{Code: "en-US", NativeName: "English (United States)", SortOrder: 10},
-	{Code: "zh-TW", NativeName: "繁體中文", SortOrder: 20},
-	{Code: "zh-CN", NativeName: "简体中文", SortOrder: 30},
+	{Code: "en-US", NativeName: "English", SortOrder: 10},
+	{Code: "zh-TW", NativeName: "繁中", SortOrder: 20},
+	{Code: "zh-CN", NativeName: "简中", SortOrder: 30},
 	{Code: "ja-JP", NativeName: "日本語", SortOrder: 40},
 	{Code: "ko-KR", NativeName: "한국어", SortOrder: 50},
 	{Code: "de-DE", NativeName: "Deutsch", SortOrder: 60},
@@ -41,6 +41,15 @@ func BuiltinLocaleCodes() []string {
 		result = append(result, locale.Code)
 	}
 	return result
+}
+
+func BuiltinLocaleName(code string) string {
+	for _, locale := range builtinLocaleRegistry {
+		if locale.Code == code {
+			return locale.NativeName
+		}
+	}
+	return code
 }
 
 func NormalizeBuiltinLocale(value string) (string, bool) {

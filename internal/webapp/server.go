@@ -577,6 +577,7 @@ type publicPage struct {
 
 type publicLanguageOption struct {
 	Locale string
+	Name   string
 	URL    string
 	Active bool
 }
@@ -635,7 +636,12 @@ func (s *Server) currentPublicPage(r *http.Request, views []publishing.PublicVie
 		Text: localization.ApplyPublicCopy(localization.For(language), publicCopy), CatalogURL: withLanguage("/catalog", language), RFQURL: withLanguage("/rfq", language),
 	}
 	for _, locale := range supportedLocales {
-		page.LanguageOptions = append(page.LanguageOptions, publicLanguageOption{Locale: locale, URL: withLanguage(r.URL.RequestURI(), locale), Active: locale == language})
+		page.LanguageOptions = append(page.LanguageOptions, publicLanguageOption{
+			Locale: locale,
+			Name:   localization.BuiltinLocaleName(locale),
+			URL:    withLanguage(r.URL.RequestURI(), locale),
+			Active: locale == language,
+		})
 	}
 	return page, nil
 }

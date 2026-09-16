@@ -1,10 +1,10 @@
+import { normalizeAdminLocale, type AdminLocale } from "./locales";
+
 export const csrf = document.querySelector<HTMLMetaElement>('meta[name="csrf-token"]')?.content ?? "";
 
-export type APILocale = "en-US" | "zh-TW";
+export type APILocale = AdminLocale;
 
-let requestLocale: APILocale = document.documentElement.lang.toLowerCase().startsWith("zh")
-  ? "zh-TW"
-  : "en-US";
+let requestLocale: APILocale = normalizeAdminLocale(document.documentElement.lang);
 
 export function setAPILocale(locale: APILocale): void {
   requestLocale = locale;

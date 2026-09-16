@@ -125,6 +125,12 @@ body,
   padding: 40px;
 }
 
+.admin-login-locale {
+  display: block;
+  width: 12rem;
+  margin: 0 0 1rem auto;
+}
+
 .admin-login-eyebrow.ant-typography {
   color: #147985;
   font-size: 12px;

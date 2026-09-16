@@ -1,7 +1,6 @@
 import { useState } from "react";
-import { Alert, Button, Card, ConfigProvider, Form, Input, Space, Typography } from "antd";
-import enUS from "antd/locale/en_US";
-import zhTW from "antd/locale/zh_TW";
+import { Alert, Button, Card, ConfigProvider, Form, Input, Select, Space, Typography } from "antd";
+import { ADMIN_LOCALE_OPTIONS, antDesignLocale, normalizeAdminLocale, type AdminLocale } from "./locales";
 
 type LoginRootData = {
   language: string;
@@ -42,17 +41,24 @@ function readLoginData(root: HTMLElement): LoginRootData {
 
 export function LoginPage({ root }: { root: HTMLElement }) {
   const data = readLoginData(root);
+  const locale = normalizeAdminLocale(data.language);
   const [submitting, setSubmitting] = useState(false);
   const submit = () => {
     setSubmitting(true);
     (document.getElementById("admin-login-form") as HTMLFormElement | null)?.submit();
   };
 
-  document.documentElement.lang = data.language;
+  const switchLocale = (next: AdminLocale) => {
+    const url = new URL(window.location.href);
+    url.searchParams.set("lang", next);
+    window.location.assign(url);
+  };
+
+  document.documentElement.lang = locale;
 
   return (
     <ConfigProvider
-      locale={data.language === "zh-TW" ? zhTW : enUS}
+      locale={antDesignLocale(locale)}
       theme={{
         token: {
           colorPrimary: "#147985",
@@ -74,6 +80,13 @@ export function LoginPage({ root }: { root: HTMLElement }) {
             </Space>
           </div>
           <Card className="admin-login-card" bordered={false}>
+            <Select
+              className="admin-login-locale"
+              aria-label="Language"
+              value={locale}
+              onChange={switchLocale}
+              options={[...ADMIN_LOCALE_OPTIONS]}
+            />
             <Typography.Text className="admin-login-eyebrow">PRODS</Typography.Text>
             <Typography.Title id="admin-login-title" level={2}>{data.title}</Typography.Title>
             <Typography.Paragraph type="secondary" className="admin-login-subtitle">

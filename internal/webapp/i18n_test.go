@@ -53,6 +53,12 @@ func TestPublicInterfaceLocalesQueryAndUntranslatedCanonicalMatrix(t *testing.T)
 	if chineseResponse.Header.Get("Content-Language") != "zh-TW" || chineseResponse.Header.Get("ETag") == englishETag || !strings.Contains(chineseBody, "提出詢價") {
 		t.Fatalf("Chinese representation language=%q etag=%q body=%s", chineseResponse.Header.Get("Content-Language"), chineseResponse.Header.Get("ETag"), chineseBody)
 	}
+	if !strings.Contains(chineseBody, `hreflang="en-US">English</a>`) || !strings.Contains(chineseBody, `hreflang="zh-TW" aria-current="page">繁中</a>`) {
+		t.Fatalf("language selector did not map stable locale keys to native labels: %s", chineseBody)
+	}
+	if !strings.Contains(chineseBody, `<summary>繁中</summary>`) || strings.Contains(chineseBody, `<summary>語言:`) {
+		t.Fatalf("language selector summary must only show the active native label: %s", chineseBody)
+	}
 	canonical := `<link rel="canonical" href="http://catalog.example.test` + productPath + `">`
 	if !strings.Contains(chineseBody, canonical) || !strings.Contains(chineseBody, `rel="alternate" hreflang="x-default"`) || strings.Contains(chineseBody, `rel="alternate" hreflang="zh-TW"`) {
 		t.Fatalf("UI-only canonical/hreflang matrix body=%s", chineseBody)
