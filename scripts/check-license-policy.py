@@ -45,9 +45,9 @@ def group_counts(value: dict[str, list[dict[str, object]]]) -> dict[str, int]:
     return {license_name: len(packages) for license_name, packages in sorted(value.items())}
 
 
-def module_set(goos: str) -> set[str]:
+def module_set(goos: str, goarch: str) -> set[str]:
     env = os.environ.copy()
-    env.update({"GOOS": goos, "GOARCH": "amd64", "CGO_ENABLED": "0"})
+    env.update({"GOOS": goos, "GOARCH": goarch, "CGO_ENABLED": "0"})
     raw = output(
         "go",
         "list",
@@ -76,7 +76,12 @@ def main() -> None:
     if len(modules) != expected_all:
         fail(f"Go module graph has {len(modules)} external modules; audited value is {expected_all}")
 
-    release_modules = module_set("linux") | module_set("windows")
+    release_modules = (
+        module_set("linux", "amd64")
+        | module_set("windows", "amd64")
+        | module_set("darwin", "amd64")
+        | module_set("darwin", "arm64")
+    )
     expected_release = audit["go"]["release_external_modules"]
     if len(release_modules) != expected_release:
         fail(f"release closure has {len(release_modules)} Go modules; audited value is {expected_release}")

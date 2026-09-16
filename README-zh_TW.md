@@ -41,7 +41,7 @@ V1 刻意不包含結帳、定價、庫存 Availability、CRM、通用頁面編�
 
 從 [GitHub Releases](https://github.com/herefindalex/prods/releases) 下載同一版本的檔案：
 
-- `prods-linux-amd64` 或 `prods-windows-amd64.exe`
+- `prods-linux-amd64`、`prods-windows-amd64.exe`、`prods-darwin-arm64` 或 `prods-darwin-amd64`
 - `SHA256SUMS` 與 `BUILD_INFO.txt`
 - `LICENSE`、`LICENSE_POLICY.md`、各語言 README 與 `THIRD_PARTY_NOTICES.md`
 
@@ -58,6 +58,15 @@ Windows PowerShell：
 ```powershell
 .\prods-windows-amd64.exe
 ```
+
+Apple Silicon macOS：
+
+```sh
+chmod +x prods-darwin-arm64
+./prods-darwin-arm64
+```
+
+Intel macOS 使用 `prods-darwin-amd64`。**目前兩個 macOS 執行檔都只有 cross-compile 結果，尚未在 macOS 實際執行、code sign 或 notarize；native runtime、Installer、Admin、backup／recovery 與 shutdown 驗收完成前，macOS 版本均視為未驗證。**
 
 資料目錄全新時，Terminal 會顯示一次性的本機 Installer URL。開啟網址、認領安裝程序、建立第一位 Owner、選擇站點語系與時區，再完成安裝。Ready marker 交易完成後 Prods 會離開；重新啟動同一個執行檔，開啟畫面顯示的 Admin URL，並以 Owner 登入。
 
@@ -77,10 +86,11 @@ Windows PowerShell：
 
 新安裝預設沒有任何產品測試資料，只有 Owner 明確選擇 sample data 時才會匯入。
 
-只有執行檔內嵌的精確版本，在相同 GitHub Release tag 同時提供下列兩個資產時，sample data 選項才會啟用：
+只有執行檔內嵌的精確版本，在相同 GitHub Release tag 同時提供下列三個資產時，sample data 選項才會啟用：
 
 - `prods-sample-data-v1.json`
 - `prods-sample-data-v1.json.sha256`
+- `schema-v1.json`
 
 Prods 絕不拿 `latest` 的資料替代。系統會驗證 checksum、schema version、release version 與 payload 限制，再把 Owner、最小站點設定、sample records、audit entry 與 Ready marker 放在同一個 SQLite transaction 中提交。下載內容保留於 `data/sample-data/`。
 
@@ -212,21 +222,21 @@ CGO_ENABLED=0 go build -trimpath -o prods ./cmd/prods
 
 前端建置會寫入 `internal/webapp/static/` 的內嵌資產；原始碼變更時應一起提交產生檔。
 
-建立含內嵌版本、對應 sample data、原始碼 metadata、授權文件與 checksum 的 Linux／Windows amd64 release：
+建立含內嵌版本、對應 sample data、原始碼 metadata、授權文件與 checksum 的 Linux amd64、Windows amd64、macOS Intel 與 macOS Apple Silicon release：
 
 ```sh
-./scripts/build-release.sh v1.0.0
+./scripts/build-release.sh v0.6.6
 ```
 
-輸出位於 `dist/<version>/`；build version 與 GitHub release tag 必須相同。Windows cross-build 只能證明可編譯，必須在 Windows 實際執行後才能宣稱通過 runtime 驗證。
+輸出位於 `dist/<version>/`。根目錄 [`VERSION`](VERSION) 是唯一版本來源；script 會拒絕不同參數，GitHub Actions 也會拒絕不同 tag。同一版本會寫入每個 binary、sample payload、`BUILD_INFO.txt`、產物目錄與 GitHub Release tag。Cross-build 只能證明可編譯；Windows 必須在 Windows 實際執行後才能宣稱通過 runtime 驗證，兩個 macOS 產物在 native macOS 驗收前均明確列為未測試。
 
 ## GitHub Actions 與 Release
 
-`.github/workflows/ci.yml` 會在每次 push 與 pull request 執行：安裝 pinned frontend dependency、檢查 dependency license policy、執行 typecheck 與前端測試、重建並檢查 embedded assets、執行一般與 PoC Go suite、`go vet`、sample contract 驗證，以及 Linux／Windows amd64 cross-build，最後上傳短期 CI artifacts。
+`.github/workflows/ci.yml` 會在每次 push 與 pull request 執行：安裝 pinned frontend dependency、檢查 dependency license policy、執行 typecheck 與前端測試、重建並檢查 embedded assets、執行一般與 PoC Go suite、`go vet`、sample contract 驗證，以及 Linux amd64、Windows amd64、macOS Intel 與 macOS Apple Silicon cross-build，最後上傳短期 CI artifacts。
 
 Push `v*` tag 會啟動 `.github/workflows/release.yml`。Workflow 會再次驗證原始碼，以精確 tag 呼叫 `scripts/build-release.sh`、驗證 `SHA256SUMS`、上傳 workflow artifact，並將所有檔案發布到相同 tag 的 GitHub Release。含連字號的 tag 會標成 prerelease，不會進入 Admin 的 latest-stable 更新路徑。
 
-Release script 要求 tracked working tree 乾淨，並將 tag 與 source revision 寫入 binary 與 `BUILD_INFO.txt`。
+Release script 要求 tracked working tree 乾淨，並將版本與 source revision 寫入 binary 與 `BUILD_INFO.txt`。它會重新產生 tracked sample payload 與 schema checksum，逐位元相同才允許發布。
 
 ## 授權與商用相容性
 

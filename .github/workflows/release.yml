@@ -58,7 +58,9 @@ jobs:
           go vet ./...
 
       - name: Build release payload
-        run: ./scripts/build-release.sh "$GITHUB_REF_NAME"
+        run: |
+          test "$(tr -d '\r\n' < VERSION)" = "$GITHUB_REF_NAME"
+          ./scripts/build-release.sh "$GITHUB_REF_NAME"
 
       - name: Verify release checksums
         run: |

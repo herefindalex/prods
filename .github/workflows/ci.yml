@@ -64,24 +64,33 @@ jobs:
       - name: Verify release-bound sample data
         run: |
           sample_dir="$(mktemp -d)"
+          version="$(tr -d '\r\n' < VERSION)"
           go run ./cmd/prods-sample \
-            -release-version v0.0.0-ci \
+            -release-version "$version" \
             -output "$sample_dir/prods-sample-data-v1.json"
+          cp sample-data/schema-v1.json "$sample_dir/schema-v1.json"
           (
             cd "$sample_dir"
-            sha256sum prods-sample-data-v1.json > prods-sample-data-v1.json.sha256
-            sha256sum --check prods-sample-data-v1.json.sha256
+            sha256sum prods-sample-data-v1.json schema-v1.json > prods-sample-data-v1.json.sha256
           )
-          python3 - "$sample_dir/prods-sample-data-v1.json" <<'PY'
+          cmp "$sample_dir/prods-sample-data-v1.json" sample-data/prods-sample-data-v1.json
+          cmp "$sample_dir/prods-sample-data-v1.json.sha256" sample-data/prods-sample-data-v1.json.sha256
+          cmp "$sample_dir/schema-v1.json" sample-data/schema-v1.json
+          python3 - "$sample_dir/prods-sample-data-v1.json" "$version" <<'PY'
           import json
           import sys
 
           with open(sys.argv[1], encoding="utf-8") as source:
               payload = json.load(source)
           assert payload["schema_version"] == 1
-          assert payload["release_version"] == "v0.0.0-ci"
+          assert payload["release_version"] == sys.argv[2]
+          assert len(payload["dictionaries"]) == 64
           assert len(payload["categories"]) == 58
+          assert len(payload["specs"]) == 34
+          assert len(payload["spec_sets"]) == 24
+          assert len(payload["category_spec_sets"]) == 58
           assert len(payload["products"]) == 1200
+          assert sum(len(product.get("spec_values", [])) for product in payload["products"]) == 4834
           PY
 
       - name: Cross-build release binaries
@@ -89,13 +98,20 @@ jobs:
           SOURCE_REVISION: ${{ github.sha }}
         run: |
           mkdir -p artifacts
-          build_flags="-s -w -X main.applicationVersion=v0.0.0-ci -X main.sourceRevision=$SOURCE_REVISION"
+          version="$(tr -d '\r\n' < VERSION)"
+          build_flags="-s -w -X main.applicationVersion=$version -X main.sourceRevision=$SOURCE_REVISION"
           CGO_ENABLED=0 GOOS=linux GOARCH=amd64 \
             go build -trimpath -ldflags "$build_flags" \
             -o artifacts/prods-linux-amd64 ./cmd/prods
           CGO_ENABLED=0 GOOS=windows GOARCH=amd64 \
             go build -trimpath -ldflags "$build_flags" \
             -o artifacts/prods-windows-amd64.exe ./cmd/prods
+          CGO_ENABLED=0 GOOS=darwin GOARCH=amd64 \
+            go build -trimpath -ldflags "$build_flags" \
+            -o artifacts/prods-darwin-amd64 ./cmd/prods
+          CGO_ENABLED=0 GOOS=darwin GOARCH=arm64 \
+            go build -trimpath -ldflags "$build_flags" \
+            -o artifacts/prods-darwin-arm64 ./cmd/prods
           sha256sum artifacts/* > artifacts/SHA256SUMS
 
       - name: Upload cross-build artifacts

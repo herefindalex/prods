@@ -15,7 +15,7 @@ The runtime includes the Admin application, public website, SQLite support, sear
 - **Serve engineers, buyers, crawlers, and AI tools.** Core browsing, search, pagination, documents, and RFQ work from server-rendered semantic HTML without JavaScript. The same published model feeds JSON-LD, JSON, Markdown, Sitemap, manifest, and `llms.txt` outputs.
 - **Capture demand without pretending to be a commerce platform.** Visitors can request one or more catalog Products or submit a Requested Part when search has no result. Prods records durable, replay-safe RFQs and leaves pricing, availability, qualification, and follow-up to the business.
 - **Keep operations understandable.** One process owns migrations, bounded writes, durable jobs, audit records, backups, restore journals, and health checks. The terminal shows the current state, next action, URLs, Admin path, host details, resource paths, and live logs.
-- **Own the deployment and the data.** Prods Community is AGPL-licensed, stores primary state in SQLite, keeps assets and backups in explicit local roots, and runs on Windows or Linux behind the reverse proxy you choose.
+- **Own the deployment and the data.** Prods Community is AGPL-licensed, stores primary state in SQLite, and keeps assets and backups in explicit local roots. Release builds target Linux, Windows, and macOS behind the reverse proxy you choose.
 
 ## Who it is for
 
@@ -33,7 +33,7 @@ V1 deliberately does not implement checkout, pricing, inventory availability, CR
 | RFQ | Multi-product requests, Requested Part intake from no-result searches, high-entropy idempotency keys, durable receipts, Admin review, and explicit optional SMTP sending |
 | Access and accountability | Opaque server-side sessions, CSRF protection, capability-based roles, scoped Admin access, and records for required Admin actions |
 | Operations | Liveness/readiness, runtime logs, scheduled and one-shot backup, verified restore, Recovery, Owner recovery, Maintenance, asset cleanup, and on-demand update checking |
-| Distribution | Empty installation by default, optional exact-version sample data, embedded source revision/version, checksums, and Linux/Windows amd64 release artifacts |
+| Distribution | Empty installation by default, optional exact-version sample data, embedded source revision/version, checksums, and Linux/Windows/macOS release artifacts |
 
 The built-in locales are `en-US`, `zh-TW`, `zh-CN`, `ja-JP`, `ko-KR`, `de-DE`, `fr-FR`, `it-IT`, `es-ES`, and `pt-BR`. Their bundled defaults have passed key, placeholder, plural, formatting, and layout checks, but have not received professional native-language, legal, or marketing review. Review customer-facing copy before a production launch.
 
@@ -41,7 +41,7 @@ The built-in locales are `en-US`, `zh-TW`, `zh-CN`, `ja-JP`, `ko-KR`, `de-DE`, `
 
 Download the files for your version from [GitHub Releases](https://github.com/herefindalex/prods/releases):
 
-- `prods-linux-amd64` or `prods-windows-amd64.exe`
+- `prods-linux-amd64`, `prods-windows-amd64.exe`, `prods-darwin-arm64`, or `prods-darwin-amd64`
 - `SHA256SUMS` and `BUILD_INFO.txt`
 - `LICENSE`, `LICENSE_POLICY.md`, the README files, and `THIRD_PARTY_NOTICES.md`
 
@@ -58,6 +58,15 @@ On Windows PowerShell:
 ```powershell
 .\prods-windows-amd64.exe
 ```
+
+On Apple Silicon macOS:
+
+```sh
+chmod +x prods-darwin-arm64
+./prods-darwin-arm64
+```
+
+Intel macOS uses `prods-darwin-amd64`. **The macOS binaries are currently cross-compiled candidates only: they have not been run on macOS, code-signed, or notarized. Treat macOS as unverified until native runtime, Installer, Admin, backup/recovery, and shutdown acceptance is completed.**
 
 On a fresh data directory, the terminal shows a one-time local Installer URL. Open it, claim the installation, create the first Owner, choose the site locale and time zone, and complete installation. Prods exits after the Ready marker is committed. Restart the same executable, open the displayed Admin URL, and sign in as the Owner.
 
@@ -77,10 +86,11 @@ Use Up/Down, `PgUp`/`PgDn`, `Home`, and `End` to inspect logs. `Ctrl+C` begins g
 
 A new installation contains no Product test data unless the Owner explicitly selects sample data.
 
-The sample option is enabled only when the exact version embedded in the executable has both of these assets on the matching GitHub release tag:
+The sample option is enabled only when the exact version embedded in the executable has all three assets on the matching GitHub Release tag:
 
 - `prods-sample-data-v1.json`
 - `prods-sample-data-v1.json.sha256`
+- `schema-v1.json`
 
 Prods never substitutes sample data from `latest`. It verifies the checksum, schema version, release version, and payload limits before committing the Owner, minimum site settings, sample records, audit entry, and Ready marker in one SQLite transaction. The downloaded payload is retained under `data/sample-data/`.
 
@@ -212,21 +222,21 @@ CGO_ENABLED=0 go build -trimpath -o prods ./cmd/prods
 
 The frontend build writes embedded assets under `internal/webapp/static/`; commit those generated files with their source changes.
 
-Build a complete Linux/Windows amd64 release with an embedded version, matching sample data, source metadata, notices, and checksums:
+Build a complete Linux amd64, Windows amd64, macOS Intel, and macOS Apple Silicon release with an embedded version, matching sample data, source metadata, notices, and checksums:
 
 ```sh
-./scripts/build-release.sh v1.0.0
+./scripts/build-release.sh v0.6.6
 ```
 
-Output is written to `dist/<version>/`. Use the same value for the build version and GitHub release tag. A Windows cross-build proves compilation only; execute the binary on Windows before claiming Windows runtime verification.
+Output is written to `dist/<version>/`. Root [`VERSION`](VERSION) is the release source of truth; the script rejects any different argument, and GitHub Actions rejects a different tag. The same version is embedded in every binary, written into the sample payload and `BUILD_INFO.txt`, and used for the artifact directory and GitHub Release tag. Cross-builds prove compilation only. Windows must be tested on Windows before claiming Windows runtime verification; both macOS artifacts remain explicitly untested until native macOS acceptance is recorded.
 
 ## GitHub Actions and releases
 
-`.github/workflows/ci.yml` runs on every push and pull request. It installs pinned frontend dependencies, runs typecheck and frontend tests, rebuilds embedded assets and rejects drift, runs the normal and PoC Go suites, runs `go vet`, verifies the generated sample contract, cross-builds Linux and Windows amd64 binaries, and uploads short-lived CI artifacts.
+`.github/workflows/ci.yml` runs on every push and pull request. It installs pinned frontend dependencies, runs typecheck and frontend tests, rebuilds embedded assets and rejects drift, runs the normal and PoC Go suites, runs `go vet`, verifies the generated sample contract, cross-builds Linux amd64, Windows amd64, macOS Intel, and macOS Apple Silicon binaries, and uploads short-lived CI artifacts.
 
 Pushing a `v*` tag starts `.github/workflows/release.yml`. The workflow repeats source validation, calls `scripts/build-release.sh` with the exact tag, verifies `SHA256SUMS`, uploads a workflow artifact, and publishes every release file to the matching GitHub Release. Tags containing a hyphen are marked as prereleases and are excluded from the Admin latest-stable update path.
 
-The release script requires a clean tracked working tree and records the tag and source revision in the binaries and `BUILD_INFO.txt`.
+The release script requires a clean tracked working tree and records the version and source revision in the binaries and `BUILD_INFO.txt`. It regenerates the tracked sample payload and schema checksum and requires an exact match before publishing.
 
 ## License and contributions
 
