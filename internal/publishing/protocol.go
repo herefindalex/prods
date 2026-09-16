@@ -9,6 +9,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"log/slog"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -348,7 +349,11 @@ func (e *Engine) worker(ctx context.Context) {
 				return
 			}
 			processed, err := e.ProcessOne(ctx)
-			if err != nil || !processed {
+			if err != nil {
+				slog.Error("publication worker failed", "error", err)
+				break
+			}
+			if !processed {
 				break
 			}
 		}
