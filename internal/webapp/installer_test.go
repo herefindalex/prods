@@ -140,6 +140,7 @@ func TestInstallerCommitsCompleteEmbeddedSampleData(t *testing.T) {
 		{catalog.DictionaryBrand, 15},
 		{catalog.DictionaryApplication, 24},
 		{catalog.DictionaryLifecycle, 5},
+		{catalog.DictionaryDocumentType, 4},
 	} {
 		entries, err := store.ListDictionaryEntries(t.Context(), check.kind)
 		if err != nil || len(entries) != check.want {
