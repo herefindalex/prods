@@ -122,6 +122,34 @@ func TestAdminBrandCaptureClassifiesUnsafeURL(t *testing.T) {
 	}
 }
 
+func TestAdminBrandCaptureReportsSourceAccessDenied(t *testing.T) {
+	store, err := sqlite.CreatePOC(filepath.Join(t.TempDir(), "test.db"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _ = store.Close() })
+	capturer := &fakeBrandCapturer{err: errors.Join(brandcapture.ErrSourceAccessDenied, errors.New("HTTP 403"))}
+	app, _, err := New(store, Config{
+		BaseURL: "https://catalog.example.test", AdminToken: "test-admin-token", EnablePOCAdmin: true,
+		BrandCapturer: capturer,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(app.Close)
+	server := httptest.NewServer(app)
+	t.Cleanup(server.Close)
+	jar, _ := cookiejar.New(nil)
+	client := &http.Client{Jar: jar}
+	csrf := loginAdmin(t, client, server.URL)
+	response := postAdminJSON(t, client, server.URL+"/admin/api/website/capture", csrf, `{"source_url":"https://blocked.example"}`)
+	var body apiErrorResponse
+	decodeResponseJSON(t, response, &body)
+	if response.StatusCode != http.StatusBadGateway || body.Code != apiCodeBrandCaptureDenied {
+		t.Fatalf("blocked capture status=%d body=%+v", response.StatusCode, body)
+	}
+}
+
 func TestBrandCaptureProposalLeavesSEOAssetsAndCustomCSSUntouched(t *testing.T) {
 	current := site.DefaultConfiguration()
 	current.Organization.PrimaryLogoAsset = "asset-1"

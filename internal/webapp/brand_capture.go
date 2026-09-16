@@ -43,6 +43,8 @@ func (s *Server) adminCaptureWebsiteBrand(w http.ResponseWriter, r *http.Request
 		if errors.Is(err, brandcapture.ErrInvalidURL) || errors.Is(err, brandcapture.ErrNonPublicDestination) {
 			status = http.StatusUnprocessableEntity
 			code = apiCodeValidationFailed
+		} else if errors.Is(err, brandcapture.ErrSourceAccessDenied) {
+			code = apiCodeBrandCaptureDenied
 		}
 		s.writeAPIError(w, r, status, code)
 		return

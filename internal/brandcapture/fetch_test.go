@@ -158,6 +158,29 @@ func TestFetcherEnforcesMediaTypeAndDecodedSize(t *testing.T) {
 	}
 }
 
+func TestFetcherClassifiesSourceAccessDenied(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		w.Header().Set("Content-Type", "text/html; charset=utf-8")
+		w.WriteHeader(http.StatusForbidden)
+	}))
+	defer server.Close()
+	serverURL, _ := url.Parse(server.URL)
+	fetcher := &Fetcher{
+		Resolver: staticResolver{addresses: map[string][]net.IPAddr{
+			"capture.example": {{IP: net.ParseIP("93.184.216.34")}},
+		}},
+		DialContext: func(ctx context.Context, network, _ string) (net.Conn, error) {
+			return (&net.Dialer{}).DialContext(ctx, network, server.Listener.Addr().String())
+		},
+		Timeout: 5 * time.Second,
+	}
+
+	_, err := fetcher.Capture(t.Context(), "http://capture.example:"+serverURL.Port()+"/")
+	if !errors.Is(err, ErrSourceAccessDenied) {
+		t.Fatalf("expected access-denied classification, got %v", err)
+	}
+}
+
 func contains(values []string, wanted string) bool {
 	for _, value := range values {
 		if value == wanted {

@@ -26,6 +26,7 @@ const (
 	apiCodeResourceUnavailable  = "resource_unavailable"
 	apiCodeRevisionConflict     = "revision_conflict"
 	apiCodeServiceUnavailable   = "service_unavailable"
+	apiCodeBrandCaptureDenied   = "brand_capture_source_access_denied"
 	apiCodeSMTPNotConfigured    = "smtp_not_configured"
 	apiCodeUnauthorized         = "unauthorized"
 	apiCodeUnsupportedMediaType = "unsupported_media_type"
@@ -57,6 +58,7 @@ var apiErrorMessages = map[string]map[string]string{
 		apiCodeResourceUnavailable:  "The required storage resource is unavailable; no data was accepted.",
 		apiCodeRevisionConflict:     "This record changed since it was loaded. Refresh and try again.",
 		apiCodeServiceUnavailable:   "This service is temporarily unavailable.",
+		apiCodeBrandCaptureDenied:   "The source website rejected automated access. Enter the brand details manually or try an authorized static page.",
 		apiCodeSMTPNotConfigured:    "SMTP is not configured. Configure email delivery or use the manual sharing workflow.",
 		apiCodeUnauthorized:         "Your session is missing or expired. Sign in again.",
 		apiCodeUnsupportedMediaType: "The uploaded file type is not supported.",
@@ -81,6 +83,7 @@ var apiErrorMessages = map[string]map[string]string{
 		apiCodeResourceUnavailable:  "必要的儲存資源目前無法使用，系統未接受任何資料。",
 		apiCodeRevisionConflict:     "此資料在載入後已被變更，請重新整理後再試。",
 		apiCodeServiceUnavailable:   "此服務目前暫時無法使用。",
+		apiCodeBrandCaptureDenied:   "來源網站拒絕自動讀取。請改用人工填寫品牌資料，或嘗試已授權的靜態頁面。",
 		apiCodeSMTPNotConfigured:    "尚未設定 SMTP，請設定郵件傳送或使用手動分享流程。",
 		apiCodeUnauthorized:         "登入工作階段不存在或已過期，請重新登入。",
 		apiCodeUnsupportedMediaType: "不支援此上傳檔案類型。",

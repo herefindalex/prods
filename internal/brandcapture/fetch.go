@@ -23,6 +23,7 @@ const (
 var (
 	ErrInvalidURL           = errors.New("capture URL is invalid")
 	ErrNonPublicDestination = errors.New("capture destination is not public")
+	ErrSourceAccessDenied   = errors.New("capture source denied automated access")
 )
 
 type Resolver interface {
@@ -152,6 +153,9 @@ func (fetcher *Fetcher) fetch(ctx context.Context, rawURL string, allowedMediaTy
 		}
 		defer response.Body.Close()
 		if response.StatusCode < 200 || response.StatusCode >= 300 {
+			if response.StatusCode == http.StatusUnauthorized || response.StatusCode == http.StatusForbidden || response.StatusCode == http.StatusTooManyRequests {
+				return nil, nil, fmt.Errorf("%w: HTTP %d", ErrSourceAccessDenied, response.StatusCode)
+			}
 			return nil, nil, fmt.Errorf("capture source returned HTTP %d", response.StatusCode)
 		}
 		mediaType, _, err := mime.ParseMediaType(response.Header.Get("Content-Type"))
