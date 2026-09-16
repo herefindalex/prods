@@ -16,6 +16,7 @@ import (
 	"testing"
 	"time"
 
+	"prods/internal/catalog"
 	"prods/internal/distribution"
 	"prods/internal/sampledata"
 	"prods/internal/storage/sqlite"
@@ -178,6 +179,53 @@ func TestInstallerCommitsCompleteGeneratedSampleData(t *testing.T) {
 	}
 	if count, err := store.ProductCount(t.Context()); err != nil || count != len(sample.Products) {
 		t.Fatalf("generated sample product count=%d want=%d err=%v", count, len(sample.Products), err)
+	}
+	for _, check := range []struct {
+		kind catalog.DictionaryKind
+		want int
+	}{
+		{catalog.DictionaryManufacturer, 20},
+		{catalog.DictionaryBrand, 15},
+		{catalog.DictionaryApplication, 24},
+		{catalog.DictionaryLifecycle, 5},
+	} {
+		entries, err := store.ListDictionaryEntries(t.Context(), check.kind)
+		if err != nil || len(entries) != check.want {
+			t.Fatalf("generated sample %s count=%d want=%d err=%v", check.kind, len(entries), check.want, err)
+		}
+	}
+	specs, err := store.ListSpecDefinitions(t.Context())
+	if err != nil || len(specs) != 34 {
+		t.Fatalf("generated sample specification count=%d want=34 err=%v", len(specs), err)
+	}
+	sets, err := store.ListSpecSets(t.Context())
+	if err != nil || len(sets) != 24 {
+		t.Fatalf("generated sample specification set count=%d want=24 err=%v", len(sets), err)
+	}
+	var richProduct distribution.Product
+	for _, source := range sample.Products {
+		if source.ManufacturerID != "" && len(source.ApplicationIDs) > 0 && len(source.SpecValues) > 0 {
+			richProduct = source
+			break
+		}
+	}
+	if richProduct.ID == "" {
+		t.Fatal("generated sample has no product with reference and specification values")
+	}
+	storedProduct, err := store.Product(t.Context(), richProduct.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if storedProduct.ManufacturerID != richProduct.ManufacturerID || len(storedProduct.ApplicationIDs) != len(richProduct.ApplicationIDs) {
+		t.Fatalf("generated sample product references were not preserved: got=%+v want=%+v", storedProduct, richProduct)
+	}
+	values, err := store.ProductSpecValues(t.Context(), richProduct.ID)
+	if err != nil || len(values) != len(richProduct.SpecValues) {
+		t.Fatalf("generated sample product specification count=%d want=%d err=%v", len(values), len(richProduct.SpecValues), err)
+	}
+	set, err := store.CategorySpecSet(t.Context(), richProduct.CategoryID)
+	if err != nil || set.ID == "" {
+		t.Fatalf("generated sample category specification set=%+v err=%v", set, err)
 	}
 	for _, source := range sample.Products {
 		if source.RecordState != "archived" {

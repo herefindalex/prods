@@ -107,12 +107,22 @@ type Installation struct {
 }
 
 type InstallationSampleData struct {
-	Version        string
-	DatasetVersion string
-	SourceURL      string
-	SHA256         string
-	Categories     []catalog.Category
-	Products       []catalog.Product
+	Version          string
+	DatasetVersion   string
+	SourceURL        string
+	SHA256           string
+	Dictionaries     []catalog.DictionaryEntry
+	Categories       []catalog.Category
+	Specs            []catalog.SpecDefinition
+	SpecSets         []catalog.SpecSet
+	CategorySpecSets []InstallationCategorySpecSet
+	Products         []catalog.Product
+	SpecValues       []catalog.SpecValue
+}
+
+type InstallationCategorySpecSet struct {
+	CategoryID string
+	SpecSetID  string
 }
 
 type RFQSummary struct {
@@ -424,6 +434,33 @@ func (s *Store) CompleteInstallation(ctx context.Context, installation Installat
 		return identity.User{}, fmt.Errorf("create default dictionary content: %w", err)
 	}
 	if installation.SampleData != nil {
+		seenDictionaryIDs := make(map[string]struct{}, len(installation.SampleData.Dictionaries))
+		for index := range installation.SampleData.Dictionaries {
+			entry := installation.SampleData.Dictionaries[index]
+			entry.Revision = 1
+			if entry.SourceLocale == "" {
+				entry.SourceLocale = installation.DefaultLocale
+			}
+			if err := entry.Prepare(); err != nil {
+				return identity.User{}, fmt.Errorf("sample dictionary entry %d: %w", index+1, err)
+			}
+			if entry.Kind == catalog.DictionaryDocumentType {
+				return identity.User{}, fmt.Errorf("sample dictionary entry %d cannot replace a system document type", index+1)
+			}
+			if _, exists := seenDictionaryIDs[entry.ID]; exists {
+				return identity.User{}, fmt.Errorf("sample dictionary entry %d duplicates id %q", index+1, entry.ID)
+			}
+			if _, err := tx.ExecContext(ctx, `INSERT INTO dictionary_entries(
+				id,kind,name,slug,status,revision,created_by,updated_by,created_at,updated_at
+			) VALUES(?,?,?,?,?,?,?,?,?,?)`, entry.ID, entry.Kind, entry.Name, entry.Slug, entry.Status, 1,
+				ownerID, ownerID, now, now); err != nil {
+				return identity.User{}, fmt.Errorf("install sample dictionary entry %q: %w", entry.ID, err)
+			}
+			if err := insertTaxonomySource(ctx, tx, "dictionary", entry.ID, entry.SourceLocale, entry.Description, entry.SourceLocales); err != nil {
+				return identity.User{}, err
+			}
+			seenDictionaryIDs[entry.ID] = struct{}{}
+		}
 		seenCategoryIDs := make(map[string]struct{}, len(installation.SampleData.Categories))
 		seenCategorySlugs := make(map[string]struct{}, len(installation.SampleData.Categories))
 		for index := range installation.SampleData.Categories {
@@ -461,6 +498,84 @@ func (s *Store) CompleteInstallation(ctx context.Context, installation Installat
 			seenCategoryIDs[category.ID] = struct{}{}
 			seenCategorySlugs[slugKey] = struct{}{}
 		}
+		seenSpecIDs := make(map[string]struct{}, len(installation.SampleData.Specs))
+		for index := range installation.SampleData.Specs {
+			spec := installation.SampleData.Specs[index]
+			spec.ID = strings.TrimSpace(spec.ID)
+			spec.Name = strings.TrimSpace(spec.Name)
+			spec.PreferredUnit = strings.TrimSpace(spec.PreferredUnit)
+			if spec.ID == "" || spec.Name == "" || (spec.Status != "" && spec.Status != catalog.EntryActive && spec.Status != catalog.EntryDisabled) {
+				return identity.User{}, fmt.Errorf("sample specification %d: %w", index+1, catalog.ErrInvalidSpec)
+			}
+			if spec.Status == "" {
+				spec.Status = catalog.EntryActive
+			}
+			if spec.SemanticVer < 1 {
+				return identity.User{}, fmt.Errorf("sample specification %d: %w", index+1, catalog.ErrInvalidSpec)
+			}
+			if _, duplicate := seenSpecIDs[spec.ID]; duplicate {
+				return identity.User{}, fmt.Errorf("sample specification %d duplicates id %q", index+1, spec.ID)
+			}
+			if _, err := tx.ExecContext(ctx, `INSERT INTO spec_definitions(
+				id,name,preferred_unit,filterable,semantic_version,status,revision,created_by,updated_by,created_at,updated_at
+			) VALUES(?,?,?,?,?,?,?,?,?,?,?)`, spec.ID, spec.Name, spec.PreferredUnit, spec.Filterable, spec.SemanticVer,
+				spec.Status, 1, ownerID, ownerID, now, now); err != nil {
+				return identity.User{}, fmt.Errorf("install sample specification %q: %w", spec.ID, err)
+			}
+			seenSpecIDs[spec.ID] = struct{}{}
+		}
+		seenSpecSetIDs := make(map[string]struct{}, len(installation.SampleData.SpecSets))
+		for index := range installation.SampleData.SpecSets {
+			set := installation.SampleData.SpecSets[index]
+			set.ID = strings.TrimSpace(set.ID)
+			set.Name = strings.TrimSpace(set.Name)
+			if set.ID == "" || set.Name == "" || len(set.SpecIDs) == 0 ||
+				(set.Status != "" && set.Status != catalog.EntryActive && set.Status != catalog.EntryDisabled) {
+				return identity.User{}, fmt.Errorf("sample specification set %d: %w", index+1, catalog.ErrInvalidSpec)
+			}
+			if set.Status == "" {
+				set.Status = catalog.EntryActive
+			}
+			if _, duplicate := seenSpecSetIDs[set.ID]; duplicate {
+				return identity.User{}, fmt.Errorf("sample specification set %d duplicates id %q", index+1, set.ID)
+			}
+			if _, err := tx.ExecContext(ctx, `INSERT INTO spec_sets(
+				id,name,status,revision,created_by,updated_by,created_at,updated_at
+			) VALUES(?,?,?,?,?,?,?,?)`, set.ID, set.Name, set.Status, 1, ownerID, ownerID, now, now); err != nil {
+				return identity.User{}, fmt.Errorf("install sample specification set %q: %w", set.ID, err)
+			}
+			members := make(map[string]struct{}, len(set.SpecIDs))
+			for memberIndex, specID := range set.SpecIDs {
+				specID = strings.TrimSpace(specID)
+				if _, exists := seenSpecIDs[specID]; !exists {
+					return identity.User{}, fmt.Errorf("sample specification set %q references unknown specification %q", set.ID, specID)
+				}
+				if _, duplicate := members[specID]; duplicate {
+					return identity.User{}, fmt.Errorf("sample specification set %q duplicates specification %q", set.ID, specID)
+				}
+				if _, err := tx.ExecContext(ctx, `INSERT INTO spec_set_members(spec_set_id,spec_id,sort_order) VALUES(?,?,?)`, set.ID, specID, memberIndex); err != nil {
+					return identity.User{}, err
+				}
+				members[specID] = struct{}{}
+			}
+			seenSpecSetIDs[set.ID] = struct{}{}
+		}
+		seenCategoryAssignments := make(map[string]struct{}, len(installation.SampleData.CategorySpecSets))
+		for index, assignment := range installation.SampleData.CategorySpecSets {
+			if _, exists := seenCategoryIDs[assignment.CategoryID]; !exists {
+				return identity.User{}, fmt.Errorf("sample category specification assignment %d references unknown category %q", index+1, assignment.CategoryID)
+			}
+			if _, exists := seenSpecSetIDs[assignment.SpecSetID]; !exists {
+				return identity.User{}, fmt.Errorf("sample category specification assignment %d references unknown set %q", index+1, assignment.SpecSetID)
+			}
+			if _, duplicate := seenCategoryAssignments[assignment.CategoryID]; duplicate {
+				return identity.User{}, fmt.Errorf("sample category %q has multiple specification sets", assignment.CategoryID)
+			}
+			if _, err := tx.ExecContext(ctx, `INSERT INTO category_spec_sets(category_id,spec_set_id) VALUES(?,?)`, assignment.CategoryID, assignment.SpecSetID); err != nil {
+				return identity.User{}, err
+			}
+			seenCategoryAssignments[assignment.CategoryID] = struct{}{}
+		}
 		seenIDs := make(map[string]struct{}, len(installation.SampleData.Products))
 		seenIdentities := make(map[string]struct{}, len(installation.SampleData.Products))
 		for index := range installation.SampleData.Products {
@@ -468,11 +583,9 @@ func (s *Store) CompleteInstallation(ctx context.Context, installation Installat
 			if product.CategoryID == "" {
 				product.CategoryID = catalog.UncategorizedCategoryID
 			}
-			product.SourceLocale = installation.DefaultLocale
-			product.ApplicationIDs = nil
-			product.ManufacturerID = ""
-			product.BrandID = ""
-			product.LifecycleID = ""
+			if product.SourceLocale == "" {
+				product.SourceLocale = installation.DefaultLocale
+			}
 			product.Revision = 1
 			product.CreatedBy = ownerID
 			product.UpdatedBy = ownerID
@@ -481,6 +594,12 @@ func (s *Store) CompleteInstallation(ctx context.Context, installation Installat
 			}
 			if product.Status == "" {
 				product.Status = catalog.Hidden
+			}
+			if err := product.Prepare(); err != nil {
+				return identity.User{}, fmt.Errorf("sample product %d: %w", index+1, err)
+			}
+			if err := validateProductReferences(ctx, tx, &product); err != nil {
+				return identity.User{}, fmt.Errorf("sample product %d references: %w", index+1, err)
 			}
 			if err := product.Prepare(); err != nil {
 				return identity.User{}, fmt.Errorf("sample product %d: %w", index+1, err)
@@ -508,12 +627,58 @@ func (s *Store) CompleteInstallation(ctx context.Context, installation Installat
 				}
 			}
 		}
+		seenSpecValues := make(map[string]struct{}, len(installation.SampleData.SpecValues))
+		for index, value := range installation.SampleData.SpecValues {
+			value.ProductID = strings.TrimSpace(value.ProductID)
+			value.SpecID = strings.TrimSpace(value.SpecID)
+			value.RawValue = strings.TrimSpace(value.RawValue)
+			value.SourceLocale = strings.TrimSpace(value.SourceLocale)
+			if value.SourceLocale == "" {
+				value.SourceLocale = installation.DefaultLocale
+			}
+			if _, exists := seenIDs[value.ProductID]; !exists || value.SpecID == "" || value.RawValue == "" {
+				return identity.User{}, fmt.Errorf("sample specification value %d: %w", index+1, catalog.ErrInvalidSpec)
+			}
+			if _, exists := seenSpecIDs[value.SpecID]; !exists {
+				return identity.User{}, fmt.Errorf("sample specification value %d references unknown specification %q", index+1, value.SpecID)
+			}
+			key := value.ProductID + "\x00" + value.SpecID + "\x00" + value.SourceLocale
+			if _, duplicate := seenSpecValues[key]; duplicate {
+				return identity.User{}, fmt.Errorf("sample specification value %d is duplicated", index+1)
+			}
+			var applicable int
+			if err := tx.QueryRowContext(ctx, `SELECT EXISTS(
+				SELECT 1 FROM products p
+				JOIN category_spec_sets cs ON cs.category_id=p.category_id
+				JOIN spec_set_members sm ON sm.spec_set_id=cs.spec_set_id
+				WHERE p.id=? AND sm.spec_id=?
+			)`, value.ProductID, value.SpecID).Scan(&applicable); err != nil {
+				return identity.User{}, err
+			}
+			if applicable == 0 {
+				return identity.User{}, fmt.Errorf("sample specification value %d is not applicable to product %q", index+1, value.ProductID)
+			}
+			valueID := value.ID
+			if valueID == "" {
+				valueID = fmt.Sprintf("spv_sample_%06d", index+1)
+			}
+			if _, err := tx.ExecContext(ctx, `INSERT INTO product_spec_values(
+				id,product_id,spec_id,raw_value,source_locale,source_revision,active,created_by,updated_by,created_at,updated_at
+			) VALUES(?,?,?,?,?,1,1,?,?,?,?)`, valueID, value.ProductID, value.SpecID, value.RawValue, value.SourceLocale,
+				ownerID, ownerID, now, now); err != nil {
+				return identity.User{}, fmt.Errorf("install sample specification value for product %q: %w", value.ProductID, err)
+			}
+			seenSpecValues[key] = struct{}{}
+		}
 	}
 	details := map[string]any{}
 	if installation.SampleData != nil {
 		details["sample_data"] = map[string]any{
 			"version": installation.SampleData.Version, "dataset_version": installation.SampleData.DatasetVersion, "source_url": installation.SampleData.SourceURL,
-			"sha256": installation.SampleData.SHA256, "product_count": len(installation.SampleData.Products),
+			"sha256": installation.SampleData.SHA256, "dictionary_count": len(installation.SampleData.Dictionaries),
+			"category_count": len(installation.SampleData.Categories), "spec_count": len(installation.SampleData.Specs),
+			"spec_set_count": len(installation.SampleData.SpecSets), "spec_value_count": len(installation.SampleData.SpecValues),
+			"product_count": len(installation.SampleData.Products),
 		}
 	}
 	detailsJSON, err := json.Marshal(details)

@@ -335,19 +335,55 @@ func (s *InstallerServer) complete(w http.ResponseWriter, r *http.Request) {
 				SourceLocale: source.SourceLocale, Slug: source.Slug, Status: catalog.EntryStatus(source.Status),
 			})
 		}
+		dictionaries := make([]catalog.DictionaryEntry, 0, len(item.Data.Dictionaries))
+		for _, source := range item.Data.Dictionaries {
+			dictionaries = append(dictionaries, catalog.DictionaryEntry{
+				ID: source.ID, Kind: catalog.DictionaryKind(source.Kind), Name: source.Name, Description: source.Description,
+				SourceLocale: source.SourceLocale, Slug: source.Slug, Status: catalog.EntryStatus(source.Status),
+			})
+		}
+		specs := make([]catalog.SpecDefinition, 0, len(item.Data.Specs))
+		for _, source := range item.Data.Specs {
+			specs = append(specs, catalog.SpecDefinition{
+				ID: source.ID, Name: source.Name, PreferredUnit: source.PreferredUnit, Filterable: source.Filterable,
+				SemanticVer: source.SemanticVersion, Status: catalog.EntryStatus(source.Status),
+			})
+		}
+		specSets := make([]catalog.SpecSet, 0, len(item.Data.SpecSets))
+		for _, source := range item.Data.SpecSets {
+			specSets = append(specSets, catalog.SpecSet{
+				ID: source.ID, Name: source.Name, Status: catalog.EntryStatus(source.Status), SpecIDs: append([]string(nil), source.SpecIDs...),
+			})
+		}
+		categorySpecSets := make([]sqlite.InstallationCategorySpecSet, 0, len(item.Data.CategorySpecSets))
+		for _, source := range item.Data.CategorySpecSets {
+			categorySpecSets = append(categorySpecSets, sqlite.InstallationCategorySpecSet{
+				CategoryID: source.CategoryID, SpecSetID: source.SpecSetID,
+			})
+		}
 		products := make([]catalog.Product, 0, len(item.Data.Products))
+		var specValues []catalog.SpecValue
 		for _, source := range item.Data.Products {
 			products = append(products, catalog.Product{
 				ID: source.ID, PartNumber: source.PartNumber, Name: source.Name,
-				Manufacturer: source.Manufacturer, CategoryID: source.CategoryID, PackageFormFactor: source.PackageFormFactor,
-				Description: source.Description, Features: source.Features,
+				SourceLocale: source.SourceLocale, ManufacturerID: source.ManufacturerID, Manufacturer: source.Manufacturer,
+				BrandID: source.BrandID, Brand: source.Brand, LifecycleID: source.LifecycleID,
+				ApplicationIDs: append([]string(nil), source.ApplicationIDs...), CategoryID: source.CategoryID,
+				PackageFormFactor: source.PackageFormFactor,
+				Description:       source.Description, Features: source.Features,
 				Specification: source.Specification, DocumentURL: source.DocumentURL,
 				Status: catalog.Status(source.Status), RecordState: catalog.RecordState(source.RecordState),
 			})
+			for _, value := range source.SpecValues {
+				specValues = append(specValues, catalog.SpecValue{
+					ProductID: source.ID, SpecID: value.SpecID, RawValue: value.RawValue, SourceLocale: value.SourceLocale,
+				})
+			}
 		}
 		sampleInstallation = &sqlite.InstallationSampleData{
 			Version: item.Data.ReleaseVersion, DatasetVersion: item.Data.DatasetVersion,
-			SourceURL: item.SourceURL, SHA256: item.SHA256, Categories: categories, Products: products,
+			SourceURL: item.SourceURL, SHA256: item.SHA256, Dictionaries: dictionaries, Categories: categories,
+			Specs: specs, SpecSets: specSets, CategorySpecSets: categorySpecSets, Products: products, SpecValues: specValues,
 		}
 	}
 	_, err = s.store.CompleteInstallation(r.Context(), sqlite.Installation{
