@@ -11,6 +11,28 @@ import (
 	_ "modernc.org/sqlite"
 )
 
+func TestDatabaseFileURLUsesValidWindowsFileURI(t *testing.T) {
+	tests := []struct {
+		name string
+		path string
+		want string
+	}{
+		{name: "drive path", path: "C:/Users/Alex Chang/Desktop/prods/data/prods.db", want: "file:///C:/Users/Alex%20Chang/Desktop/prods/data/prods.db"},
+		{name: "UNC path", path: "//fileserver/catalog/prods.db", want: "file://fileserver/catalog/prods.db"},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			location, err := databaseFileURL(test.path, "windows")
+			if err != nil {
+				t.Fatal(err)
+			}
+			if got := location.String(); got != test.want {
+				t.Fatalf("Windows SQLite URI = %q, want %q", got, test.want)
+			}
+		})
+	}
+}
+
 func TestInspectNeverCreatesMissingDatabase(t *testing.T) {
 	path := filepath.Join(t.TempDir(), "missing.db")
 	inspection := Inspect(path)

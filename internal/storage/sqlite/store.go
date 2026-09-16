@@ -11,6 +11,7 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"sync"
 	"time"
@@ -490,7 +491,10 @@ func openDatabase(path, mode string) (*sql.DB, error) {
 	if err != nil {
 		return nil, err
 	}
-	location := &url.URL{Scheme: "file", Path: filepath.ToSlash(abs)}
+	location, err := databaseFileURL(filepath.ToSlash(abs), runtime.GOOS)
+	if err != nil {
+		return nil, err
+	}
 	query := location.Query()
 	query.Set("mode", mode)
 	query.Add("_pragma", "foreign_keys(1)")
@@ -515,6 +519,34 @@ func openDatabase(path, mode string) (*sql.DB, error) {
 		return nil, err
 	}
 	return db, nil
+}
+
+func databaseFileURL(absolutePath, goos string) (*url.URL, error) {
+	if absolutePath == "" {
+		return nil, errors.New("sqlite path is empty")
+	}
+	location := &url.URL{Scheme: "file"}
+	if goos != "windows" {
+		if !strings.HasPrefix(absolutePath, "/") {
+			return nil, errors.New("sqlite path is not absolute")
+		}
+		location.Path = absolutePath
+		return location, nil
+	}
+	if strings.HasPrefix(absolutePath, "//") {
+		parts := strings.SplitN(strings.TrimPrefix(absolutePath, "//"), "/", 2)
+		if len(parts) != 2 || parts[0] == "" || parts[1] == "" {
+			return nil, errors.New("sqlite UNC path is invalid")
+		}
+		location.Host = parts[0]
+		location.Path = "/" + parts[1]
+		return location, nil
+	}
+	if len(absolutePath) < 3 || absolutePath[1] != ':' || absolutePath[2] != '/' {
+		return nil, errors.New("sqlite Windows path is not absolute")
+	}
+	location.Path = "/" + absolutePath
+	return location, nil
 }
 
 func (s *Store) Close() error { return s.db.Close() }
