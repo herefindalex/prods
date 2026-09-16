@@ -215,6 +215,55 @@ func TestSpecRawManualNormalizationCategoryChangeAndMultipleDocuments(t *testing
 	}
 }
 
+func TestCategorySpecSetChangeQueuesProductsNotUnclaimableCategoryIntent(t *testing.T) {
+	ctx := context.Background()
+	store, owner := installedStore(t)
+	category, err := store.CreateCategory(ctx, owner.ID, catalog.Category{Name: "Reference category", Slug: "reference-category"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	firstSpec, err := store.CreateSpecDefinition(ctx, owner.ID, catalog.SpecDefinition{Name: "Input voltage"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	firstSet, err := store.CreateSpecSet(ctx, owner.ID, catalog.SpecSet{Name: "First set", SpecIDs: []string{firstSpec.ID}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := store.SetCategorySpecSet(ctx, owner.ID, category.ID, firstSet.ID, category.Revision); err != nil {
+		t.Fatal(err)
+	}
+	var categoryIntents int
+	if err := store.db.QueryRowContext(ctx, `SELECT COUNT(*) FROM publication_intents WHERE entity_type='category'`).Scan(&categoryIntents); err != nil {
+		t.Fatal(err)
+	}
+	if categoryIntents != 0 {
+		t.Fatalf("unclaimable category publication intents = %d", categoryIntents)
+	}
+	product, err := store.CreateProduct(ctx, owner.ID, catalog.Product{PartNumber: "SPEC-QUEUE-1", CategoryID: category.ID})
+	if err != nil {
+		t.Fatal(err)
+	}
+	secondSpec, err := store.CreateSpecDefinition(ctx, owner.ID, catalog.SpecDefinition{Name: "Output voltage"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	secondSet, err := store.CreateSpecSet(ctx, owner.ID, catalog.SpecSet{Name: "Second set", SpecIDs: []string{secondSpec.ID}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := store.SetCategorySpecSet(ctx, owner.ID, category.ID, secondSet.ID, category.Revision+1); err != nil {
+		t.Fatal(err)
+	}
+	var productIntents int
+	if err := store.db.QueryRowContext(ctx, `SELECT COUNT(*) FROM publication_intents WHERE entity_type='product' AND entity_id=? AND cause='category.spec_set_changed'`, product.ID).Scan(&productIntents); err != nil {
+		t.Fatal(err)
+	}
+	if productIntents != 1 {
+		t.Fatalf("category spec change product intents = %d, want 1", productIntents)
+	}
+}
+
 func TestTaxonomyUpdatePreviewsAndRequeuesAffectedProducts(t *testing.T) {
 	ctx := context.Background()
 	store, owner := installedStore(t)

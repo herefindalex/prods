@@ -235,6 +235,9 @@ type assetTarget struct {
 }
 
 type Engine struct {
+	processMu                  sync.Mutex
+	deferVisibility            atomic.Bool
+	deferredVisibilityDirty    atomic.Bool
 	repository                 Repository
 	root                       string
 	assetRoot                  string
@@ -352,6 +355,12 @@ func (e *Engine) worker(ctx context.Context) {
 }
 
 func (e *Engine) ProcessOne(ctx context.Context) (bool, error) {
+	e.processMu.Lock()
+	defer e.processMu.Unlock()
+	return e.processOne(ctx)
+}
+
+func (e *Engine) processOne(ctx context.Context) (bool, error) {
 	if e == nil || e.draining.Load() {
 		return false, nil
 	}
@@ -395,6 +404,50 @@ func (e *Engine) ProcessOne(ctx context.Context) (bool, error) {
 		return true, err
 	}
 	return true, nil
+}
+
+// ProcessBatch drains up to limit publication intents while keeping the
+// currently installed immutable public index in place. Each Product
+// activation remains an independent durable transaction, but newly activated
+// revisions are not admitted until one final index installation succeeds.
+// A zero limit drains all currently available work. Revocation does not use
+// this path and therefore retains its immediate request-admission guarantee.
+func (e *Engine) ProcessBatch(ctx context.Context, limit int) (processed int, err error) {
+	if limit < 0 {
+		return 0, errors.New("publication batch limit must not be negative")
+	}
+	if e == nil {
+		return 0, nil
+	}
+	e.processMu.Lock()
+	defer e.processMu.Unlock()
+	if e.draining.Load() {
+		return 0, nil
+	}
+	e.deferVisibility.Store(true)
+	defer func() {
+		e.deferVisibility.Store(false)
+		if !e.deferredVisibilityDirty.Swap(false) {
+			return
+		}
+		e.LockVisibility()
+		installErr := e.InstallVisibility(ctx)
+		e.UnlockVisibility()
+		if err == nil && installErr != nil {
+			err = installErr
+		}
+	}()
+	for limit == 0 || processed < limit {
+		didProcess, processErr := e.processOne(ctx)
+		if processErr != nil {
+			return processed, processErr
+		}
+		if !didProcess {
+			return processed, nil
+		}
+		processed++
+	}
+	return processed, nil
 }
 
 func (e *Engine) Revoke(ctx context.Context, request RevokeRequest) error {
@@ -487,7 +540,13 @@ func (e *Engine) Reconcile(ctx context.Context) error {
 
 func (e *Engine) LockVisibility() { e.gate.Lock() }
 
-func (e *Engine) InstallVisibility(ctx context.Context) error { return e.installLocked(ctx) }
+func (e *Engine) InstallVisibility(ctx context.Context) error {
+	if e.deferVisibility.Load() {
+		e.deferredVisibilityDirty.Store(true)
+		return nil
+	}
+	return e.installLocked(ctx)
+}
 
 func (e *Engine) UnlockVisibility() { e.gate.Unlock() }
 

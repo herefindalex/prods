@@ -981,10 +981,11 @@ func (s *Store) SearchPublications(ctx context.Context, foldedQuery, projectionV
 		ORDER BY CASE
 			WHEN sp.part_number_folded=? THEN 0
 			WHEN sp.part_number_folded LIKE ? ESCAPE '\' THEN 1
-			WHEN sp.product_name_folded LIKE ? ESCAPE '\' OR sp.manufacturer_folded LIKE ? ESCAPE '\' OR sp.brand_folded LIKE ? ESCAPE '\' THEN 2
-			ELSE 3 END,
-			a.product_id
-		LIMIT 2000`, projectionVersion, contains, foldedQuery, prefix, prefix, prefix, prefix)
+			WHEN sp.part_number_folded LIKE ? ESCAPE '\' THEN 2
+			WHEN sp.product_name_folded LIKE ? ESCAPE '\' OR sp.manufacturer_folded LIKE ? ESCAPE '\' OR sp.brand_folded LIKE ? ESCAPE '\' THEN 3
+			ELSE 4 END,
+			sp.part_number_folded,a.product_id
+		LIMIT 2000`, projectionVersion, contains, foldedQuery, prefix, contains, contains, contains, contains)
 	if err != nil {
 		return nil, err
 	}

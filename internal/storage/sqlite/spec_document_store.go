@@ -218,7 +218,8 @@ func (s *Store) SetCategorySpecSet(ctx context.Context, actorID, categoryID, spe
 		}); err != nil {
 			return err
 		}
-		return appendPublicChange(ctx, tx, "category", categoryID, expectedCategoryRevision+1, "category.spec_set_changed", now)
+		_, err := requeueAffectedProductsTx(ctx, tx, actorID, "category", categoryID, "category.spec_set_changed", now)
+		return err
 	})
 }
 

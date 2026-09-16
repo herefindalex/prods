@@ -95,7 +95,7 @@ func TestMaintenanceAPIPreservesCategoryAndDisabledReferenceContracts(t *testing
 		t.Fatalf("assign spec set status=%d body=%s", assignment.StatusCode, body)
 	}
 	valueResponse := postAdminJSON(t, client, server.URL+"/admin/api/products/"+product.ID+"/spec-values", csrf,
-		`{"expected_revision":1,"spec_id":"spec_voltage","raw_value":"3.0–3.6","source_locale":"en-US"}`)
+		`{"expected_revision":2,"spec_id":"spec_voltage","raw_value":"3.0–3.6","source_locale":"en-US"}`)
 	if valueResponse.StatusCode != http.StatusOK {
 		t.Fatalf("save spec value status=%d body=%s", valueResponse.StatusCode, responseBody(t, valueResponse))
 	}
@@ -112,7 +112,7 @@ func TestMaintenanceAPIPreservesCategoryAndDisabledReferenceContracts(t *testing
 	}
 	_ = responseBody(t, documentType)
 	documentResponse := postAdminJSON(t, client, server.URL+"/admin/api/products/"+product.ID+"/documents", csrf,
-		`{"expected_revision":2,"document":{"id":"doc_acme_1","label":"Datasheet","document_type_id":"dic_datasheet","external_url":"https://example.test/acme-1.pdf","language":"en-US","sort_order":1}}`)
+		`{"expected_revision":3,"document":{"id":"doc_acme_1","label":"Datasheet","document_type_id":"dic_datasheet","external_url":"https://example.test/acme-1.pdf","language":"en-US","sort_order":1}}`)
 	if documentResponse.StatusCode != http.StatusCreated {
 		t.Fatalf("add document status=%d body=%s", documentResponse.StatusCode, responseBody(t, documentResponse))
 	}
