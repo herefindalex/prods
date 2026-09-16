@@ -1,19 +1,13 @@
 package distribution
 
 import (
-	"bufio"
-	"bytes"
 	"context"
-	"crypto/sha256"
-	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
 	"net/http"
 	"net/url"
-	"os"
-	"path/filepath"
 	"runtime"
 	"strings"
 	"sync"
@@ -29,7 +23,6 @@ const (
 	SampleAssetName      = "prods-sample-data-v1.json"
 	SampleChecksumName   = SampleAssetName + ".sha256"
 	maxSampleBytes       = 16 << 20
-	maxChecksumBytes     = 1024
 )
 
 var ErrUnavailable = errors.New("distribution service is unavailable")
@@ -117,13 +110,6 @@ type SampleData struct {
 	Products         []Product         `json:"products"`
 }
 
-type DownloadedSample struct {
-	Data      SampleData
-	SourceURL string
-	SHA256    string
-	Path      string
-}
-
 type Asset struct {
 	Name               string `json:"name"`
 	BrowserDownloadURL string `json:"browser_download_url"`
@@ -174,22 +160,6 @@ func (c *Client) LatestRelease(ctx context.Context) (Release, error) {
 	return c.release(ctx, "latest", strings.TrimRight(c.apiBase(), "/")+"/repos/herefindalex/prods/releases/latest")
 }
 
-func (c *Client) ReleaseForVersion(ctx context.Context, version string) (Release, error) {
-	version = strings.TrimSpace(version)
-	if version == "" || version == "dev" || strings.ContainsAny(version, "\r\n") {
-		return Release{}, fmt.Errorf("%w: this build has no release version", ErrUnavailable)
-	}
-	endpoint := strings.TrimRight(c.apiBase(), "/") + "/repos/herefindalex/prods/releases/tags/" + url.PathEscape(version)
-	release, err := c.release(ctx, "tag:"+version, endpoint)
-	if err != nil {
-		return Release{}, err
-	}
-	if release.TagName != version {
-		return Release{}, fmt.Errorf("%w: release tag does not match this build", ErrUnavailable)
-	}
-	return release, nil
-}
-
 func (c *Client) release(ctx context.Context, cacheKey, endpoint string) (Release, error) {
 	c.mu.Lock()
 	if cached, ok := c.cache[cacheKey]; ok && time.Since(cached.at) < c.cacheTTL() {
@@ -232,72 +202,6 @@ func (c *Client) release(ctx context.Context, cacheKey, endpoint string) (Releas
 	c.cache[cacheKey] = cachedRelease{release: release, at: time.Now()}
 	c.mu.Unlock()
 	return release, nil
-}
-
-func (c *Client) SampleAvailable(ctx context.Context, version string) bool {
-	release, err := c.ReleaseForVersion(ctx, version)
-	if err != nil || release.Prerelease {
-		return false
-	}
-	_, dataOK := assetNamed(release, SampleAssetName)
-	_, checksumOK := assetNamed(release, SampleChecksumName)
-	return dataOK && checksumOK
-}
-
-func (c *Client) DownloadSampleData(ctx context.Context, dataDir, version string) (DownloadedSample, error) {
-	release, err := c.ReleaseForVersion(ctx, version)
-	if err != nil {
-		return DownloadedSample{}, err
-	}
-	if release.Prerelease {
-		return DownloadedSample{}, fmt.Errorf("%w: matching release is a prerelease", ErrUnavailable)
-	}
-	dataAsset, ok := assetNamed(release, SampleAssetName)
-	if !ok {
-		return DownloadedSample{}, fmt.Errorf("%w: release has no %s", ErrUnavailable, SampleAssetName)
-	}
-	checksumAsset, ok := assetNamed(release, SampleChecksumName)
-	if !ok {
-		return DownloadedSample{}, fmt.Errorf("%w: release has no %s", ErrUnavailable, SampleChecksumName)
-	}
-	checksumBody, err := c.download(ctx, checksumAsset.BrowserDownloadURL, maxChecksumBytes)
-	if err != nil {
-		return DownloadedSample{}, fmt.Errorf("download sample checksum: %w", err)
-	}
-	want, err := parseChecksum(checksumBody)
-	if err != nil {
-		return DownloadedSample{}, err
-	}
-	body, err := c.download(ctx, dataAsset.BrowserDownloadURL, maxSampleBytes)
-	if err != nil {
-		return DownloadedSample{}, fmt.Errorf("download sample data: %w", err)
-	}
-	digest := sha256.Sum256(body)
-	got := hex.EncodeToString(digest[:])
-	if got != want {
-		return DownloadedSample{}, errors.New("sample data checksum does not match the signed release manifest")
-	}
-	var sample SampleData
-	decoder := json.NewDecoder(bytes.NewReader(body))
-	decoder.DisallowUnknownFields()
-	if err := decoder.Decode(&sample); err != nil {
-		return DownloadedSample{}, fmt.Errorf("decode sample data: %w", err)
-	}
-	if decoder.Decode(&struct{}{}) != io.EOF {
-		return DownloadedSample{}, errors.New("sample data format is invalid")
-	}
-	if err := validateSampleData(sample, strings.TrimSpace(version)); err != nil {
-		return DownloadedSample{}, err
-	}
-	destinationDir := filepath.Join(dataDir, "sample-data")
-	if err := os.MkdirAll(destinationDir, 0o700); err != nil {
-		return DownloadedSample{}, fmt.Errorf("create sample data directory: %w", err)
-	}
-	destination := filepath.Join(destinationDir, SampleAssetName)
-	if err := atomicWrite(destination, body); err != nil {
-		return DownloadedSample{}, err
-	}
-	return DownloadedSample{Data: sample, SourceURL: dataAsset.BrowserDownloadURL, SHA256: got, Path: destination}, nil
 }
 
 func validateSampleData(sample SampleData, version string) error {
@@ -551,74 +455,6 @@ func assetNamed(release Release, name string) (Asset, bool) {
 		}
 	}
 	return Asset{}, false
-}
-
-func parseChecksum(body []byte) (string, error) {
-	scanner := bufio.NewScanner(bytes.NewReader(body))
-	if !scanner.Scan() {
-		return "", errors.New("sample checksum is empty")
-	}
-	fields := strings.Fields(scanner.Text())
-	if len(fields) == 0 || len(fields[0]) != sha256.Size*2 {
-		return "", errors.New("sample checksum is invalid")
-	}
-	if _, err := hex.DecodeString(fields[0]); err != nil {
-		return "", errors.New("sample checksum is invalid")
-	}
-	return strings.ToLower(fields[0]), nil
-}
-
-func (c *Client) download(ctx context.Context, rawURL string, limit int64) ([]byte, error) {
-	if !c.validAssetURL(rawURL) {
-		return nil, errors.New("release asset URL is not trusted")
-	}
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, rawURL, nil)
-	if err != nil {
-		return nil, err
-	}
-	req.Header.Set("User-Agent", "Prods-sample-installer")
-	resp, err := c.httpClient().Do(req)
-	if err != nil {
-		return nil, err
-	}
-	defer resp.Body.Close()
-	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("HTTP %d", resp.StatusCode)
-	}
-	reader := http.MaxBytesReader(nil, resp.Body, limit)
-	body, err := io.ReadAll(reader)
-	if err != nil {
-		return nil, fmt.Errorf("asset exceeds %d bytes or could not be read: %w", limit, err)
-	}
-	return body, nil
-}
-
-func atomicWrite(destination string, body []byte) error {
-	temp, err := os.CreateTemp(filepath.Dir(destination), ".sample-data-*")
-	if err != nil {
-		return fmt.Errorf("create sample data file: %w", err)
-	}
-	name := temp.Name()
-	defer os.Remove(name)
-	if err := temp.Chmod(0o600); err != nil {
-		temp.Close()
-		return err
-	}
-	if _, err := temp.Write(body); err != nil {
-		temp.Close()
-		return err
-	}
-	if err := temp.Sync(); err != nil {
-		temp.Close()
-		return err
-	}
-	if err := temp.Close(); err != nil {
-		return err
-	}
-	if err := os.Rename(name, destination); err != nil {
-		return fmt.Errorf("publish sample data file: %w", err)
-	}
-	return nil
 }
 
 func (c *Client) cacheFailure(cacheKey string, err error) (Release, error) {

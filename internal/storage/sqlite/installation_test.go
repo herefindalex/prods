@@ -28,7 +28,7 @@ func TestInstallationSampleDataCommitsWithOwnerAndReadyMarker(t *testing.T) {
 		OwnerEmail: "owner@example.test", PasswordHash: passwordHash,
 		DefaultLocale: "en-US", SupportedLocales: []string{"en-US"}, TimeZone: "UTC",
 		SampleData: &InstallationSampleData{
-			Version: "v1.2.3", DatasetVersion: "a01-r1", SourceURL: "https://github.com/herefindalex/prods/releases/download/v1.2.3/prods-sample-data-v1.json",
+		Version: "v1.2.3", DatasetVersion: "a01-r1", SourceURL: "embedded:sample-data/prods-sample-data-v1.json",
 			SHA256:     "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
 			Categories: []catalog.Category{{ID: "cat_sample", ParentID: "cat_root", Name: "Sample", Slug: "sample", SourceLocale: "en-US"}},
 			Products:   []catalog.Product{{ID: "sample-1", PartNumber: "SAMPLE-1", Name: "Sample product", CategoryID: "cat_sample", Manufacturer: "Example", Status: catalog.Published}},
@@ -75,7 +75,7 @@ func TestInstallationSampleDataPreservesArchivedProducts(t *testing.T) {
 		SupportedLocales: []string{"en-US"}, TimeZone: "UTC",
 		SampleData: &InstallationSampleData{
 			Version: "v1.2.3", DatasetVersion: "a01-r1",
-			SourceURL: "https://github.com/herefindalex/prods/releases/download/v1.2.3/prods-sample-data-v1.json",
+		SourceURL: "embedded:sample-data/prods-sample-data-v1.json",
 			SHA256:    strings.Repeat("a", 64),
 			Products: []catalog.Product{
 				{ID: "current", PartNumber: "SAME", Manufacturer: "Example", Status: catalog.Hidden, RecordState: catalog.RecordCurrent},
@@ -109,7 +109,7 @@ func TestInvalidSampleDataRollsBackWholeInstallation(t *testing.T) {
 		OwnerEmail: "owner@example.test", PasswordHash: passwordHash,
 		DefaultLocale: "en-US", SupportedLocales: []string{"en-US"}, TimeZone: "UTC",
 		SampleData: &InstallationSampleData{
-			Version: "v1.2.3", DatasetVersion: "a01-r1", SourceURL: "https://github.com/herefindalex/prods/releases/download/v1.2.3/prods-sample-data-v1.json",
+		Version: "v1.2.3", DatasetVersion: "a01-r1", SourceURL: "embedded:sample-data/prods-sample-data-v1.json",
 			SHA256: "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
 			Products: []catalog.Product{
 				{ID: "sample-1", PartNumber: "SAME", Manufacturer: "Example"},

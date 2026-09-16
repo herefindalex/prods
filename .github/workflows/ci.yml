@@ -76,6 +76,8 @@ jobs:
           cmp "$sample_dir/prods-sample-data-v1.json" sample-data/prods-sample-data-v1.json
           cmp "$sample_dir/prods-sample-data-v1.json.sha256" sample-data/prods-sample-data-v1.json.sha256
           cmp "$sample_dir/schema-v1.json" sample-data/schema-v1.json
+          gzip -n -9 -c "$sample_dir/prods-sample-data-v1.json" > "$sample_dir/prods-sample-data-v1.json.gz"
+          cmp "$sample_dir/prods-sample-data-v1.json.gz" internal/distribution/prods-sample-data-v1.json.gz
           python3 - "$sample_dir/prods-sample-data-v1.json" "$version" <<'PY'
           import json
           import sys

@@ -86,15 +86,9 @@ Use Up/Down, `PgUp`/`PgDn`, `Home`, and `End` to inspect logs. `Ctrl+C` begins g
 
 A new installation contains no Product test data unless the Owner explicitly selects sample data.
 
-The sample option is enabled only when the exact version embedded in the executable has all three assets on the matching GitHub Release tag:
+The release-bound sample payload is compressed and compiled into every Prods executable. The installer enables it only when its `release_version` exactly matches the binary's compiled version, then validates its schema, references, duplicate identities, and payload limits before committing the Owner, minimum site settings, sample records, audit entry, and Ready marker in one SQLite transaction. No network connection or runtime sample file is required.
 
-- `prods-sample-data-v1.json`
-- `prods-sample-data-v1.json.sha256`
-- `schema-v1.json`
-
-Prods never substitutes sample data from `latest`. It verifies the checksum, schema version, release version, and payload limits before committing the Owner, minimum site settings, sample records, audit entry, and Ready marker in one SQLite transaction. The downloaded payload is retained under `data/sample-data/`.
-
-If GitHub is offline, private, missing the tag, or missing either asset, the sample option is unavailable and an empty installation still works.
+The binary never substitutes data from another release. Development or incorrectly packaged builds whose embedded payload does not match remain available for an empty installation. The JSON, schema, and checksum published with a release are review artifacts for the exact bytes compiled into that release; they are not downloaded by the installer.
 
 ## Portable runtime and configuration
 

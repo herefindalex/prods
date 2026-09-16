@@ -33,7 +33,6 @@ type InstallerConfig struct {
 	DefaultLocale      string
 	DefaultTimeZone    string
 	ApplicationVersion string
-	DistributionClient *distribution.Client
 	OnComplete         func()
 }
 
@@ -175,12 +174,8 @@ func (s *InstallerServer) currentInstallerState(r *http.Request) installerState 
 }
 
 func (s *InstallerServer) sampleAvailable(ctx context.Context) bool {
-	if s.config.DistributionClient == nil {
-		return false
-	}
-	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
-	defer cancel()
-	return s.config.DistributionClient.SampleAvailable(ctx, s.config.ApplicationVersion)
+	_ = ctx
+	return distribution.EmbeddedSampleAvailable(s.config.ApplicationVersion)
 }
 
 func (s *InstallerServer) claim(w http.ResponseWriter, r *http.Request) {
@@ -314,20 +309,14 @@ func (s *InstallerServer) complete(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	useSampleData := r.FormValue("use_sample_data") == "true" || r.FormValue("use_sample_data") == "on" || r.FormValue("use_sample_data") == "1"
-	var downloaded *distribution.DownloadedSample
 	var sampleInstallation *sqlite.InstallationSampleData
 	if useSampleData {
-		if s.config.DistributionClient == nil {
+		item, loadErr := distribution.LoadEmbeddedSample(s.config.ApplicationVersion)
+		if loadErr != nil {
+			slog.Error("embedded sample data validation failed", "version", s.config.ApplicationVersion, "error", loadErr)
 			s.writeSampleUnavailable(w, r, page, csrf)
 			return
 		}
-		item, downloadErr := s.config.DistributionClient.DownloadSampleData(r.Context(), s.config.DataDir, s.config.ApplicationVersion)
-		if downloadErr != nil {
-			slog.Warn("sample data download failed", "version", s.config.ApplicationVersion, "error", downloadErr)
-			s.writeSampleUnavailable(w, r, page, csrf)
-			return
-		}
-		downloaded = &item
 		categories := make([]catalog.Category, 0, len(item.Data.Categories))
 		for _, source := range item.Data.Categories {
 			categories = append(categories, catalog.Category{
@@ -392,9 +381,6 @@ func (s *InstallerServer) complete(w http.ResponseWriter, r *http.Request) {
 		SampleData: sampleInstallation,
 	})
 	if err != nil {
-		if downloaded != nil {
-			_ = os.Remove(downloaded.Path)
-		}
 		if errors.Is(err, sqlite.ErrInstallationState) || errors.Is(err, sqlite.ErrOwnerAlreadyExists) {
 			if installerWantsJSON(r) {
 				writeInstallerJSON(w, http.StatusConflict, map[string]string{"error": "installation state changed; restart Prods and follow the reported mode"})

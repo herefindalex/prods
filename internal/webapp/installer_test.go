@@ -1,9 +1,7 @@
 package webapp
 
 import (
-	"crypto/sha256"
 	"encoding/json"
-	"fmt"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -22,35 +20,16 @@ import (
 	"prods/internal/storage/sqlite"
 )
 
-func TestInstallerDownloadsMatchingReleaseSampleData(t *testing.T) {
-	sampleBody := []byte(`{"schema_version":1,"release_version":"v1.2.3","dataset_version":"test-r1","seed":1,"source_statement":"synthetic","categories":[],"products":[{"id":"sample-1","part_number":"SAMPLE-1","name":"Sample","status":"hidden","record_state":"current"}]}`)
-	digest := sha256.Sum256(sampleBody)
-	var releaseServer *httptest.Server
-	releaseServer = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		switch r.URL.Path {
-		case "/repos/herefindalex/prods/releases/tags/v1.2.3":
-			fmt.Fprintf(w, `{"tag_name":"v1.2.3","html_url":%q,"assets":[{"name":%q,"browser_download_url":%q},{"name":%q,"browser_download_url":%q}]}`,
-				releaseServer.URL+"/herefindalex/prods/releases/tag/v1.2.3", distribution.SampleAssetName, releaseServer.URL+"/sample", distribution.SampleChecksumName, releaseServer.URL+"/checksum")
-		case "/sample":
-			_, _ = w.Write(sampleBody)
-		case "/checksum":
-			fmt.Fprintf(w, "%x  %s\n", digest, distribution.SampleAssetName)
-		default:
-			http.NotFound(w, r)
-		}
-	}))
-	defer releaseServer.Close()
-
+func TestInstallerUsesEmbeddedMatchingVersionSampleData(t *testing.T) {
 	root := t.TempDir()
 	store, err := sqlite.Create(filepath.Join(root, "prods.db"))
 	if err != nil {
 		t.Fatal(err)
 	}
 	defer store.Close()
-	client := &distribution.Client{HTTPClient: releaseServer.Client(), APIBase: releaseServer.URL, AllowTestHTTP: true}
 	installer, _, err := NewInstaller(store, InstallerConfig{
 		BootstrapToken: "bootstrap", DataDir: filepath.Join(root, "data"), BackupDir: filepath.Join(root, "backups"),
-		DefaultLocale: "en-US", DefaultTimeZone: "UTC", ApplicationVersion: "v1.2.3", DistributionClient: client,
+		DefaultLocale: "en-US", DefaultTimeZone: "UTC", ApplicationVersion: "v0.6.6",
 	})
 	if err != nil {
 		t.Fatal(err)
@@ -61,7 +40,7 @@ func TestInstallerDownloadsMatchingReleaseSampleData(t *testing.T) {
 	if err := json.Unmarshal(claim.Body.Bytes(), &state); err != nil {
 		t.Fatal(err)
 	}
-	if !state.SampleDataAvailable || state.ApplicationVersion != "v1.2.3" {
+	if !state.SampleDataAvailable || state.ApplicationVersion != "v0.6.6" {
 		t.Fatalf("installer sample state = %+v", state)
 	}
 	complete := formRequestWithCookies(installer, http.MethodPost, "/install/complete", url.Values{
@@ -73,27 +52,24 @@ func TestInstallerDownloadsMatchingReleaseSampleData(t *testing.T) {
 		t.Fatalf("sample completion status=%d body=%s", complete.Code, complete.Body.String())
 	}
 	count, err := store.ProductCount(t.Context())
-	if err != nil || count != 1 {
+	if err != nil || count != 1200 {
 		t.Fatalf("sample product count=%d err=%v", count, err)
 	}
-	if _, err := os.Stat(filepath.Join(root, "data", "sample-data", distribution.SampleAssetName)); err != nil {
-		t.Fatal(err)
+	if _, err := os.Stat(filepath.Join(root, "data", "sample-data", distribution.SampleAssetName)); !os.IsNotExist(err) {
+		t.Fatalf("embedded sample unexpectedly wrote a runtime payload: %v", err)
 	}
 }
 
-func TestInstallerUnpublishedRepositoryStillCompletesBlankInstallation(t *testing.T) {
-	releaseServer := httptest.NewServer(http.NotFoundHandler())
-	defer releaseServer.Close()
+func TestInstallerEmbeddedSampleVersionMismatchStillCompletesBlankInstallation(t *testing.T) {
 	root := t.TempDir()
 	store, err := sqlite.Create(filepath.Join(root, "prods.db"))
 	if err != nil {
 		t.Fatal(err)
 	}
 	defer store.Close()
-	client := &distribution.Client{HTTPClient: releaseServer.Client(), APIBase: releaseServer.URL, AllowTestHTTP: true}
 	installer, _, err := NewInstaller(store, InstallerConfig{
 		BootstrapToken: "bootstrap", DataDir: filepath.Join(root, "data"), BackupDir: filepath.Join(root, "backups"),
-		DefaultLocale: "en-US", DefaultTimeZone: "UTC", ApplicationVersion: "v1.2.3", DistributionClient: client,
+		DefaultLocale: "en-US", DefaultTimeZone: "UTC", ApplicationVersion: "v1.2.3",
 	})
 	if err != nil {
 		t.Fatal(err)
@@ -120,35 +96,12 @@ func TestInstallerUnpublishedRepositoryStillCompletesBlankInstallation(t *testin
 	}
 }
 
-func TestInstallerCommitsCompleteGeneratedSampleData(t *testing.T) {
-	const version = "v1.2.3"
+func TestInstallerCommitsCompleteEmbeddedSampleData(t *testing.T) {
+	const version = "v0.6.6"
 	sample, err := sampledata.Generate(version)
 	if err != nil {
 		t.Fatal(err)
 	}
-	sampleBody, err := json.Marshal(sample)
-	if err != nil {
-		t.Fatal(err)
-	}
-	digest := sha256.Sum256(sampleBody)
-	var releaseServer *httptest.Server
-	releaseServer = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		switch r.URL.Path {
-		case "/repos/herefindalex/prods/releases/tags/" + version:
-			fmt.Fprintf(w, `{"tag_name":%q,"html_url":%q,"assets":[{"name":%q,"browser_download_url":%q},{"name":%q,"browser_download_url":%q}]}`,
-				version, releaseServer.URL+"/herefindalex/prods/releases/tag/"+version,
-				distribution.SampleAssetName, releaseServer.URL+"/sample",
-				distribution.SampleChecksumName, releaseServer.URL+"/checksum")
-		case "/sample":
-			_, _ = w.Write(sampleBody)
-		case "/checksum":
-			fmt.Fprintf(w, "%x  %s\n", digest, distribution.SampleAssetName)
-		default:
-			http.NotFound(w, r)
-		}
-	}))
-	defer releaseServer.Close()
-
 	root := t.TempDir()
 	store, err := sqlite.Create(filepath.Join(root, "prods.db"))
 	if err != nil {
@@ -158,7 +111,6 @@ func TestInstallerCommitsCompleteGeneratedSampleData(t *testing.T) {
 	installer, _, err := NewInstaller(store, InstallerConfig{
 		BootstrapToken: "bootstrap", DataDir: filepath.Join(root, "data"), BackupDir: filepath.Join(root, "backups"),
 		DefaultLocale: "en-US", DefaultTimeZone: "UTC", ApplicationVersion: version,
-		DistributionClient: &distribution.Client{HTTPClient: releaseServer.Client(), APIBase: releaseServer.URL, AllowTestHTTP: true},
 	})
 	if err != nil {
 		t.Fatal(err)

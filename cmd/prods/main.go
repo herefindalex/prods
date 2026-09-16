@@ -682,7 +682,7 @@ func runInstaller(ctx context.Context, store *sqlite.Store, listener net.Listene
 	completed := make(chan struct{}, 1)
 	app, bootstrapToken, err := webapp.NewInstaller(store, webapp.InstallerConfig{
 		DataDir: options.DataDir, BackupDir: options.BackupDir, DefaultTimeZone: time.Local.String(),
-		ApplicationVersion: applicationVersion, DistributionClient: distribution.NewClient(nil),
+		ApplicationVersion: applicationVersion,
 		OnComplete: func() {
 			select {
 			case completed <- struct{}{}:

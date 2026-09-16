@@ -70,6 +70,12 @@ for sample_file in prods-sample-data-v1.json prods-sample-data-v1.json.sha256 sc
 		exit 1
 	fi
 done
+gzip -n -9 -c "$staging/prods-sample-data-v1.json" > "$staging/prods-sample-data-v1.json.gz"
+if ! cmp -s "$staging/prods-sample-data-v1.json.gz" "$repo_root/internal/distribution/prods-sample-data-v1.json.gz"; then
+	echo "embedded sample gzip differs from the release-bound payload" >&2
+	exit 1
+fi
+rm "$staging/prods-sample-data-v1.json.gz"
 
 ldflags="-s -w -X main.applicationVersion=$version -X main.sourceRevision=$source_revision"
 CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -trimpath -ldflags "$ldflags" -o "$staging/prods-linux-amd64" ./cmd/prods

@@ -86,15 +86,9 @@ Intel macOS 使用 `prods-darwin-amd64`。**目前兩個 macOS 執行檔都只�
 
 新安裝預設沒有任何產品測試資料，只有 Owner 明確選擇 sample data 時才會匯入。
 
-只有執行檔內嵌的精確版本，在相同 GitHub Release tag 同時提供下列三個資產時，sample data 選項才會啟用：
+每個 Prods 執行檔都會內建經壓縮、綁定發行版本的 sample payload。只有 payload 的 `release_version` 與 binary 編譯版本完全相同時，安裝器才會啟用這個選項；匯入前會驗證 schema、參照關係、重複 identity 與 payload 限制，再把 Owner、最小站點設定、sample records、audit entry 與 Ready marker 放在同一個 SQLite transaction 中提交。整個流程不需要網路，也不會在 runtime 另外保存 sample 檔案。
 
-- `prods-sample-data-v1.json`
-- `prods-sample-data-v1.json.sha256`
-- `schema-v1.json`
-
-Prods 絕不拿 `latest` 的資料替代。系統會驗證 checksum、schema version、release version 與 payload 限制，再把 Owner、最小站點設定、sample records、audit entry 與 Ready marker 放在同一個 SQLite transaction 中提交。下載內容保留於 `data/sample-data/`。
-
-如果 GitHub 離線、repo 為 private、缺少 tag 或任一資產，sample 選項會顯示不可用，但空白安裝仍可正常完成。
+Binary 絕不改用其他 release 的資料。開發版或封裝錯誤而造成內建 payload 版本不符時，仍可完成空白安裝。Release 附帶的 JSON、schema 與 checksum 是供人審閱內建資料的發行證據，安裝器不會下載這些檔案。
 
 ## 可攜式執行環境與設定
 

@@ -11,7 +11,7 @@ import (
 )
 
 func main() {
-	releaseVersion := flag.String("release-version", "", "exact GitHub release tag embedded in this sample")
+	releaseVersion := flag.String("release-version", "", "exact Prods release version embedded in this sample")
 	output := flag.String("output", "", "new JSON output path")
 	flag.Parse()
 	if strings.TrimSpace(*releaseVersion) == "" || strings.TrimSpace(*output) == "" {
