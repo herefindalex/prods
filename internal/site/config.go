@@ -13,11 +13,15 @@ import (
 const (
 	MaxNavigationItems = 200
 	MaxCustomCSSBytes  = 64 << 10
+	MaxListingProfiles = 500
+	MaxListingColumns  = 16
+	MaxMobileKeySpecs  = 5
 )
 
 var (
-	colorPattern = regexp.MustCompile(`^#[0-9A-Fa-f]{6}$`)
-	fontPattern  = regexp.MustCompile(`^[A-Za-z0-9 ,.'"_-]{1,160}$`)
+	colorPattern      = regexp.MustCompile(`^#[0-9A-Fa-f]{6}$`)
+	fontPattern       = regexp.MustCompile(`^[A-Za-z0-9 ,.'"_-]{1,160}$`)
+	specColumnPattern = regexp.MustCompile(`^spec:[A-Za-z0-9_-]{1,128}$`)
 )
 
 type ContactLink struct {
@@ -64,11 +68,19 @@ type SEO struct {
 	DefaultDescription string `json:"default_description,omitempty"`
 }
 
+type CategoryListingProfile struct {
+	VisibleColumns       []string `json:"visible_columns"`
+	DefaultSort          string   `json:"default_sort,omitempty"`
+	DefaultSortDirection string   `json:"default_sort_direction,omitempty"`
+	MobileKeySpecs       []string `json:"mobile_key_specs,omitempty"`
+}
+
 type Configuration struct {
-	Organization Organization     `json:"organization"`
-	Navigation   []NavigationItem `json:"navigation,omitempty"`
-	Theme        Theme            `json:"theme"`
-	SEO          SEO              `json:"seo"`
+	CategoryListingProfiles map[string]CategoryListingProfile `json:"category_listing_profiles,omitempty"`
+	Organization            Organization                      `json:"organization"`
+	Navigation              []NavigationItem                  `json:"navigation,omitempty"`
+	Theme                   Theme                             `json:"theme"`
+	SEO                     SEO                               `json:"seo"`
 }
 
 type State struct {
@@ -206,7 +218,87 @@ func (configuration *Configuration) Prepare() error {
 	if len(configuration.SEO.DefaultTitle) > 200 || len(configuration.SEO.DefaultDescription) > 500 {
 		return errors.New("SEO title or description is too long")
 	}
+	if err := prepareListingProfiles(configuration.CategoryListingProfiles); err != nil {
+		return err
+	}
 	return nil
+}
+
+func prepareListingProfiles(profiles map[string]CategoryListingProfile) error {
+	if len(profiles) > MaxListingProfiles {
+		return fmt.Errorf("at most %d category listing profiles allowed", MaxListingProfiles)
+	}
+	for categoryID, profile := range profiles {
+		if strings.TrimSpace(categoryID) == "" || strings.TrimSpace(categoryID) != categoryID || len(profile.VisibleColumns) == 0 || len(profile.VisibleColumns) > MaxListingColumns {
+			return errors.New("category listing profile requires a category and visible columns")
+		}
+		seen := make(map[string]struct{}, len(profile.VisibleColumns))
+		partNumberVisible := false
+		for index := range profile.VisibleColumns {
+			key := strings.TrimSpace(profile.VisibleColumns[index])
+			if !validListingColumn(key) {
+				return fmt.Errorf("invalid listing column %q", key)
+			}
+			if _, duplicate := seen[key]; duplicate {
+				return fmt.Errorf("duplicate listing column %q", key)
+			}
+			seen[key] = struct{}{}
+			profile.VisibleColumns[index] = key
+			partNumberVisible = partNumberVisible || key == "part_number"
+		}
+		if !partNumberVisible {
+			return errors.New("category listing profile must keep part_number visible")
+		}
+		profile.DefaultSort = strings.TrimSpace(profile.DefaultSort)
+		profile.DefaultSortDirection = strings.ToLower(strings.TrimSpace(profile.DefaultSortDirection))
+		if profile.DefaultSort == "" {
+			profile.DefaultSort = "part_number"
+		}
+		if profile.DefaultSortDirection == "" {
+			profile.DefaultSortDirection = "asc"
+		}
+		if !sortableListingColumn(profile.DefaultSort) || (profile.DefaultSortDirection != "asc" && profile.DefaultSortDirection != "desc") {
+			return errors.New("category listing profile has unsupported default sort")
+		}
+		if len(profile.MobileKeySpecs) > MaxMobileKeySpecs {
+			return fmt.Errorf("at most %d mobile key specs allowed", MaxMobileKeySpecs)
+		}
+		mobileSeen := make(map[string]struct{}, len(profile.MobileKeySpecs))
+		for index := range profile.MobileKeySpecs {
+			key := strings.TrimSpace(profile.MobileKeySpecs[index])
+			if !specColumnPattern.MatchString(key) {
+				return fmt.Errorf("mobile key spec %q is not a spec column", key)
+			}
+			if _, visible := seen[key]; !visible {
+				return fmt.Errorf("mobile key spec %q is not visible", key)
+			}
+			if _, duplicate := mobileSeen[key]; duplicate {
+				return fmt.Errorf("duplicate mobile key spec %q", key)
+			}
+			mobileSeen[key] = struct{}{}
+			profile.MobileKeySpecs[index] = key
+		}
+		profiles[categoryID] = profile
+	}
+	return nil
+}
+
+func validListingColumn(key string) bool {
+	switch key {
+	case "part_number", "name", "manufacturer", "brand", "category", "package", "lifecycle", "documents", "rfq":
+		return true
+	default:
+		return specColumnPattern.MatchString(key)
+	}
+}
+
+func sortableListingColumn(key string) bool {
+	switch key {
+	case "part_number", "name", "manufacturer", "brand", "lifecycle":
+		return true
+	default:
+		return false
+	}
 }
 
 func (configuration Configuration) VisibleNavigation() []NavigationItem {

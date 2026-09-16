@@ -64,6 +64,7 @@ type SourceImage struct {
 }
 
 type Source struct {
+	ApplicableSpecs            []SourceSpec
 	Product                    catalog.Product
 	Translations               []catalog.ProductTranslation
 	SourceLocale               string
@@ -637,10 +638,20 @@ func (e *Engine) installLocked(ctx context.Context) error {
 	return nil
 }
 
+func applicableSpecifications(specs []SourceSpec) []ApplicableSpecification {
+	result := make([]ApplicableSpecification, 0, len(specs))
+	for _, spec := range specs {
+		result = append(result, ApplicableSpecification{ID: spec.ID, Name: spec.Name, PreferredUnit: spec.PreferredUnit})
+	}
+	return result
+}
+
 func (e *Engine) viewFromSource(source Source) PublicView {
 	view := PublicView{
-		Site: source.Site,
-		ID:   source.Product.ID, Revision: source.Product.Revision, SiteEpoch: source.SiteEpoch,
+		PackageFormFactor:        source.Product.PackageFormFactor,
+		ApplicableSpecifications: applicableSpecifications(source.ApplicableSpecs),
+		Site:                     source.Site,
+		ID:                       source.Product.ID, Revision: source.Product.Revision, SiteEpoch: source.SiteEpoch,
 		PartNumber: source.Product.PartNumber, Name: source.Product.Name, Manufacturer: source.Product.Manufacturer,
 		ManufacturerID: source.Product.ManufacturerID, Brand: source.Product.Brand, BrandID: source.Product.BrandID,
 		Lifecycle: source.Product.Lifecycle, LifecycleID: source.Product.LifecycleID,

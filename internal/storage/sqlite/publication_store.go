@@ -193,6 +193,29 @@ func (s *Store) PublicationSource(ctx context.Context, productID string) (publis
 	if routeReason != "" {
 		return publishing.Source{}, errors.New(routeReason)
 	}
+	applicableRows, err := tx.QueryContext(ctx, `SELECT sd.id,sd.name,sd.preferred_unit
+		FROM products p
+		JOIN category_spec_sets cs ON cs.category_id=p.category_id
+		JOIN spec_set_members sm ON sm.spec_set_id=cs.spec_set_id
+		JOIN spec_definitions sd ON sd.id=sm.spec_id AND sd.status='active'
+		WHERE p.id=? ORDER BY sm.sort_order,sd.id`, productID)
+	if err != nil {
+		return publishing.Source{}, err
+	}
+	for applicableRows.Next() {
+		var spec publishing.SourceSpec
+		if err := applicableRows.Scan(&spec.ID, &spec.Name, &spec.PreferredUnit); err != nil {
+			applicableRows.Close()
+			return publishing.Source{}, err
+		}
+		source.ApplicableSpecs = append(source.ApplicableSpecs, spec)
+	}
+	if err := applicableRows.Close(); err != nil {
+		return publishing.Source{}, err
+	}
+	if err := applicableRows.Err(); err != nil {
+		return publishing.Source{}, err
+	}
 	specRows, err := tx.QueryContext(ctx, `SELECT sd.id,sd.name,pv.raw_value,sd.preferred_unit,pv.source_locale
 		FROM product_spec_values pv JOIN spec_definitions sd ON sd.id=pv.spec_id
 		WHERE pv.product_id=? AND pv.active=1 AND sd.status='active'
