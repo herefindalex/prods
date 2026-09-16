@@ -97,14 +97,6 @@ func (m model) Update(message tea.Msg) (tea.Model, tea.Cmd) {
 		case "end":
 			m.scrollFromBottom = 0
 		}
-	case tea.MouseMsg:
-		event := tea.MouseEvent(message)
-		switch event.Type {
-		case tea.MouseWheelUp:
-			m.scrollFromBottom += 3
-		case tea.MouseWheelDown:
-			m.scrollFromBottom -= 3
-		}
 	}
 	m.clampScroll()
 	return m, nil

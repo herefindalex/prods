@@ -75,7 +75,7 @@ func (s *Session) Start(ctx context.Context, guide Guide) error {
 	ready := make(chan struct{})
 	program := tea.NewProgram(
 		newModel(guide, s.logs, s.requestStop, ready),
-		tea.WithInput(s.input), tea.WithOutput(s.output), tea.WithAltScreen(), tea.WithMouseCellMotion(),
+		tea.WithInput(s.input), tea.WithOutput(s.output), tea.WithAltScreen(),
 	)
 	s.program = program
 	s.mu.Unlock()
