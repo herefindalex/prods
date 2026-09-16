@@ -31,7 +31,6 @@ const updateText: Record<AdminLocale, { title: string; description(version: stri
   "pt-BR": { title: "Uma nova versão do Prods está disponível", description: (version) => `A versão ${version} está disponível para esta plataforma.`, download: "Baixar versão mais recente" },
 };
 
-
 const runtimeLogCopyText: Record<AdminLocale, { copy: string; copied: string; failed: string }> = {
   "en-US": { copy: "Copy all", copied: "Runtime log copied.", failed: "Could not copy the runtime log." },
   "zh-TW": { copy: "複製全部", copied: "已複製執行期日誌。", failed: "無法複製執行期日誌。" },
@@ -626,7 +625,6 @@ function statusTag(status: SystemComponentHealth["status"]) {
   return <Tag color={status === "Critical" ? "red" : status === "Warning" ? "gold" : "green"}>{status}</Tag>;
 }
 
-
 async function copyToClipboard(value: string): Promise<void> {
   if (navigator.clipboard?.writeText) {
     await navigator.clipboard.writeText(value);
@@ -652,7 +650,7 @@ export function HealthPanel({ locale, onError }: Props) {
 	const [update, setUpdate] = useState<SystemUpdate>();
 	const [runtimeGeneration, setRuntimeGeneration] = useState(0);
   const [loading, setLoading] = useState(false);
-  const [copyingLog, setCopyingLog] = useState(false);
+	const [copyingLog, setCopyingLog] = useState(false);
 	const [updatingMaintenance, setUpdatingMaintenance] = useState(false);
   const onErrorRef = useRef(onError);
   onErrorRef.current = onError;
@@ -705,8 +703,8 @@ export function HealthPanel({ locale, onError }: Props) {
     if (!runtimeLog?.available) return;
     setCopyingLog(true);
     try {
-	  const content = await apiText(`/admin/api/system/runtime-log/text?generation=${runtimeGeneration}`);
-	  await copyToClipboard(content);
+      const content = await apiText(`/admin/api/system/runtime-log/text?generation=${runtimeGeneration}`);
+      await copyToClipboard(content);
       message.success(runtimeLogCopyText[locale].copied);
     } catch {
       message.error(runtimeLogCopyText[locale].failed);
@@ -714,7 +712,6 @@ export function HealthPanel({ locale, onError }: Props) {
       setCopyingLog(false);
     }
   };
-
 
   const componentColumns = [
     {
