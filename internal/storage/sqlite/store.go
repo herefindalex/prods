@@ -103,6 +103,16 @@ type Installation struct {
 	DefaultLocale    string
 	SupportedLocales []string
 	TimeZone         string
+	SampleData       *InstallationSampleData
+}
+
+type InstallationSampleData struct {
+	Version        string
+	DatasetVersion string
+	SourceURL      string
+	SHA256         string
+	Categories     []catalog.Category
+	Products       []catalog.Product
 }
 
 type RFQSummary struct {
@@ -293,6 +303,20 @@ func CreatePOC(path string) (*Store, error) {
 		_ = store.Close()
 		return nil, err
 	}
+	if err := store.InstallOfficialPublicCopy(ctx, localization.OfficialPublicCopyCatalog()); err != nil {
+		_ = store.Close()
+		return nil, fmt.Errorf("install POC official public copy: %w", err)
+	}
+	if _, err := store.db.ExecContext(ctx, `INSERT INTO taxonomy_content(subject_type,subject_id,source_locale)
+		SELECT 'category',c.id,s.default_locale FROM categories c CROSS JOIN site_settings s WHERE s.singleton=1`); err != nil {
+		_ = store.Close()
+		return nil, fmt.Errorf("create POC category content: %w", err)
+	}
+	if _, err := store.db.ExecContext(ctx, `INSERT INTO taxonomy_content(subject_type,subject_id,source_locale)
+		SELECT 'dictionary',d.id,s.default_locale FROM dictionary_entries d CROSS JOIN site_settings s WHERE s.singleton=1`); err != nil {
+		_ = store.Close()
+		return nil, fmt.Errorf("create POC dictionary content: %w", err)
+	}
 	if _, err := store.db.ExecContext(ctx, `UPDATE system_state SET installation_state=?,instance_kind=? WHERE singleton=1`, DatabaseReady, DatabaseKindPOC); err != nil {
 		_ = store.Close()
 		return nil, fmt.Errorf("complete POC installation: %w", err)
@@ -316,6 +340,14 @@ func (s *Store) CompleteInstallation(ctx context.Context, installation Installat
 	}
 	if installation.OwnerDisplayName == "" {
 		installation.OwnerDisplayName = installation.OwnerEmail
+	}
+	if installation.SampleData != nil {
+		if strings.TrimSpace(installation.SampleData.Version) == "" ||
+			strings.TrimSpace(installation.SampleData.SourceURL) == "" ||
+			strings.TrimSpace(installation.SampleData.DatasetVersion) == "" ||
+			len(installation.SampleData.SHA256) != 64 || len(installation.SampleData.Products) == 0 {
+			return identity.User{}, ErrInstallationState
+		}
 	}
 	defaultLocale, locales, err := localization.NormalizeSupported(installation.DefaultLocale, installation.SupportedLocales)
 	if err != nil {
@@ -391,9 +423,106 @@ func (s *Store) CompleteInstallation(ctx context.Context, installation Installat
 	if _, err := tx.ExecContext(ctx, `INSERT INTO taxonomy_content(subject_type,subject_id,source_locale) SELECT 'dictionary',id,? FROM dictionary_entries`, installation.DefaultLocale); err != nil {
 		return identity.User{}, fmt.Errorf("create default dictionary content: %w", err)
 	}
+	if installation.SampleData != nil {
+		seenCategoryIDs := make(map[string]struct{}, len(installation.SampleData.Categories))
+		seenCategorySlugs := make(map[string]struct{}, len(installation.SampleData.Categories))
+		for index := range installation.SampleData.Categories {
+			category := installation.SampleData.Categories[index]
+			if category.ParentID == "" {
+				category.ParentID = "cat_root"
+			}
+			category.SystemKey = ""
+			category.Revision = 1
+			if category.SourceLocale == "" {
+				category.SourceLocale = installation.DefaultLocale
+			}
+			if err := category.Prepare(); err != nil {
+				return identity.User{}, fmt.Errorf("sample category %d: %w", index+1, err)
+			}
+			if _, exists := seenCategoryIDs[category.ID]; exists || category.ID == "cat_root" || category.ID == catalog.UncategorizedCategoryID {
+				return identity.User{}, fmt.Errorf("sample category %d duplicates or replaces a system category", index+1)
+			}
+			slugKey := category.ParentID + "\x00" + category.Slug
+			if _, exists := seenCategorySlugs[slugKey]; exists {
+				return identity.User{}, fmt.Errorf("sample category %d duplicates a sibling slug", index+1)
+			}
+			if err := requireActiveCategory(ctx, tx, category.ParentID); err != nil {
+				return identity.User{}, fmt.Errorf("sample category %d parent: %w", index+1, err)
+			}
+			if _, err := tx.ExecContext(ctx, `INSERT INTO categories(
+				id,parent_id,system_key,name,slug,status,revision,created_by,updated_by,created_at,updated_at
+			) VALUES(?,?,NULL,?,?,?,?,?,?,?,?)`, category.ID, category.ParentID, category.Name, category.Slug,
+				category.Status, 1, ownerID, ownerID, now, now); err != nil {
+				return identity.User{}, fmt.Errorf("install sample category %q: %w", category.ID, err)
+			}
+			if err := insertTaxonomySource(ctx, tx, "category", category.ID, category.SourceLocale, category.Description, category.SourceLocales); err != nil {
+				return identity.User{}, err
+			}
+			seenCategoryIDs[category.ID] = struct{}{}
+			seenCategorySlugs[slugKey] = struct{}{}
+		}
+		seenIDs := make(map[string]struct{}, len(installation.SampleData.Products))
+		seenIdentities := make(map[string]struct{}, len(installation.SampleData.Products))
+		for index := range installation.SampleData.Products {
+			product := installation.SampleData.Products[index]
+			if product.CategoryID == "" {
+				product.CategoryID = catalog.UncategorizedCategoryID
+			}
+			product.SourceLocale = installation.DefaultLocale
+			product.ApplicationIDs = nil
+			product.ManufacturerID = ""
+			product.BrandID = ""
+			product.LifecycleID = ""
+			product.Revision = 1
+			product.CreatedBy = ownerID
+			product.UpdatedBy = ownerID
+			if product.Slug == "" {
+				product.Slug = catalog.SuggestedSlug(product.PartNumber, product.ID)
+			}
+			if product.Status == "" {
+				product.Status = catalog.Hidden
+			}
+			if err := product.Prepare(); err != nil {
+				return identity.User{}, fmt.Errorf("sample product %d: %w", index+1, err)
+			}
+			if product.Status != catalog.Hidden && product.Status != catalog.Published {
+				return identity.User{}, fmt.Errorf("sample product %d: %w", index+1, catalog.ErrInvalidProduct)
+			}
+			if _, exists := seenIDs[product.ID]; exists {
+				return identity.User{}, fmt.Errorf("sample product %d duplicates product id %q", index+1, product.ID)
+			}
+			if product.RecordState == catalog.RecordCurrent {
+				identityKey := product.IdentityMaker + "\x00" + product.IdentityPart
+				if _, exists := seenIdentities[identityKey]; exists {
+					return identity.User{}, fmt.Errorf("sample product %d duplicates a current product identity", index+1)
+				}
+				seenIdentities[identityKey] = struct{}{}
+			}
+			seenIDs[product.ID] = struct{}{}
+			if err := insertProductTx(ctx, tx, product, now); err != nil {
+				return identity.User{}, fmt.Errorf("install sample product %q: %w", product.ID, err)
+			}
+			if product.Status == catalog.Published {
+				if err := appendPublicationIntent(ctx, tx, product.ID, product.Revision, "installation.sample_data", now); err != nil {
+					return identity.User{}, err
+				}
+			}
+		}
+	}
+	details := map[string]any{}
+	if installation.SampleData != nil {
+		details["sample_data"] = map[string]any{
+			"version": installation.SampleData.Version, "dataset_version": installation.SampleData.DatasetVersion, "source_url": installation.SampleData.SourceURL,
+			"sha256": installation.SampleData.SHA256, "product_count": len(installation.SampleData.Products),
+		}
+	}
+	detailsJSON, err := json.Marshal(details)
+	if err != nil {
+		return identity.User{}, err
+	}
 	if _, err := tx.ExecContext(ctx, `INSERT INTO admin_log(
 		id,actor_id,action,target_type,target_id,result,details_json,created_at
-	) VALUES(?,?,?,?,?,?,?,?)`, logID, ownerID, "installation.completed", "installation", "site", "success", `{}`, now); err != nil {
+	) VALUES(?,?,?,?,?,?,?,?)`, logID, ownerID, "installation.completed", "installation", "site", "success", string(detailsJSON), now); err != nil {
 		return identity.User{}, fmt.Errorf("record installation audit: %w", err)
 	}
 	result, err := tx.ExecContext(ctx, `UPDATE system_state SET installation_state=?

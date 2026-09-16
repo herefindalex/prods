@@ -19,6 +19,8 @@ import (
 	"syscall"
 	"time"
 
+	"prods/internal/consoleui"
+	"prods/internal/distribution"
 	"prods/internal/hostconfig"
 	"prods/internal/maildelivery"
 	"prods/internal/platform"
@@ -82,11 +84,15 @@ func runWithStop(stop <-chan struct{}) (returnErr error) {
 	if err != nil {
 		return err
 	}
+	hostConsole := consoleui.New(os.Stdin, os.Stderr)
 	previousLogger := slog.Default()
-	slog.SetDefault(slog.New(slog.NewJSONHandler(io.MultiWriter(os.Stderr, runtimeLog), nil)))
+	slog.SetDefault(slog.New(slog.NewJSONHandler(io.MultiWriter(runtimeLog, hostConsole), nil)))
 	defer func() {
 		if returnErr != nil {
 			slog.Error("Prods runtime stopped", "error", returnErr)
+		}
+		if consoleErr := hostConsole.Close(); consoleErr != nil && returnErr == nil {
+			returnErr = fmt.Errorf("close console UI: %w", consoleErr)
 		}
 		slog.SetDefault(previousLogger)
 		if closeErr := runtimeLog.Close(); closeErr != nil && returnErr == nil {
@@ -132,12 +138,12 @@ func runWithStop(stop <-chan struct{}) (returnErr error) {
 	}
 	if len(pendingRestores) > 1 {
 		return runRecoveryDiagnosticUI(runtimeCtx, options,
-			fmt.Sprintf("Multiple prepared restore journals were found in %s. Prods will not choose, resume, or replace either operation automatically.", controlDir), stop)
+			fmt.Sprintf("Multiple prepared restore journals were found in %s. Prods will not choose, resume, or replace either operation automatically.", controlDir), hostConsole, stop)
 	}
 	if len(pendingRestores) == 1 {
 		if err := recovery.ResumeRestore(runtimeCtx, pendingRestores[0]); err != nil {
 			return runPreparedRestoreRecoveryUI(runtimeCtx, options,
-				fmt.Sprintf("Prepared restore could not complete automatically: %v", err), pendingRestores[0], stop)
+				fmt.Sprintf("Prepared restore could not complete automatically: %v", err), pendingRestores[0], hostConsole, stop)
 		}
 		return errors.New("prepared restore completed and verified; restart Prods to run normal startup checks")
 	}
@@ -156,11 +162,11 @@ func runWithStop(stop <-chan struct{}) (returnErr error) {
 	}
 	if len(pendingMigrations) > 1 {
 		return runRecoveryUI(runtimeCtx, options,
-			fmt.Sprintf("Multiple pending migration journals were found in %s; select a verified restore point.", controlDir), stop)
+			fmt.Sprintf("Multiple pending migration journals were found in %s; select a verified restore point.", controlDir), hostConsole, stop)
 	}
 	if len(pendingMigrations) == 1 {
 		if err := resumeMigration(runtimeCtx, dbPath, pendingMigrations[0]); err != nil {
-			return runRecoveryUI(runtimeCtx, options, fmt.Sprintf("Schema migration reconciliation failed: %v", err), stop)
+			return runRecoveryUI(runtimeCtx, options, fmt.Sprintf("Schema migration reconciliation failed: %v", err), hostConsole, stop)
 		}
 		return errors.New("pending schema migration reconciled; restart Prods to run normal startup checks")
 	}
@@ -302,7 +308,7 @@ func runWithStop(stop <-chan struct{}) (returnErr error) {
 		return errors.New("schema upgrade completed; restart Prods to run normal startup checks")
 	}
 	if inspection.State == sqlite.DatabaseRecovery {
-		return runRecoveryUI(runtimeCtx, options, inspection.Reason, stop)
+		return runRecoveryUI(runtimeCtx, options, inspection.Reason, hostConsole, stop)
 	}
 	if inspection.State == sqlite.DatabaseInstalling {
 		if *pocFixtures || *adminToken != "" {
@@ -318,7 +324,7 @@ func runWithStop(stop <-chan struct{}) (returnErr error) {
 			return err
 		}
 		defer listener.Close()
-		return runInstaller(store, listener, *dataDir, *backupDir, stop)
+		return runInstaller(runtimeCtx, store, listener, options, dbPath, hostConsole, stop)
 	}
 	if inspection.State == sqlite.DatabaseFresh && !*pocFixtures {
 		if *adminToken != "" {
@@ -334,7 +340,7 @@ func runWithStop(stop <-chan struct{}) (returnErr error) {
 			return err
 		}
 		defer store.Close()
-		return runInstaller(store, listener, *dataDir, *backupDir, stop)
+		return runInstaller(runtimeCtx, store, listener, options, dbPath, hostConsole, stop)
 	}
 
 	var store *sqlite.Store
@@ -378,7 +384,7 @@ func runWithStop(stop <-chan struct{}) (returnErr error) {
 		SecureCookies: secureCookies, EnforceHost: true, WorkDir: filepath.Join(*dataDir, "work"),
 		PublicDir: filepath.Join(*dataDir, "generated", "public"),
 		AssetDir:  filepath.Join(*dataDir, "assets"), DatabasePath: dbPath, BackupDir: *backupDir, ResourceGate: resourceGate,
-		EnableBackupScheduler: !pocMode, EnableAssetGC: !pocMode, AssetGCGrace: time.Duration(options.AssetGCGraceDays) * 24 * time.Hour, TrustedProxyCIDRs: options.TrustedProxyCIDRs, BackupRoots: existingBackupRoots(*dataDir), BackupFiles: existingBackupFiles(options.ConfigPath), ApplicationVersion: applicationVersion,
+		EnableBackupScheduler: !pocMode, EnableAssetGC: !pocMode, AssetGCGrace: time.Duration(options.AssetGCGraceDays) * 24 * time.Hour, TrustedProxyCIDRs: options.TrustedProxyCIDRs, BackupRoots: existingBackupRoots(*dataDir), BackupFiles: existingBackupFiles(options.ConfigPath), ApplicationVersion: applicationVersion, DistributionClient: distribution.NewClient(nil),
 		MailSender:                 mailSender,
 		IndexNowSubmitter:          searchnotify.HTTPIndexNowClient{},
 		GoogleSearchSubmitter:      googleSearchSubmitter,
@@ -390,7 +396,9 @@ func runWithStop(stop <-chan struct{}) (returnErr error) {
 		return err
 	}
 	if generatedToken != "" {
-		fmt.Printf("Temporary PoC Admin login token (console only):\n%s\n", generatedToken)
+		if !hostConsole.Interactive() {
+			fmt.Printf("Temporary PoC Admin login token (console only):\n%s\n", generatedToken)
+		}
 	}
 	defer app.Close()
 	listener, err := net.Listen("tcp", *listen)
@@ -398,8 +406,16 @@ func runWithStop(stop <-chan struct{}) (returnErr error) {
 		return fmt.Errorf("listen on %s: %w; choose another --listen address or stop the conflicting process", *listen, err)
 	}
 	defer listener.Close()
+	guide := runtimeConsoleGuide(options, "正常執行", "服務已啟動，請在瀏覽器開啟服務網址。", *baseURL, listener.Addr().String(), ownership.ResourcePath())
+	if generatedToken != "" {
+		guide.Action = "服務已啟動。請在瀏覽器開啟服務網址，並使用下列臨時 Admin token 登入。"
+		guide.Details = []string{"臨時 Admin token：" + generatedToken}
+	}
+	if err := hostConsole.Start(runtimeCtx, guide); err != nil {
+		return fmt.Errorf("start console UI: %w", err)
+	}
 	slog.Info("Prods listening", "address", listener.Addr().String(), "mode", "normal", "instance_kind", inspection.Kind, "base_url", *baseURL)
-	return serveListenerWithStop(listener, app, nil, 10*time.Second, stop)
+	return serveListenerWithStop(listener, app, nil, 10*time.Second, consoleStop(stop, hostConsole))
 }
 
 func configuredMailSender(options hostconfig.Options) (maildelivery.Sender, error) {
@@ -662,10 +678,11 @@ func existingBackupFiles(configPath string) map[string]string {
 	return files
 }
 
-func runInstaller(store *sqlite.Store, listener net.Listener, dataDir, backupDir string, stop <-chan struct{}) error {
+func runInstaller(ctx context.Context, store *sqlite.Store, listener net.Listener, options hostconfig.Options, databasePath string, hostConsole *consoleui.Session, stop <-chan struct{}) error {
 	completed := make(chan struct{}, 1)
 	app, bootstrapToken, err := webapp.NewInstaller(store, webapp.InstallerConfig{
-		DataDir: dataDir, BackupDir: backupDir, DefaultTimeZone: time.Local.String(),
+		DataDir: options.DataDir, BackupDir: options.BackupDir, DefaultTimeZone: time.Local.String(),
+		ApplicationVersion: applicationVersion, DistributionClient: distribution.NewClient(nil),
 		OnComplete: func() {
 			select {
 			case completed <- struct{}{}:
@@ -677,9 +694,44 @@ func runInstaller(store *sqlite.Store, listener net.Listener, dataDir, backupDir
 		return err
 	}
 	listen := listener.Addr().String()
-	fmt.Printf("Prods installation requires ownership claim. Open this one-time URL (console only):\n%s\n", localInstallerURL(listen, bootstrapToken))
-	slog.Info("Prods listening", "address", listen, "mode", "installer", "data_dir", dataDir, "backup_dir", backupDir)
-	return serveListenerWithStop(listener, app, completed, 10*time.Second, stop)
+	installerURL := localInstallerURL(listen, bootstrapToken)
+	if !hostConsole.Interactive() {
+		fmt.Printf("Prods installation requires ownership claim. Open this one-time URL (console only):\n%s\n", installerURL)
+	}
+	guide := runtimeConsoleGuide(options, "等待安裝", "請在瀏覽器開啟以下網址以進行安裝。", installerURL, listen, databasePath)
+	if err := hostConsole.Start(ctx, guide); err != nil {
+		return fmt.Errorf("start console UI: %w", err)
+	}
+	slog.Info("Prods listening", "address", listen, "mode", "installer", "data_dir", options.DataDir, "backup_dir", options.BackupDir)
+	return serveListenerWithStop(listener, app, completed, 10*time.Second, consoleStop(stop, hostConsole))
+}
+
+func runtimeConsoleGuide(options hostconfig.Options, status, action, actionURL, listen, databasePath string) consoleui.Guide {
+	return consoleui.Guide{
+		Status: status, Action: action, URL: actionURL,
+		Version: applicationVersion, Host: consoleui.HostLabel(), Listen: listen, BaseURL: options.BaseURL,
+		AdminURL:   strings.TrimRight(options.BaseURL, "/") + "/admin",
+		ConfigPath: options.ConfigPath, DataDir: options.DataDir, BackupDir: options.BackupDir, DatabasePath: databasePath,
+	}
+}
+
+func consoleStop(serviceStop <-chan struct{}, hostConsole *consoleui.Session) <-chan struct{} {
+	if hostConsole == nil || !hostConsole.Interactive() {
+		return serviceStop
+	}
+	consoleInterrupt := hostConsole.Interrupt()
+	if serviceStop == nil {
+		return consoleInterrupt
+	}
+	combined := make(chan struct{})
+	go func() {
+		select {
+		case <-serviceStop:
+		case <-consoleInterrupt:
+		}
+		close(combined)
+	}()
+	return combined
 }
 
 func prepareInstallerListener(options *hostconfig.Options) (net.Listener, error) {

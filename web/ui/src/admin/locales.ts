@@ -22,8 +22,20 @@ export const ADMIN_LOCALE_OPTIONS = [
   { value: "pt-BR", label: "Português (Brasil)" },
 ] as const;
 
+export function localeDisplayName(value: string): string {
+  return ADMIN_LOCALE_OPTIONS.find((option) => option.value === value)?.label ?? value;
+}
+
+export function localeLabel(value: string): string {
+  const displayName = localeDisplayName(value);
+  return displayName === value ? value : `${displayName} · ${value}`;
+}
+
+export function localeSelectOptions(values: readonly string[]) {
+  return values.map((value) => ({ value, label: localeLabel(value) }));
+}
+
 export type AdminLocale = (typeof ADMIN_LOCALE_OPTIONS)[number]["value"];
-export type ImplementedAdminMessageLocale = "en-US" | "zh-TW";
 
 const adminLocaleCodes = new Set<string>(ADMIN_LOCALE_OPTIONS.map(({ value }) => value));
 
@@ -37,10 +49,6 @@ export function normalizeAdminLocale(value: string): AdminLocale {
   if (exact) return exact.value;
   const language = normalized.split("-")[0];
   return ADMIN_LOCALE_OPTIONS.find(({ value: candidate }) => candidate.toLowerCase().startsWith(`${language}-`))?.value ?? "en-US";
-}
-
-export function implementedAdminMessageLocale(locale: AdminLocale): ImplementedAdminMessageLocale {
-  return locale === "zh-TW" ? "zh-TW" : "en-US";
 }
 
 export function antDesignLocale(locale: AdminLocale) {

@@ -16,6 +16,7 @@ import (
 	"sync/atomic"
 	"time"
 
+	"prods/internal/consoleui"
 	"prods/internal/hostconfig"
 	"prods/internal/identity"
 	"prods/internal/platform"
@@ -337,8 +338,8 @@ func writeRecoveryJSON(w http.ResponseWriter, status int, value any) {
 	_ = json.NewEncoder(w).Encode(value)
 }
 
-func runRecoveryDiagnosticUI(ctx context.Context, options hostconfig.Options, diagnostic string, stop <-chan struct{}) error {
-	return serveRecoveryUI(ctx, options, diagnostic, stop, "", nil)
+func runRecoveryDiagnosticUI(ctx context.Context, options hostconfig.Options, diagnostic string, hostConsole *consoleui.Session, stop <-chan struct{}) error {
+	return serveRecoveryUI(ctx, options, diagnostic, hostConsole, stop, "", nil)
 }
 
 func (ui *recoveryUI) writeDenied(w http.ResponseWriter) {
@@ -351,9 +352,9 @@ func (ui *recoveryUI) finish() {
 	ui.completeOnce.Do(func() { close(ui.config.Completed) })
 }
 
-func runRecoveryUI(ctx context.Context, options hostconfig.Options, diagnostic string, stop <-chan struct{}) error {
+func runRecoveryUI(ctx context.Context, options hostconfig.Options, diagnostic string, hostConsole *consoleui.Session, stop <-chan struct{}) error {
 	gate := platform.NewResourceGate(nil)
-	return serveRecoveryUI(ctx, options, diagnostic, stop, "", func(restoreCtx context.Context, selected string) error {
+	return serveRecoveryUI(ctx, options, diagnostic, hostConsole, stop, "", func(restoreCtx context.Context, selected string) error {
 		return runOfflineRestore(restoreCtx, filepath.Join(options.DataDir, "prods.db"), options.DataDir,
 			options.BackupDir, options.ConfigPath, selected, true, gate, externalBackupRequirements(options))
 	})
@@ -386,15 +387,15 @@ func newPreparedRestoreRecoveryPlan(options hostconfig.Options, journalPath stri
 	}, nil
 }
 
-func runPreparedRestoreRecoveryUI(ctx context.Context, options hostconfig.Options, diagnostic, journalPath string, stop <-chan struct{}) error {
+func runPreparedRestoreRecoveryUI(ctx context.Context, options hostconfig.Options, diagnostic, journalPath string, hostConsole *consoleui.Session, stop <-chan struct{}) error {
 	plan, err := newPreparedRestoreRecoveryPlan(options, journalPath, recovery.ResumeRestore)
 	if err != nil {
 		return err
 	}
-	return serveRecoveryUI(ctx, options, diagnostic, stop, plan.allowedBackupID, plan.restore)
+	return serveRecoveryUI(ctx, options, diagnostic, hostConsole, stop, plan.allowedBackupID, plan.restore)
 }
 
-func serveRecoveryUI(ctx context.Context, options hostconfig.Options, diagnostic string, stop <-chan struct{},
+func serveRecoveryUI(ctx context.Context, options hostconfig.Options, diagnostic string, hostConsole *consoleui.Session, stop <-chan struct{},
 	allowedBackupID string, restore func(context.Context, string) error) error {
 	if stop != nil {
 		return errors.New("recovery required: stop the Prods service and run the same binary interactively to receive a one-time recovery URL")
@@ -413,9 +414,18 @@ func serveRecoveryUI(ctx context.Context, options hostconfig.Options, diagnostic
 		_ = listener.Close()
 		return err
 	}
-	fmt.Printf("Recovery Required. Open this one-time URL within 30 minutes:\n%s\n",
-		localRecoveryURL(listener.Addr().String(), token))
-	return serveListenerWithStop(listener, ui, completed, 10*time.Second, nil)
+	recoveryURL := localRecoveryURL(listener.Addr().String(), token)
+	if !hostConsole.Interactive() {
+		fmt.Printf("Recovery Required. Open this one-time URL within 30 minutes:\n%s\n", recoveryURL)
+	}
+	guide := runtimeConsoleGuide(options, "需要復原", "請在 30 分鐘內開啟以下一次性網址以進行復原。", recoveryURL,
+		listener.Addr().String(), filepath.Join(options.DataDir, "prods.db"))
+	guide.Details = []string{"診斷：" + diagnostic}
+	if err := hostConsole.Start(ctx, guide); err != nil {
+		_ = listener.Close()
+		return fmt.Errorf("start console UI: %w", err)
+	}
+	return serveListenerWithStop(listener, ui, completed, 10*time.Second, consoleStop(nil, hostConsole))
 }
 
 func localRecoveryURL(listen, token string) string {

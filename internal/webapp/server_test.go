@@ -3,6 +3,7 @@ package webapp
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
 	"net/http/cookiejar"
@@ -10,10 +11,12 @@ import (
 	"net/url"
 	"path/filepath"
 	"regexp"
+	"runtime"
 	"strings"
 	"testing"
 
 	"prods/internal/catalog"
+	"prods/internal/distribution"
 	"prods/internal/identity"
 	"prods/internal/storage/sqlite"
 )
@@ -81,6 +84,105 @@ func loginAdmin(t *testing.T, client *http.Client, baseURL string) string {
 		t.Fatalf("admin CSRF missing from %s", body)
 	}
 	return match[1]
+}
+
+func TestAdminDocumentsSetSecurityHeaders(t *testing.T) {
+	server, client := testServer(t)
+	loginAdmin(t, client, server.URL)
+
+	response, err := client.Get(server.URL + "/admin/catalog")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer response.Body.Close()
+	if response.StatusCode != http.StatusOK {
+		t.Fatalf("admin document status=%d", response.StatusCode)
+	}
+	policy := response.Header.Get("Content-Security-Policy")
+	for _, required := range []string{"default-src 'none'", "script-src 'self'", "connect-src 'self'", "form-action 'self'", "frame-ancestors 'none'", "base-uri 'none'"} {
+		if !strings.Contains(policy, required) {
+			t.Fatalf("admin CSP missing %q: %s", required, policy)
+		}
+	}
+	if response.Header.Get("Referrer-Policy") != "no-referrer" ||
+		response.Header.Get("X-Content-Type-Options") != "nosniff" ||
+		response.Header.Get("X-Frame-Options") != "DENY" {
+		t.Fatalf("admin security headers incomplete: %v", response.Header)
+	}
+}
+
+func TestSystemUpdateIsAuthenticatedAndUnavailableDoesNotFailHealth(t *testing.T) {
+	server, client := testServer(t)
+	response, err := client.Get(server.URL + "/admin/api/system/update")
+	if err != nil {
+		t.Fatal(err)
+	}
+	response.Body.Close()
+	if response.StatusCode != http.StatusUnauthorized {
+		t.Fatalf("anonymous update status=%d", response.StatusCode)
+	}
+	loginAdmin(t, client, server.URL)
+	response, err = client.Get(server.URL + "/admin/api/system/update")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer response.Body.Close()
+	var status struct {
+		Status string `json:"status"`
+	}
+	if err := json.NewDecoder(response.Body).Decode(&status); err != nil {
+		t.Fatal(err)
+	}
+	if response.StatusCode != http.StatusOK || status.Status != "unavailable" {
+		t.Fatalf("update response status=%d body=%+v", response.StatusCode, status)
+	}
+}
+
+func TestSystemUpdateReturnsValidatedPlatformDownload(t *testing.T) {
+	assetName := "prods-" + runtime.GOOS + "-" + runtime.GOARCH
+	if runtime.GOOS == "windows" {
+		assetName += ".exe"
+	}
+	var releaseServer *httptest.Server
+	releaseServer = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		fmt.Fprintf(w, `{"tag_name":"v2.0.0","html_url":%q,"assets":[{"name":%q,"browser_download_url":%q}]}`,
+			releaseServer.URL+"/herefindalex/prods/releases/tag/v2.0.0", assetName, releaseServer.URL+"/download")
+	}))
+	defer releaseServer.Close()
+	store, err := sqlite.CreatePOC(filepath.Join(t.TempDir(), "test.db"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer store.Close()
+	app, _, err := New(store, Config{
+		BaseURL: "https://catalog.example.test", AdminToken: "test-admin-token", EnablePOCAdmin: true,
+		ApplicationVersion: "v1.0.0",
+		DistributionClient: &distribution.Client{HTTPClient: releaseServer.Client(), APIBase: releaseServer.URL, AllowTestHTTP: true},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	server := httptest.NewServer(app)
+	defer server.Close()
+	jar, err := cookiejar.New(nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	client := &http.Client{Jar: jar}
+	loginAdmin(t, client, server.URL)
+	response, err := client.Get(server.URL + "/admin/api/system/update")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer response.Body.Close()
+	var status distribution.UpdateStatus
+	if err := json.NewDecoder(response.Body).Decode(&status); err != nil {
+		t.Fatal(err)
+	}
+	if response.StatusCode != http.StatusOK || status.Status != "update_available" ||
+		status.LatestVersion != "v2.0.0" || status.DownloadURL != releaseServer.URL+"/download" {
+		t.Fatalf("update response status=%d body=%+v", response.StatusCode, status)
+	}
 }
 
 func TestRuntimeProductUsesOnePublicViewAcrossFormats(t *testing.T) {
@@ -245,6 +347,66 @@ func TestHTMLRFQCatalogSubmissionUsesSupportedLocale(t *testing.T) {
 		!strings.Contains(body, `name="kind" value="catalog"`) ||
 		!strings.Contains(body, `name="product_id" value="synthetic-page-1"`) {
 		t.Fatalf("RFQ conflict status=%d body=%s", response.StatusCode, body)
+	}
+}
+
+func TestHTMLRFQMultipleCatalogProductsAreDeduplicatedAndPersistedTogether(t *testing.T) {
+	server, client, store := testServerWithStore(t)
+	csrf := loginAdmin(t, client, server.URL)
+	created := postAdminJSON(t, client, server.URL+"/admin/api/products", csrf,
+		`{"id":"rfq-second-product","part_number":"RFQ-SECOND","status":"published"}`)
+	if created.StatusCode != http.StatusCreated {
+		t.Fatalf("create status=%d body=%s", created.StatusCode, responseBody(t, created))
+	}
+	_ = responseBody(t, created)
+	waitForPublicBody(t, client, server.URL+"/products/rfq-second-product", "RFQ-SECOND")
+
+	response, err := client.Get(server.URL + "/rfq?product_id=synthetic-page-1&product_id=rfq-second-product&product_id=synthetic-page-1")
+	if err != nil {
+		t.Fatal(err)
+	}
+	page := responseBody(t, response)
+	if response.StatusCode != http.StatusOK {
+		t.Fatalf("RFQ form status=%d body=%s", response.StatusCode, page)
+	}
+	if strings.Count(page, `name="product_id" value="synthetic-page-1"`) != 1 ||
+		strings.Count(page, `name="product_id" value="rfq-second-product"`) != 1 {
+		t.Fatalf("RFQ form did not render two deduplicated catalog products: %s", page)
+	}
+	csrfMatch := regexp.MustCompile(`name="csrf_token" value="([^"]+)"`).FindStringSubmatch(page)
+	keyMatch := regexp.MustCompile(`name="submission_key" value="([^"]+)"`).FindStringSubmatch(page)
+	actionMatch := regexp.MustCompile(`<form method="post" action="([^"]+)"`).FindStringSubmatch(page)
+	if len(csrfMatch) != 2 || len(keyMatch) != 2 || len(actionMatch) != 2 {
+		t.Fatal("RFQ form did not contain CSRF, submission key, and action")
+	}
+
+	form := url.Values{
+		"csrf_token":     {csrfMatch[1]},
+		"submission_key": {keyMatch[1]},
+		"kind":           {"catalog"},
+		"product_id":     {"synthetic-page-1", "rfq-second-product", "synthetic-page-1"},
+		"name":           {"Multi Product Buyer"},
+		"email":          {"multi@example.test"},
+	}
+	action := strings.ReplaceAll(actionMatch[1], "&amp;", "&")
+	response, err = client.PostForm(server.URL+action, form)
+	if err != nil {
+		t.Fatal(err)
+	}
+	body := responseBody(t, response)
+	if response.StatusCode != http.StatusOK || !strings.Contains(body, "RFQ received") {
+		t.Fatalf("RFQ submission status=%d body=%s", response.StatusCode, body)
+	}
+
+	rfqs, err := store.ListRFQs(t.Context())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(rfqs) != 1 || len(rfqs[0].Items) != 2 {
+		t.Fatalf("stored RFQs=%#v", rfqs)
+	}
+	if rfqs[0].Items[0].ProductID != "synthetic-page-1" || rfqs[0].Items[1].ProductID != "rfq-second-product" {
+		t.Fatalf("stored RFQ item order=%#v", rfqs[0].Items)
 	}
 }
 

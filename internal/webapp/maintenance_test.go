@@ -48,6 +48,13 @@ func TestMaintenanceAPIPreservesCategoryAndDisabledReferenceContracts(t *testing
 	}
 	var parentCategory catalog.Category
 	decodeResponseJSON(t, parent, &parentCategory)
+	unassigned, err := client.Get(server.URL + "/admin/api/categories/cat_power/spec-set")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if body := responseBody(t, unassigned); unassigned.StatusCode != http.StatusOK || strings.TrimSpace(body) != "null" {
+		t.Fatalf("unassigned category spec set status=%d body=%s", unassigned.StatusCode, body)
+	}
 
 	child := postAdminJSON(t, client, server.URL+"/admin/api/categories", csrf,
 		`{"id":"cat_regulators","parent_id":"cat_power","name":"Regulators","slug":"regulators","status":"active","revision":1}`)

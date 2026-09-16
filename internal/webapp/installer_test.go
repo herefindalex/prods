@@ -1,11 +1,14 @@
 package webapp
 
 import (
+	"crypto/sha256"
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
+	"os"
 	"path/filepath"
 	"regexp"
 	"strings"
@@ -13,8 +16,184 @@ import (
 	"testing"
 	"time"
 
+	"prods/internal/distribution"
+	"prods/internal/sampledata"
 	"prods/internal/storage/sqlite"
 )
+
+func TestInstallerDownloadsMatchingReleaseSampleData(t *testing.T) {
+	sampleBody := []byte(`{"schema_version":1,"release_version":"v1.2.3","dataset_version":"test-r1","seed":1,"source_statement":"synthetic","categories":[],"products":[{"id":"sample-1","part_number":"SAMPLE-1","name":"Sample","status":"hidden","record_state":"current"}]}`)
+	digest := sha256.Sum256(sampleBody)
+	var releaseServer *httptest.Server
+	releaseServer = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case "/repos/herefindalex/prods/releases/tags/v1.2.3":
+			fmt.Fprintf(w, `{"tag_name":"v1.2.3","html_url":%q,"assets":[{"name":%q,"browser_download_url":%q},{"name":%q,"browser_download_url":%q}]}`,
+				releaseServer.URL+"/herefindalex/prods/releases/tag/v1.2.3", distribution.SampleAssetName, releaseServer.URL+"/sample", distribution.SampleChecksumName, releaseServer.URL+"/checksum")
+		case "/sample":
+			_, _ = w.Write(sampleBody)
+		case "/checksum":
+			fmt.Fprintf(w, "%x  %s\n", digest, distribution.SampleAssetName)
+		default:
+			http.NotFound(w, r)
+		}
+	}))
+	defer releaseServer.Close()
+
+	root := t.TempDir()
+	store, err := sqlite.Create(filepath.Join(root, "prods.db"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer store.Close()
+	client := &distribution.Client{HTTPClient: releaseServer.Client(), APIBase: releaseServer.URL, AllowTestHTTP: true}
+	installer, _, err := NewInstaller(store, InstallerConfig{
+		BootstrapToken: "bootstrap", DataDir: filepath.Join(root, "data"), BackupDir: filepath.Join(root, "backups"),
+		DefaultLocale: "en-US", DefaultTimeZone: "UTC", ApplicationVersion: "v1.2.3", DistributionClient: client,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	claim := jsonFormRequest(installer, http.MethodPost, "/install/claim", url.Values{"token": {"bootstrap"}})
+	cookie := cookieNamed(claim.Result(), "prods_install")
+	var state installerState
+	if err := json.Unmarshal(claim.Body.Bytes(), &state); err != nil {
+		t.Fatal(err)
+	}
+	if !state.SampleDataAvailable || state.ApplicationVersion != "v1.2.3" {
+		t.Fatalf("installer sample state = %+v", state)
+	}
+	complete := formRequestWithCookies(installer, http.MethodPost, "/install/complete", url.Values{
+		"csrf_token": {state.CSRFToken}, "owner_email": {"owner@example.test"}, "password": {"ownerpass1"},
+		"password_confirm": {"ownerpass1"}, "default_locale": {"en-US"}, "supported_locales": {"en-US"},
+		"time_zone": {"UTC"}, "use_sample_data": {"true"},
+	}, cookie)
+	if complete.Code != http.StatusOK {
+		t.Fatalf("sample completion status=%d body=%s", complete.Code, complete.Body.String())
+	}
+	count, err := store.ProductCount(t.Context())
+	if err != nil || count != 1 {
+		t.Fatalf("sample product count=%d err=%v", count, err)
+	}
+	if _, err := os.Stat(filepath.Join(root, "data", "sample-data", distribution.SampleAssetName)); err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestInstallerUnpublishedRepositoryStillCompletesBlankInstallation(t *testing.T) {
+	releaseServer := httptest.NewServer(http.NotFoundHandler())
+	defer releaseServer.Close()
+	root := t.TempDir()
+	store, err := sqlite.Create(filepath.Join(root, "prods.db"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer store.Close()
+	client := &distribution.Client{HTTPClient: releaseServer.Client(), APIBase: releaseServer.URL, AllowTestHTTP: true}
+	installer, _, err := NewInstaller(store, InstallerConfig{
+		BootstrapToken: "bootstrap", DataDir: filepath.Join(root, "data"), BackupDir: filepath.Join(root, "backups"),
+		DefaultLocale: "en-US", DefaultTimeZone: "UTC", ApplicationVersion: "v1.2.3", DistributionClient: client,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	claim := jsonFormRequest(installer, http.MethodPost, "/install/claim", url.Values{"token": {"bootstrap"}})
+	cookie := cookieNamed(claim.Result(), "prods_install")
+	var state installerState
+	if err := json.Unmarshal(claim.Body.Bytes(), &state); err != nil {
+		t.Fatal(err)
+	}
+	if state.SampleDataAvailable || state.CSRFToken == "" {
+		t.Fatalf("unpublished repository state = %+v", state)
+	}
+	complete := formRequestWithCookies(installer, http.MethodPost, "/install/complete", url.Values{
+		"csrf_token": {state.CSRFToken}, "owner_email": {"owner@example.test"}, "password": {"ownerpass1"},
+		"password_confirm": {"ownerpass1"}, "default_locale": {"en-US"}, "supported_locales": {"en-US"},
+		"time_zone": {"UTC"},
+	}, cookie)
+	if complete.Code != http.StatusOK {
+		t.Fatalf("blank completion status=%d body=%s", complete.Code, complete.Body.String())
+	}
+	if count, err := store.ProductCount(t.Context()); err != nil || count != 0 {
+		t.Fatalf("blank product count=%d err=%v", count, err)
+	}
+}
+
+func TestInstallerCommitsCompleteGeneratedSampleData(t *testing.T) {
+	const version = "v1.2.3"
+	sample, err := sampledata.Generate(version)
+	if err != nil {
+		t.Fatal(err)
+	}
+	sampleBody, err := json.Marshal(sample)
+	if err != nil {
+		t.Fatal(err)
+	}
+	digest := sha256.Sum256(sampleBody)
+	var releaseServer *httptest.Server
+	releaseServer = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case "/repos/herefindalex/prods/releases/tags/" + version:
+			fmt.Fprintf(w, `{"tag_name":%q,"html_url":%q,"assets":[{"name":%q,"browser_download_url":%q},{"name":%q,"browser_download_url":%q}]}`,
+				version, releaseServer.URL+"/herefindalex/prods/releases/tag/"+version,
+				distribution.SampleAssetName, releaseServer.URL+"/sample",
+				distribution.SampleChecksumName, releaseServer.URL+"/checksum")
+		case "/sample":
+			_, _ = w.Write(sampleBody)
+		case "/checksum":
+			fmt.Fprintf(w, "%x  %s\n", digest, distribution.SampleAssetName)
+		default:
+			http.NotFound(w, r)
+		}
+	}))
+	defer releaseServer.Close()
+
+	root := t.TempDir()
+	store, err := sqlite.Create(filepath.Join(root, "prods.db"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer store.Close()
+	installer, _, err := NewInstaller(store, InstallerConfig{
+		BootstrapToken: "bootstrap", DataDir: filepath.Join(root, "data"), BackupDir: filepath.Join(root, "backups"),
+		DefaultLocale: "en-US", DefaultTimeZone: "UTC", ApplicationVersion: version,
+		DistributionClient: &distribution.Client{HTTPClient: releaseServer.Client(), APIBase: releaseServer.URL, AllowTestHTTP: true},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	claim := jsonFormRequest(installer, http.MethodPost, "/install/claim", url.Values{"token": {"bootstrap"}})
+	cookie := cookieNamed(claim.Result(), "prods_install")
+	var state installerState
+	if err := json.Unmarshal(claim.Body.Bytes(), &state); err != nil {
+		t.Fatal(err)
+	}
+	complete := formRequestWithCookies(installer, http.MethodPost, "/install/complete", url.Values{
+		"csrf_token": {state.CSRFToken}, "owner_email": {"owner@example.test"}, "password": {"ownerpass1"},
+		"password_confirm": {"ownerpass1"}, "default_locale": {"en-US"}, "supported_locales": {"en-US"},
+		"time_zone": {"UTC"}, "use_sample_data": {"true"},
+	}, cookie)
+	if complete.Code != http.StatusOK {
+		t.Fatalf("generated sample completion status=%d body=%s", complete.Code, complete.Body.String())
+	}
+	if count, err := store.ProductCount(t.Context()); err != nil || count != len(sample.Products) {
+		t.Fatalf("generated sample product count=%d want=%d err=%v", count, len(sample.Products), err)
+	}
+	for _, source := range sample.Products {
+		if source.RecordState != "archived" {
+			continue
+		}
+		product, err := store.Product(t.Context(), source.ID)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if product.RecordState != "archived" {
+			t.Fatalf("generated archived product %q state=%q", source.ID, product.RecordState)
+		}
+		return
+	}
+	t.Fatal("generated sample did not contain an archived product")
+}
 
 func TestInstallerOwnershipRestartAndMinimumJourney(t *testing.T) {
 	root := t.TempDir()
@@ -103,6 +282,9 @@ func TestInstallerOwnershipRestartAndMinimumJourney(t *testing.T) {
 	}
 	if inspection := sqlite.Inspect(filepath.Join(root, "prods.db")); inspection.State != sqlite.DatabaseReady || inspection.Kind != sqlite.DatabaseKindSite {
 		t.Fatalf("inspection = %+v", inspection)
+	}
+	if count, err := store.ProductCount(t.Context()); err != nil || count != 0 {
+		t.Fatalf("empty installation product count=%d err=%v", count, err)
 	}
 
 	app, generated, err := New(store, Config{BaseURL: "https://catalog.example.test"})
@@ -234,6 +416,15 @@ func TestInstallerJSONClaimReturnsOwnedSetupState(t *testing.T) {
 
 func formRequest(handler http.Handler, method, path string, values url.Values) *httptest.ResponseRecorder {
 	return formRequestWithCookies(handler, method, path, values)
+}
+
+func jsonFormRequest(handler http.Handler, method, path string, values url.Values) *httptest.ResponseRecorder {
+	request := httptest.NewRequest(method, path, strings.NewReader(values.Encode()))
+	request.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	request.Header.Set("Accept", "application/json")
+	response := httptest.NewRecorder()
+	handler.ServeHTTP(response, request)
+	return response
 }
 
 func formRequestWithCookies(handler http.Handler, method, path string, values url.Values, cookies ...*http.Cookie) *httptest.ResponseRecorder {

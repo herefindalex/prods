@@ -1,6 +1,7 @@
 package webapp
 
 import (
+	"context"
 	"crypto/subtle"
 	"encoding/json"
 	"errors"
@@ -18,18 +19,22 @@ import (
 
 	"golang.org/x/text/language"
 
+	"prods/internal/catalog"
+	"prods/internal/distribution"
 	"prods/internal/identity"
 	"prods/internal/localization"
 	"prods/internal/storage/sqlite"
 )
 
 type InstallerConfig struct {
-	BootstrapToken  string
-	DataDir         string
-	BackupDir       string
-	DefaultLocale   string
-	DefaultTimeZone string
-	OnComplete      func()
+	BootstrapToken     string
+	DataDir            string
+	BackupDir          string
+	DefaultLocale      string
+	DefaultTimeZone    string
+	ApplicationVersion string
+	DistributionClient *distribution.Client
+	OnComplete         func()
 }
 
 type InstallerServer struct {
@@ -60,11 +65,13 @@ type installerPage struct {
 }
 
 type installerState struct {
-	Stage            string `json:"stage"`
-	CSRFToken        string `json:"csrf_token,omitempty"`
-	DefaultLocale    string `json:"default_locale"`
-	SupportedLocales string `json:"supported_locales"`
-	TimeZone         string `json:"time_zone"`
+	Stage               string `json:"stage"`
+	CSRFToken           string `json:"csrf_token,omitempty"`
+	DefaultLocale       string `json:"default_locale"`
+	SupportedLocales    string `json:"supported_locales"`
+	TimeZone            string `json:"time_zone"`
+	ApplicationVersion  string `json:"application_version"`
+	SampleDataAvailable bool   `json:"sample_data_available"`
 }
 
 type installerFieldError struct {
@@ -146,6 +153,7 @@ func (s *InstallerServer) currentInstallerState(r *http.Request) installerState 
 	state := installerState{
 		Stage: "claim", DefaultLocale: s.config.DefaultLocale,
 		SupportedLocales: s.config.DefaultLocale, TimeZone: s.config.DefaultTimeZone,
+		ApplicationVersion: s.config.ApplicationVersion,
 	}
 	s.mu.Lock()
 	claimed, completed := s.claimed, s.completed
@@ -157,12 +165,22 @@ func (s *InstallerServer) currentInstallerState(r *http.Request) installerState 
 	if csrf, ok := s.readSession(r); ok {
 		state.Stage = "setup"
 		state.CSRFToken = csrf
+		state.SampleDataAvailable = s.sampleAvailable(r.Context())
 		return state
 	}
 	if claimed {
 		state.Stage = "claimed"
 	}
 	return state
+}
+
+func (s *InstallerServer) sampleAvailable(ctx context.Context) bool {
+	if s.config.DistributionClient == nil {
+		return false
+	}
+	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	defer cancel()
+	return s.config.DistributionClient.SampleAvailable(ctx, s.config.ApplicationVersion)
 }
 
 func (s *InstallerServer) claim(w http.ResponseWriter, r *http.Request) {
@@ -207,11 +225,13 @@ func (s *InstallerServer) claim(w http.ResponseWriter, r *http.Request) {
 	})
 	if installerWantsJSON(r) {
 		writeInstallerJSON(w, http.StatusOK, installerState{
-			Stage:            "setup",
-			CSRFToken:        csrfToken,
-			DefaultLocale:    s.config.DefaultLocale,
-			SupportedLocales: s.config.DefaultLocale,
-			TimeZone:         s.config.DefaultTimeZone,
+			Stage:               "setup",
+			CSRFToken:           csrfToken,
+			DefaultLocale:       s.config.DefaultLocale,
+			SupportedLocales:    s.config.DefaultLocale,
+			TimeZone:            s.config.DefaultTimeZone,
+			ApplicationVersion:  s.config.ApplicationVersion,
+			SampleDataAvailable: s.sampleAvailable(r.Context()),
 		})
 		return
 	}
@@ -293,11 +313,52 @@ func (s *InstallerServer) complete(w http.ResponseWriter, r *http.Request) {
 		s.renderWithCSRF(w, "install-form", page, csrf)
 		return
 	}
+	useSampleData := r.FormValue("use_sample_data") == "true" || r.FormValue("use_sample_data") == "on" || r.FormValue("use_sample_data") == "1"
+	var downloaded *distribution.DownloadedSample
+	var sampleInstallation *sqlite.InstallationSampleData
+	if useSampleData {
+		if s.config.DistributionClient == nil {
+			s.writeSampleUnavailable(w, r, page, csrf)
+			return
+		}
+		item, downloadErr := s.config.DistributionClient.DownloadSampleData(r.Context(), s.config.DataDir, s.config.ApplicationVersion)
+		if downloadErr != nil {
+			slog.Warn("sample data download failed", "version", s.config.ApplicationVersion, "error", downloadErr)
+			s.writeSampleUnavailable(w, r, page, csrf)
+			return
+		}
+		downloaded = &item
+		categories := make([]catalog.Category, 0, len(item.Data.Categories))
+		for _, source := range item.Data.Categories {
+			categories = append(categories, catalog.Category{
+				ID: source.ID, ParentID: source.ParentID, Name: source.Name, Description: source.Description,
+				SourceLocale: source.SourceLocale, Slug: source.Slug, Status: catalog.EntryStatus(source.Status),
+			})
+		}
+		products := make([]catalog.Product, 0, len(item.Data.Products))
+		for _, source := range item.Data.Products {
+			products = append(products, catalog.Product{
+				ID: source.ID, PartNumber: source.PartNumber, Name: source.Name,
+				Manufacturer: source.Manufacturer, CategoryID: source.CategoryID, PackageFormFactor: source.PackageFormFactor,
+				Description: source.Description, Features: source.Features,
+				Specification: source.Specification, DocumentURL: source.DocumentURL,
+				Status: catalog.Status(source.Status), RecordState: catalog.RecordState(source.RecordState),
+			})
+		}
+		sampleInstallation = &sqlite.InstallationSampleData{
+			Version: item.Data.ReleaseVersion, DatasetVersion: item.Data.DatasetVersion,
+			SourceURL: item.SourceURL, SHA256: item.SHA256, Categories: categories, Products: products,
+		}
+	}
 	_, err = s.store.CompleteInstallation(r.Context(), sqlite.Installation{
 		OwnerEmail: page.OwnerEmail, OwnerDisplayName: page.OwnerDisplayName, PasswordHash: passwordHash,
 		DefaultLocale: page.DefaultLocale, SupportedLocales: locales, TimeZone: page.TimeZone,
+		SampleData: sampleInstallation,
 	})
 	if err != nil {
+		if downloaded != nil {
+			_ = os.Remove(downloaded.Path)
+		}
 		if errors.Is(err, sqlite.ErrInstallationState) || errors.Is(err, sqlite.ErrOwnerAlreadyExists) {
 			if installerWantsJSON(r) {
 				writeInstallerJSON(w, http.StatusConflict, map[string]string{"error": "installation state changed; restart Prods and follow the reported mode"})
@@ -320,6 +381,19 @@ func (s *InstallerServer) complete(w http.ResponseWriter, r *http.Request) {
 	if s.config.OnComplete != nil {
 		defer func() { go s.config.OnComplete() }()
 	}
+}
+
+func (s *InstallerServer) writeSampleUnavailable(w http.ResponseWriter, r *http.Request, page installerPage, csrf string) {
+	message := "Sample data is temporarily unavailable. You can retry or complete an empty installation."
+	if installerWantsJSON(r) {
+		writeInstallerJSON(w, http.StatusServiceUnavailable, map[string]string{
+			"error": localizedInstallerError(page.Lang, message), "field": "use_sample_data",
+		})
+		return
+	}
+	page.Error = message
+	w.WriteHeader(http.StatusServiceUnavailable)
+	s.renderWithCSRF(w, "install-form", page, csrf)
 }
 
 func (s *InstallerServer) readSession(r *http.Request) (string, bool) {

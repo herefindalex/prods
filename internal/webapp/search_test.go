@@ -1,6 +1,7 @@
 package webapp
 
 import (
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -157,6 +158,45 @@ func TestSearchURLPreservesFiltersAcrossPagination(t *testing.T) {
 	for _, expected := range []string{"q=query", "page=2", "lang=zh-TW", "manufacturer_id=maker-1", "brand_id=brand-1", "category_id=category-1"} {
 		if !strings.Contains(got, expected) {
 			t.Fatalf("pagination URL %q missing %q", got, expected)
+		}
+	}
+}
+
+func TestCatalogListingHTMLKeepsServerRowsClearFiltersAndEnhancementSlots(t *testing.T) {
+	server, client := testServer(t)
+	csrf := loginAdmin(t, client, server.URL)
+	for index := 0; index < 25; index++ {
+		id := fmt.Sprintf("listing-html-%02d", index)
+		partNumber := fmt.Sprintf("LISTING-HTML-%02d", index)
+		response := postAdminJSON(t, client, server.URL+"/admin/api/products", csrf,
+			fmt.Sprintf(`{"id":%q,"part_number":%q,"status":"published"}`, id, partNumber))
+		if response.StatusCode != http.StatusCreated {
+			t.Fatalf("create %s status=%d body=%s", id, response.StatusCode, responseBody(t, response))
+		}
+		_ = responseBody(t, response)
+	}
+	waitForPublicBody(t, client, server.URL+"/products/listing-html-24", "LISTING-HTML-24")
+
+	response, err := client.Get(server.URL + "/search?q=LISTING-HTML")
+	if err != nil {
+		t.Fatal(err)
+	}
+	body := responseBody(t, response)
+	if response.StatusCode != http.StatusOK {
+		t.Fatalf("listing status=%d body=%s", response.StatusCode, body)
+	}
+	if count := strings.Count(body, `data-product-row=`); count != publicListingPageSize {
+		t.Fatalf("server-rendered row count=%d, want %d", count, publicListingPageSize)
+	}
+	if count := strings.Count(body, `data-row-more=`); count != publicListingPageSize {
+		t.Fatalf("More-details slot count=%d, want %d", count, publicListingPageSize)
+	}
+	if count := strings.Count(body, `data-rfq-select=`); count != publicListingPageSize {
+		t.Fatalf("RFQ selection slot count=%d, want %d", count, publicListingPageSize)
+	}
+	for _, expected := range []string{"Clear filters", `id="listing-rfq-island"`, `q=LISTING-HTML`, "Next"} {
+		if !strings.Contains(body, expected) {
+			t.Fatalf("listing HTML missing %q", expected)
 		}
 	}
 }

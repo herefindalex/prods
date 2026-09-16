@@ -36,6 +36,13 @@ type Messages struct {
 	SearchLabel      string
 	Search           string
 	All              string
+	Filters          string
+	ClearFilters     string
+	SelectForRFQ     string
+	SelectedProducts string
+	ClearSelection   string
+	MoreDetails      string
+	LessDetails      string
 	NoProducts       string
 	NoProductsPrefix string
 	RequestThisPart  string
@@ -73,6 +80,7 @@ type Messages struct {
 
 var english = Messages{
 	Catalog: "Catalog", RequestPart: "Request a part", SearchLabel: "Part number or name", Search: "Search", All: "All",
+	Filters: "Filters", ClearFilters: "Clear filters", SelectForRFQ: "Select for RFQ", SelectedProducts: "Selected products", ClearSelection: "Clear selection", MoreDetails: "More details", LessDetails: "Less details",
 	NoProducts: "No products found", NoProductsPrefix: "No published product matched", RequestThisPart: "Request this part",
 	PreviousPage: "Previous page", NextPage: "Next page", PartNumber: "Part number", Manufacturer: "Manufacturer",
 	Brand: "Brand", Category: "Category", Lifecycle: "Lifecycle", Applications: "Applications", ProductImages: "Product images",
@@ -86,6 +94,7 @@ var english = Messages{
 
 var traditionalChinese = Messages{
 	Catalog: "產品型錄", RequestPart: "提出詢價", SearchLabel: "料號或產品名稱", Search: "搜尋", All: "全部",
+	Filters: "篩選條件", ClearFilters: "清除篩選", SelectForRFQ: "加入詢價選取", SelectedProducts: "已選產品", ClearSelection: "清除選取", MoreDetails: "更多資料", LessDetails: "收合資料",
 	NoProducts: "找不到產品", NoProductsPrefix: "目前沒有已發布產品符合", RequestThisPart: "詢問這個料號",
 	PreviousPage: "上一頁", NextPage: "下一頁", PartNumber: "料號", Manufacturer: "製造商",
 	Brand: "品牌", Category: "分類", Lifecycle: "生命週期", Applications: "應用領域", ProductImages: "產品圖片",

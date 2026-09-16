@@ -9,6 +9,8 @@ import (
 	"testing"
 
 	_ "modernc.org/sqlite"
+
+	"prods/internal/localization"
 )
 
 func TestDatabaseFileURLUsesValidWindowsFileURI(t *testing.T) {
@@ -96,6 +98,49 @@ func TestCreatePOCIsExplicitAndReady(t *testing.T) {
 	count, err := store.ProductCount(context.Background())
 	if err != nil || count == 0 {
 		t.Fatalf("explicit POC fixtures count=%d err=%v", count, err)
+	}
+}
+
+func TestCreatePOCSeedsCategoryContentMetadata(t *testing.T) {
+	store, err := CreatePOC(filepath.Join(t.TempDir(), "poc.db"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer store.Close()
+
+	categories, err := store.ListCategories(context.Background())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(categories) != 2 {
+		t.Fatalf("categories = %d, want 2", len(categories))
+	}
+	for _, category := range categories {
+		if category.SourceLocale != "en-US" {
+			t.Fatalf("category %s source locale = %q", category.ID, category.SourceLocale)
+		}
+		if len(category.SourceLocales) == 0 {
+			t.Fatalf("category %s has no field source locales", category.ID)
+		}
+	}
+}
+
+func TestCreatePOCInstallsOfficialPublicCopy(t *testing.T) {
+	store, err := CreatePOC(filepath.Join(t.TempDir(), "poc.db"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer store.Close()
+
+	catalog, err := store.PublicCopyCatalog(t.Context())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if catalog.OfficialBundle != localization.OfficialBundleVersion ||
+		len(catalog.Definitions) == 0 ||
+		len(catalog.Defaults) != len(catalog.Definitions)*len(localization.BuiltinLocaleCodes()) {
+		t.Fatalf("official public copy was not installed completely: bundle=%q definitions=%d defaults=%d",
+			catalog.OfficialBundle, len(catalog.Definitions), len(catalog.Defaults))
 	}
 }
 

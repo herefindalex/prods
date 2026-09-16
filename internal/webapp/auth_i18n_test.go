@@ -49,7 +49,11 @@ func TestLoginAndSetPasswordRespectConfiguredInterfaceLanguage(t *testing.T) {
 	defer app.Close()
 
 	login := authPageRequest(app, http.MethodGet, "/admin/login?lang=zh-TW", nil, "")
-	if login.Code != http.StatusOK || !strings.Contains(login.Body.String(), "Prods 管理後台") ||
+	if login.Code != http.StatusOK ||
+		!strings.Contains(login.Header().Get("Content-Security-Policy"), "script-src 'self'") ||
+		!strings.Contains(login.Header().Get("Content-Security-Policy"), "frame-ancestors 'none'") ||
+		login.Header().Get("Referrer-Policy") != "no-referrer" ||
+		!strings.Contains(login.Body.String(), "Prods 管理後台") ||
 		!strings.Contains(login.Body.String(), "data-email-label=\"電子郵件\"") ||
 		!strings.Contains(login.Body.String(), "id=\"admin-login-root\"") ||
 		!strings.Contains(login.Body.String(), "/static/admin/admin.js") ||

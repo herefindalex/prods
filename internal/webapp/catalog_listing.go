@@ -29,6 +29,7 @@ type catalogPage struct {
 	PreviousURL         string
 	NextURL             string
 	FormAction          string
+	ClearURL            string
 	ShowFilters         bool
 	ManufacturerID      string
 	BrandID             string
@@ -102,6 +103,11 @@ func (s *Server) renderCatalogSearch(w http.ResponseWriter, r *http.Request) {
 		FormAction: r.URL.Path, ShowFilters: true, ManufacturerID: filters.ManufacturerID, BrandID: filters.BrandID, CategoryID: filters.CategoryID,
 		ManufacturerOptions: manufacturerOptions, BrandOptions: brandOptions, CategoryOptions: categoryOptions,
 		CategoryLinks: categoryLinks,
+	}
+	if strings.TrimSpace(query) != "" || filters.ManufacturerID != "" || filters.BrandID != "" || filters.CategoryID != "" ||
+		strings.TrimSpace(r.URL.Query().Get("sort")) != "" || strings.TrimSpace(r.URL.Query().Get("direction")) != "" ||
+		strings.TrimSpace(r.URL.Query().Get("page")) != "" || strings.TrimSpace(r.URL.Query().Get("page_size")) != "" {
+		data.ClearURL = withLanguage(r.URL.Path, presentation.Language)
 	}
 	setCatalogPagination(r, &data)
 	w.Header().Set("Content-Language", presentation.Language)

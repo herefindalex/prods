@@ -3,6 +3,7 @@ import { createRoot } from "react-dom/client";
 import { Alert, Button, Card, Checkbox, ConfigProvider, Descriptions, Form, Input, Popconfirm, Progress, Result, Select, Space, Spin, Typography } from "antd";
 import "antd/dist/reset.css";
 import "./style.css";
+import { installerRequestBody } from "./installerPayload";
 import {
   antdLocale,
   extraCommonText,
@@ -83,6 +84,8 @@ type InstallerState = {
   default_locale: string;
   supported_locales: string;
   time_zone: string;
+  application_version: string;
+  sample_data_available: boolean;
 };
 
 type InstallerValues = {
@@ -94,6 +97,7 @@ type InstallerValues = {
   default_locale: SystemLocale;
   supported_locales: SystemLocale[];
   time_zone: string;
+  use_sample_data: boolean;
 };
 
 const installerText = {
@@ -104,6 +108,8 @@ const installerText = {
     email: "Owner email", name: "Owner display name", password: "Password", confirm: "Confirm password",
     passwordHelp: "Use at least 8 characters with at least one letter and one number.", defaultLocale: "Default locale", supportedLocales: "Supported locales",
     localesHelp: "Choose one or more interface languages available in this binary; include the default locale.", timeZone: "Site time zone", finish: "Complete installation",
+    sampleData: "Download and install sample data for this release", sampleAvailable: "Downloaded from the matching GitHub release, verified, and stored locally.",
+    sampleUnavailable: "Sample data is temporarily unavailable for this build. You can still complete an empty installation.",
     complete: "Installation was saved atomically. Restart Prods to enter Normal mode.",
   },
   "zh-TW": {
@@ -113,10 +119,29 @@ const installerText = {
     email: "Owner 電子郵件", name: "Owner 顯示名稱", password: "密碼", confirm: "確認密碼",
     passwordHelp: "至少 8 個字元，並至少包含一個英文字母與一個數字。", defaultLocale: "預設語系", supportedLocales: "支援語系",
     localesHelp: "選擇此 binary 提供的一個或多個介面語系，且必須包含預設語系。", timeZone: "站點時區", finish: "完成安裝",
+    sampleData: "下載並安裝此版本的 sample data", sampleAvailable: "系統會從相同版本的 GitHub release 下載、校驗並存到本機。",
+    sampleUnavailable: "此 build 的 sample data 暫時不可用；仍可完成空白安裝。",
     complete: "安裝資料已原子保存。請重新啟動 Prods 進入正常模式。",
   },
 } as const;
-const localizedInstallerText = { ...installerText, ...extraInstallerText } as unknown as Record<SystemLocale, TextOf<(typeof installerText)["en-US"]>>;
+const sampleInstallerText: Record<SystemLocale, Pick<TextOf<(typeof installerText)["en-US"]>, "sampleData" | "sampleAvailable" | "sampleUnavailable">> = {
+  "en-US": { sampleData: "Download and install sample data for this release", sampleAvailable: "Downloaded from the matching GitHub release, verified, and stored locally.", sampleUnavailable: "Sample data is temporarily unavailable for this build. You can still complete an empty installation." },
+  "zh-TW": { sampleData: "下載並安裝此版本的 sample data", sampleAvailable: "系統會從相同版本的 GitHub release 下載、校驗並存到本機。", sampleUnavailable: "此 build 的 sample data 暫時不可用；仍可完成空白安裝。" },
+  "zh-CN": { sampleData: "下载并安装此版本的示例数据", sampleAvailable: "系统会从相同版本的 GitHub release 下载、校验并保存到本机。", sampleUnavailable: "此 build 的示例数据暂不可用；仍可完成空白安装。" },
+  "ja-JP": { sampleData: "このリリースのサンプルデータをダウンロードしてインストール", sampleAvailable: "同じバージョンの GitHub release からダウンロードし、検証してローカルに保存します。", sampleUnavailable: "この build のサンプルデータは現在利用できません。空の状態でインストールできます。" },
+  "ko-KR": { sampleData: "이 릴리스의 샘플 데이터 다운로드 및 설치", sampleAvailable: "동일한 버전의 GitHub release에서 다운로드하고 검증한 뒤 로컬에 저장합니다.", sampleUnavailable: "이 build의 샘플 데이터를 현재 사용할 수 없습니다. 빈 설치는 계속할 수 있습니다." },
+  "de-DE": { sampleData: "Beispieldaten für diese Version herunterladen und installieren", sampleAvailable: "Wird aus dem passenden GitHub Release geladen, geprüft und lokal gespeichert.", sampleUnavailable: "Für diesen Build sind derzeit keine Beispieldaten verfügbar. Eine leere Installation ist weiterhin möglich." },
+  "fr-FR": { sampleData: "Télécharger et installer les données d’exemple de cette version", sampleAvailable: "Téléchargées depuis la version GitHub correspondante, vérifiées puis stockées localement.", sampleUnavailable: "Les données d’exemple sont indisponibles pour ce build. Une installation vide reste possible." },
+  "it-IT": { sampleData: "Scarica e installa i dati di esempio di questa versione", sampleAvailable: "Scaricati dalla release GitHub corrispondente, verificati e salvati localmente.", sampleUnavailable: "I dati di esempio non sono disponibili per questa build. Puoi comunque completare un’installazione vuota." },
+  "es-ES": { sampleData: "Descargar e instalar los datos de ejemplo de esta versión", sampleAvailable: "Se descargan de la versión de GitHub correspondiente, se verifican y se guardan localmente.", sampleUnavailable: "Los datos de ejemplo no están disponibles para esta compilación. Puedes completar una instalación vacía." },
+  "pt-BR": { sampleData: "Baixar e instalar os dados de exemplo desta versão", sampleAvailable: "Baixados da versão correspondente no GitHub, verificados e armazenados localmente.", sampleUnavailable: "Os dados de exemplo estão indisponíveis para esta build. Ainda é possível concluir uma instalação vazia." },
+};
+const localizedInstallerText = Object.fromEntries(systemLocaleCodes.map((locale) => [locale, {
+  ...installerText["en-US"],
+  ...((extraInstallerText as Record<string, Partial<TextOf<(typeof installerText)["en-US"]>>>)[locale] ?? {}),
+  ...((installerText as Partial<Record<SystemLocale, TextOf<(typeof installerText)["en-US"]>>>)[locale] ?? {}),
+  ...sampleInstallerText[locale],
+}])) as Record<SystemLocale, TextOf<(typeof installerText)["en-US"]>>;
 
 function InstallerApp() {
   const [locale, setLocale] = useState<SystemLocale>(initialLocale);
@@ -161,7 +186,7 @@ function InstallerApp() {
   const submit = async (values: InstallerValues) => {
     setLoading(true);
     setError(undefined);
-    const body = new URLSearchParams({ ...values, supported_locales: values.supported_locales.join(","), interface_locale: locale });
+    const body = installerRequestBody(state?.stage ?? "claim", values, locale);
     try {
       if (state?.stage === "claim") {
         const next = await requestJSON<InstallerState>("/install/claim", { method: "POST", headers: { Accept: "application/json", "Content-Type": "application/x-www-form-urlencoded" }, body });
@@ -204,7 +229,10 @@ function InstallerApp() {
               <Form.Item name="password_confirm" label={copy.confirm} dependencies={["password"]} rules={[{ required: true }, ({ getFieldValue }) => ({ validator(_, value) { return !value || value === getFieldValue("password") ? Promise.resolve() : Promise.reject(new Error(copy.confirm)); } })]}><Input.Password autoComplete="new-password" /></Form.Item>
               <Form.Item name="default_locale" label={copy.defaultLocale} rules={[{ required: true }]}><Select options={systemLocaleOptions} /></Form.Item>
               <Form.Item name="supported_locales" label={copy.supportedLocales} extra={copy.localesHelp} dependencies={["default_locale"]} rules={[{ required: true }, ({ getFieldValue }) => ({ validator(_, value?: SystemLocale[]) { return value?.includes(getFieldValue("default_locale")) ? Promise.resolve() : Promise.reject(new Error(copy.localesHelp)); } })]}><Select mode="multiple" options={systemLocaleOptions} /></Form.Item>
-              <Form.Item name="time_zone" label={copy.timeZone} rules={[{ required: true }]}><Input placeholder="UTC" /></Form.Item>
+            <Form.Item name="time_zone" label={copy.timeZone} rules={[{ required: true }]}><Input placeholder="UTC" /></Form.Item>
+            <Form.Item name="use_sample_data" valuePropName="checked" extra={state.sample_data_available ? copy.sampleAvailable : copy.sampleUnavailable}>
+              <Checkbox disabled={!state.sample_data_available}>{copy.sampleData}</Checkbox>
+            </Form.Item>
             </>
           )}
           <Button type="primary" htmlType="submit" loading={loading}>{state.stage === "claim" ? copy.claim : copy.finish}</Button>

@@ -29,6 +29,7 @@ import (
 
 	"prods/internal/brandcapture"
 	"prods/internal/catalog"
+	"prods/internal/distribution"
 	"prods/internal/identity"
 	"prods/internal/inquiries"
 	"prods/internal/localization"
@@ -74,6 +75,7 @@ type Config struct {
 	BackupRoots                map[string]string
 	BackupFiles                map[string]string
 	ApplicationVersion         string
+	DistributionClient         *distribution.Client
 	MailSender                 maildelivery.Sender
 	BackupExternalRequirements []string
 	RuntimeLogPath             string
@@ -445,6 +447,7 @@ func (s *Server) routes(static fs.FS) {
 	s.mux.HandleFunc("POST /set-password", s.setPassword)
 	s.mux.HandleFunc("POST /admin/logout", s.adminLogout)
 	s.mux.HandleFunc("GET /admin", s.admin)
+	s.registerAdminConsole()
 	s.mux.HandleFunc("POST /admin/api/previews/products", s.adminCreateProductPreview)
 	s.mux.HandleFunc("GET /admin/previews/{token}", s.adminProductPreview)
 	s.mux.HandleFunc("GET /admin/api/rfqs", s.adminRFQs)
@@ -459,6 +462,7 @@ func (s *Server) routes(static fs.FS) {
 	s.mux.HandleFunc("POST /admin/api/exports/products.xlsx", s.adminExportProducts)
 	s.mux.HandleFunc("POST /admin/api/exports/rfqs.csv", s.adminExportRFQs)
 	s.mux.HandleFunc("GET /admin/api/system/health", s.adminSystemHealth)
+	s.mux.HandleFunc("GET /admin/api/system/update", s.adminSystemUpdate)
 	s.mux.HandleFunc("GET /admin/api/system/runtime-log", s.adminRuntimeLog)
 	s.mux.HandleFunc("GET /admin/api/system/maintenance", s.adminSiteMaintenance)
 	s.mux.HandleFunc("PUT /admin/api/system/maintenance", s.adminUpdateSiteMaintenance)
@@ -953,7 +957,7 @@ type rfqPage struct {
 	Title         string
 	CSRF          string
 	SubmissionKey string
-	Product       *publishing.PublicView
+	Products      []publishing.PublicView
 	RawQuery      string
 	Requested     string
 	Name          string
@@ -1006,18 +1010,23 @@ func (s *Server) newRFQPage(w http.ResponseWriter, r *http.Request) (rfqPage, er
 		return rfqPage{}, err
 	}
 	page := rfqPage{Title: "Request for quotation", CSRF: current.CSRF, SubmissionKey: key, RawQuery: r.URL.Query().Get("query"), Requested: r.URL.Query().Get("query")}
-	if id := r.URL.Query().Get("product_id"); id != "" {
+	seen := make(map[string]struct{})
+	for _, candidate := range r.URL.Query()["product_id"] {
+		id := strings.TrimSpace(candidate)
+		if id == "" {
+			continue
+		}
+		if _, exists := seen[id]; exists {
+			continue
+		}
+		seen[id] = struct{}{}
 		view, err := s.publicProductView(r.Context(), id)
 		if err != nil {
 			return rfqPage{}, err
 		}
-		page.Product = &view
+		page.Products = append(page.Products, view)
 	}
-	var views []publishing.PublicView
-	if page.Product != nil {
-		views = []publishing.PublicView{*page.Product}
-	}
-	presentation, err := s.currentPublicPage(r, views)
+	presentation, err := s.currentPublicPage(r, page.Products)
 	if err != nil {
 		return rfqPage{}, err
 	}
@@ -1034,7 +1043,26 @@ func (s *Server) rfqHTML(w http.ResponseWriter, r *http.Request) {
 	}
 	_ = id
 	item := inquiries.Item{Kind: r.FormValue("kind"), ProductID: r.FormValue("product_id"), Requested: r.FormValue("requested"), RawQuery: r.FormValue("raw_query"), Quantity: r.FormValue("quantity"), Notes: r.FormValue("notes")}
-	submission := inquiries.Submission{Name: r.FormValue("name"), Email: r.FormValue("email"), Items: []inquiries.Item{item}}
+	items := []inquiries.Item{item}
+	if item.Kind == "catalog" {
+		items = nil
+		seen := make(map[string]struct{})
+		for _, candidate := range r.Form["product_id"] {
+			productID := strings.TrimSpace(candidate)
+			if productID == "" {
+				continue
+			}
+			if _, exists := seen[productID]; exists {
+				continue
+			}
+			seen[productID] = struct{}{}
+			items = append(items, inquiries.Item{Kind: "catalog", ProductID: productID, Quantity: item.Quantity, Notes: item.Notes})
+		}
+		if len(items) > 0 {
+			item = items[0]
+		}
+	}
+	submission := inquiries.Submission{Name: r.FormValue("name"), Email: r.FormValue("email"), Items: items}
 	receipt, err := s.submitPublicRFQ(r, r.FormValue("submission_key"), submission)
 	if err != nil {
 		status := http.StatusBadRequest
@@ -1053,16 +1081,16 @@ func (s *Server) rfqHTML(w http.ResponseWriter, r *http.Request) {
 			message = "Too many RFQ submissions from this connection. Your entered content is preserved; retry after the indicated wait."
 			writeRFQRateLimit(w, rateLimit)
 		}
-		var product *publishing.PublicView
 		var views []publishing.PublicView
-		if item.Kind == "catalog" && item.ProductID != "" {
-			view, productErr := s.publicProductView(r.Context(), item.ProductID)
-			if productErr == nil {
-				product = &view
-				views = []publishing.PublicView{view}
-			} else if !errors.Is(productErr, sql.ErrNoRows) {
-				s.internalError(w, productErr)
-				return
+		for _, submitted := range submission.Items {
+			if submitted.Kind == "catalog" && submitted.ProductID != "" {
+				view, productErr := s.publicProductView(r.Context(), submitted.ProductID)
+				if productErr == nil {
+					views = append(views, view)
+				} else if !errors.Is(productErr, sql.ErrNoRows) {
+					s.internalError(w, productErr)
+					return
+				}
 			}
 		}
 		presentation, presentationErr := s.currentPublicPage(r, views)
@@ -1072,7 +1100,7 @@ func (s *Server) rfqHTML(w http.ResponseWriter, r *http.Request) {
 		}
 		w.Header().Set("Content-Type", "text/html; charset=utf-8")
 		w.WriteHeader(status)
-		s.render(w, "rfq", rfqPage{publicPage: presentation, Title: presentation.Text.RFQTitle, CSRF: current.CSRF, SubmissionKey: r.FormValue("submission_key"), Product: product, RawQuery: item.RawQuery, Requested: item.Requested, Name: submission.Name, Email: submission.Email, Quantity: item.Quantity, Notes: item.Notes, Error: message})
+		s.render(w, "rfq", rfqPage{publicPage: presentation, Title: presentation.Text.RFQTitle, CSRF: current.CSRF, SubmissionKey: r.FormValue("submission_key"), Products: views, RawQuery: item.RawQuery, Requested: item.Requested, Name: submission.Name, Email: submission.Email, Quantity: item.Quantity, Notes: item.Notes, Error: message})
 		return
 	}
 	presentation, err := s.currentPublicPage(r, nil)
@@ -1128,6 +1156,7 @@ func (s *Server) rfqJSON(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) adminLogin(w http.ResponseWriter, r *http.Request) {
+	setAdminDocumentSecurityHeaders(w)
 	page, err := s.newLoginPage(r)
 	if err != nil {
 		http.Error(w, "unsupported language", http.StatusBadRequest)
@@ -1270,7 +1299,7 @@ func loginKey(email string) string {
 
 func (s *Server) adminLogout(w http.ResponseWriter, r *http.Request) {
 	id, current, ok := s.readSession(r)
-	if !ok || !current.Admin {
+	if !ok || !current.Admin || !s.matchesAdminScope(r, current) {
 		s.writeAPIError(w, r, http.StatusUnauthorized, apiCodeUnauthorized)
 		return
 	}
@@ -1287,10 +1316,15 @@ func (s *Server) adminLogout(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	http.SetCookie(w, &http.Cookie{Name: "prods_admin", Value: "", Path: "/", HttpOnly: true, SameSite: http.SameSiteStrictMode, Secure: s.config.SecureCookies, MaxAge: -1})
+	if r.Header.Get("Accept") == "application/json" {
+		w.WriteHeader(http.StatusNoContent)
+		return
+	}
 	http.Redirect(w, r, "/admin/login", http.StatusSeeOther)
 }
 
 func (s *Server) admin(w http.ResponseWriter, r *http.Request) {
+	setAdminDocumentSecurityHeaders(w)
 	_, current, ok := s.readSession(r)
 	if !ok || !current.can(identity.CapabilityAdminAccess) {
 		http.Redirect(w, r, "/admin/login", http.StatusSeeOther)
@@ -1305,6 +1339,13 @@ func (s *Server) admin(w http.ResponseWriter, r *http.Request) {
 		CSRF     string
 		Language string
 	}{current.CSRF, language})
+}
+
+func setAdminDocumentSecurityHeaders(w http.ResponseWriter) {
+	w.Header().Set("Content-Security-Policy", "default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'; form-action 'self'; frame-ancestors 'none'; base-uri 'none'")
+	w.Header().Set("Referrer-Policy", "no-referrer")
+	w.Header().Set("X-Content-Type-Options", "nosniff")
+	w.Header().Set("X-Frame-Options", "DENY")
 }
 
 func (s *Server) adminRFQs(w http.ResponseWriter, r *http.Request) {
@@ -1494,7 +1535,7 @@ func (s *Server) adminArchiveProduct(w http.ResponseWriter, r *http.Request) {
 
 func (s *Server) requireCapability(w http.ResponseWriter, r *http.Request, capability identity.Capability, csrf bool) (session, bool) {
 	_, current, ok := s.readSession(r)
-	if !ok || !current.Admin {
+	if !ok || !current.Admin || !s.matchesAdminScope(r, current) {
 		s.writeAPIError(w, r, http.StatusUnauthorized, apiCodeUnauthorized)
 		return session{}, false
 	}

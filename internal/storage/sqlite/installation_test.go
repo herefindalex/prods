@@ -2,14 +2,136 @@ package sqlite
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"path/filepath"
+	"strings"
 	"testing"
 	"time"
 
+	"prods/internal/catalog"
 	"prods/internal/identity"
 	"prods/internal/localization"
 )
+
+func TestInstallationSampleDataCommitsWithOwnerAndReadyMarker(t *testing.T) {
+	store, err := Create(filepath.Join(t.TempDir(), "prods.db"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer store.Close()
+	passwordHash, err := identity.HashPassword("ownerpass1")
+	if err != nil {
+		t.Fatal(err)
+	}
+	_, err = store.CompleteInstallation(t.Context(), Installation{
+		OwnerEmail: "owner@example.test", PasswordHash: passwordHash,
+		DefaultLocale: "en-US", SupportedLocales: []string{"en-US"}, TimeZone: "UTC",
+		SampleData: &InstallationSampleData{
+			Version: "v1.2.3", DatasetVersion: "a01-r1", SourceURL: "https://github.com/herefindalex/prods/releases/download/v1.2.3/prods-sample-data-v1.json",
+			SHA256:     "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+			Categories: []catalog.Category{{ID: "cat_sample", ParentID: "cat_root", Name: "Sample", Slug: "sample", SourceLocale: "en-US"}},
+			Products:   []catalog.Product{{ID: "sample-1", PartNumber: "SAMPLE-1", Name: "Sample product", CategoryID: "cat_sample", Manufacturer: "Example", Status: catalog.Published}},
+		},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := store.Ready(t.Context()); err != nil {
+		t.Fatal(err)
+	}
+	var products, intents int
+	var detailsRaw string
+	if err := store.db.QueryRowContext(t.Context(), `SELECT COUNT(*) FROM products WHERE id='sample-1'`).Scan(&products); err != nil {
+		t.Fatal(err)
+	}
+	if err := store.db.QueryRowContext(t.Context(), `SELECT COUNT(*) FROM publication_intents WHERE entity_id='sample-1'`).Scan(&intents); err != nil {
+		t.Fatal(err)
+	}
+	if err := store.db.QueryRowContext(t.Context(), `SELECT details_json FROM admin_log WHERE action='installation.completed'`).Scan(&detailsRaw); err != nil {
+		t.Fatal(err)
+	}
+	var details map[string]any
+	if err := json.Unmarshal([]byte(detailsRaw), &details); err != nil {
+		t.Fatal(err)
+	}
+	if products != 1 || intents != 1 || details["sample_data"] == nil {
+		t.Fatalf("sample installation products=%d intents=%d audit=%v", products, intents, details)
+	}
+}
+
+func TestInstallationSampleDataPreservesArchivedProducts(t *testing.T) {
+	store, err := Create(filepath.Join(t.TempDir(), "prods.db"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer store.Close()
+	passwordHash, err := identity.HashPassword("ownerpass1")
+	if err != nil {
+		t.Fatal(err)
+	}
+	_, err = store.CompleteInstallation(t.Context(), Installation{
+		OwnerEmail: "owner@example.test", PasswordHash: passwordHash, DefaultLocale: "en-US",
+		SupportedLocales: []string{"en-US"}, TimeZone: "UTC",
+		SampleData: &InstallationSampleData{
+			Version: "v1.2.3", DatasetVersion: "a01-r1",
+			SourceURL: "https://github.com/herefindalex/prods/releases/download/v1.2.3/prods-sample-data-v1.json",
+			SHA256:    strings.Repeat("a", 64),
+			Products: []catalog.Product{
+				{ID: "current", PartNumber: "SAME", Manufacturer: "Example", Status: catalog.Hidden, RecordState: catalog.RecordCurrent},
+				{ID: "archived", PartNumber: "SAME", Manufacturer: "Example", Status: catalog.Hidden, RecordState: catalog.RecordArchived},
+			},
+		},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	var state string
+	if err := store.db.QueryRowContext(t.Context(), `SELECT record_state FROM products WHERE id='archived'`).Scan(&state); err != nil {
+		t.Fatal(err)
+	}
+	if state != string(catalog.RecordArchived) {
+		t.Fatalf("archived product record_state = %q", state)
+	}
+}
+
+func TestInvalidSampleDataRollsBackWholeInstallation(t *testing.T) {
+	store, err := Create(filepath.Join(t.TempDir(), "prods.db"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer store.Close()
+	passwordHash, err := identity.HashPassword("ownerpass1")
+	if err != nil {
+		t.Fatal(err)
+	}
+	_, err = store.CompleteInstallation(t.Context(), Installation{
+		OwnerEmail: "owner@example.test", PasswordHash: passwordHash,
+		DefaultLocale: "en-US", SupportedLocales: []string{"en-US"}, TimeZone: "UTC",
+		SampleData: &InstallationSampleData{
+			Version: "v1.2.3", DatasetVersion: "a01-r1", SourceURL: "https://github.com/herefindalex/prods/releases/download/v1.2.3/prods-sample-data-v1.json",
+			SHA256: "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+			Products: []catalog.Product{
+				{ID: "sample-1", PartNumber: "SAME", Manufacturer: "Example"},
+				{ID: "sample-2", PartNumber: "SAME", Manufacturer: "Example"},
+			},
+		},
+	})
+	if err == nil {
+		t.Fatal("duplicate sample identity was accepted")
+	}
+	var users, products int
+	if err := store.db.QueryRowContext(t.Context(), `SELECT COUNT(*) FROM users`).Scan(&users); err != nil {
+		t.Fatal(err)
+	}
+	if err := store.db.QueryRowContext(t.Context(), `SELECT COUNT(*) FROM products`).Scan(&products); err != nil {
+		t.Fatal(err)
+	}
+	readyErr := store.Ready(t.Context())
+	if users != 0 || products != 0 || !errors.Is(readyErr, ErrDatabaseNotReady) {
+		t.Fatalf("failed sample install leaked rows or Ready state: users=%d products=%d", users, products)
+	}
+}
 
 func TestInstallationCompletionIsAtomicAndCreatesMinimumSiteState(t *testing.T) {
 	path := filepath.Join(t.TempDir(), "prods.db")

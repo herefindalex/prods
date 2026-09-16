@@ -4,14 +4,48 @@ import (
 	"database/sql"
 	"errors"
 	"net/http"
+	"strconv"
 	"strings"
 
 	"prods/internal/catalog"
 	"prods/internal/identity"
+	"prods/internal/storage/sqlite"
 )
 
 func (s *Server) adminProducts(w http.ResponseWriter, r *http.Request) {
 	if _, ok := s.requireCapability(w, r, identity.CapabilityCatalogView, false); !ok {
+		return
+	}
+	values := r.URL.Query()
+	if values.Has("page") || values.Has("page_size") || values.Has("sort") || values.Has("order") {
+		query := sqlite.ProductPageQuery{Page: 1, PageSize: 20, Sort: "updated_at", Order: "desc", IncludeArchived: values.Get("include_archived") == "true"}
+		var err error
+		if values.Has("page") {
+			query.Page, err = strconv.Atoi(values.Get("page"))
+		}
+		if err == nil && values.Has("page_size") {
+			query.PageSize, err = strconv.Atoi(values.Get("page_size"))
+		}
+		if values.Has("sort") {
+			query.Sort = values.Get("sort")
+		}
+		if values.Has("order") {
+			query.Order = values.Get("order")
+		}
+		if err != nil || (values.Has("include_archived") && values.Get("include_archived") != "true" && values.Get("include_archived") != "false") {
+			s.writeAPIError(w, r, http.StatusBadRequest, apiCodeValidationFailed)
+			return
+		}
+		page, err := s.store.PageProducts(r.Context(), query)
+		if errors.Is(err, sqlite.ErrInvalidProductPage) {
+			s.writeAPIError(w, r, http.StatusBadRequest, apiCodeValidationFailed)
+			return
+		}
+		if err != nil {
+			s.internalAPIError(w, r, err)
+			return
+		}
+		writeJSON(w, http.StatusOK, page)
 		return
 	}
 	products, err := s.store.ListProducts(r.Context(), r.URL.Query().Get("include_archived") == "true", 500)
@@ -77,7 +111,7 @@ func (s *Server) adminCategorySpecSet(w http.ResponseWriter, r *http.Request) {
 	}
 	set, err := s.store.CategorySpecSet(r.Context(), r.PathValue("id"))
 	if errors.Is(err, sql.ErrNoRows) {
-		s.writeAPIError(w, r, http.StatusNotFound, apiCodeNotFound)
+		writeJSON(w, http.StatusOK, nil)
 		return
 	}
 	if err != nil {
