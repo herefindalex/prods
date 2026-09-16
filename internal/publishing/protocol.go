@@ -940,7 +940,7 @@ func (e *Engine) stage(ctx context.Context, operationID string, view PublicView)
 		return "", "", err
 	}
 	destination := filepath.Join(e.root, "units", artifactID)
-	if err := os.Rename(staging, destination); err != nil {
+	if err := renameStagedDirectory(ctx, staging, destination); err != nil {
 		return "", "", err
 	}
 	return artifactID, manifestHash, nil
