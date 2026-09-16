@@ -560,6 +560,68 @@ func TestConfiguredHostOriginAndSecureCookieBoundary(t *testing.T) {
 	}
 }
 
+func TestLoopbackAliasesShareConfiguredHostAndOriginBoundary(t *testing.T) {
+	store, err := sqlite.CreatePOC(filepath.Join(t.TempDir(), "test.db"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer store.Close()
+	app, _, err := New(store, Config{
+		BaseURL:        "http://localhost:8080",
+		AdminToken:     "test-token",
+		EnablePOCAdmin: true,
+		EnforceHost:    true,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer app.Close()
+
+	login := httptest.NewRequest(http.MethodPost, "/admin/login?lang=en-US", strings.NewReader("token=test-token"))
+	login.Host = "127.0.0.1:8080"
+	login.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	login.Header.Set("Origin", "http://127.0.0.1:8080")
+	response := httptest.NewRecorder()
+	app.ServeHTTP(response, login)
+	if response.Code != http.StatusSeeOther || response.Header().Get("Location") != "/admin" {
+		t.Fatalf("loopback alias login status=%d location=%q body=%s", response.Code, response.Header().Get("Location"), response.Body.String())
+	}
+}
+
+func TestNormalModeRedirectsStaleInstallerAndAdminTrailingSlash(t *testing.T) {
+	server, client := testServer(t)
+	client.CheckRedirect = func(_ *http.Request, _ []*http.Request) error {
+		return http.ErrUseLastResponse
+	}
+
+	for _, test := range []struct {
+		path     string
+		location string
+	}{
+		{path: "/install?token=must-not-leak", location: "/"},
+		{path: "/install/", location: "/"},
+		{path: "/admin/?lang=zh-TW", location: "/admin?lang=zh-TW"},
+	} {
+		response, err := client.Get(server.URL + test.path)
+		if err != nil {
+			t.Fatal(err)
+		}
+		_ = response.Body.Close()
+		if response.StatusCode != http.StatusSeeOther || response.Header.Get("Location") != test.location {
+			t.Errorf("%s status=%d location=%q", test.path, response.StatusCode, response.Header.Get("Location"))
+		}
+	}
+
+	response, err := client.Get(server.URL + "/install/api/state")
+	if err != nil {
+		t.Fatal(err)
+	}
+	_ = response.Body.Close()
+	if response.StatusCode != http.StatusNotFound {
+		t.Fatalf("stale installer API status=%d", response.StatusCode)
+	}
+}
+
 func TestNormalHealthSeparatesLivenessAndReadiness(t *testing.T) {
 	store, err := sqlite.CreatePOC(filepath.Join(t.TempDir(), "test.db"))
 	if err != nil {

@@ -15,6 +15,7 @@ import (
 	"io"
 	"io/fs"
 	"log/slog"
+	"net"
 	"net/http"
 	"net/url"
 	"os"
@@ -354,12 +355,12 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "service is draining", http.StatusServiceUnavailable)
 		return
 	}
-	if s.config.EnforceHost && !strings.EqualFold(r.Host, s.expectedHost) {
+	if s.config.EnforceHost && !requestHostMatches(r.Host, s.expectedOrigin) {
 		http.Error(w, "unrecognized Host", http.StatusMisdirectedRequest)
 		return
 	}
 	if s.config.EnforceHost && isStateChanging(r.Method) {
-		if origin := r.Header.Get("Origin"); origin != "" && !strings.EqualFold(origin, s.expectedOrigin) {
+		if origin := r.Header.Get("Origin"); origin != "" && !requestOriginMatches(origin, s.expectedOrigin) {
 			http.Error(w, "unrecognized Origin", http.StatusForbidden)
 			return
 		}
@@ -396,12 +397,79 @@ func requestAuthority(rawBaseURL string) (string, string, error) {
 	return location.Host, location.Scheme + "://" + location.Host, nil
 }
 
+func requestHostMatches(rawHost, expectedOrigin string) bool {
+	expected, err := url.Parse(expectedOrigin)
+	if err != nil || expected.Scheme == "" || expected.Host == "" {
+		return false
+	}
+	candidate, err := url.Parse(expected.Scheme + "://" + rawHost)
+	return err == nil && candidate.User == nil && candidate.Path == "" && candidate.RawQuery == "" && candidate.Fragment == "" &&
+		sameAuthority(candidate, expected)
+}
+
+func requestOriginMatches(rawOrigin, expectedOrigin string) bool {
+	candidate, err := url.Parse(rawOrigin)
+	if err != nil || candidate.Scheme == "" || candidate.Host == "" || candidate.User != nil ||
+		(candidate.Path != "" && candidate.Path != "/") || candidate.RawQuery != "" || candidate.Fragment != "" {
+		return false
+	}
+	expected, err := url.Parse(expectedOrigin)
+	if err != nil || !strings.EqualFold(candidate.Scheme, expected.Scheme) {
+		return false
+	}
+	return sameAuthority(candidate, expected)
+}
+
+func sameAuthority(candidate, expected *url.URL) bool {
+	if canonicalOriginPort(candidate) != canonicalOriginPort(expected) {
+		return false
+	}
+	candidateHost := candidate.Hostname()
+	expectedHost := expected.Hostname()
+	return strings.EqualFold(candidateHost, expectedHost) || (isLoopbackHost(candidateHost) && isLoopbackHost(expectedHost))
+}
+
+func canonicalOriginPort(location *url.URL) string {
+	if port := location.Port(); port != "" {
+		return port
+	}
+	switch strings.ToLower(location.Scheme) {
+	case "http":
+		return "80"
+	case "https":
+		return "443"
+	default:
+		return ""
+	}
+}
+
+func isLoopbackHost(host string) bool {
+	if strings.EqualFold(host, "localhost") {
+		return true
+	}
+	ip := net.ParseIP(host)
+	return ip != nil && ip.IsLoopback()
+}
+
 func isStateChanging(method string) bool {
 	return method != http.MethodGet && method != http.MethodHead && method != http.MethodOptions
 }
 
 func (s *Server) routes(static fs.FS) {
 	s.mux.Handle("GET /static/", http.StripPrefix("/static/", http.FileServer(http.FS(static))))
+	s.mux.HandleFunc("GET /install", func(w http.ResponseWriter, r *http.Request) {
+		http.Redirect(w, r, "/", http.StatusSeeOther)
+	})
+	s.mux.HandleFunc("GET /install/{$}", func(w http.ResponseWriter, r *http.Request) {
+		http.Redirect(w, r, "/", http.StatusSeeOther)
+	})
+	s.mux.HandleFunc("GET /admin/{$}", func(w http.ResponseWriter, r *http.Request) {
+		location := "/admin"
+		if r.URL.RawQuery != "" {
+			location += "?" + r.URL.RawQuery
+		}
+		http.Redirect(w, r, location, http.StatusSeeOther)
+	})
 	s.mux.HandleFunc("GET /maintenance/api/state", s.siteMaintenanceState)
 	s.mux.HandleFunc("GET /health/live", func(w http.ResponseWriter, _ *http.Request) {
 		w.Header().Set("Content-Type", "text/plain; charset=utf-8")
