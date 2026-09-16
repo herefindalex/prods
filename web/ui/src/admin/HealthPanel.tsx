@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Alert, Button, Card, Input, Popconfirm, Select, Space, Table, Tag, Typography, message } from "antd";
-import { api, putJSON } from "./api";
+import { api, apiText, putJSON } from "./api";
 import type { AdminLocale } from "./locales";
 import type { RuntimeLog, SiteMaintenance, SystemComponentHealth, SystemHealth, SystemResourceHealth } from "./types";
 
@@ -31,6 +31,19 @@ const updateText: Record<AdminLocale, { title: string; description(version: stri
   "pt-BR": { title: "Uma nova versão do Prods está disponível", description: (version) => `A versão ${version} está disponível para esta plataforma.`, download: "Baixar versão mais recente" },
 };
 
+
+const runtimeLogCopyText: Record<AdminLocale, { copy: string; copied: string; failed: string }> = {
+  "en-US": { copy: "Copy all", copied: "Runtime log copied.", failed: "Could not copy the runtime log." },
+  "zh-TW": { copy: "複製全部", copied: "已複製執行期日誌。", failed: "無法複製執行期日誌。" },
+  "zh-CN": { copy: "复制全部", copied: "已复制运行时日志。", failed: "无法复制运行时日志。" },
+  "ja-JP": { copy: "すべてコピー", copied: "実行時ログをコピーしました。", failed: "実行時ログをコピーできませんでした。" },
+  "ko-KR": { copy: "전체 복사", copied: "런타임 로그를 복사했습니다.", failed: "런타임 로그를 복사할 수 없습니다." },
+  "de-DE": { copy: "Alles kopieren", copied: "Laufzeitprotokoll kopiert.", failed: "Laufzeitprotokoll konnte nicht kopiert werden." },
+  "fr-FR": { copy: "Tout copier", copied: "Journal d’exécution copié.", failed: "Impossible de copier le journal d’exécution." },
+  "it-IT": { copy: "Copia tutto", copied: "Registro di runtime copiato.", failed: "Impossibile copiare il registro di runtime." },
+  "es-ES": { copy: "Copiar todo", copied: "Registro de ejecución copiado.", failed: "No se pudo copiar el registro de ejecución." },
+  "pt-BR": { copy: "Copiar tudo", copied: "Log de execução copiado.", failed: "Não foi possível copiar o log de execução." },
+};
 const labels = {
   "en-US": {
     title: "System health",
@@ -613,6 +626,23 @@ function statusTag(status: SystemComponentHealth["status"]) {
   return <Tag color={status === "Critical" ? "red" : status === "Warning" ? "gold" : "green"}>{status}</Tag>;
 }
 
+
+async function copyToClipboard(value: string): Promise<void> {
+  if (navigator.clipboard?.writeText) {
+    await navigator.clipboard.writeText(value);
+    return;
+  }
+  const textarea = document.createElement("textarea");
+  textarea.value = value;
+  textarea.style.position = "fixed";
+  textarea.style.opacity = "0";
+  document.body.appendChild(textarea);
+  textarea.select();
+  const copied = document.execCommand("copy");
+  textarea.remove();
+  if (!copied) throw new Error("clipboard copy was rejected");
+}
+
 export function HealthPanel({ locale, onError }: Props) {
   const text = labels[locale];
   const [health, setHealth] = useState<SystemHealth>();
@@ -622,6 +652,7 @@ export function HealthPanel({ locale, onError }: Props) {
 	const [update, setUpdate] = useState<SystemUpdate>();
 	const [runtimeGeneration, setRuntimeGeneration] = useState(0);
   const [loading, setLoading] = useState(false);
+  const [copyingLog, setCopyingLog] = useState(false);
 	const [updatingMaintenance, setUpdatingMaintenance] = useState(false);
   const onErrorRef = useRef(onError);
   onErrorRef.current = onError;
@@ -670,6 +701,20 @@ export function HealthPanel({ locale, onError }: Props) {
   useEffect(() => {
     void load();
   }, [load]);
+  const copyRuntimeLog = async () => {
+    if (!runtimeLog?.available) return;
+    setCopyingLog(true);
+    try {
+	  const content = await apiText(`/admin/api/system/runtime-log/text?generation=${runtimeGeneration}`);
+	  await copyToClipboard(content);
+      message.success(runtimeLogCopyText[locale].copied);
+    } catch {
+      message.error(runtimeLogCopyText[locale].failed);
+    } finally {
+      setCopyingLog(false);
+    }
+  };
+
 
   const componentColumns = [
     {
@@ -795,15 +840,24 @@ export function HealthPanel({ locale, onError }: Props) {
 		</Card>
 		<Card size="small" type="inner" title={text.runtimeLog} style={{ marginBottom: 24 }}>
 			<Space direction="vertical" style={{ width: "100%" }}>
-				<Select
-					aria-label={text.logGeneration}
-					value={runtimeGeneration}
-					onChange={setRuntimeGeneration}
-					options={Array.from({ length: (runtimeLog?.max_generation ?? 5) + 1 }, (_, generation) => ({
-						value: generation,
-						label: generation === 0 ? text.currentLog : `${text.previousLog} ${generation}`,
-					}))}
-				/>
+				<Space wrap>
+					<Select
+						aria-label={text.logGeneration}
+						value={runtimeGeneration}
+						onChange={setRuntimeGeneration}
+						options={Array.from({ length: (runtimeLog?.max_generation ?? 5) + 1 }, (_, generation) => ({
+							value: generation,
+							label: generation === 0 ? text.currentLog : `${text.previousLog} ${generation}`,
+						}))}
+					/>
+					<Button
+						onClick={() => void copyRuntimeLog()}
+						loading={copyingLog}
+						disabled={!runtimeLog?.available}
+					>
+						{runtimeLogCopyText[locale].copy}
+					</Button>
+				</Space>
 				{runtimeLog?.available ? (
 					<>
 						<Typography.Text type="secondary">

@@ -532,6 +532,7 @@ func (s *Server) routes(static fs.FS) {
 	s.mux.HandleFunc("GET /admin/api/system/health", s.adminSystemHealth)
 	s.mux.HandleFunc("GET /admin/api/system/update", s.adminSystemUpdate)
 	s.mux.HandleFunc("GET /admin/api/system/runtime-log", s.adminRuntimeLog)
+	s.mux.HandleFunc("GET /admin/api/system/runtime-log/text", s.adminRuntimeLogText)
 	s.mux.HandleFunc("GET /admin/api/system/maintenance", s.adminSiteMaintenance)
 	s.mux.HandleFunc("PUT /admin/api/system/maintenance", s.adminUpdateSiteMaintenance)
 	s.mux.HandleFunc("GET /admin/api/system/settings", s.adminSiteSettings)

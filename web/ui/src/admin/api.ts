@@ -69,7 +69,7 @@ async function request<T>(path: string, init: RequestInit, read: (response: Resp
   const controller = new AbortController();
   pending.add(controller);
   const headers = new Headers(init.headers);
-  headers.set("Accept", "application/json");
+	if (!headers.has("Accept")) headers.set("Accept", "application/json");
   if (sessionScope) headers.set("X-Prods-Session-Scope", sessionScope);
   headers.set("Accept-Language", requestLocale);
   if (init.body && !(init.body instanceof FormData) && !headers.has("Content-Type")) {
@@ -105,6 +105,10 @@ async function request<T>(path: string, init: RequestInit, read: (response: Resp
 
 export async function api<T>(path: string, init: RequestInit = {}): Promise<T> {
   return request(path, init, async (response) => response.status === 204 ? undefined as T : await response.json() as T);
+}
+
+export async function apiText(path: string): Promise<string> {
+	return request(path, { headers: { Accept: "text/plain" } }, (response) => response.text());
 }
 
 export function postJSON<T>(path: string, body: unknown): Promise<T> {

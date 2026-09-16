@@ -2,6 +2,7 @@ package webapp
 
 import (
 	"encoding/json"
+	"io"
 	"net/http"
 	"net/http/cookiejar"
 	"net/http/httptest"
@@ -109,5 +110,49 @@ func TestRuntimeLogTailRequiresSystemCapabilityAndHidesHostPath(t *testing.T) {
 	_ = invalid.Body.Close()
 	if invalid.StatusCode != http.StatusBadRequest {
 		t.Fatalf("invalid runtime log generation status=%d", invalid.StatusCode)
+	}
+
+	unauthorizedText, err := http.Get(server.URL + "/admin/api/system/runtime-log/text")
+	if err != nil {
+		t.Fatal(err)
+	}
+	_ = unauthorizedText.Body.Close()
+	if unauthorizedText.StatusCode != http.StatusUnauthorized {
+		t.Fatalf("unauthorized runtime log text status=%d", unauthorizedText.StatusCode)
+	}
+
+	textResponse, err := client.Get(server.URL + "/admin/api/system/runtime-log/text")
+	if err != nil {
+		t.Fatal(err)
+	}
+	textBody, err := io.ReadAll(textResponse.Body)
+	_ = textResponse.Body.Close()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if textResponse.StatusCode != http.StatusOK || textResponse.Header.Get("Content-Type") != "text/plain; charset=utf-8" || string(textBody) != "first\nsecond\n" {
+		t.Fatalf("runtime log text status=%d content-type=%q body=%q", textResponse.StatusCode, textResponse.Header.Get("Content-Type"), textBody)
+	}
+
+	rotatedText, err := client.Get(server.URL + "/admin/api/system/runtime-log/text?generation=1")
+	if err != nil {
+		t.Fatal(err)
+	}
+	rotatedBody, err := io.ReadAll(rotatedText.Body)
+	_ = rotatedText.Body.Close()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if rotatedText.StatusCode != http.StatusOK || string(rotatedBody) != "older\n" {
+		t.Fatalf("rotated runtime log text status=%d body=%q", rotatedText.StatusCode, rotatedBody)
+	}
+
+	missingText, err := client.Get(server.URL + "/admin/api/system/runtime-log/text?generation=2")
+	if err != nil {
+		t.Fatal(err)
+	}
+	_ = missingText.Body.Close()
+	if missingText.StatusCode != http.StatusNotFound {
+		t.Fatalf("missing runtime log text status=%d", missingText.StatusCode)
 	}
 }

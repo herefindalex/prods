@@ -55,3 +55,37 @@ func (s *Server) adminRuntimeLog(w http.ResponseWriter, r *http.Request) {
 		SizeBytes: tail.SizeBytes, Truncated: tail.Truncated, Lines: tail.Lines,
 	})
 }
+
+func (s *Server) adminRuntimeLogText(w http.ResponseWriter, r *http.Request) {
+	if _, ok := s.requireCapability(w, r, identity.CapabilitySystemManage, false); !ok {
+		return
+	}
+	generation := 0
+	if raw := r.URL.Query().Get("generation"); raw != "" {
+		parsed, err := strconv.Atoi(raw)
+		if err != nil {
+			s.writeAPIError(w, r, http.StatusBadRequest, apiCodeValidationFailed)
+			return
+		}
+		generation = parsed
+	}
+	if generation < 0 || generation > s.config.RuntimeLogFiles {
+		s.writeAPIError(w, r, http.StatusBadRequest, apiCodeValidationFailed)
+		return
+	}
+	content, err := platform.ReadRuntimeLogContent(
+		s.config.RuntimeLogPath, generation, s.config.RuntimeLogFiles, platform.DefaultRuntimeLogMaxBytes,
+	)
+	if errors.Is(err, os.ErrNotExist) {
+		s.writeAPIError(w, r, http.StatusNotFound, apiCodeNotFound)
+		return
+	}
+	if err != nil {
+		s.internalAPIError(w, r, err)
+		return
+	}
+	w.Header().Set("Cache-Control", "no-store")
+	w.Header().Set("Content-Type", "text/plain; charset=utf-8")
+	w.Header().Set("X-Content-Type-Options", "nosniff")
+	_, _ = w.Write([]byte(content.Body))
+}

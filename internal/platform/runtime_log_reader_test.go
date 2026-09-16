@@ -54,3 +54,60 @@ func TestReadRuntimeLogTailRejectsSymlink(t *testing.T) {
 		t.Fatal("runtime log symlink was accepted")
 	}
 }
+
+func TestReadRuntimeLogContentReadsCompleteSelectedGeneration(t *testing.T) {
+	root := t.TempDir()
+	path := filepath.Join(root, "prods.log")
+	current := "first\nsecond\nthird\n"
+	if err := os.WriteFile(path, []byte(current), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(path+".1", []byte("older\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+
+	content, err := ReadRuntimeLogContent(path, 0, 2, 1024)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if content.FileName != "prods.log" || content.Generation != 0 || content.Body != current || content.SizeBytes != int64(len(current)) {
+		t.Fatalf("content = %+v", content)
+	}
+
+	older, err := ReadRuntimeLogContent(path, 1, 2, 1024)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if older.FileName != "prods.log.1" || older.Generation != 1 || older.Body != "older\n" {
+		t.Fatalf("older content = %+v", older)
+	}
+	if _, err := ReadRuntimeLogContent(path, 3, 2, 1024); err == nil {
+		t.Fatal("out-of-range generation accepted")
+	}
+}
+
+func TestReadRuntimeLogContentRejectsUnsafeOrOversizedFiles(t *testing.T) {
+	root := t.TempDir()
+	path := filepath.Join(root, "prods.log")
+	if err := os.WriteFile(path, []byte("12345"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := ReadRuntimeLogContent(path, 0, 1, 4); err == nil || !strings.Contains(err.Error(), "exceeds") {
+		t.Fatalf("oversized runtime log error = %v", err)
+	}
+
+	secret := filepath.Join(root, "secret")
+	linked := filepath.Join(root, "linked.log")
+	if err := os.WriteFile(secret, []byte("do-not-read"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Symlink(secret, linked); err != nil {
+		if errors.Is(err, os.ErrPermission) {
+			t.Skip("symlinks are not available")
+		}
+		t.Fatal(err)
+	}
+	if _, err := ReadRuntimeLogContent(linked, 0, 1, 1024); err == nil {
+		t.Fatal("runtime log symlink was accepted")
+	}
+}
