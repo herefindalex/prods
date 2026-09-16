@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"reflect"
 	"slices"
 	"time"
 
@@ -87,6 +88,9 @@ func Create(ctx context.Context, dataRoot string, seed int64) (CreateResult, err
 	if err := loadTaxonomy(ctx, store, owner.ID, dataset); err != nil {
 		return CreateResult{}, err
 	}
+	if err := configureListingProfiles(ctx, store, owner.ID); err != nil {
+		return CreateResult{}, err
+	}
 	if err := loadProducts(ctx, store, owner.ID, dataset); err != nil {
 		return CreateResult{}, err
 	}
@@ -145,12 +149,27 @@ func Publish(ctx context.Context, dataRoot, baseURL string) (PublishResult, erro
 		baseURL = "https://catalog.example.test"
 	}
 	engine, err := publishing.NewEngine(ctx, store, publishing.Config{
-		Root: filepath.Join(root, "public"), AssetRoot: filepath.Join(root, "assets"), BaseURL: baseURL,
+		Root: filepath.Join(root, "generated", "public"), AssetRoot: filepath.Join(root, "assets"), BaseURL: baseURL,
 	})
 	if err != nil {
 		return PublishResult{}, fmt.Errorf("start fixture publisher: %w", err)
 	}
 	defer engine.Close()
+	website, err := store.WebsiteState(ctx)
+	if err != nil {
+		return PublishResult{}, fmt.Errorf("load reference website working state: %w", err)
+	}
+	if !reflect.DeepEqual(website.Working, website.Active) || !reflect.DeepEqual(website.WorkingLocalization, website.ActiveLocalization) {
+		epoch, routes, routeErr := store.PublicSiteRouteConfig(ctx)
+		if routeErr != nil {
+			return PublishResult{}, fmt.Errorf("load reference route configuration: %w", routeErr)
+		}
+		if _, routeErr = engine.PublishSiteRoutes(ctx, publishing.SiteRouteRequest{
+			ActorID: owner.ID, ExpectedEpoch: epoch, ExpectedWorkingRevision: website.WorkingRevision, Config: routes,
+		}); routeErr != nil {
+			return PublishResult{}, fmt.Errorf("publish reference website configuration: %w", routeErr)
+		}
+	}
 	if _, err := engine.ProcessBatch(ctx, 0); err != nil {
 		return PublishResult{}, fmt.Errorf("process reference publication batch: %w", err)
 	}
@@ -162,7 +181,35 @@ func Publish(ctx context.Context, dataRoot, baseURL string) (PublishResult, erro
 	if err := writeJSON(manifestPath, manifest); err != nil {
 		return PublishResult{}, err
 	}
-	return PublishResult{DataRoot: root, Published: len(manifest.PublishedProductIDs), ManifestPath: manifestPath, PublicRoot: filepath.Join(root, "public"), PublicationLag: health}, nil
+	return PublishResult{DataRoot: root, Published: len(manifest.PublishedProductIDs), ManifestPath: manifestPath, PublicRoot: filepath.Join(root, "generated", "public"), PublicationLag: health}, nil
+}
+
+func configureListingProfiles(ctx context.Context, store *storesqlite.Store, actorID string) error {
+	state, err := store.WebsiteState(ctx)
+	if err != nil {
+		return fmt.Errorf("load listing profile working state: %w", err)
+	}
+	state.Working.CategoryListingProfiles = map[string]site.CategoryListingProfile{
+		categoryID("semi-ldo"): {
+			VisibleColumns: []string{"part_number", "name", "manufacturer", "spec:spc_input_voltage", "spec:spc_output_voltage", "spec:spc_output_current", "package", "documents", "rfq"},
+			DefaultSort:    "part_number", DefaultSortDirection: "asc",
+			MobileKeySpecs: []string{"spec:spc_input_voltage", "spec:spc_output_voltage", "spec:spc_output_current"},
+		},
+		categoryID("semi-buck"): {
+			VisibleColumns: []string{"part_number", "manufacturer", "spec:spc_output_current", "spec:spc_input_voltage", "spec:spc_switching_frequency", "package", "documents", "rfq"},
+			DefaultSort:    "manufacturer", DefaultSortDirection: "asc",
+			MobileKeySpecs: []string{"spec:spc_output_current", "spec:spc_input_voltage"},
+		},
+		categoryID("connector-board"): {
+			VisibleColumns: []string{"part_number", "name", "manufacturer", "spec:spc_positions", "spec:spc_pitch", "spec:spc_rated_contact_current", "documents", "rfq"},
+			DefaultSort:    "name", DefaultSortDirection: "asc",
+			MobileKeySpecs: []string{"spec:spc_positions", "spec:spc_pitch"},
+		},
+	}
+	if _, err := store.SaveWebsiteWorking(ctx, actorID, state.WorkingRevision, state.Working); err != nil {
+		return fmt.Errorf("save reference listing profiles: %w", err)
+	}
+	return nil
 }
 
 func Verify(ctx context.Context, dataRoot string) (Manifest, error) {

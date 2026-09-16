@@ -422,6 +422,7 @@ func (s *Server) routes(static fs.FS) {
 		_, _ = w.Write([]byte("ready\n"))
 	})
 	s.mux.HandleFunc("GET /{$}", s.search)
+	s.mux.HandleFunc("GET /catalog", s.search)
 	s.mux.HandleFunc("GET /search", s.search)
 	s.mux.HandleFunc("GET /api/locales", s.publicLocales)
 	s.mux.HandleFunc("GET /products/{artifact}", s.product)
@@ -631,7 +632,7 @@ func (s *Server) currentPublicPage(r *http.Request, views []publishing.PublicVie
 	page := publicPage{
 		Site: configuration, SiteEpoch: epoch, Language: language,
 		Navigation: configuration.VisibleNavigation(), Stylesheet: template.CSS(configuration.Stylesheet()),
-		Text: localization.ApplyPublicCopy(localization.For(language), publicCopy), CatalogURL: withLanguage("/search", language), RFQURL: withLanguage("/rfq", language),
+		Text: localization.ApplyPublicCopy(localization.For(language), publicCopy), CatalogURL: withLanguage("/catalog", language), RFQURL: withLanguage("/rfq", language),
 	}
 	for _, locale := range supportedLocales {
 		page.LanguageOptions = append(page.LanguageOptions, publicLanguageOption{Locale: locale, URL: withLanguage(r.URL.RequestURI(), locale), Active: locale == language})
@@ -694,78 +695,7 @@ type searchFilterOption struct {
 }
 
 func (s *Server) search(w http.ResponseWriter, r *http.Request) {
-	query := r.URL.Query().Get("q")
-	filters := publicSearchFilters{
-		ManufacturerID: strings.TrimSpace(r.URL.Query().Get("manufacturer_id")),
-		BrandID:        strings.TrimSpace(r.URL.Query().Get("brand_id")),
-		CategoryID:     strings.TrimSpace(r.URL.Query().Get("category_id")),
-	}
-	page, _ := strconv.Atoi(r.URL.Query().Get("page"))
-	if page < 1 {
-		page = 1
-	}
-	const pageSize = 3
-	allViews, err := s.publicViews(r.Context())
-	if err != nil {
-		s.internalError(w, err)
-		return
-	}
-	views := allViews
-	if query != "" && s.publisher != nil {
-		views, err = s.publisher.Search(r.Context(), query)
-	}
-	if err != nil {
-		s.internalError(w, err)
-		return
-	}
-	if query != "" && s.publisher == nil {
-		folded := catalog.FoldSearch(query)
-		filtered := make([]publishing.PublicView, 0, len(views))
-		for _, view := range views {
-			haystack := catalog.FoldSearch(strings.Join([]string{
-				view.PartNumber, view.Name, view.Manufacturer, view.Brand, view.Category, view.Lifecycle, publicApplicationNames(view.Applications),
-			}, " "))
-			if strings.Contains(haystack, folded) {
-				filtered = append(filtered, view)
-			}
-		}
-		views = filtered
-	}
-	views = filterPublicViews(views, filters)
-	manufacturerOptions, brandOptions, categoryOptions := publicSearchFilterOptions(allViews, filters)
-	total := len(views)
-	start := (page - 1) * pageSize
-	if start > total {
-		start = total
-	}
-	end := start + pageSize
-	if end > total {
-		end = total
-	}
-	presentation, err := s.currentPublicPage(r, views)
-	if err != nil {
-		s.writePublicPageError(w, err)
-		return
-	}
-	w.Header().Set("Content-Language", presentation.Language)
-	displayProducts := append([]publishing.PublicView(nil), views[start:end]...)
-	for index := range displayProducts {
-		displayProducts[index] = displayProducts[index].ForLocale(presentation.Language)
-		displayProducts[index].CanonicalURL = withLanguage(displayProducts[index].CanonicalURL, presentation.Language)
-	}
-	data := searchPage{
-		publicPage: presentation, Title: presentation.Text.Catalog, Query: query, Products: displayProducts,
-		NoResults: query != "" && total == 0, RequestURL: withLanguage("/rfq?query="+url.QueryEscape(query), presentation.Language),
-		ManufacturerID: filters.ManufacturerID, BrandID: filters.BrandID, CategoryID: filters.CategoryID,
-		ManufacturerOptions: manufacturerOptions, BrandOptions: brandOptions, CategoryOptions: categoryOptions,
-	}
-	if page > 1 {
-		data.PreviousURL = searchURL(query, page-1, presentation.Language, filters)
-	}
-	if page*pageSize < total {
-		data.NextURL = searchURL(query, page+1, presentation.Language, filters)
-	}
-	s.render(w, "search", data)
+	s.renderCatalogSearch(w, r)
 }
 
 func filterPublicViews(views []publishing.PublicView, filters publicSearchFilters) []publishing.PublicView {
@@ -853,77 +783,7 @@ func (s *Server) publicApplication(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) publicAggregate(w http.ResponseWriter, r *http.Request, kind string) {
-	views, err := s.publicViews(r.Context())
-	if err != nil {
-		s.internalError(w, err)
-		return
-	}
-	targetURL := strings.TrimRight(s.config.BaseURL, "/") + r.URL.Path
-	filtered := make([]publishing.PublicView, 0)
-	title := ""
-	for _, view := range views {
-		var aggregateURL, aggregateName string
-		switch kind {
-		case "category":
-			for _, category := range view.CategoryTrail {
-				if category.URL == targetURL {
-					aggregateURL, aggregateName = category.URL, category.Name
-					break
-				}
-			}
-			if aggregateURL == "" && view.CategoryURL == targetURL {
-				aggregateURL, aggregateName = view.CategoryURL, view.Category
-			}
-		case "manufacturer":
-			aggregateURL, aggregateName = view.ManufacturerURL, view.Manufacturer
-		case "brand":
-			aggregateURL, aggregateName = view.BrandURL, view.Brand
-		case "application":
-			for _, application := range view.Applications {
-				if application.URL == targetURL {
-					aggregateURL, aggregateName = application.URL, application.Name
-					break
-				}
-			}
-		default:
-			s.internalError(w, errors.New("unknown public aggregate kind"))
-			return
-		}
-		if aggregateURL == targetURL {
-			filtered = append(filtered, view)
-			if title == "" {
-				title = aggregateName
-			}
-		}
-	}
-	if len(filtered) == 0 {
-		http.NotFound(w, r)
-		return
-	}
-	hasher := sha256.New()
-	_, _ = io.WriteString(hasher, targetURL)
-	for _, view := range filtered {
-		_, _ = fmt.Fprintf(hasher, "\x00%s\x00%d\x00%d", view.ID, view.Revision, view.SiteEpoch)
-	}
-	etag := `"g-` + hex.EncodeToString(hasher.Sum(nil))[:32] + `"`
-	w.Header().Set("ETag", etag)
-	w.Header().Set("Cache-Control", "public, max-age=0, must-revalidate")
-	if r.Header.Get("If-None-Match") == etag {
-		w.WriteHeader(http.StatusNotModified)
-		return
-	}
-	presentation, err := s.currentPublicPage(r, filtered)
-	if err != nil {
-		s.writePublicPageError(w, err)
-		return
-	}
-	w.Header().Set("Content-Language", presentation.Language)
-	displayProducts := append([]publishing.PublicView(nil), filtered...)
-	for index := range displayProducts {
-		displayProducts[index] = displayProducts[index].ForLocale(presentation.Language)
-		displayProducts[index].CanonicalURL = withLanguage(displayProducts[index].CanonicalURL, presentation.Language)
-	}
-	s.render(w, "search", searchPage{publicPage: presentation, Title: title, Products: displayProducts})
+	s.renderCatalogAggregate(w, r, kind)
 }
 
 func publicApplicationNames(applications []publishing.Application) string {

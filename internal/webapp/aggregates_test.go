@@ -1,6 +1,7 @@
 package webapp
 
 import (
+	"encoding/json"
 	"net/http"
 	"net/http/httptest"
 	"path/filepath"
@@ -9,8 +10,123 @@ import (
 
 	"prods/internal/catalog"
 	"prods/internal/identity"
+	"prods/internal/site"
 	"prods/internal/storage/sqlite"
 )
+
+func TestCategoryListingProfileActivatesOnlyWithWebsitePublishAndKeepsEmptyCategory(t *testing.T) {
+	root := t.TempDir()
+	store, err := sqlite.Create(filepath.Join(root, "prods.db"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _ = store.Close() })
+	passwordHash, err := identity.HashPassword("ownerpass1")
+	if err != nil {
+		t.Fatal(err)
+	}
+	owner, err := store.CompleteInstallation(t.Context(), sqlite.Installation{
+		OwnerEmail: "owner@example.test", OwnerDisplayName: "Owner", PasswordHash: passwordHash,
+		DefaultLocale: "en-US", SupportedLocales: []string{"en-US"}, TimeZone: "UTC",
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	app, _, err := New(store, Config{BaseURL: "http://catalog.example.test", PublicDir: filepath.Join(root, "generated"), AssetDir: filepath.Join(root, "assets"), WorkDir: filepath.Join(root, "work")})
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(app.Close)
+	server := httptest.NewServer(app)
+	t.Cleanup(server.Close)
+	client := newCookieClient(t)
+	csrf := loginNormalAdmin(t, client, server.URL, "owner@example.test", "ownerpass1")
+
+	category := createCategoryAPI(t, client, server.URL, csrf, `{"id":"cat_listing","name":"Listing","slug":"listing","status":"active","revision":1}`)
+	empty := createCategoryAPI(t, client, server.URL, csrf, `{"id":"cat_empty","name":"Empty","slug":"empty","status":"active","revision":1}`)
+	for _, payload := range []string{
+		`{"id":"spec_input","name":"Input voltage","preferred_unit":"V","filterable":true,"semantic_version":1,"status":"active","revision":1}`,
+		`{"id":"spec_output","name":"Output current","preferred_unit":"A","filterable":true,"semantic_version":1,"status":"active","revision":1}`,
+	} {
+		response := postAdminJSON(t, client, server.URL+"/admin/api/specs", csrf, payload)
+		if body := responseBody(t, response); response.StatusCode != http.StatusCreated {
+			t.Fatalf("create spec status=%d body=%s", response.StatusCode, body)
+		}
+	}
+	setResponse := postAdminJSON(t, client, server.URL+"/admin/api/spec-sets", csrf, `{"id":"set_listing","name":"Listing","status":"active","revision":1,"spec_ids":["spec_input","spec_output"]}`)
+	if body := responseBody(t, setResponse); setResponse.StatusCode != http.StatusCreated {
+		t.Fatalf("create spec set status=%d body=%s", setResponse.StatusCode, body)
+	}
+	assignment := postAdminJSON(t, client, server.URL+"/admin/api/categories/"+category.ID+"/spec-set", csrf, `{"expected_revision":1,"spec_set_id":"set_listing"}`)
+	if body := responseBody(t, assignment); assignment.StatusCode != http.StatusNoContent {
+		t.Fatalf("assign spec set status=%d body=%s", assignment.StatusCode, body)
+	}
+	created := postAdminJSON(t, client, server.URL+"/admin/api/products", csrf, `{"part_number":"LIST-1","name":"Listing product","category_id":"`+category.ID+`","status":"published"}`)
+	if body := responseBody(t, created); created.StatusCode != http.StatusCreated {
+		t.Fatalf("create product status=%d body=%s", created.StatusCode, body)
+	}
+	waitForPublicBody(t, client, server.URL+"/categories/listing", "LIST-1")
+	before, err := client.Get(server.URL + "/categories/listing")
+	if err != nil {
+		t.Fatal(err)
+	}
+	beforeBody := responseBody(t, before)
+	if strings.Index(beforeBody, "Input voltage") > strings.Index(beforeBody, "Output current") {
+		t.Fatalf("default Common order unexpected: %s", beforeBody)
+	}
+
+	state, err := store.WebsiteState(t.Context())
+	if err != nil {
+		t.Fatal(err)
+	}
+	state.Working.CategoryListingProfiles = map[string]site.CategoryListingProfile{
+		category.ID: {
+			VisibleColumns: []string{"part_number", "spec:spec_output", "spec:spec_input", "rfq"},
+			DefaultSort:    "part_number", DefaultSortDirection: "asc", MobileKeySpecs: []string{"spec:spec_output"},
+		},
+	}
+	state, err = store.SaveWebsiteWorking(t.Context(), owner.ID, state.WorkingRevision, state.Working)
+	if err != nil {
+		t.Fatal(err)
+	}
+	unpublished, err := client.Get(server.URL + "/categories/listing")
+	if err != nil {
+		t.Fatal(err)
+	}
+	unpublishedBody := responseBody(t, unpublished)
+	if strings.Index(unpublishedBody, "Input voltage") > strings.Index(unpublishedBody, "Output current") {
+		t.Fatal("working listing profile leaked before Website Publish")
+	}
+	publishPayload, err := json.Marshal(map[string]any{
+		"expected_epoch": 1, "expected_working_revision": state.WorkingRevision,
+		"config": map[string]any{"product_prefix": "/products", "url_pattern": "compact"},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	published := postAdminJSON(t, client, server.URL+"/admin/api/website/routes/publish", csrf, string(publishPayload))
+	if body := responseBody(t, published); published.StatusCode != http.StatusOK {
+		t.Fatalf("publish Website status=%d body=%s", published.StatusCode, body)
+	}
+	after, err := client.Get(server.URL + "/categories/listing")
+	if err != nil {
+		t.Fatal(err)
+	}
+	afterBody := responseBody(t, after)
+	if strings.Index(afterBody, "Output current") < 0 || strings.Index(afterBody, "Input voltage") < 0 || strings.Index(afterBody, "Output current") > strings.Index(afterBody, "Input voltage") {
+		t.Fatalf("published listing profile not active: %s", afterBody)
+	}
+	if strings.Contains(afterBody, ">Name</th>") {
+		t.Fatal("published profile retained a removed column")
+	}
+	emptyResponse, err := client.Get(server.URL + "/categories/" + empty.Slug)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if body := responseBody(t, emptyResponse); emptyResponse.StatusCode != http.StatusOK || !strings.Contains(body, "no published products") {
+		t.Fatalf("empty Category status=%d body=%s", emptyResponse.StatusCode, body)
+	}
+}
 
 func TestPublicAggregatesAndSitemapUseOnlyActiveSnapshots(t *testing.T) {
 	root := t.TempDir()
@@ -133,8 +249,12 @@ func TestPublicAggregatesAndSitemapUseOnlyActiveSnapshots(t *testing.T) {
 			t.Fatal(err)
 		}
 		body := responseBody(t, response)
-		if response.StatusCode == http.StatusOK || response.StatusCode == http.StatusNotModified || strings.Contains(body, "AGG-1") {
+		categoryRoute := strings.HasPrefix(route, "/categories/")
+		if response.StatusCode == http.StatusNotModified || strings.Contains(body, "AGG-1") || (response.StatusCode == http.StatusOK && !categoryRoute) {
 			t.Fatalf("revoked aggregate %s status=%d body=%s", route, response.StatusCode, body)
+		}
+		if categoryRoute && response.StatusCode != http.StatusOK {
+			t.Fatalf("empty active category %s status=%d body=%s", route, response.StatusCode, body)
 		}
 	}
 	assertPublicAbsent(t, client, server.URL+"/sitemap.xml", product.ID)

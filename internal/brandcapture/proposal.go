@@ -49,6 +49,14 @@ func cloneConfiguration(configuration site.Configuration) site.Configuration {
 	cloned := configuration
 	cloned.Organization.ContactLinks = append([]site.ContactLink(nil), configuration.Organization.ContactLinks...)
 	cloned.Navigation = append([]site.NavigationItem(nil), configuration.Navigation...)
+	if configuration.CategoryListingProfiles != nil {
+		cloned.CategoryListingProfiles = make(map[string]site.CategoryListingProfile, len(configuration.CategoryListingProfiles))
+		for categoryID, profile := range configuration.CategoryListingProfiles {
+			profile.VisibleColumns = append([]string(nil), profile.VisibleColumns...)
+			profile.MobileKeySpecs = append([]string(nil), profile.MobileKeySpecs...)
+			cloned.CategoryListingProfiles[categoryID] = profile
+		}
+	}
 	return cloned
 }
 
@@ -61,7 +69,7 @@ func proposedNavigation(current []site.NavigationItem, captured []Navigation) []
 		if target == "" {
 			continue
 		}
-		if target == "/search" || target == "/rfq" {
+		if target == "/catalog" || target == "/rfq" {
 			if _, exists := coreTargets[target]; exists {
 				continue
 			}
@@ -85,7 +93,7 @@ func ensureCoreNavigation(navigation *[]site.NavigationItem) {
 	core := []struct {
 		id, label, target string
 	}{
-		{"catalog", "Catalog", "/search"},
+		{"catalog", "Catalog", "/catalog"},
 		{"rfq", "Request quote", "/rfq"},
 	}
 	usedIDs := make(map[string]struct{}, len(*navigation)+2)
@@ -122,7 +130,7 @@ func mapCatalogTarget(label, target string) string {
 	lowerPath := strings.ToLower(parsed.Path)
 	if strings.Contains(lowerLabel, "product") || strings.Contains(lowerLabel, "catalog") ||
 		strings.HasPrefix(lowerPath, "/products") || strings.HasPrefix(lowerPath, "/catalog") {
-		return "/search"
+		return "/catalog"
 	}
 	return parsed.String()
 }

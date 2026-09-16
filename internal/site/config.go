@@ -108,7 +108,7 @@ func DefaultConfiguration() Configuration {
 	return Configuration{
 		Organization: Organization{DisplayName: "Product Catalog"},
 		Navigation: []NavigationItem{
-			{ID: "catalog", Label: "Catalog", URL: "/search", SortOrder: 10, Visible: true},
+			{ID: "catalog", Label: "Catalog", URL: "/catalog", SortOrder: 10, Visible: true},
 			{ID: "rfq", Label: "Request quote", URL: "/rfq", SortOrder: 20, Visible: true},
 		},
 		Theme: Theme{

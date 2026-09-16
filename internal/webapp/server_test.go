@@ -132,8 +132,8 @@ func TestNoResultsPaginationAndHiddenBoundary(t *testing.T) {
 		present string
 		absent  string
 	}{
-		{"/search?page=1", "Next page", "SECRET-POC-01"},
-		{"/search?page=2", "Previous page", "SECRET-POC-01"},
+		{"/search?page=1&page_size=3", "Next page", "SECRET-POC-01"},
+		{"/search?page=2&page_size=3", "Previous page", "SECRET-POC-01"},
 		{"/search?q=TI+TPS54331DR", "Request this part", "SECRET-POC-01"},
 		{"/products/synthetic-hidden.json", "404 page not found", "SECRET-POC-01"},
 	} {

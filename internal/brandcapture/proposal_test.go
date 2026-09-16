@@ -45,7 +45,7 @@ func TestBuildProposalChangesOnlyCapturedFieldsAndKeepsCorePaths(t *testing.T) {
 		proposed.Theme.ContentWidthPX != current.Theme.ContentWidthPX || !reflect.DeepEqual(proposed.SEO, current.SEO) {
 		t.Fatalf("proposal overwrote unrelated manual state: %+v", proposed)
 	}
-	if navigationURLCount(proposed.Navigation, "/search") != 1 || navigationURLCount(proposed.Navigation, "/rfq") != 1 {
+	if navigationURLCount(proposed.Navigation, "/catalog") != 1 || navigationURLCount(proposed.Navigation, "/rfq") != 1 {
 		t.Fatalf("core navigation was not preserved exactly once: %+v", proposed.Navigation)
 	}
 	if navigationURLCount(proposed.Navigation, "https://www.new.example/support") != 1 {

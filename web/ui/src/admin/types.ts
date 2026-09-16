@@ -226,6 +226,7 @@ export type SiteNavigationItem = {
 };
 
 export type SiteConfiguration = {
+  category_listing_profiles?: Record<string, CategoryListingProfile>;
   organization: {
     display_name: string;
     legal_name?: string;
@@ -251,6 +252,13 @@ export type SiteConfiguration = {
     default_title?: string;
     default_description?: string;
   };
+};
+
+export type CategoryListingProfile = {
+  visible_columns: string[];
+  default_sort?: "part_number" | "name" | "manufacturer" | "brand" | "lifecycle";
+  default_sort_direction?: "asc" | "desc";
+  mobile_key_specs?: string[];
 };
 
 export type PublicCopyOverride = {

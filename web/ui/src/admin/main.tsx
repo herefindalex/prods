@@ -12,6 +12,7 @@ import { HealthPanel } from "./HealthPanel";
 import { ImportPanel } from "./ImportPanel";
 import { JobsPanel } from "./JobsPanel";
 import { LoginPage } from "./LoginPage";
+import { ListingProfilesPanel } from "./ListingProfilesPanel";
 import { PublicCopyPanel } from "./PublicCopyPanel";
 import { ProductBulkPanel } from "./ProductBulkPanel";
 import { SettingsPanel } from "./SettingsPanel";
@@ -33,6 +34,7 @@ const adminText = {
     imports: "Imports",
     productBulk: "Product bulk",
     jobs: "Jobs",
+    listingProfiles: "Listing profiles",
     website: "Website",
     publicCopy: "Public copy",
     access: "Users & roles",
@@ -54,6 +56,7 @@ const adminText = {
     imports: "匯入",
     productBulk: "Product 批次",
     jobs: "工作",
+    listingProfiles: "列表設定檔",
     website: "網站",
     publicCopy: "公開介面文案",
     access: "使用者與角色",
@@ -217,6 +220,11 @@ function AdminApp() {
                   key: "website",
                   label: text.website,
                   children: <WebsitePanel locale={locale} onError={showError} onMessage={showMessage} />,
+                },
+                {
+                  key: "listing-profiles",
+                  label: text.listingProfiles,
+                  children: <ListingProfilesPanel locale={locale} onError={showError} onMessage={showMessage} />,
                 },
                 {
                   key: "public-copy",

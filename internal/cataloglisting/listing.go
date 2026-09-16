@@ -46,6 +46,7 @@ type Column struct {
 	PreferredUnit string `json:"preferred_unit,omitempty"`
 	Sortable      bool   `json:"sortable"`
 	MobileKey     bool   `json:"mobile_key"`
+	MobileVisible bool   `json:"mobile_visible"`
 }
 
 type Row struct {
@@ -260,10 +261,13 @@ func resolveColumns(scope Scope, profile site.CategoryListingProfile, hasProfile
 			if !exists {
 				continue
 			}
-			columns = append(columns, Column{Key: key, Label: spec.Name, Kind: "spec", PreferredUnit: spec.PreferredUnit, MobileKey: mobile[key]})
+			columns = append(columns, Column{Key: key, Label: spec.Name, Kind: "spec", PreferredUnit: spec.PreferredUnit, MobileKey: mobile[key], MobileVisible: mobile[key]})
 			continue
 		}
-		columns = append(columns, Column{Key: key, Label: baseLabel(key), Kind: "base", Sortable: sortableBase(key)})
+		columns = append(columns, Column{
+			Key: key, Label: baseLabel(key), Kind: "base", Sortable: sortableBase(key),
+			MobileVisible: key == "part_number" || key == "name" || key == "manufacturer" || key == "brand" || key == "documents" || key == "rfq",
+		})
 	}
 	return columns
 }
