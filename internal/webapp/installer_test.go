@@ -485,8 +485,8 @@ func TestInstallerRoutesExcludeNormalApplication(t *testing.T) {
 	}
 	for _, path := range []string{"/search", "/rfq", "/admin", "/products/example", "/admin/api/rfqs"} {
 		response := requestWithCookies(app, http.MethodGet, path, nil)
-		if response.Code != http.StatusNotFound {
-			t.Errorf("%s status=%d", path, response.Code)
+		if response.Code != http.StatusSeeOther || response.Header().Get("Location") != "/install" {
+			t.Errorf("%s status=%d location=%q", path, response.Code, response.Header().Get("Location"))
 		}
 	}
 	if response := requestWithCookies(app, http.MethodGet, "/health/live", nil); response.Code != http.StatusOK {

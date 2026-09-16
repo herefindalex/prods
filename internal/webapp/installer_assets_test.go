@@ -46,8 +46,15 @@ func TestInstallerUsesOnlyItsDedicatedStaticStyles(t *testing.T) {
 		t.Fatalf("installer script status=%d body=%s", script.Code, script.Body.String())
 	}
 	publicAsset := installerAssetRequest(installer, "/static/public/public.css")
-	if publicAsset.Code != http.StatusNotFound {
-		t.Fatalf("public asset exposed by installer: status=%d", publicAsset.Code)
+	if publicAsset.Code != http.StatusSeeOther || publicAsset.Header().Get("Location") != "/install" {
+		t.Fatalf("unknown installer asset status=%d location=%q", publicAsset.Code, publicAsset.Header().Get("Location"))
+	}
+
+	for _, target := range []string{"/", "/unknown", "/admin", "/install/", "/products/example"} {
+		response := installerAssetRequest(installer, target)
+		if response.Code != http.StatusSeeOther || response.Header().Get("Location") != "/install" {
+			t.Fatalf("unknown installer route %q status=%d location=%q", target, response.Code, response.Header().Get("Location"))
+		}
 	}
 }
 

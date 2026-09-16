@@ -123,11 +123,7 @@ func NewInstaller(store *sqlite.Store, config InstallerConfig) (*InstallerServer
 		_, _ = w.Write([]byte("not ready\n"))
 	})
 	server.mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		if r.URL.Path == "/" {
-			http.Redirect(w, r, "/install", http.StatusTemporaryRedirect)
-			return
-		}
-		http.NotFound(w, r)
+		http.Redirect(w, r, "/install", http.StatusSeeOther)
 	})
 	return server, generated, nil
 }
