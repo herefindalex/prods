@@ -52,7 +52,7 @@ func TestLoginAndSetPasswordRespectConfiguredInterfaceLanguage(t *testing.T) {
 	if login.Code != http.StatusOK ||
 		!strings.Contains(login.Header().Get("Content-Security-Policy"), "script-src 'self'") ||
 		!strings.Contains(login.Header().Get("Content-Security-Policy"), "frame-ancestors 'none'") ||
-		login.Header().Get("Referrer-Policy") != "no-referrer" ||
+		login.Header().Get("Referrer-Policy") != "same-origin" ||
 		!strings.Contains(login.Body.String(), "Prods 管理後台") ||
 		!strings.Contains(login.Body.String(), "data-email-label=\"電子郵件\"") ||
 		!strings.Contains(login.Body.String(), "id=\"admin-login-root\"") ||

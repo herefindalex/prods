@@ -104,7 +104,7 @@ func TestAdminDocumentsSetSecurityHeaders(t *testing.T) {
 			t.Fatalf("admin CSP missing %q: %s", required, policy)
 		}
 	}
-	if response.Header.Get("Referrer-Policy") != "no-referrer" ||
+	if response.Header.Get("Referrer-Policy") != "same-origin" ||
 		response.Header.Get("X-Content-Type-Options") != "nosniff" ||
 		response.Header.Get("X-Frame-Options") != "DENY" {
 		t.Fatalf("admin security headers incomplete: %v", response.Header)
