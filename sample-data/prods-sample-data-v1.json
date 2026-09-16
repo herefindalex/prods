@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "release_version": "v0.6.7",
+  "release_version": "v0.6.8",
   "dataset_version": "a01-r1",
   "seed": 20260916,
   "source_statement": "Deterministic synthetic electronic-component data; no customer records, third-party catalog copy, or production assets.",

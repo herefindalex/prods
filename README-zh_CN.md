@@ -219,7 +219,7 @@ CGO_ENABLED=0 go build -trimpath -o prods ./cmd/prods
 创建含嵌入版本、对应 sample data、源代码 metadata、许可文件与 checksum 的 Linux amd64、Windows amd64、macOS Intel 与 macOS Apple Silicon release：
 
 ```sh
-./scripts/build-release.sh v0.6.7
+./scripts/build-release.sh v0.6.8
 ```
 
 输出位于 `dist/<version>/`。根目录 [`VERSION`](VERSION) 是唯一版本来源；script 会拒绝不同参数，GitHub Actions 也会拒绝不同 tag。同一版本会写入每个 binary、sample payload、`BUILD_INFO.txt`、产物目录与 GitHub Release tag。Cross-build 只能证明可编译；Windows 必须在 Windows 实际运行后才能宣称通过 runtime 验证，两个 macOS 产物在 native macOS 验收前均明确列为未测试。

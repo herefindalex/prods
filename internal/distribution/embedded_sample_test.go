@@ -6,11 +6,11 @@ import (
 )
 
 func TestEmbeddedSampleMatchesCompiledRelease(t *testing.T) {
-	sample, err := LoadEmbeddedSample("v0.6.7")
+	sample, err := LoadEmbeddedSample("v0.6.8")
 	if err != nil {
 		t.Fatal(err)
 	}
-	if sample.Data.SchemaVersion != 1 || sample.Data.ReleaseVersion != "v0.6.7" || sample.Data.DatasetVersion == "" {
+	if sample.Data.SchemaVersion != 1 || sample.Data.ReleaseVersion != "v0.6.8" || sample.Data.DatasetVersion == "" {
 		t.Fatalf("embedded sample metadata = %+v", sample.Data)
 	}
 	if len(sample.Data.Dictionaries) != 64 || len(sample.Data.Categories) != 58 || len(sample.Data.Specs) != 34 ||
@@ -32,10 +32,10 @@ func TestEmbeddedSampleMatchesCompiledRelease(t *testing.T) {
 }
 
 func TestEmbeddedSampleRejectsDifferentBinaryVersion(t *testing.T) {
-	if _, err := LoadEmbeddedSample("v0.6.8"); !errors.Is(err, ErrUnavailable) {
+	if _, err := LoadEmbeddedSample("v0.6.9"); !errors.Is(err, ErrUnavailable) {
 		t.Fatalf("mismatched binary version error=%v", err)
 	}
-	if EmbeddedSampleAvailable("v0.6.8") {
+	if EmbeddedSampleAvailable("v0.6.9") {
 		t.Fatal("mismatched binary version reported embedded sample available")
 	}
 }
