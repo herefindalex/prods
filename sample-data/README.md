@@ -1,6 +1,6 @@
 # Prods installer sample data
 
-Release builds generate `prods-sample-data-v1.json` from the deterministic synthetic reference catalog. The file is a GitHub Release asset and is never embedded in the Prods runtime binary. Its SHA-256 companion is `prods-sample-data-v1.json.sha256`.
+[`prods-sample-data-v1.json`](prods-sample-data-v1.json) is the release-bound payload generated from the deterministic synthetic reference catalog. It is tracked here so the data is reviewable in the repository, published as a GitHub Release asset, and never embedded in the Prods runtime binary. Its SHA-256 companion is [`prods-sample-data-v1.json.sha256`](prods-sample-data-v1.json.sha256).
 
 The format is defined by `schema-v1.json`, which is published with every GitHub Release as an auditable schema snapshot. `schema_version` changes only for an incompatible file-format change. `release_version` must exactly match the running binary's compiled release version and the GitHub Release tag. `dataset_version` identifies the synthetic data revision independently of the application release. The installer rejects unknown fields, checksum mismatches, a different release version, duplicate IDs or current identities, invalid parent ordering, and invalid domain values. Runtime validation is compiled into the binary, so it never follows a mutable schema from the repository default branch.
 
@@ -13,3 +13,5 @@ Generate a payload locally:
 ```sh
 go run ./cmd/prods-sample -release-version v0.6.6 -output /tmp/prods-sample-data-v1.json
 ```
+
+Before publishing, `scripts/build-release.sh` regenerates the payload and checksum, then compares them byte-for-byte with the files in this directory. A stale payload, schema, checksum, version, or nondeterministic generator stops the release.
