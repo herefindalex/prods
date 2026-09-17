@@ -4,6 +4,7 @@
   "version": "0.1.0",
   "type": "module",
   "scripts": {
+    "dev": "vite --config vite.dev.config.ts",
     "build": "vite build --config vite.system.config.ts && node scripts/build-styles.mjs && vite build --config vite.public.config.ts && vite build --config vite.admin.config.ts",
     "build:styles": "node scripts/build-styles.mjs",
     "build:public": "node scripts/build-styles.mjs && vite build --config vite.public.config.ts",
