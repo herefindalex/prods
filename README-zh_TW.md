@@ -194,6 +194,31 @@ Browser / crawler
 - Restore 使用 durable journal；`prepared` 之前可安全放棄，之後只能用同一 operation 依各 root 證據向前完成。
 - Admin 使用不透明 server-side session、server-side authorization、same-origin CSRF 與可信任 Host／proxy 設定。
 
+## 本地 UI 開發（Admin + Public HMR）
+
+正式環境仍內嵌建置後的 Admin／Public 資產。本地 React HMR 請以 Vite 當瀏覽器入口，並反代到 Go：
+
+1. Terminal A — 啟動 Prods（`base_url` 維持指向 Go listen，例如 `http://127.0.0.1:3310`）：
+
+```sh
+./prods
+```
+
+Vite proxy 會把瀏覽器的 `Origin`／`Referer`（`:5173`）改寫成 Go 的 `base_url` origin，避免 Admin POST（例如 `/admin/login`）被 `EnforceHost` 回 403。
+
+2. Terminal B — 啟動 Vite proxy（此流程才需要 Node.js／pnpm）：
+
+```sh
+pnpm --dir web/ui install --frozen-lockfile
+pnpm --dir web/ui dev
+```
+
+3. 瀏覽 `http://127.0.0.1:5173/` 與 `http://127.0.0.1:5173/admin`（`http://localhost:5173` 也可）。不要用 `:3310` 做 UI 修改；該埠仍提供內嵌 bundle，沒有 HMR。
+
+若 Go listen 不是 `http://127.0.0.1:3310`，可用 `PRODS_DEV_PROXY_TARGET` 覆寫 proxy 目標（須與 `prods.ini` 的 `base_url` 一致）。
+
+限制：Public HMR 只涵蓋 islands JS 與 `public.css`；Go 模板／SSR HTML 變更仍需整頁重整。Admin Fast Refresh 在改到 root mount 或 provider 外層時可能整頁 remount。發行驗證仍以 `pnpm --dir web/ui build`、`go build` 與直接執行 binary 為準。
+
 ## 從原始碼建置與驗證
 
 所需工具：
