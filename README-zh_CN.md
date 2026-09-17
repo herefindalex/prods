@@ -2,40 +2,35 @@
 
 [English](README.md) | [繁體中文](README-zh_TW.md) | 简体中文
 
-**把产品数据变成正式、可搜索、可询价的官方网站，不必运维一整套应用系统。**
+Prods 是供制造商与经销商自托管的技术产品目录与 RFQ（询价请求）系统。管理员维护产品数据、分类专属规格与文档；买家发现已发布产品并提出询价。半导体与电子元器件目录不只是扁平产品列表：产品身份、适用规格、原始值、datasheet 与发布状态都有实际意义。
 
-Prods 是为制造商、经销商与其他 B2B 产品团队打造的自托管产品目录与 RFQ（询价请求）系统。小型团队可导入并维护技术产品数据，安全发布给访客、搜索引擎与机器使用，再从单个便携式 Go 可执行文件接收真实买家需求。
+单个 Go 进程提供公开网站、内嵌 Admin 应用程序与生命周期工具，SQLite 为主数据库。Public 由 Go 生成 HTML，通过 React 增强交互；Admin 使用 React、headless Refine Core 与 Ant Design v6。Node.js 是构建依赖，不是部署后的运行要求。
 
-运行时包含 Admin 后台、公开网站、SQLite 支持、搜索、发布、RFQ、备份、恢复与运维工具。Node.js 只在从源代码构建时需要；部署后不需要 Node.js、独立数据库服务器、Docker、队列或外部搜索服务。
+## 工程文档与当前状态
 
-## 为什么选择 Prods
-
-- **沿用现有数据开始。** 管理产品、分类、规格、字典、文件、翻译与 Website 配置。XLSX 导入／导出及批量操作可维护大型产品目录，不必逐条开表单修改。
-- **精确控制公开状态。** 产品页、结构化数据、JSON、Markdown 与路由状态一起切换。更新已发布产品时，旧的有效版本会保留到新版本完成；Hide 与 Archive 会立即停止新的公开访问。
-- **同时服务工程师、采购、搜索引擎与 AI 工具。** 产品目录浏览、搜索、分页、文件及 RFQ 都有服务器端语意 HTML，没有 JavaScript 仍能使用。同一份已发布模型也供应 JSON-LD、JSON、Markdown、Sitemap、manifest 与 `llms.txt`。
-- **先获取需求，不假装成电商。** 访客可以询问一个或多个产品目录产品；搜索无结果时也能主动提交 Requested Part。Prods 以可重播且耐久的方式记录 RFQ，价格、供货、资格审查与后续联系仍由企业决定。
-- **运维方式清楚可掌握。** 单个进程负责 migration、写入节流、持久化任务、审计、备份、restore journal 与健康检查。Terminal 会显示当前状态、下一步、URL、Admin 路径、主机信息、资源路径与实时日志。
-- **掌握部署与数据。** Prods Community 采 AGPL 许可，以 SQLite 储存主要状态，将资产与备份放在明确的本机目录，可在 Windows 或 Linux 上执行并搭配自选的反向代理。
-
-## 适合的团队
-
-Prods 适合需要官方产品目录与 RFQ 管道，但不想自行拼装并运维 CMS、定制数据库应用、搜索服务与独立后台的产品型企业。尤其适合元器件、工业、技术型与 B2B 产品目录，这些情境通常重视料号、分类、规格、文件、公开控制与询价脉络。
-
-V1 刻意不包含结帐、定价、库存 Availability、CRM、通用页面编辑器、任意自定义 JavaScript，也不会由 RFQ 自动创建产品。这些边界让产品目录真实数据、公开内容与买家需求维持清楚可控。
-
-## 主要能力
-
-| 领域 | Prods 提供的能力 |
+| 文档 | 用途 |
 | --- | --- |
-| 产品目录作业 | Current／Archived 产品、任意深度分类、规格与 Spec Set、字典、图片／文件、分页、排序、XLSX 导入／导出，以及批量 Publish／Hide／Archive／分类／生命周期操作 |
-| Website 与多语 | 版本化 Website 配置、预览／发布流程、Public Copy 覆写、导览与主题控制、独立 Admin UI 语言，以及十种内建公开语言 |
-| 公开探索 | 服务器端搜索与产品目录页、产品／分类／制造商／品牌／应用路由、Unicode folding 搜索、JSON-LD、JSON、Markdown、Sitemap、robots、manifest 与 `llms.txt` |
-| RFQ | 多产品询价、搜索无结果后的 Requested Part、high-entropy idempotency key、持久化回执、Admin 查看，以及由用户明确触发的可选 SMTP 发送 |
-| 权限与可追溯性 | 不透明 server-side session、CSRF 防护、能力型角色、Admin scope，以及必要管理操作记录 |
-| 运维 | Liveness／readiness、runtime log、排程与单次备份、验证式 restore、Recovery、Owner 救援、Maintenance、资产清理与手动版本检查 |
-| 发布 | 默认空白安装、可选且精确对应版本的 sample data、嵌入源代码 revision／版本、checksum，以及 Linux／Windows amd64 构建产物 |
+| [架构概览](docs/zh-CN/architecture.md) | 组件、请求／数据流程、持久化、认证与系统边界 |
+| [工程案例研究](docs/zh-CN/engineering-case-study.md) | 六项决策及其证据、替代方案、取舍与演进触发条件 |
+| [运维与生产环境证据](docs/zh-CN/operations.md) | 安装、备份／恢复、部署控制与尚未验证的运维声明 |
 
-内建语言为 `en-US`、`zh-TW`、`zh-CN`、`ja-JP`、`ko-KR`、`de-DE`、`fr-FR`、`it-IT`、`es-ES`、`pt-BR`。内置默认文案已通过 key、placeholder、plural、格式与版面检查，但尚未经专业母语、法律或行销审核；正式发布前请审阅所有面向公网文案。
+指南描述 2026-09-17 查看时的工作目录（`VERSION`：`v0.6.8`）。源代码、测试与发布 workflow 展示已实现的机制；本次核查未验证运行中的生产部署、客户负载或可用性目标。Release workflow 发布构建产物，不部署运行中的站点。历史需求与 ADR 保持内部文档属性；指南提供源代码链接与说明，不重新公开内部内容。
+
+## 已实现范围
+
+| 领域 | 代码仓库中的实现 |
+| --- | --- |
+| 产品目录 | Current／Archived 产品、分类、Spec Set、原始规格值、字典、图片／文档、XLSX 导入／导出与逐产品批量结果 |
+| Website 与语言 | 工作中／预览／发布配置、Public Copy 覆盖、分类列表 profile、独立 Admin 语言与十种内置公开语言 |
+| 公开发现 | 语义 HTML、搜索／列表／分页、产品与分类字典路由、JSON-LD、JSON、Markdown、Sitemap、manifest 与 `llms.txt` |
+| RFQ | 目录产品及访客明确提出的目录外型号、canonical-payload idempotency、持久化回执、Admin 查看与可选且明确触发的 SMTP 发送 |
+| 访问 | 不透明 server-side session、服务器端 capability、CSRF 检查与审计记录 |
+| 运维 | Installer、health／readiness、runtime log、backup、journaled restore、Recovery、Maintenance 与可选 service 集成 |
+| 交付 | 内嵌 UI／sample payload、source／version metadata、checksum 与 Linux／Windows／macOS 构建目标；cross-build 不等于原生运行验收 |
+
+V1 排除结账、价格／库存承诺、CRM、通用页面编辑器、任意 JavaScript／template 与外部写入 token。RFQ 不创建 Product，也不自动发送邮件。机器可读输出不代表 AI／RAG 实现；语义相似不代表电气兼容。案例研究详细区分这些边界，以及已实现、延后与探索性工作。
+
+内置语言为 `en-US`、`zh-TW`、`zh-CN`、`ja-JP`、`ko-KR`、`de-DE`、`fr-FR`、`it-IT`、`es-ES`、`pt-BR`。代码仓库包含资源契约检查，不声称已完成专业母语、法律或营销审核。工程指南与 README 同步提供英文、繁体中文与简体中文。
 
 ## 快速开始
 
@@ -48,7 +43,7 @@ V1 刻意不包含结帐、定价、库存 Availability、CRM、通用页面编�
 执行前请先验证下载档。Linux：
 
 ```sh
-sha256sum --check SHA256SUMS
+sha256sum --check --ignore-missing SHA256SUMS
 chmod +x prods-linux-amd64
 ./prods-linux-amd64
 ```
@@ -137,7 +132,7 @@ RFQ 不会创建 Product、不会虚构价格或 availability，也不会自动�
 
 ## 备份、恢复与 Maintenance
 
-可在 Admin 创建与监看备份，或执行单次备份：
+可在 Admin 创建与跟踪在线备份。命令行 backup、restore 或 Owner recovery 前，先停止运行中的 instance，并使用相同配置／data 路径；这些命令需要获取 instance ownership lock。单次备份：
 
 ```sh
 ./prods-linux-amd64 --backup-now
@@ -200,6 +195,7 @@ Browser / crawler
 
 - Go 1.27.1
 - Node.js 24
+- Python 3，用于许可政策验证
 - pnpm 10.28.1，由 `packageManager` 固定
 
 ```sh
