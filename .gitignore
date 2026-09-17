@@ -12,3 +12,6 @@
 /dist/
 *.test
 coverage.out
+
+# Prods configuration
+prods.ini
