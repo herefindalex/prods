@@ -17,7 +17,7 @@ MIT, ISC, 0BSD, BSD-2-Clause, BSD-3-Clause, and Apache-2.0 dependencies are norm
 
 ## Audited dependency snapshot
 
-Audit date: 2026-09-16. Exact inputs and expected counts are recorded in [`licenses/audit.json`](licenses/audit.json).
+Audit date: 2026-09-18. Exact inputs and expected counts are recorded in [`licenses/audit.json`](licenses/audit.json).
 
 | Scope | Result |
 | --- | --- |

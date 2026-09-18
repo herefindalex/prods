@@ -1,10 +1,10 @@
 {
   "schema_version": 1,
-  "audited_on": "2026-09-16",
+  "audited_on": "2026-09-18",
   "inputs": {
     "go.mod": "6da0f697298da66eb5925ec32aa0dc49e6b5999a93dd31b4ceb693882e9b620e",
     "go.sum": "1bc375f9ab523c32daa36c4facb0f968b8eb15c2c0eee05bae6d551a49a4d7ae",
-    "web/ui/package.json": "7e674c2007c94b857d125ea8ae2828f0ceed83f57aa8347a683fc64a4a19203e",
+    "web/ui/package.json": "3efb972712963df5e035b5ae0dc5544827e271792fbed6631344c2fead0654bc",
     "web/ui/pnpm-lock.yaml": "c8a6e141f6a610d07a8a57473f6b0233801b9e1aaf5954e97c9b123f86f07c65"
   },
   "go": {

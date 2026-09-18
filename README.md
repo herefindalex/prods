@@ -198,6 +198,31 @@ Key boundaries:
 - Restore uses a durable journal. Before `prepared` it can be abandoned safely; after `prepared` it only rolls forward through the same operation with per-root evidence.
 - Admin uses opaque server-side sessions, server-side authorization, same-origin CSRF protection, and trusted Host/proxy settings.
 
+## Local UI development (Admin + Public HMR)
+
+Production still embeds built Admin and Public assets. For local React HMR, run Vite as the browser front door and proxy to the Go process:
+
+1. Terminal A — start Prods (keep `base_url` on the Go listen address, e.g. `http://127.0.0.1:3310`):
+
+```sh
+./prods
+```
+
+The Vite proxy rewrites the browser `Origin` / `Referer` (`:5173`) to the Go `base_url` origin so Admin POSTs (for example `/admin/login`) are not rejected by `EnforceHost` with 403.
+
+2. Terminal B — start the Vite proxy (requires Node.js / pnpm only for this workflow):
+
+```sh
+pnpm --dir web/ui install --frozen-lockfile
+pnpm --dir web/ui dev
+```
+
+3. Browse `http://127.0.0.1:5173/` and `http://127.0.0.1:5173/admin` (`http://localhost:5173` also works). Do not use `:3310` for UI edits; that port still serves the embedded bundle without HMR.
+
+Override the Go proxy target with `PRODS_DEV_PROXY_TARGET` when listen is not `http://127.0.0.1:3310` (it must match `base_url` in `prods.ini`).
+
+Limits: Public HMR covers islands JS and `public.css` only — Go template / SSR HTML changes still need a full reload. Admin Fast Refresh can remount when you edit the root mount or provider shell. Release validation remains `pnpm --dir web/ui build`, `go build`, and running the binary directly.
+
 ## Build and verify from source
 
 Required tools:
