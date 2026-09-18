@@ -236,15 +236,20 @@ func (s *Server) adminCreateWebsitePreview(w http.ResponseWriter, r *http.Reques
 		s.writeAPIError(w, r, http.StatusConflict, apiCodeRevisionConflict)
 		return
 	}
-	locale, err := s.store.DefaultLocale(r.Context())
-	if err != nil {
-		s.internalAPIError(w, r, err)
-		return
+	locale := state.WorkingLocalization.DefaultLocale
+	supportedLocales := state.WorkingLocalization.EnabledLocales
+	if locale == "" {
+		locale, err = s.store.DefaultLocale(r.Context())
+		if err != nil {
+			s.internalAPIError(w, r, err)
+			return
+		}
+		supportedLocales = []string{locale}
 	}
 	body, err := publishing.HTML(publishing.PublicView{
 		ID: "website-preview", Revision: state.WorkingRevision, SiteEpoch: state.ActiveEpoch + 1,
 		PartNumber: "Website preview", Name: "Website preview", Description: "Preview of the unpublished website configuration.",
-		Language: locale, Site: state.Working,
+		Language: locale, DefaultLocale: locale, SupportedLocales: supportedLocales, Site: state.Working,
 	})
 	if err != nil {
 		s.internalAPIError(w, r, err)

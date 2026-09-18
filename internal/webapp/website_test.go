@@ -237,7 +237,7 @@ func TestWebsiteWorkingPreviewPublishAndRestoreVersion(t *testing.T) {
 	}
 	if _, err := store.CompleteInstallation(t.Context(), sqlite.Installation{
 		OwnerEmail: "owner@example.test", OwnerDisplayName: "Owner", PasswordHash: passwordHash,
-		DefaultLocale: "en-US", SupportedLocales: []string{"en-US"}, TimeZone: "UTC",
+		DefaultLocale: "en-US", SupportedLocales: []string{"en-US", "zh-TW"}, TimeZone: "UTC",
 	}); err != nil {
 		t.Fatal(err)
 	}
@@ -301,7 +301,7 @@ func TestWebsiteWorkingPreviewPublishAndRestoreVersion(t *testing.T) {
 		t.Fatal(err)
 	}
 	privatePreviewBody := responseBody(t, privatePreview)
-	if privatePreview.StatusCode != http.StatusOK || !strings.Contains(privatePreviewBody, "Example Components") || !strings.Contains(privatePreviewBody, "letter-spacing") || privatePreview.Header.Get("Cache-Control") != "private, no-store" {
+	if privatePreview.StatusCode != http.StatusOK || !strings.Contains(privatePreviewBody, "Example Components") || !strings.Contains(privatePreviewBody, "letter-spacing") || !strings.Contains(privatePreviewBody, "繁中") || privatePreview.Header.Get("Cache-Control") != "private, no-store" {
 		t.Fatalf("private preview status=%d cache=%q body=%s", privatePreview.StatusCode, privatePreview.Header.Get("Cache-Control"), privatePreviewBody)
 	}
 

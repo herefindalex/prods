@@ -3,25 +3,33 @@ package site
 import (
 	"errors"
 	"fmt"
+	"net/mail"
 	"net/url"
 	"regexp"
 	"sort"
+	"strconv"
 	"strings"
 	"time"
 )
 
 const (
-	MaxNavigationItems = 200
-	MaxCustomCSSBytes  = 64 << 10
-	MaxListingProfiles = 500
-	MaxListingColumns  = 16
-	MaxMobileKeySpecs  = 5
+	MaxNavigationItems       = 200
+	MaxNavigationDepth       = 5
+	MaxHeaderRows            = 4
+	MaxHeaderItemsPerRow     = 20
+	MaxFooterSections        = 6
+	MaxFooterItemsPerSection = 20
+	MaxCustomCSSBytes        = 64 << 10
+	MaxListingProfiles       = 500
+	MaxListingColumns        = 16
+	MaxMobileKeySpecs        = 5
 )
 
 var (
-	colorPattern      = regexp.MustCompile(`^#[0-9A-Fa-f]{6}$`)
-	fontPattern       = regexp.MustCompile(`^[A-Za-z0-9 ,.'"_-]{1,160}$`)
-	specColumnPattern = regexp.MustCompile(`^spec:[A-Za-z0-9_-]{1,128}$`)
+	colorPattern        = regexp.MustCompile(`^#[0-9A-Fa-f]{6}$`)
+	fontPattern         = regexp.MustCompile(`^[A-Za-z0-9 ,.'"_-]{1,160}$`)
+	specColumnPattern   = regexp.MustCompile(`^spec:[A-Za-z0-9_-]{1,128}$`)
+	contactPhonePattern = regexp.MustCompile(`^\+?[0-9][0-9(). -]{2,39}$`)
 )
 
 type ContactLink struct {
@@ -31,17 +39,38 @@ type ContactLink struct {
 	SortOrder int    `json:"sort_order"`
 }
 
+type ContactMethod struct {
+	ID        string `json:"id"`
+	Type      string `json:"type"`
+	Label     string `json:"label"`
+	Value     string `json:"value"`
+	URL       string `json:"url,omitempty"`
+	SortOrder int    `json:"sort_order"`
+}
+
+type SocialLink struct {
+	ID        string `json:"id"`
+	Network   string `json:"network"`
+	Label     string `json:"label"`
+	URL       string `json:"url"`
+	SortOrder int    `json:"sort_order"`
+}
+
 type Organization struct {
-	DisplayName      string        `json:"display_name"`
-	LegalName        string        `json:"legal_name,omitempty"`
-	OfficialWebsite  string        `json:"official_website,omitempty"`
-	PrivacyURL       string        `json:"privacy_url,omitempty"`
-	TermsURL         string        `json:"terms_url,omitempty"`
-	PrimaryLogoAsset string        `json:"primary_logo_asset_id,omitempty"`
-	DarkLogoAsset    string        `json:"dark_logo_asset_id,omitempty"`
-	FaviconAsset     string        `json:"favicon_asset_id,omitempty"`
-	SocialImageAsset string        `json:"social_image_asset_id,omitempty"`
-	ContactLinks     []ContactLink `json:"contact_links,omitempty"`
+	DisplayName       string          `json:"display_name"`
+	LegalName         string          `json:"legal_name,omitempty"`
+	OfficialWebsite   string          `json:"official_website,omitempty"`
+	Description       string          `json:"description,omitempty"`
+	PrivacyURL        string          `json:"privacy_url,omitempty"`
+	TermsURL          string          `json:"terms_url,omitempty"`
+	PrimaryLogoAsset  string          `json:"primary_logo_asset_id,omitempty"`
+	DarkLogoAsset     string          `json:"dark_logo_asset_id,omitempty"`
+	FaviconAsset      string          `json:"favicon_asset_id,omitempty"`
+	SocialImageAsset  string          `json:"social_image_asset_id,omitempty"`
+	ContactLinks      []ContactLink   `json:"contact_links,omitempty"`
+	Contacts          []ContactMethod `json:"contacts,omitempty"`
+	SocialLinks       []SocialLink    `json:"social_links,omitempty"`
+	RegistrationLines []string        `json:"registration_lines,omitempty"`
 }
 
 type NavigationItem struct {
@@ -49,18 +78,105 @@ type NavigationItem struct {
 	ParentID      string `json:"parent_id,omitempty"`
 	Label         string `json:"label"`
 	URL           string `json:"url"`
+	TargetType    string `json:"target_type,omitempty"`
+	SystemAction  string `json:"system_action,omitempty"`
+	Presentation  string `json:"presentation,omitempty"`
 	SortOrder     int    `json:"sort_order"`
 	OpenNewWindow bool   `json:"open_new_window"`
 	Visible       bool   `json:"visible"`
 }
 
+type HeaderItem struct {
+	ID           string `json:"id"`
+	Kind         string `json:"kind"`
+	Label        string `json:"label,omitempty"`
+	URL          string `json:"url,omitempty"`
+	SystemAction string `json:"system_action,omitempty"`
+	Text         string `json:"text,omitempty"`
+	SortOrder    int    `json:"sort_order"`
+}
+
+type HeaderRow struct {
+	ID        string       `json:"id"`
+	Type      string       `json:"type"`
+	SortOrder int          `json:"sort_order"`
+	Items     []HeaderItem `json:"items,omitempty"`
+}
+
+type Header struct {
+	Layout            string      `json:"layout"`
+	Sticky            bool        `json:"sticky"`
+	BrandPresentation string      `json:"brand_presentation"`
+	Rows              []HeaderRow `json:"rows,omitempty"`
+}
+
+type FooterItem struct {
+	ID           string `json:"id"`
+	Kind         string `json:"kind"`
+	Label        string `json:"label,omitempty"`
+	URL          string `json:"url,omitempty"`
+	Text         string `json:"text,omitempty"`
+	ContactID    string `json:"contact_id,omitempty"`
+	SystemAction string `json:"system_action,omitempty"`
+	SortOrder    int    `json:"sort_order"`
+}
+
+type FooterSection struct {
+	ID                  string       `json:"id"`
+	Heading             string       `json:"heading"`
+	SortOrder           int          `json:"sort_order"`
+	CollapsibleOnMobile bool         `json:"collapsible_on_mobile"`
+	Items               []FooterItem `json:"items,omitempty"`
+}
+
+type FooterBrandBlock struct {
+	ShowBrand       bool     `json:"show_brand"`
+	ShowDescription bool     `json:"show_description"`
+	ContactIDs      []string `json:"contact_ids,omitempty"`
+}
+
+type FooterLocaleControl struct {
+	Enabled   bool   `json:"enabled"`
+	Placement string `json:"placement"`
+}
+
+type Footer struct {
+	Layout            string              `json:"layout"`
+	BrandBlock        FooterBrandBlock    `json:"brand_block"`
+	Sections          []FooterSection     `json:"sections,omitempty"`
+	ShowSocialLinks   bool                `json:"show_social_links"`
+	LegalLinks        []ContactLink       `json:"legal_links,omitempty"`
+	CopyrightText     string              `json:"copyright_text,omitempty"`
+	RegistrationLines []string            `json:"registration_lines,omitempty"`
+	Disclaimer        string              `json:"disclaimer,omitempty"`
+	LocaleControl     FooterLocaleControl `json:"locale_control"`
+}
+
+type BrandImportProvenance struct {
+	SourceURL     string    `json:"source_url"`
+	ObservedURL   string    `json:"observed_url"`
+	SourceLocale  string    `json:"source_locale"`
+	PromptVersion string    `json:"prompt_version"`
+	ImportedAt    time.Time `json:"imported_at"`
+}
+
 type Theme struct {
-	PrimaryColor     string `json:"primary_color"`
-	SecondaryColor   string `json:"secondary_color"`
-	FontFamily       string `json:"font_family"`
-	ContentWidthPX   int    `json:"content_width_px"`
-	CustomCSS        string `json:"custom_css,omitempty"`
-	CustomCSSEnabled bool   `json:"custom_css_enabled"`
+	PrimaryColor      string `json:"primary_color"`
+	SecondaryColor    string `json:"secondary_color"`
+	AccentColor       string `json:"accent_color,omitempty"`
+	BodyTextColor     string `json:"body_text_color,omitempty"`
+	BorderColor       string `json:"border_color,omitempty"`
+	HeaderBackground  string `json:"header_background,omitempty"`
+	HeaderTextColor   string `json:"header_text_color,omitempty"`
+	FooterBackground  string `json:"footer_background,omitempty"`
+	FooterTextColor   string `json:"footer_text_color,omitempty"`
+	TypographyProfile string `json:"typography_profile,omitempty"`
+	Density           string `json:"density,omitempty"`
+	Radius            string `json:"radius,omitempty"`
+	FontFamily        string `json:"font_family"`
+	ContentWidthPX    int    `json:"content_width_px"`
+	CustomCSS         string `json:"custom_css,omitempty"`
+	CustomCSSEnabled  bool   `json:"custom_css_enabled"`
 }
 
 type SEO struct {
@@ -78,9 +194,12 @@ type CategoryListingProfile struct {
 type Configuration struct {
 	CategoryListingProfiles map[string]CategoryListingProfile `json:"category_listing_profiles,omitempty"`
 	Organization            Organization                      `json:"organization"`
-	Navigation              []NavigationItem                  `json:"navigation,omitempty"`
+	Header                  Header                            `json:"header"`
+	Navigation              []NavigationItem                  `json:"navigation"`
+	Footer                  Footer                            `json:"footer"`
 	Theme                   Theme                             `json:"theme"`
 	SEO                     SEO                               `json:"seo"`
+	BrandImport             *BrandImportProvenance            `json:"brand_import,omitempty"`
 }
 
 type State struct {
@@ -107,12 +226,32 @@ type Version struct {
 func DefaultConfiguration() Configuration {
 	return Configuration{
 		Organization: Organization{DisplayName: "Product Catalog"},
+		Header: Header{
+			Layout:            "commerce",
+			BrandPresentation: "existing_logo_or_display_name",
+			Rows: []HeaderRow{
+				{ID: "main", Type: "main", SortOrder: 10, Items: []HeaderItem{
+					{ID: "search", Kind: "system_action", SystemAction: "catalog_search", SortOrder: 10},
+					{ID: "rfq", Kind: "system_action", SystemAction: "rfq", SortOrder: 20},
+				}},
+				{ID: "primary_navigation", Type: "primary_navigation", SortOrder: 20},
+			},
+		},
 		Navigation: []NavigationItem{
-			{ID: "catalog", Label: "Catalog", URL: "/catalog", SortOrder: 10, Visible: true},
-			{ID: "rfq", Label: "Request quote", URL: "/rfq", SortOrder: 20, Visible: true},
+			{ID: "catalog", Label: "Catalog", URL: "/catalog", TargetType: "system_action", SystemAction: "catalog", Presentation: "direct", SortOrder: 10, Visible: true},
+			{ID: "rfq", Label: "Request quote", URL: "/rfq", TargetType: "system_action", SystemAction: "rfq", Presentation: "direct", SortOrder: 20, Visible: true},
+		},
+		Footer: Footer{
+			Layout:        "compact",
+			BrandBlock:    FooterBrandBlock{ShowBrand: true},
+			LocaleControl: FooterLocaleControl{Enabled: true, Placement: "header"},
 		},
 		Theme: Theme{
-			PrimaryColor: "#1677ff", SecondaryColor: "#475569",
+			PrimaryColor: "#1677ff", SecondaryColor: "#475569", AccentColor: "#1677ff",
+			BodyTextColor: "#172033", BorderColor: "#d7dde7",
+			HeaderBackground: "#ffffff", HeaderTextColor: "#172033",
+			FooterBackground: "#f6f8fb", FooterTextColor: "#172033",
+			TypographyProfile: "system_sans", Density: "comfortable", Radius: "small",
 			FontFamily: "system-ui, sans-serif", ContentWidthPX: 1120,
 		},
 		SEO: SEO{DefaultTitle: "Product Catalog"},
@@ -131,6 +270,9 @@ func (configuration *Configuration) Prepare() error {
 	configuration.Theme.CustomCSS = strings.TrimSpace(configuration.Theme.CustomCSS)
 	configuration.SEO.DefaultTitle = strings.TrimSpace(configuration.SEO.DefaultTitle)
 	configuration.SEO.DefaultDescription = strings.TrimSpace(configuration.SEO.DefaultDescription)
+	if err := prepareBrandLayout(configuration); err != nil {
+		return err
+	}
 
 	if configuration.Organization.DisplayName == "" || len(configuration.Organization.DisplayName) > 200 {
 		return errors.New("organization display name is required and must be at most 200 characters")
@@ -172,8 +314,8 @@ func (configuration *Configuration) Prepare() error {
 		item.ParentID = strings.TrimSpace(item.ParentID)
 		item.Label = strings.TrimSpace(item.Label)
 		item.URL = strings.TrimSpace(item.URL)
-		if item.ID == "" || item.Label == "" || !validNavigationURL(item.URL) {
-			return errors.New("every navigation item requires a unique ID, label, and safe internal or HTTP(S) URL")
+		if item.ID == "" || item.Label == "" || !validNavigationItem(item) {
+			return errors.New("every navigation item requires a unique ID, label, and valid target")
 		}
 		if _, exists := items[item.ID]; exists {
 			return fmt.Errorf("duplicate navigation item ID %q", item.ID)
@@ -188,7 +330,12 @@ func (configuration *Configuration) Prepare() error {
 		}
 		seen := map[string]struct{}{item.ID: {}}
 		parentID := item.ParentID
+		depth := 1
 		for parentID != "" {
+			depth++
+			if depth > MaxNavigationDepth {
+				return fmt.Errorf("navigation depth must not exceed %d", MaxNavigationDepth)
+			}
 			if _, cycle := seen[parentID]; cycle {
 				return errors.New("navigation must not contain a cycle")
 			}
@@ -340,8 +487,28 @@ func (configuration Configuration) AssetIDs() []string {
 }
 
 func (configuration Configuration) Stylesheet() string {
-	return fmt.Sprintf(`:root{--prods-primary:%s;--prods-secondary:%s;--prods-font:%s;--prods-content-width:%dpx}body{font-family:var(--prods-font);margin:0;color:#172033}header,main,footer{max-width:var(--prods-content-width);margin:auto;padding:1rem}header{display:flex;justify-content:space-between;gap:1rem}nav a{margin-inline-start:1rem}a{color:var(--prods-primary)}`,
-		configuration.Theme.PrimaryColor, configuration.Theme.SecondaryColor, configuration.Theme.FontFamily, configuration.Theme.ContentWidthPX)
+	return fmt.Sprintf(`:root{--prods-primary:%s;--prods-primary-contrast:%s;--prods-secondary:%s;--prods-accent:%s;--prods-accent-contrast:%s;--prods-text:%s;--prods-border:%s;--prods-header-bg:%s;--prods-header-text:%s;--prods-footer-bg:%s;--prods-footer-text:%s;--prods-font:%s;--prods-content-width:%dpx;--prods-radius:%s;--prods-space:%s}body{font-family:var(--prods-font);margin:0;color:var(--prods-text)}main{max-width:var(--prods-content-width);margin:auto;padding:var(--prods-space)}.site-header{color:var(--prods-header-text);background:var(--prods-header-bg);border-bottom:1px solid var(--prods-border)}.site-footer{color:var(--prods-footer-text);background:var(--prods-footer-bg);border-top:1px solid var(--prods-border)}.site-header-row,.primary-navigation>ul,.footer-grid,.footer-social,.footer-legal,.footer-company{max-width:var(--prods-content-width);margin-inline:auto}a{color:var(--prods-primary)}button,.button{border-radius:var(--prods-radius)}`,
+		configuration.Theme.PrimaryColor, primaryContrastColor(configuration.Theme.PrimaryColor), configuration.Theme.SecondaryColor, configuration.Theme.AccentColor, primaryContrastColor(configuration.Theme.AccentColor),
+		configuration.Theme.BodyTextColor, configuration.Theme.BorderColor, configuration.Theme.HeaderBackground,
+		configuration.Theme.HeaderTextColor, configuration.Theme.FooterBackground, configuration.Theme.FooterTextColor,
+		configuration.Theme.FontFamily, configuration.Theme.ContentWidthPX, themeRadiusValue(configuration.Theme.Radius), themeSpacingValue(configuration.Theme.Density))
+}
+
+func primaryContrastColor(value string) string {
+	if len(value) != 7 || value[0] != '#' {
+		return "#FFFFFF"
+	}
+	parsed, err := strconv.ParseUint(value[1:], 16, 24)
+	if err != nil {
+		return "#FFFFFF"
+	}
+	r := (parsed >> 16) & 0xff
+	g := (parsed >> 8) & 0xff
+	b := parsed & 0xff
+	if (r*299+g*587+b*114)/1000 >= 128 {
+		return "#161616"
+	}
+	return "#FFFFFF"
 }
 
 func (configuration Configuration) CustomStylesheet() string {
@@ -354,6 +521,35 @@ func (configuration Configuration) CustomStylesheet() string {
 func validExternalURL(value string) bool {
 	parsed, err := url.Parse(value)
 	return err == nil && parsed.User == nil && (parsed.Scheme == "http" || parsed.Scheme == "https") && parsed.Host != ""
+}
+
+// ValidContactURL reports whether a prepared contact link can be emitted as an
+// HTML href. Contact links additionally support the safe mailto and tel
+// schemes used by imported Website footers.
+func ValidContactURL(value string) bool {
+	if validExternalURL(value) {
+		return true
+	}
+	parsed, err := url.Parse(value)
+	if err != nil || parsed.User != nil || parsed.Host != "" || parsed.Opaque == "" || parsed.RawQuery != "" || parsed.Fragment != "" {
+		return false
+	}
+	switch parsed.Scheme {
+	case "mailto":
+		address, err := mail.ParseAddress(parsed.Opaque)
+		return err == nil && address.Name == "" && address.Address == parsed.Opaque
+	case "tel":
+		return contactPhonePattern.MatchString(parsed.Opaque)
+	default:
+		return false
+	}
+}
+
+// ValidHeaderLinkURL reports whether a prepared Header link can be emitted as
+// an HTML href. Header links support normal navigation targets plus the safe
+// mailto and tel schemes accepted for organization contacts.
+func ValidHeaderLinkURL(value string) bool {
+	return validNavigationURL(value) || ValidContactURL(value)
 }
 
 func validNavigationURL(value string) bool {

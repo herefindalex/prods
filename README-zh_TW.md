@@ -2,11 +2,9 @@
 
 [English](README.md) | 繁體中文 | [简体中文](README-zh_CN.md)
 
-**把產品資料變成正式、可搜尋、可詢價的官方網站，不必維運一整套應用系統。**
+Prods 是供製造商與經銷商自架的技術產品型錄與 RFQ（詢價請求）系統。管理員維護產品資料、分類專屬規格與文件；買家探索已發布產品並提出詢價。半導體與電子零組件型錄不只是扁平產品清單：產品身分、適用規格、原始值、datasheet 與發布狀態都具有意義。
 
-Prods 是為製造商、經銷商與其他 B2B 產品團隊打造的自架產品型錄與 RFQ（詢價請求）系統。小型團隊可匯入並維護技術產品資料，安全發布給訪客、搜尋引擎與機器使用，再從同一個可攜式 Go 執行檔接收真實買家需求。
-
-執行環境內含 Admin 後台、公開網站、SQLite 支援、搜尋、發布、RFQ、備份、復原與維運工具。Node.js 只在從原始碼建置時需要；部署後不需要 Node.js、獨立資料庫伺服器、Docker、佇列或外部搜尋服務。
+單一 Go 行程提供公開網站、內嵌 Admin 應用程式與生命週期工具，SQLite 為主要資料庫。Public 由 Go 生成 HTML，以 React 增強互動；Admin 使用 React、headless Refine Core 與 Ant Design v6。Node.js 是建置相依工具，不是部署後的執行需求。
 
 ## 為什麼選擇 Prods
 
@@ -17,25 +15,31 @@ Prods 是為製造商、經銷商與其他 B2B 產品團隊打造的自架產品
 - **維運方式清楚可掌握。** 單一行程負責 migration、寫入節流、耐久工作、稽核、備份、restore journal 與健康檢查。Terminal 會顯示目前狀態、下一步、網址、Admin 路徑、主機資訊、資源路徑與即時 log。
 - **掌握部署與資料。** Prods Community 採 AGPL 授權，以 SQLite 儲存主要狀態，將資產與備份放在明確的本機目錄，可在 Windows 或 Linux 上執行並搭配自選的反向代理。
 
-## 適合的團隊
+## 工程文件與目前狀態
 
-Prods 適合需要官方產品型錄與 RFQ 管道，但不想自行拼裝並維運 CMS、客製資料庫應用、搜尋服務與獨立後台的產品型企業。尤其適合零組件、工業、技術型與 B2B 型錄，這些情境通常重視料號、分類、規格、文件、公開控制與詢價脈絡。
-
-V1 刻意不包含結帳、定價、庫存 Availability、CRM、通用頁面編輯器、任意自訂 JavaScript，也不會由 RFQ 自動建立產品。這些邊界讓型錄真實資料、公開內容與買家需求維持清楚可控。
-
-## 主要能力
-
-| 領域 | Prods 提供的能力 |
+| 文件 | 用途 |
 | --- | --- |
-| 型錄作業 | Current／Archived 產品、任意深度分類、規格與 Spec Set、字典、圖片／文件、分頁、排序、XLSX 匯入／匯出，以及批次 Publish／Hide／Archive／分類／生命週期操作 |
-| Website 與多語 | 版本化 Website 設定、預覽／發布流程、Public Copy 覆寫、導覽與主題控制、獨立 Admin UI 語系，以及十種內建公開語系 |
-| 公開探索 | 伺服器端搜尋與型錄頁、產品／分類／製造商／品牌／應用路由、Unicode folding 搜尋、JSON-LD、JSON、Markdown、Sitemap、robots、manifest 與 `llms.txt` |
-| RFQ | 多產品詢價、搜尋無結果後的 Requested Part、high-entropy idempotency key、耐久收據、Admin 檢視，以及明確觸發的選用 SMTP 寄送 |
-| 權限與可追溯性 | 不透明 server-side session、CSRF 防護、能力型角色、Admin scope，以及必要管理操作記錄 |
-| 維運 | Liveness／readiness、runtime log、排程與單次備份、驗證式 restore、Recovery、Owner 救援、Maintenance、資產清理與手動版本檢查 |
-| 發布 | 預設空白安裝、選用且精確對應版本的 sample data、內嵌原始碼 revision／版本、checksum，以及 Linux／Windows amd64 成品 |
+| [架構概覽](docs/zh-TW/architecture.md) | 元件、請求／資料流程、持久化、認證與系統邊界 |
+| [工程案例研究](docs/zh-TW/engineering-case-study.md) | 六項決策及其證據、替代方案、取捨與演進觸發條件 |
+| [維運與正式環境證據](docs/zh-TW/operations.md) | 安裝、備份／復原、部署控制與尚未驗證的維運宣稱 |
 
-內建語系為 `en-US`、`zh-TW`、`zh-CN`、`ja-JP`、`ko-KR`、`de-DE`、`fr-FR`、`it-IT`、`es-ES`、`pt-BR`。預設文字已通過 key、placeholder、plural、格式與版面檢查，但尚未經專業母語、法律或行銷審校；正式上線前請審閱所有對外文案。
+指南描述 2026-09-17 檢視的工作目錄（`VERSION`：`v0.6.8`）。原始碼、測試與發布 workflow 呈現已實作機制；本次查核未驗證運行中的正式部署、客戶負載或可用性目標。Release workflow 發布成品，不部署運行中的站點。歷史需求與 ADR 保持內部文件身分；指南提供原始碼連結與說明，不重新公開內部內容。
+
+## 已實作範圍
+
+| 領域 | 儲存庫中的實作 |
+| --- | --- |
+| 型錄 | Current／Archived 產品、分類、Spec Set、原始規格值、字典、圖片／文件、XLSX 匯入／匯出與逐產品批次結果 |
+| Website 與語系 | 工作中／預覽／發布設定、Public Copy 覆寫、分類列表 profile、獨立 Admin 語系與十種內建公開語系 |
+| 公開探索 | 語意 HTML、搜尋／列表／分頁、產品與分類字典路由、JSON-LD、JSON、Markdown、Sitemap、manifest 與 `llms.txt` |
+| RFQ | 型錄產品及訪客明確提出的非型錄料號、canonical-payload idempotency、持久收據、Admin 檢視與選用且明確觸發的 SMTP 寄送 |
+| 存取 | 不透明 server-side session、伺服器端 capability、CSRF 檢查與稽核紀錄 |
+| 維運 | Installer、health／readiness、runtime log、backup、journaled restore、Recovery、Maintenance 與選用 service 整合 |
+| 交付 | 內嵌 UI／sample payload、source／version metadata、checksum 與 Linux／Windows／macOS 建置目標；cross-build 不等於原生執行驗收 |
+
+V1 排除結帳、價格／庫存承諾、CRM、通用頁面編輯器、任意 JavaScript／template 與外部寫入 token。RFQ 不建立 Product，也不自動寄信。機器可讀輸出不代表 AI／RAG 實作；語意相似不代表電氣相容。案例研究詳細區分這些邊界，以及已實作、延後與探索性工作。
+
+內建語系為 `en-US`、`zh-TW`、`zh-CN`、`ja-JP`、`ko-KR`、`de-DE`、`fr-FR`、`it-IT`、`es-ES`、`pt-BR`。儲存庫包含資源契約檢查，不宣稱已經專業母語、法律或行銷審校。工程指南與 README 同步提供英文、繁體中文與簡體中文。
 
 ## 快速開始
 
@@ -48,7 +52,7 @@ V1 刻意不包含結帳、定價、庫存 Availability、CRM、通用頁面編�
 執行前請先驗證下載檔。Linux：
 
 ```sh
-sha256sum --check SHA256SUMS
+sha256sum --check --ignore-missing SHA256SUMS
 chmod +x prods-linux-amd64
 ./prods-linux-amd64
 ```
@@ -137,7 +141,7 @@ RFQ 不會建立 Product、不會虛構價格或 availability，也不會自動�
 
 ## 備份、復原與 Maintenance
 
-可在 Admin 建立與監看備份，或執行單次備份：
+可在 Admin 建立與追蹤線上備份。命令列 backup、restore 或 Owner recovery 前，先停止運行中的 instance，並使用相同設定／data 路徑；這些命令需要取得 instance ownership lock。單次備份：
 
 ```sh
 ./prods-linux-amd64 --backup-now
@@ -225,6 +229,7 @@ pnpm --dir web/ui dev
 
 - Go 1.27.1
 - Node.js 24
+- Python 3，用於授權政策驗證
 - pnpm 10.28.1，由 `packageManager` 固定
 
 ```sh

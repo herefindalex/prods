@@ -18,10 +18,13 @@ import {
 import { api, postJSON, putJSON } from "./api";
 import { localeLabel, localeSelectOptions } from "./locales";
 import type { AdminLocale } from "./locales";
+import { brandImportCopy } from "./brandImportLabels";
+import { replaceFormValues } from "./formValues";
 import type {
   Asset,
-  BrandCaptureFieldChange,
-  BrandCaptureResponse,
+  BrandImportFieldChange,
+  BrandImportRequest,
+  BrandImportValidation,
   SiteConfiguration,
   SiteRouteConfig,
   SiteRouteIssue,
@@ -54,6 +57,33 @@ type Props = {
   onMessage: (message: string) => void;
 };
 
+type NavigationEditorCopy = {
+  targetType: string;
+  link: string;
+  systemAction: string;
+  group: string;
+  action: string;
+  catalog: string;
+  catalogSearch: string;
+  rfq: string;
+  presentation: string;
+  direct: string;
+  dropdown: string;
+};
+
+const navigationEditorCopy: Record<AdminLocale, NavigationEditorCopy> = {
+  "en-US": { targetType: "Target type", link: "Link", systemAction: "System action", group: "Group", action: "Action", catalog: "Catalog", catalogSearch: "Catalog search", rfq: "Request quote", presentation: "Presentation", direct: "Direct", dropdown: "Dropdown" },
+  "zh-TW": { targetType: "目標類型", link: "連結", systemAction: "系統動作", group: "群組", action: "動作", catalog: "產品目錄", catalogSearch: "目錄搜尋", rfq: "詢價", presentation: "呈現方式", direct: "直接顯示", dropdown: "下拉選單" },
+  "zh-CN": { targetType: "目标类型", link: "链接", systemAction: "系统操作", group: "分组", action: "操作", catalog: "产品目录", catalogSearch: "目录搜索", rfq: "询价", presentation: "展示方式", direct: "直接显示", dropdown: "下拉菜单" },
+  "ja-JP": { targetType: "リンク先の種類", link: "リンク", systemAction: "システム操作", group: "グループ", action: "操作", catalog: "カタログ", catalogSearch: "カタログ検索", rfq: "見積依頼", presentation: "表示方法", direct: "直接表示", dropdown: "ドロップダウン" },
+  "ko-KR": { targetType: "대상 유형", link: "링크", systemAction: "시스템 작업", group: "그룹", action: "작업", catalog: "카탈로그", catalogSearch: "카탈로그 검색", rfq: "견적 요청", presentation: "표시 방식", direct: "직접 표시", dropdown: "드롭다운" },
+  "de-DE": { targetType: "Zieltyp", link: "Link", systemAction: "Systemaktion", group: "Gruppe", action: "Aktion", catalog: "Katalog", catalogSearch: "Katalogsuche", rfq: "Angebot anfordern", presentation: "Darstellung", direct: "Direkt", dropdown: "Dropdown" },
+  "fr-FR": { targetType: "Type de cible", link: "Lien", systemAction: "Action système", group: "Groupe", action: "Action", catalog: "Catalogue", catalogSearch: "Recherche catalogue", rfq: "Demande de devis", presentation: "Présentation", direct: "Directe", dropdown: "Menu déroulant" },
+  "it-IT": { targetType: "Tipo di destinazione", link: "Link", systemAction: "Azione di sistema", group: "Gruppo", action: "Azione", catalog: "Catalogo", catalogSearch: "Ricerca catalogo", rfq: "Richiedi preventivo", presentation: "Presentazione", direct: "Diretta", dropdown: "Menu a discesa" },
+  "es-ES": { targetType: "Tipo de destino", link: "Enlace", systemAction: "Acción del sistema", group: "Grupo", action: "Acción", catalog: "Catálogo", catalogSearch: "Buscar en catálogo", rfq: "Solicitar cotización", presentation: "Presentación", direct: "Directa", dropdown: "Menú desplegable" },
+  "pt-BR": { targetType: "Tipo de destino", link: "Link", systemAction: "Ação do sistema", group: "Grupo", action: "Ação", catalog: "Catálogo", catalogSearch: "Pesquisa no catálogo", rfq: "Solicitar cotação", presentation: "Apresentação", direct: "Direta", dropdown: "Menu suspenso" },
+};
+
 const labels = {
   "en-US": {
     saved: (revision: number) => `Saved Website working revision ${revision}. The public site is unchanged.`,
@@ -62,8 +92,6 @@ const labels = {
     published: (epoch: number) => `Published Website configuration and every Product representation at site epoch ${epoch}.`,
     restored: (version: number, revision: number) => `Restored Website version ${version} into working revision ${revision}. Preview and Publish are still required.`,
     absoluteURL: "Enter an absolute HTTP or HTTPS URL.", validURL: "Enter a valid Website URL.",
-    captured: (revision: number) => `Captured a review-only candidate against Website working revision ${revision}.`,
-    applied: "Applied the candidate to this browser form only. Save working copy, Preview, and Publish are still required.",
     searchSaved: "Search integration settings saved. External submissions run independently.",
     cssState: (disabled: boolean) => disabled ? "Custom CSS Safe Mode is active for all new public requests." : "Custom CSS was re-enabled for new public requests.",
 workingConfiguration: "Website working configuration", workingRevision: "Working revision", activeVersion: "Active version", activeEpoch: "Active site epoch",
@@ -71,16 +99,9 @@ localization: "Languages and content editing", localizationHelp: "These are Webs
 defaultLocale: "Site default locale", enabledLocales: "Published locales after next Publish", contentEditingEnabled: "Enable Customer Content translation editing", activeLocales: "Currently public locales", saveLocalization: "Save language working copy", localizationSaved: (revision: number) => `Saved Website language working revision ${revision}. The public site is unchanged.`,
     cssSafeMode: "Custom CSS Safe Mode is active", cssSafeDescription: "Public requests cannot retrieve the active custom stylesheet. Admin and system pages are unaffected.",
     reenableCSS: "Re-enable Custom CSS", disableCSSConfirm: "Immediately stop serving Custom CSS to new public requests?", disableCSS: "Disable Custom CSS now",
-    workingHelp: "Save changes into the durable working copy. Preview is private. Only Publish changes the public Website and Product artifacts.",
-    captureTitle: "Brand Capture candidate", captureHelp: "Fetch bounded public HTML/CSS to suggest Organization, Theme, and Navigation. It never imports source scripts, canonical/SEO settings, analytics, raw HTML/CSS, or assets. Dynamic JavaScript-only content may remain unavailable.",
-    sourceURL: "Source Website URL", analyze: "Analyze", dirtyCapture: "Save or reload local form edits before re-capturing.",
+    workingHelp: "Save changes into the durable working copy. Preview is private. Only Publish changes the public Website and Product artifacts.", dirtyCapture: "Save or reload local form edits before re-capturing.",
     dirtyCaptureDescription: "The server compares a capture with the durable Website working revision, not unsaved browser fields.", reloadWorking: "Reload saved working",
-    dynamicUnavailable: "Some source content requires JavaScript and was not captured.", unavailable: "Unavailable", dynamicContent: "dynamic content", completeManually: "Complete these fields manually.", stylesheetUnavailable: "Stylesheet unavailable:",
-    organization: "Organization", sourceTitle: "Source title", colors: "Colors", fonts: "Fonts", logoReferences: "Logo references", manualCorrections: "Manual corrections",
-    manualInput: "Manual input required", unavailableValue: "Not available", manualUpload: "Manual upload required", noneIdentified: "None identified",
-    noCaptureChanges: "The capture does not change the saved working configuration.", field: "Field", currentWorking: "Current working", candidate: "Candidate",
-    rights: "I confirm that we have the right to use the selected branding and references.", applyInfo: "Applying only updates this browser form.",
-    applyInfoDescription: "You must still Save working copy, Preview, and Publish. Logo URLs are references for review and are not downloaded or attached automatically.", applyCandidate: "Apply candidate to form",
+    organization: "Organization", field: "Field",
     displayName: "Display name", legalName: "Legal name", officialWebsite: "Official website", privacyURL: "Privacy URL", termsURL: "Terms URL",
     primaryLogo: "Primary logo", darkLogo: "Dark-background logo", favicon: "Favicon", socialImage: "Social image", assetID: "asset ID", upload: "Upload",
     contactID: "Contact ID", label: "Label", url: "URL", order: "Order", removeContact: "Remove contact", addContact: "Add contact",
@@ -110,8 +131,6 @@ defaultLocale: "Site default locale", enabledLocales: "Published locales after n
     published: (epoch: number) => `已在站點 epoch ${epoch} 發布 Website 設定與所有 Product 表示。`,
     restored: (version: number, revision: number) => `已將 Website 版本 ${version} 還原到工作修訂 ${revision}；仍須預覽及發布。`,
     absoluteURL: "請輸入完整的 HTTP 或 HTTPS URL。", validURL: "請輸入有效的 Website URL。",
-    captured: (revision: number) => `已依 Website 工作修訂 ${revision} 擷取僅供檢視的候選內容。`,
-    applied: "候選內容只套用到目前瀏覽器表單；仍須儲存工作副本、預覽及發布。",
     searchSaved: "已儲存搜尋整合設定；外部提交會獨立執行。",
     cssState: (disabled: boolean) => disabled ? "所有新的公開請求已啟用 Custom CSS 安全模式。" : "新的公開請求已重新啟用 Custom CSS。",
 workingConfiguration: "Website 工作設定", workingRevision: "工作修訂", activeVersion: "啟用版本", activeEpoch: "啟用站點 epoch",
@@ -119,16 +138,9 @@ localization: "語系與內容翻譯編輯", localizationHelp: "這些是 Websit
 defaultLocale: "站點預設語系", enabledLocales: "下次發布後的公開語系", contentEditingEnabled: "啟用 Customer Content 翻譯編輯", activeLocales: "目前公開語系", saveLocalization: "儲存語系工作副本", localizationSaved: (revision: number) => `已儲存 Website 語系工作修訂 ${revision}；公開網站未變更。`,
     cssSafeMode: "Custom CSS 安全模式已啟用", cssSafeDescription: "公開請求無法取得啟用中的自訂樣式；Admin 與系統頁面不受影響。",
     reenableCSS: "重新啟用 Custom CSS", disableCSSConfirm: "要立即停止向新的公開請求提供 Custom CSS 嗎？", disableCSS: "立即停用 Custom CSS",
-    workingHelp: "先將變更儲存到持久工作副本。預覽是私有的；只有發布才會變更公開 Website 與 Product artifacts。",
-    captureTitle: "品牌擷取候選內容", captureHelp: "有限度地擷取公開 HTML／CSS，以建議組織、主題與導覽；不匯入來源 script、canonical／SEO 設定、analytics、原始 HTML／CSS 或資產。只由動態 JavaScript 產生的內容可能無法取得。",
-    sourceURL: "來源 Website URL", analyze: "分析", dirtyCapture: "重新擷取前，請儲存或重新載入本機表單修改。",
+    workingHelp: "先將變更儲存到持久工作副本。預覽是私有的；只有發布才會變更公開 Website 與 Product artifacts。", dirtyCapture: "重新擷取前，請儲存或重新載入本機表單修改。",
     dirtyCaptureDescription: "伺服器會將擷取結果與持久的 Website 工作修訂比較，而不是與未儲存的瀏覽器欄位比較。", reloadWorking: "重新載入已儲存工作副本",
-    dynamicUnavailable: "部分來源內容需要 JavaScript，因此未能擷取。", unavailable: "無法取得", dynamicContent: "動態內容", completeManually: "請手動完成這些欄位。", stylesheetUnavailable: "無法取得樣式表：",
-    organization: "組織", sourceTitle: "來源標題", colors: "色彩", fonts: "字型", logoReferences: "Logo 參照", manualCorrections: "手動修正",
-    manualInput: "需要手動輸入", unavailableValue: "無法取得", manualUpload: "需要手動上傳", noneIdentified: "未發現",
-    noCaptureChanges: "擷取結果不會變更已儲存的工作設定。", field: "欄位", currentWorking: "目前工作值", candidate: "候選值",
-    rights: "我確認我們有權使用所選品牌內容與參照。", applyInfo: "套用只會更新目前的瀏覽器表單。",
-    applyInfoDescription: "仍須執行儲存工作副本、預覽與發布。Logo URL 僅供檢視，不會自動下載或附加。", applyCandidate: "將候選內容套用到表單",
+    organization: "組織", field: "欄位",
     displayName: "顯示名稱", legalName: "法定名稱", officialWebsite: "官方網站", privacyURL: "隱私權 URL", termsURL: "條款 URL",
     primaryLogo: "主要 Logo", darkLogo: "深色背景 Logo", favicon: "Favicon", socialImage: "社群圖片", assetID: "資產 ID", upload: "上傳",
     contactID: "聯絡方式 ID", label: "標籤", url: "URL", order: "順序", removeContact: "移除聯絡方式", addContact: "新增聯絡方式",
@@ -158,8 +170,6 @@ defaultLocale: "站點預設語系", enabledLocales: "下次發布後的公開�
     published: (epoch: number) => `Published Website \u914D\u7F6E\u548C\u7AD9\u70B9\u5386\u5143\u7684\u6BCF\u4E2A Product \u8868\u793A${epoch}.`,
     restored: (version: number, revision: number) => `\u6062\u590DWebsite\u7248\u672C${version}\u8FDB\u5165\u5DE5\u4F5C\u4FEE\u8BA2${revision}\u3002\u4ECD\u7136\u9700\u8981 Preview \u548C Publish\u3002`,
     absoluteURL: "\u8F93\u5165\u7EDD\u5BF9 HTTP \u6216 HTTPS URL\u3002", validURL: "\u8F93\u5165\u6709\u6548\u7684 Website URL\u3002",
-    captured: (revision: number) => `\u9488\u5BF9 Website \u5DE5\u4F5C\u4FEE\u8BA2\u7248\u6355\u83B7\u4E86\u4EC5\u5BA1\u67E5\u5019\u9009\u8005${revision}.`,
-    applied: "\u4EC5\u5C06\u5019\u9009\u8005\u5E94\u7528\u4E8E\u6B64\u6D4F\u89C8\u5668\u8868\u5355\u3002\u4FDD\u5B58\u5DE5\u4F5C\u526F\u672C\u3001Preview \u548C Publish \u4ECD\u7136\u662F\u5FC5\u9700\u7684\u3002",
     searchSaved: "\u5DF2\u4FDD\u5B58\u641C\u7D22\u96C6\u6210\u8BBE\u7F6E\u3002\u5916\u90E8\u63D0\u4EA4\u72EC\u7ACB\u8FD0\u884C\u3002",
     cssState: (disabled: boolean) => disabled ? "Custom CSS \u5B89\u5168\u6A21\u5F0F\u9002\u7528\u4E8E\u6240\u6709\u65B0\u7684\u516C\u5171\u8BF7\u6C42\u3002" : "Custom CSS \u5DF2\u9488\u5BF9\u65B0\u7684\u516C\u4F17\u8BF7\u6C42\u91CD\u65B0\u542F\u7528\u3002",
     workingConfiguration: "Website\u5DE5\u4F5C\u914D\u7F6E", workingRevision: "\u5DE5\u4F5C\u4FEE\u8BA2", activeVersion: "\u6D3B\u52A8\u7248\u672C", activeEpoch: "\u6D3B\u52A8\u7AD9\u70B9\u7EAA\u5143",
@@ -167,16 +177,9 @@ defaultLocale: "站點預設語系", enabledLocales: "下次發布後的公開�
     defaultLocale: "\u7AD9\u70B9\u9ED8\u8BA4\u533A\u57DF\u8BBE\u7F6E", enabledLocales: "\u4E0B\u4E00\u4E2A Publish \u4E4B\u540E\u7684 Published \u533A\u57DF\u8BBE\u7F6E", contentEditingEnabled: "\u542F\u7528\u5BA2\u6237\u5185\u5BB9\u7FFB\u8BD1\u7F16\u8F91", activeLocales: "\u5F53\u524D\u516C\u5171\u573A\u6240", saveLocalization: "\u4FDD\u5B58\u8BED\u8A00\u5DE5\u4F5C\u526F\u672C", localizationSaved: (revision: number) => `\u5DF2\u4FDD\u5B58 Website \u8BED\u8A00\u5DE5\u4F5C\u4FEE\u8BA2\u7248${revision}\u3002\u516C\u5171\u7AD9\u70B9\u6CA1\u6709\u53D8\u5316\u3002`,
     cssSafeMode: "Custom CSS \u5B89\u5168\u6A21\u5F0F\u5DF2\u6FC0\u6D3B", cssSafeDescription: "\u516C\u5171\u8BF7\u6C42\u65E0\u6CD5\u68C0\u7D22\u6D3B\u52A8\u7684\u81EA\u5B9A\u4E49\u6837\u5F0F\u8868\u3002 Admin \u548C\u7CFB\u7EDF\u9875\u9762\u4E0D\u53D7\u5F71\u54CD\u3002",
     reenableCSS: "\u91CD\u65B0\u542F\u7528 Custom CSS", disableCSSConfirm: "\u7ACB\u5373\u505C\u6B62\u4E3A\u65B0\u7684\u516C\u4F17\u8BF7\u6C42\u63D0\u4F9B Custom CSS \u670D\u52A1\u5417\uFF1F", disableCSS: "\u7ACB\u5373\u7981\u7528 Custom CSS",
-    workingHelp: "\u5C06\u66F4\u6539\u4FDD\u5B58\u5230\u6301\u4E45\u5DE5\u4F5C\u526F\u672C\u4E2D\u3002 Preview \u662F\u79C1\u6709\u7684\u3002\u4EC5 Publish \u66F4\u6539\u4E86\u516C\u5171 Website \u548C Product \u5DE5\u4EF6\u3002",
-    captureTitle: "\u54C1\u724C\u6355\u6349\u5019\u9009\u4EBA", captureHelp: "\u83B7\u53D6\u6709\u754C\u516C\u5171 HTML/CSS \u4EE5\u5EFA\u8BAE\u7EC4\u7EC7\u3001\u4E3B\u9898\u548C\u5BFC\u822A\u3002\u5B83\u4ECE\u4E0D\u5BFC\u5165\u6E90\u811A\u672C\u3001\u89C4\u8303/SEO \u8BBE\u7F6E\u3001\u5206\u6790\u3001\u539F\u59CB HTML/CSS \u6216\u8D44\u4EA7\u3002\u4EC5\u52A8\u6001 JavaScript \u5185\u5BB9\u53EF\u80FD\u4ECD\u7136\u4E0D\u53EF\u7528\u3002",
-    sourceURL: "\u6765\u6E90 Website URL", analyze: "\u5206\u6790", dirtyCapture: "\u5728\u91CD\u65B0\u6355\u83B7\u4E4B\u524D\u4FDD\u5B58\u6216\u91CD\u65B0\u52A0\u8F7D\u672C\u5730\u8868\u5355\u7F16\u8F91\u3002",
+    workingHelp: "\u5C06\u66F4\u6539\u4FDD\u5B58\u5230\u6301\u4E45\u5DE5\u4F5C\u526F\u672C\u4E2D\u3002 Preview \u662F\u79C1\u6709\u7684\u3002\u4EC5 Publish \u66F4\u6539\u4E86\u516C\u5171 Website \u548C Product \u5DE5\u4EF6\u3002", dirtyCapture: "\u5728\u91CD\u65B0\u6355\u83B7\u4E4B\u524D\u4FDD\u5B58\u6216\u91CD\u65B0\u52A0\u8F7D\u672C\u5730\u8868\u5355\u7F16\u8F91\u3002",
     dirtyCaptureDescription: "\u670D\u52A1\u5668\u5C06\u6355\u83B7\u4E0E\u6301\u4E45\u7684 Website \u5DE5\u4F5C\u7248\u672C\u8FDB\u884C\u6BD4\u8F83\uFF0C\u800C\u4E0D\u662F\u4E0E\u672A\u4FDD\u5B58\u7684\u6D4F\u89C8\u5668\u5B57\u6BB5\u8FDB\u884C\u6BD4\u8F83\u3002", reloadWorking: "\u91CD\u65B0\u52A0\u8F7D\u4FDD\u5B58\u7684\u5DE5\u4F5C",
-    dynamicUnavailable: "", unavailable: "\u4E0D\u53EF\u7528", dynamicContent: "\u52A8\u6001\u5185\u5BB9", completeManually: "\u624B\u52A8\u586B\u5199\u8FD9\u4E9B\u5B57\u6BB5\u3002", stylesheetUnavailable: "\u6837\u5F0F\u8868\u4E0D\u53EF\u7528\uFF1A",
-    organization: "\u7EC4\u7EC7", sourceTitle: "\u6765\u6E90\u6807\u9898", colors: "\u989C\u8272", fonts: "\u5B57\u4F53", logoReferences: "\u6807\u5FD7\u53C2\u8003", manualCorrections: "\u624B\u52A8\u66F4\u6B63",
-    manualInput: "\u9700\u8981\u624B\u52A8\u8F93\u5165", unavailableValue: "\u65E0\u6CD5\u4F7F\u7528", manualUpload: "\u9700\u8981\u624B\u52A8\u4E0A\u4F20", noneIdentified: "\u672A\u53D1\u73B0\u4EFB\u4F55\u8EAB\u4EFD",
-    noCaptureChanges: "\u6355\u83B7\u4E0D\u4F1A\u66F4\u6539\u4FDD\u5B58\u7684\u5DE5\u4F5C\u914D\u7F6E\u3002", field: "\u573A\u5730", currentWorking: "", candidate: "\u5019\u9009\u4EBA",
-    rights: "\u6211\u786E\u8BA4\u6211\u4EEC\u6709\u6743\u4F7F\u7528\u6240\u9009\u54C1\u724C\u548C\u53C2\u8003\u8D44\u6599\u3002", applyInfo: "\u5E94\u7528\u4EC5\u66F4\u65B0\u6B64\u6D4F\u89C8\u5668\u8868\u5355\u3002",
-    applyInfoDescription: "\u60A8\u4ECD\u5FC5\u987B\u4FDD\u5B58\u5DE5\u4F5C\u526F\u672C\u3001Preview \u548C Publish\u3002\u5FBD\u6807 URL \u4EC5\u4F9B\u5BA1\u6838\u53C2\u8003\uFF0C\u4E0D\u4F1A\u81EA\u52A8\u4E0B\u8F7D\u6216\u9644\u52A0\u3002", applyCandidate: "\u7533\u8BF7\u5019\u9009\u4EBA\u8868\u683C",
+    organization: "\u7EC4\u7EC7", field: "\u573A\u5730",
     displayName: "\u663E\u793A\u540D\u79F0", legalName: "\u6CD5\u5B9A\u540D\u79F0", officialWebsite: "\u5B98\u65B9\u7F51\u7AD9", privacyURL: "\u9690\u79C1 URL", termsURL: "\u6761\u6B3E URL",
     primaryLogo: "\u4E3B\u8981\u6807\u5FD7", darkLogo: "\u6DF1\u8272\u80CC\u666F\u6807\u5FD7", favicon: "\u7F51\u7AD9\u56FE\u6807", socialImage: "\u793E\u4F1A\u5F62\u8C61", assetID: "\u8D44\u4EA7ID", upload: "\u4E0A\u4F20",
     contactID: "\u8054\u7CFB\u65B9\u5F0F ID", label: "\u6807\u7B7E", url: "URL", order: "\u547D\u4EE4", removeContact: "\u5220\u9664\u8054\u7CFB\u4EBA", addContact: "\u6DFB\u52A0\u8054\u7CFB\u4EBA",
@@ -206,8 +209,6 @@ defaultLocale: "站點預設語系", enabledLocales: "下次發布後的公開�
     published: (epoch: number) => `Published Website \u69CB\u6210\u3068\u30B5\u30A4\u30C8 \u30A8\u30DD\u30C3\u30AF\u3067\u306E\u3059\u3079\u3066\u306E Product \u8868\u73FE${epoch}.`,
     restored: (version: number, revision: number) => `\u5FA9\u5143\u3055\u308C\u305FWebsite\u30D0\u30FC\u30B8\u30E7\u30F3${version}\u5B9F\u7528\u7684\u306A\u30EA\u30D3\u30B8\u30E7\u30F3\u306B${revision}\u3002 Preview \u304A\u3088\u3073 Publish \u306F\u5F15\u304D\u7D9A\u304D\u5FC5\u8981\u3067\u3059\u3002`,
     absoluteURL: "\u7D76\u5BFE HTTP \u307E\u305F\u306F HTTPS URL \u3092\u5165\u529B\u3057\u307E\u3059\u3002", validURL: "\u6709\u52B9\u306A Website URL \u3092\u5165\u529B\u3057\u3066\u304F\u3060\u3055\u3044\u3002",
-    captured: (revision: number) => `Website \u4F5C\u696D\u30EA\u30D3\u30B8\u30E7\u30F3\u306B\u5BFE\u3059\u308B\u30EC\u30D3\u30E5\u30FC\u5C02\u7528\u306E\u5019\u88DC\u3092\u30AD\u30E3\u30D7\u30C1\u30E3\u3057\u307E\u3057\u305F${revision}.`,
-    applied: "\u5019\u88DC\u3092\u3053\u306E\u30D6\u30E9\u30A6\u30B6 \u30D5\u30A9\u30FC\u30E0\u306B\u306E\u307F\u9069\u7528\u3057\u307E\u3057\u305F\u3002\u4F5C\u696D\u30B3\u30D4\u30FC\u306E\u4FDD\u5B58\u3001Preview\u3001\u304A\u3088\u3073 Publish \u306F\u5F15\u304D\u7D9A\u304D\u5FC5\u8981\u3067\u3059\u3002",
     searchSaved: "\u691C\u7D22\u7D71\u5408\u8A2D\u5B9A\u304C\u4FDD\u5B58\u3055\u308C\u307E\u3057\u305F\u3002\u5916\u90E8\u304B\u3089\u306E\u63D0\u51FA\u306F\u72EC\u7ACB\u3057\u3066\u5B9F\u884C\u3055\u308C\u307E\u3059\u3002",
     cssState: (disabled: boolean) => disabled ? "Custom CSS \u30BB\u30FC\u30D5 \u30E2\u30FC\u30C9\u306F\u3001\u3059\u3079\u3066\u306E\u65B0\u3057\u3044\u30D1\u30D6\u30EA\u30C3\u30AF \u30EA\u30AF\u30A8\u30B9\u30C8\u306B\u5BFE\u3057\u3066\u30A2\u30AF\u30C6\u30A3\u30D6\u306B\u306A\u308A\u307E\u3059\u3002" : "Custom CSS \u304C\u65B0\u3057\u3044\u30D1\u30D6\u30EA\u30C3\u30AF \u30EA\u30AF\u30A8\u30B9\u30C8\u306B\u5BFE\u3057\u3066\u518D\u3073\u6709\u52B9\u306B\u306A\u308A\u307E\u3057\u305F\u3002",
     workingConfiguration: "Website \u52D5\u4F5C\u69CB\u6210", workingRevision: "\u4F5C\u696D\u30EA\u30D3\u30B8\u30E7\u30F3", activeVersion: "\u30A2\u30AF\u30C6\u30A3\u30D6\u306A\u30D0\u30FC\u30B8\u30E7\u30F3", activeEpoch: "\u30A2\u30AF\u30C6\u30A3\u30D6\u30B5\u30A4\u30C8\u30A8\u30DD\u30C3\u30AF",
@@ -215,16 +216,9 @@ defaultLocale: "站點預設語系", enabledLocales: "下次發布後的公開�
     defaultLocale: "\u30B5\u30A4\u30C8\u306E\u30C7\u30D5\u30A9\u30EB\u30C8\u306E\u30ED\u30B1\u30FC\u30EB", enabledLocales: "\u6B21\u306E Publish \u4EE5\u964D\u306E Published \u30ED\u30B1\u30FC\u30EB", contentEditingEnabled: "\u9867\u5BA2\u30B3\u30F3\u30C6\u30F3\u30C4\u306E\u7FFB\u8A33\u7DE8\u96C6\u3092\u6709\u52B9\u306B\u3059\u308B", activeLocales: "\u73FE\u5728\u516C\u958B\u3055\u308C\u3066\u3044\u308B\u30ED\u30B1\u30FC\u30EB", saveLocalization: "\u8A00\u8A9E\u306E\u4F5C\u696D\u30B3\u30D4\u30FC\u3092\u4FDD\u5B58\u3059\u308B", localizationSaved: (revision: number) => `\u4FDD\u5B58\u3055\u308C\u305F Website \u8A00\u8A9E\u306E\u4F5C\u696D\u30EA\u30D3\u30B8\u30E7\u30F3${revision}\u3002\u516C\u958B\u30B5\u30A4\u30C8\u306F\u5909\u66F4\u3042\u308A\u307E\u305B\u3093\u3002`,
     cssSafeMode: "Custom CSS \u30BB\u30FC\u30D5 \u30E2\u30FC\u30C9\u304C\u30A2\u30AF\u30C6\u30A3\u30D6\u3067\u3059", cssSafeDescription: "\u30D1\u30D6\u30EA\u30C3\u30AF \u30EA\u30AF\u30A8\u30B9\u30C8\u3067\u306F\u3001\u30A2\u30AF\u30C6\u30A3\u30D6\u306A\u30AB\u30B9\u30BF\u30E0 \u30B9\u30BF\u30A4\u30EB\u30B7\u30FC\u30C8\u3092\u53D6\u5F97\u3067\u304D\u307E\u305B\u3093\u3002 Admin \u3068\u30B7\u30B9\u30C6\u30E0 \u30DA\u30FC\u30B8\u306F\u5F71\u97FF\u3092\u53D7\u3051\u307E\u305B\u3093\u3002",
     reenableCSS: "Custom CSS\u3092\u518D\u5EA6\u6709\u52B9\u306B\u3059\u308B", disableCSSConfirm: "\u65B0\u3057\u3044\u30D1\u30D6\u30EA\u30C3\u30AF\u30EA\u30AF\u30A8\u30B9\u30C8\u306B\u5BFE\u3059\u308B Custom CSS \u306E\u63D0\u4F9B\u3092\u76F4\u3061\u306B\u505C\u6B62\u3057\u307E\u3059\u304B?", disableCSS: "\u4ECA\u3059\u3050 Custom CSS \u3092\u7121\u52B9\u306B\u3057\u3066\u304F\u3060\u3055\u3044",
-    workingHelp: "\u5909\u66F4\u3092\u6C38\u7D9A\u7684\u306A\u4F5C\u696D\u30B3\u30D4\u30FC\u306B\u4FDD\u5B58\u3057\u307E\u3059\u3002 Preview\u306F\u975E\u516C\u958B\u3067\u3059\u3002 Publish \u306E\u307F\u304C\u30D1\u30D6\u30EA\u30C3\u30AF Website \u304A\u3088\u3073 Product \u30A2\u30FC\u30C6\u30A3\u30D5\u30A1\u30AF\u30C8\u3092\u5909\u66F4\u3057\u307E\u3059\u3002",
-    captureTitle: "\u30D6\u30E9\u30F3\u30C9\u7372\u5F97\u5019\u88DC\u8005", captureHelp: "\u5883\u754C\u4ED8\u304D\u30D1\u30D6\u30EA\u30C3\u30AF HTML/CSS \u3092\u53D6\u5F97\u3057\u3066\u3001\u7D44\u7E54\u3001\u30C6\u30FC\u30DE\u3001\u30CA\u30D3\u30B2\u30FC\u30B7\u30E7\u30F3\u3092\u63D0\u6848\u3057\u307E\u3059\u3002\u30BD\u30FC\u30B9 \u30B9\u30AF\u30EA\u30D7\u30C8\u3001\u6B63\u898F/SEO \u8A2D\u5B9A\u3001\u5206\u6790\u3001\u751F\u306E HTML/CSS\u3001\u307E\u305F\u306F\u30A2\u30BB\u30C3\u30C8\u306F\u6C7A\u3057\u3066\u30A4\u30F3\u30DD\u30FC\u30C8\u3055\u308C\u307E\u305B\u3093\u3002\u52D5\u7684 JavaScript \u306E\u307F\u306E\u30B3\u30F3\u30C6\u30F3\u30C4\u306F\u5229\u7528\u3067\u304D\u306A\u3044\u307E\u307E\u306B\u306A\u308B\u5834\u5408\u304C\u3042\u308A\u307E\u3059\u3002",
-    sourceURL: "\u30BD\u30FC\u30B9 Website URL", analyze: "\u5206\u6790\u3059\u308B", dirtyCapture: "\u518D\u30AD\u30E3\u30D7\u30C1\u30E3\u3059\u308B\u524D\u306B\u3001\u30ED\u30FC\u30AB\u30EB \u30D5\u30A9\u30FC\u30E0\u306E\u7DE8\u96C6\u3092\u4FDD\u5B58\u307E\u305F\u306F\u518D\u30ED\u30FC\u30C9\u3057\u307E\u3059\u3002",
+    workingHelp: "\u5909\u66F4\u3092\u6C38\u7D9A\u7684\u306A\u4F5C\u696D\u30B3\u30D4\u30FC\u306B\u4FDD\u5B58\u3057\u307E\u3059\u3002 Preview\u306F\u975E\u516C\u958B\u3067\u3059\u3002 Publish \u306E\u307F\u304C\u30D1\u30D6\u30EA\u30C3\u30AF Website \u304A\u3088\u3073 Product \u30A2\u30FC\u30C6\u30A3\u30D5\u30A1\u30AF\u30C8\u3092\u5909\u66F4\u3057\u307E\u3059\u3002", dirtyCapture: "\u518D\u30AD\u30E3\u30D7\u30C1\u30E3\u3059\u308B\u524D\u306B\u3001\u30ED\u30FC\u30AB\u30EB \u30D5\u30A9\u30FC\u30E0\u306E\u7DE8\u96C6\u3092\u4FDD\u5B58\u307E\u305F\u306F\u518D\u30ED\u30FC\u30C9\u3057\u307E\u3059\u3002",
     dirtyCaptureDescription: "\u30B5\u30FC\u30D0\u30FC\u306F\u3001\u4FDD\u5B58\u3055\u308C\u3066\u3044\u306A\u3044\u30D6\u30E9\u30A6\u30B6 \u30D5\u30A3\u30FC\u30EB\u30C9\u3067\u306F\u306A\u304F\u3001\u30AD\u30E3\u30D7\u30C1\u30E3\u3092\u6C38\u7D9A\u7684\u306A Website \u4F5C\u696D\u30EA\u30D3\u30B8\u30E7\u30F3\u3068\u6BD4\u8F03\u3057\u307E\u3059\u3002", reloadWorking: "\u4FDD\u5B58\u3055\u308C\u305F\u4F5C\u696D\u3092\u30EA\u30ED\u30FC\u30C9\u3059\u308B",
-    dynamicUnavailable: "\u4E00\u90E8\u306E\u30BD\u30FC\u30B9 \u30B3\u30F3\u30C6\u30F3\u30C4\u306B\u306F JavaScript \u304C\u5FC5\u8981\u3067\u3059\u304C\u3001\u30AD\u30E3\u30D7\u30C1\u30E3\u3055\u308C\u307E\u305B\u3093\u3067\u3057\u305F\u3002", unavailable: "\u5229\u7528\u4E0D\u53EF", dynamicContent: "\u52D5\u7684\u30B3\u30F3\u30C6\u30F3\u30C4", completeManually: "\u3053\u308C\u3089\u306E\u30D5\u30A3\u30FC\u30EB\u30C9\u306B\u624B\u52D5\u3067\u5165\u529B\u3057\u307E\u3059\u3002", stylesheetUnavailable: "\u30B9\u30BF\u30A4\u30EB\u30B7\u30FC\u30C8\u306F\u4F7F\u7528\u3067\u304D\u307E\u305B\u3093:",
-    organization: "\u7D44\u7E54", sourceTitle: "\u30BD\u30FC\u30B9\u306E\u30BF\u30A4\u30C8\u30EB", colors: "\u8272", fonts: "\u30D5\u30A9\u30F3\u30C8", logoReferences: "\u30ED\u30B4\u306E\u53C2\u7167", manualCorrections: "\u624B\u52D5\u4FEE\u6B63",
-    manualInput: "\u624B\u52D5\u5165\u529B\u304C\u5FC5\u8981\u3067\u3059", unavailableValue: "\u5229\u7528\u4E0D\u53EF", manualUpload: "\u624B\u52D5\u30A2\u30C3\u30D7\u30ED\u30FC\u30C9\u304C\u5FC5\u8981\u3067\u3059", noneIdentified: "\u4F55\u3082\u7279\u5B9A\u3055\u308C\u3066\u3044\u306A\u3044",
-    noCaptureChanges: "\u30AD\u30E3\u30D7\u30C1\u30E3\u306B\u3088\u3063\u3066\u3001\u4FDD\u5B58\u3055\u308C\u305F\u4F5C\u696D\u69CB\u6210\u306F\u5909\u66F4\u3055\u308C\u307E\u305B\u3093\u3002", field: "\u5206\u91CE", currentWorking: "Current\u306F\u52D5\u4F5C\u3057\u3066\u3044\u307E\u3059", candidate: "\u5019\u88DC\u8005",
-    rights: "\u79C1\u306F\u3001\u9078\u629E\u3057\u305F\u30D6\u30E9\u30F3\u30C9\u3068\u53C2\u7167\u3092\u4F7F\u7528\u3059\u308B\u6A29\u5229\u304C\u3042\u308B\u3053\u3068\u3092\u78BA\u8A8D\u3057\u307E\u3059\u3002", applyInfo: "\u9069\u7528\u3059\u308B\u3068\u3001\u3053\u306E\u30D6\u30E9\u30A6\u30B6 \u30D5\u30A9\u30FC\u30E0\u306E\u307F\u304C\u66F4\u65B0\u3055\u308C\u307E\u3059\u3002",
-    applyInfoDescription: "\u4F5C\u696D\u30B3\u30D4\u30FC\u3001Preview\u3001\u304A\u3088\u3073 Publish \u3092\u4FDD\u5B58\u3059\u308B\u5FC5\u8981\u304C\u3042\u308A\u307E\u3059\u3002\u30ED\u30B4 URL \u306F\u30EC\u30D3\u30E5\u30FC\u7528\u306E\u53C2\u7167\u3067\u3042\u308A\u3001\u81EA\u52D5\u7684\u306B\u30C0\u30A6\u30F3\u30ED\u30FC\u30C9\u307E\u305F\u306F\u6DFB\u4ED8\u3055\u308C\u308B\u3082\u306E\u3067\u306F\u3042\u308A\u307E\u305B\u3093\u3002", applyCandidate: "\u5019\u88DC\u8005\u3092\u30D5\u30A9\u30FC\u30E0\u306B\u5FDC\u52DF\u3059\u308B",
+    organization: "\u7D44\u7E54", field: "\u5206\u91CE",
     displayName: "\u8868\u793A\u540D", legalName: "\u6B63\u5F0F\u540D\u79F0", officialWebsite: "\u516C\u5F0F\u30B5\u30A4\u30C8", privacyURL: "\u30D7\u30E9\u30A4\u30D0\u30B7\u30FC URL", termsURL: "\u898F\u7D04 URL",
     primaryLogo: "\u30D7\u30E9\u30A4\u30DE\u30EA\u30ED\u30B4", darkLogo: "\u6697\u3044\u80CC\u666F\u306E\u30ED\u30B4", favicon: "\u30D5\u30A1\u30D3\u30B3\u30F3", socialImage: "\u793E\u4F1A\u7684\u30A4\u30E1\u30FC\u30B8", assetID: "\u8CC7\u7523 ID", upload: "\u30A2\u30C3\u30D7\u30ED\u30FC\u30C9",
     contactID: "\u304A\u554F\u3044\u5408\u308F\u305B", label: "\u30E9\u30D9\u30EB", url: "URL", order: "\u6CE8\u6587", removeContact: "\u9023\u7D61\u5148\u3092\u524A\u9664\u3059\u308B", addContact: "\u9023\u7D61\u5148\u3092\u8FFD\u52A0",
@@ -254,8 +248,6 @@ defaultLocale: "站點預設語系", enabledLocales: "下次發布後的公開�
     published: (epoch: number) => `Published Website \uAD6C\uC131 \uBC0F \uC0AC\uC774\uD2B8 \uC5D0\uD3EC\uD06C\uC758 \uBAA8\uB4E0 Product \uD45C\uD604${epoch}.`,
     restored: (version: number, revision: number) => `Website \uBC84\uC804 \uBCF5\uC6D0${version}\uC791\uC5C5 \uAC1C\uC815\uC5D0${revision}. Preview \uBC0F Publish\uB294 \uC5EC\uC804\uD788 \uD544\uC694\uD569\uB2C8\uB2E4.`,
     absoluteURL: "\uC808\uB300 HTTP \uB610\uB294 HTTPS URL\uB97C \uC785\uB825\uD558\uC138\uC694.", validURL: "\uC720\uD6A8\uD55C Website URL\uB97C \uC785\uB825\uD558\uC138\uC694.",
-    captured: (revision: number) => `Website \uC791\uC5C5 \uAC1C\uC815\uD310\uC5D0 \uB300\uD55C \uAC80\uD1A0 \uC804\uC6A9 \uD6C4\uBCF4\uB97C \uCEA1\uCC98\uD588\uC2B5\uB2C8\uB2E4.${revision}.`,
-    applied: "\uC774 \uBE0C\uB77C\uC6B0\uC800 \uC591\uC2DD\uC5D0\uB9CC \uD6C4\uBCF4\uB97C \uC801\uC6A9\uD588\uC2B5\uB2C8\uB2E4. \uC791\uC5C5 \uBCF5\uC0AC\uBCF8 \uC800\uC7A5, Preview \uBC0F Publish\uB294 \uC5EC\uC804\uD788 \uD544\uC694\uD569\uB2C8\uB2E4.",
     searchSaved: "\uAC80\uC0C9 \uD1B5\uD569 \uC124\uC815\uC774 \uC800\uC7A5\uB418\uC5C8\uC2B5\uB2C8\uB2E4. \uC678\uBD80 \uC81C\uCD9C\uC740 \uB3C5\uB9BD\uC801\uC73C\uB85C \uC2E4\uD589\uB429\uB2C8\uB2E4.",
     cssState: (disabled: boolean) => disabled ? "Custom CSS \uC548\uC804 \uBAA8\uB4DC\uB294 \uBAA8\uB4E0 \uC0C8\uB85C\uC6B4 \uACF5\uAC1C \uC694\uCCAD\uC5D0 \uB300\uD574 \uD65C\uC131\uD654\uB429\uB2C8\uB2E4." : "\uC0C8\uB85C\uC6B4 \uACF5\uAC1C \uC694\uCCAD\uC5D0 \uB300\uD574 Custom CSS\uAC00 \uB2E4\uC2DC \uD65C\uC131\uD654\uB418\uC5C8\uC2B5\uB2C8\uB2E4.",
     workingConfiguration: "Website \uC791\uC5C5 \uAD6C\uC131", workingRevision: "\uC791\uC5C5 \uAC1C\uC815", activeVersion: "\uD65C\uC131 \uBC84\uC804", activeEpoch: "\uD65C\uC131 \uC0AC\uC774\uD2B8 \uC2DC\uB300",
@@ -263,16 +255,9 @@ defaultLocale: "站點預設語系", enabledLocales: "下次發布後的公開�
     defaultLocale: "\uC0AC\uC774\uD2B8 \uAE30\uBCF8 \uB85C\uCF00\uC77C", enabledLocales: "\uB2E4\uC74C Publish \uC774\uD6C4\uC758 Published \uB85C\uCF00\uC77C", contentEditingEnabled: "\uACE0\uAC1D \uCF58\uD150\uCE20 \uBC88\uC5ED \uD3B8\uC9D1 \uD65C\uC131\uD654", activeLocales: "\uD604\uC7AC \uACF5\uAC1C \uB85C\uCF00\uC77C", saveLocalization: "\uC5B8\uC5B4 \uC791\uC5C5 \uC0AC\uBCF8 \uC800\uC7A5", localizationSaved: (revision: number) => `\uC800\uC7A5\uB41C Website \uC5B8\uC5B4 \uC791\uC5C5 \uAC1C\uC815\uD310${revision}. \uACF5\uAC1C \uC0AC\uC774\uD2B8\uB294 \uBCC0\uACBD\uB418\uC9C0 \uC54A\uC558\uC2B5\uB2C8\uB2E4.`,
     cssSafeMode: "Custom CSS \uC548\uC804 \uBAA8\uB4DC\uAC00 \uD65C\uC131\uD654\uB418\uC5C8\uC2B5\uB2C8\uB2E4.", cssSafeDescription: "\uACF5\uAC1C \uC694\uCCAD\uC740 \uD65C\uC131 \uC0AC\uC6A9\uC790 \uC815\uC758 \uC2A4\uD0C0\uC77C\uC2DC\uD2B8\uB97C \uAC80\uC0C9\uD560 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4. Admin \uBC0F \uC2DC\uC2A4\uD15C \uD398\uC774\uC9C0\uB294 \uC601\uD5A5\uC744 \uBC1B\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.",
     reenableCSS: "Custom CSS\uB97C \uB2E4\uC2DC \uD65C\uC131\uD654\uD569\uB2C8\uB2E4.", disableCSSConfirm: "\uC0C8\uB85C\uC6B4 \uACF5\uAC1C \uC694\uCCAD\uC5D0 \uB300\uD574 Custom CSS \uC81C\uACF5\uC744 \uC989\uC2DC \uC911\uB2E8\uD558\uC2DC\uACA0\uC2B5\uB2C8\uAE4C?", disableCSS: "\uC9C0\uAE08 Custom CSS \uBE44\uD65C\uC131\uD654",
-    workingHelp: "\uC9C0\uC18D \uAC00\uB2A5\uD55C \uC791\uC5C5 \uBCF5\uC0AC\uBCF8\uC5D0 \uBCC0\uACBD \uC0AC\uD56D\uC744 \uC800\uC7A5\uD569\uB2C8\uB2E4. Preview\uB294 \uBE44\uACF5\uAC1C\uC785\uB2C8\uB2E4. Publish\uB9CC\uC774 \uACF5\uAC1C Website \uBC0F Product \uC544\uD2F0\uD329\uD2B8\uB97C \uBCC0\uACBD\uD569\uB2C8\uB2E4.",
-    captureTitle: "\uBE0C\uB79C\uB4DC \uCEA1\uCCD0 \uD6C4\uBCF4", captureHelp: "\uC870\uC9C1, \uD14C\uB9C8 \uBC0F \uD0D0\uC0C9\uC744 \uC81C\uC548\uD558\uAE30 \uC704\uD574 \uC81C\uD55C\uB41C \uACF5\uAC1C HTML/CSS\uB97C \uAC00\uC838\uC635\uB2C8\uB2E4. \uC18C\uC2A4 \uC2A4\uD06C\uB9BD\uD2B8, \uD45C\uC900/SEO \uC124\uC815, \uBD84\uC11D, \uC6D0\uC2DC HTML/CSS \uB610\uB294 \uC790\uC0B0\uC744 \uAC00\uC838\uC624\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4. \uB3D9\uC801 JavaScript \uC804\uC6A9 \uCF58\uD150\uCE20\uB294 \uACC4\uC18D \uC0AC\uC6A9\uD560 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4.",
-    sourceURL: "\uC18C\uC2A4 Website URL", analyze: "\uBD84\uC11D\uD558\uB2E4", dirtyCapture: "\uB2E4\uC2DC \uCEA1\uCC98\uD558\uAE30 \uC804\uC5D0 \uB85C\uCEEC \uC591\uC2DD \uD3B8\uC9D1 \uB0B4\uC6A9\uC744 \uC800\uC7A5\uD558\uAC70\uB098 \uB2E4\uC2DC \uB85C\uB4DC\uD558\uC138\uC694.",
+    workingHelp: "\uC9C0\uC18D \uAC00\uB2A5\uD55C \uC791\uC5C5 \uBCF5\uC0AC\uBCF8\uC5D0 \uBCC0\uACBD \uC0AC\uD56D\uC744 \uC800\uC7A5\uD569\uB2C8\uB2E4. Preview\uB294 \uBE44\uACF5\uAC1C\uC785\uB2C8\uB2E4. Publish\uB9CC\uC774 \uACF5\uAC1C Website \uBC0F Product \uC544\uD2F0\uD329\uD2B8\uB97C \uBCC0\uACBD\uD569\uB2C8\uB2E4.", dirtyCapture: "\uB2E4\uC2DC \uCEA1\uCC98\uD558\uAE30 \uC804\uC5D0 \uB85C\uCEEC \uC591\uC2DD \uD3B8\uC9D1 \uB0B4\uC6A9\uC744 \uC800\uC7A5\uD558\uAC70\uB098 \uB2E4\uC2DC \uB85C\uB4DC\uD558\uC138\uC694.",
     dirtyCaptureDescription: "\uC11C\uBC84\uB294 \uC800\uC7A5\uB418\uC9C0 \uC54A\uC740 \uBE0C\uB77C\uC6B0\uC800 \uD544\uB4DC\uAC00 \uC544\uB2CC \uB0B4\uAD6C\uC131 \uC788\uB294 Website \uC791\uC5C5 \uAC1C\uC815\uACFC \uCEA1\uCC98\uB97C \uBE44\uAD50\uD569\uB2C8\uB2E4.", reloadWorking: "\uC800\uC7A5\uB41C \uC791\uC5C5 \uB2E4\uC2DC \uB85C\uB4DC",
-    dynamicUnavailable: "\uC77C\uBD80 \uC18C\uC2A4 \uCF58\uD150\uCE20\uC5D0\uB294 JavaScript\uAC00 \uD544\uC694\uD558\uBBC0\uB85C \uCEA1\uCC98\uB418\uC9C0 \uC54A\uC558\uC2B5\uB2C8\uB2E4.", unavailable: "\uC5C6\uB294", dynamicContent: "\uB3D9\uC801 \uCF58\uD150\uCE20", completeManually: "\uC774 \uD544\uB4DC\uB97C \uC218\uB3D9\uC73C\uB85C \uC644\uB8CC\uD558\uC138\uC694.", stylesheetUnavailable: "\uC0AC\uC6A9\uD560 \uC218 \uC5C6\uB294 \uC2A4\uD0C0\uC77C\uC2DC\uD2B8:",
-    organization: "\uC870\uC9C1", sourceTitle: "\uC18C\uC2A4 \uC81C\uBAA9", colors: "\uADF8\uB9BC \uBB3C\uAC10", fonts: "\uAE00\uAF34", logoReferences: "\uB85C\uACE0 \uCC38\uC870", manualCorrections: "\uC218\uB3D9 \uC218\uC815",
-    manualInput: "\uC218\uB3D9 \uC785\uB825 \uD544\uC694", unavailableValue: "\uC0AC\uC6A9\uD560 \uC218 \uC5C6\uC74C", manualUpload: "\uC218\uB3D9 \uC5C5\uB85C\uB4DC \uD544\uC694", noneIdentified: "\uD655\uC778\uB41C \uBC14 \uC5C6\uC74C",
-    noCaptureChanges: "\uCEA1\uCC98\uB294 \uC800\uC7A5\uB41C \uC791\uC5C5 \uAD6C\uC131\uC744 \uBCC0\uACBD\uD558\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.", field: "\uD544\uB4DC", currentWorking: "Current \uC791\uB3D9 \uC911", candidate: "\uD6C4\uBCF4\uC790",
-    rights: "\uB098\uB294 \uC120\uD0DD\uB41C \uBE0C\uB79C\uB4DC\uC640 \uCC38\uACE0\uC790\uB8CC\uB97C \uC0AC\uC6A9\uD560 \uAD8C\uB9AC\uAC00 \uC788\uC74C\uC744 \uD655\uC778\uD569\uB2C8\uB2E4.", applyInfo: "\uC801\uC6A9\uD558\uBA74 \uC774 \uBE0C\uB77C\uC6B0\uC800 \uC591\uC2DD\uB9CC \uC5C5\uB370\uC774\uD2B8\uB429\uB2C8\uB2E4.",
-    applyInfoDescription: "\uC5EC\uC804\uD788 \uC791\uC5C5 \uBCF5\uC0AC\uBCF8\uC778 Preview \uBC0F Publish\uB97C \uC800\uC7A5\uD574\uC57C \uD569\uB2C8\uB2E4. \uB85C\uACE0 URL\uC740 \uAC80\uD1A0\uB97C \uC704\uD55C \uCC38\uC870\uC774\uBA70 \uC790\uB3D9\uC73C\uB85C \uB2E4\uC6B4\uB85C\uB4DC\uB418\uAC70\uB098 \uCCA8\uBD80\uB418\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.", applyCandidate: "\uC591\uC2DD\uC5D0 \uD6C4\uBCF4\uC790 \uC801\uC6A9",
+    organization: "\uC870\uC9C1", field: "\uD544\uB4DC",
     displayName: "\uD45C\uC2DC \uC774\uB984", legalName: "\uBC95\uC801 \uC774\uB984", officialWebsite: "\uACF5\uC2DD \uD648\uD398\uC774\uC9C0", privacyURL: "\uAC1C\uC778 \uC815\uBCF4 \uBCF4\uD638 URL", termsURL: "\uC774\uC6A9\uC57D\uAD00 URL",
     primaryLogo: "\uAE30\uBCF8 \uB85C\uACE0", darkLogo: "\uC5B4\uB450\uC6B4 \uBC30\uACBD\uC758 \uB85C\uACE0", favicon: "\uD30C\uBE44\uCF58", socialImage: "\uC18C\uC15C \uC774\uBBF8\uC9C0", assetID: "\uC790\uC0B0 ID", upload: "\uC5C5\uB85C\uB4DC",
     contactID: "ID\uC5D0 \uBB38\uC758\uD558\uC138\uC694", label: "\uC0C1\uD45C", url: "URL", order: "\uC8FC\uBB38\uD558\uB2E4", removeContact: "\uC5F0\uB77D\uCC98 \uC0AD\uC81C", addContact: "\uC5F0\uB77D\uCC98 \uCD94\uAC00",
@@ -302,8 +287,6 @@ defaultLocale: "站點預設語系", enabledLocales: "下次發布後的公開�
     published: (epoch: number) => `Published Website-Konfiguration und jede Product-Darstellung in der Standortepoche${epoch}.`,
     restored: (version: number, revision: number) => `Wiederhergestellte Website-Version${version}in die Arbeitsrevision${revision}. Preview und Publish sind weiterhin erforderlich.`,
     absoluteURL: "Geben Sie ein absolutes HTTP oder HTTPS URL ein.", validURL: "Geben Sie ein g\u00FCltiges Website URL ein.",
-    captured: (revision: number) => `Einen nur zur \u00DCberpr\u00FCfung vorgesehenen Kandidaten gegen die Arbeitsrevision Website erfasst${revision}.`,
-    applied: "Der Kandidat wurde nur auf dieses Browserformular angewendet. Arbeitskopie speichern, Preview und Publish sind weiterhin erforderlich.",
     searchSaved: "Suchintegrationseinstellungen gespeichert. Externe Einreichungen laufen unabh\u00E4ngig voneinander.",
     cssState: (disabled: boolean) => disabled ? "Der abgesicherte Modus Custom CSS ist f\u00FCr alle neuen \u00F6ffentlichen Anfragen aktiv." : "Custom CSS wurde f\u00FCr neue \u00F6ffentliche Anfragen wieder aktiviert.",
     workingConfiguration: "Website Arbeitskonfiguration", workingRevision: "Arbeitsrevision", activeVersion: "Aktive Version", activeEpoch: "Epoche der aktiven Website",
@@ -311,16 +294,9 @@ defaultLocale: "站點預設語系", enabledLocales: "下次發布後的公開�
     defaultLocale: "Standardgebietsschema der Site", enabledLocales: "Published-Gebietsschemata nach dem n\u00E4chsten Publish", contentEditingEnabled: "Aktivieren Sie die Bearbeitung der \u00DCbersetzung von Kundeninhalten", activeLocales: "Derzeit \u00F6ffentliche Orte", saveLocalization: "Arbeitskopie in der Sprache speichern", localizationSaved: (revision: number) => `Arbeitsversion der Website-Sprache gespeichert${revision}. Die \u00F6ffentliche Seite bleibt unver\u00E4ndert.`,
     cssSafeMode: "Custom CSS Der abgesicherte Modus ist aktiv", cssSafeDescription: "\u00D6ffentliche Anfragen k\u00F6nnen das aktive benutzerdefinierte Stylesheet nicht abrufen. Admin und Systemseiten sind davon nicht betroffen.",
     reenableCSS: "Custom CSS erneut aktivieren", disableCSSConfirm: "Die Bereitstellung von Custom CSS f\u00FCr neue \u00F6ffentliche Anfragen sofort einstellen?", disableCSS: "Deaktivieren Sie Custom CSS jetzt",
-    workingHelp: "Speichern Sie \u00C4nderungen in der dauerhaften Arbeitskopie. Preview ist privat. Nur Publish \u00E4ndert die \u00F6ffentlichen Website- und Product-Artefakte.",
-    captureTitle: "Kandidat f\u00FCr die Markenerfassung", captureHelp: "Rufen Sie begrenztes \u00F6ffentliches HTML/CSS ab, um Organisation, Thema und Navigation vorzuschlagen. Es importiert niemals Quellskripte, kanonische/SEO-Einstellungen, Analysen, rohes HTML/CSS oder Assets. Dynamische reine JavaScript-Inhalte bleiben m\u00F6glicherweise weiterhin nicht verf\u00FCgbar.",
-    sourceURL: "Quelle Website URL", analyze: "Analysieren", dirtyCapture: "Speichern Sie lokale Formular\u00E4nderungen oder laden Sie sie neu, bevor Sie sie erneut erfassen.",
+    workingHelp: "Speichern Sie \u00C4nderungen in der dauerhaften Arbeitskopie. Preview ist privat. Nur Publish \u00E4ndert die \u00F6ffentlichen Website- und Product-Artefakte.", dirtyCapture: "Speichern Sie lokale Formular\u00E4nderungen oder laden Sie sie neu, bevor Sie sie erneut erfassen.",
     dirtyCaptureDescription: "Der Server vergleicht eine Erfassung mit der dauerhaften Website-Arbeitsrevision, nicht mit nicht gespeicherten Browserfeldern.", reloadWorking: "Gespeicherte Arbeit neu laden",
-    dynamicUnavailable: "Einige Quellinhalte erfordern JavaScript und wurden nicht erfasst.", unavailable: "Nicht verf\u00FCgbar", dynamicContent: "dynamischer Inhalt", completeManually: "F\u00FCllen Sie diese Felder manuell aus.", stylesheetUnavailable: "Stylesheet nicht verf\u00FCgbar:",
-    organization: "Organisation", sourceTitle: "Quellentitel", colors: "Farben", fonts: "Schriftarten", logoReferences: "Logo-Referenzen", manualCorrections: "Manuelle Korrekturen",
-    manualInput: "Manuelle Eingabe erforderlich", unavailableValue: "Nicht verf\u00FCgbar", manualUpload: "Manueller Upload erforderlich", noneIdentified: "Keine identifiziert",
-    noCaptureChanges: "Durch die Erfassung wird die gespeicherte Arbeitskonfiguration nicht ver\u00E4ndert.", field: "Feld", currentWorking: "Current funktioniert", candidate: "Kandidat",
-    rights: "Ich best\u00E4tige, dass wir das Recht haben, das ausgew\u00E4hlte Branding und die Referenzen zu verwenden.", applyInfo: "Durch die Anwendung wird nur dieses Browserformular aktualisiert.",
-    applyInfoDescription: "Sie m\u00FCssen weiterhin die Arbeitskopie Preview und Publish speichern. Logo-URLs sind Referenzen zur \u00DCberpr\u00FCfung und werden nicht automatisch heruntergeladen oder angeh\u00E4ngt.", applyCandidate: "Bewerben Sie sich f\u00FCr das Formular",
+    organization: "Organisation", field: "Feld",
     displayName: "Anzeigename", legalName: "Offizieller Name", officialWebsite: "Offizielle Website", privacyURL: "Datenschutz URL", termsURL: "Bedingungen URL",
     primaryLogo: "Prim\u00E4res Logo", darkLogo: "Logo mit dunklem Hintergrund", favicon: "Favicon", socialImage: "Soziales Image", assetID: "Anlage ID", upload: "Hochladen",
     contactID: "Kontaktieren Sie ID", label: "Etikett", url: "URL", order: "Befehl", removeContact: "Kontakt entfernen", addContact: "Kontakt hinzuf\u00FCgen",
@@ -350,8 +326,6 @@ defaultLocale: "站點預設語系", enabledLocales: "下次發布後的公開�
     published: (epoch: number) => `Configuration Published Website et chaque repr\u00E9sentation Product \u00E0 l'\u00E9poque du site${epoch}.`,
     restored: (version: number, revision: number) => `Version Website restaur\u00E9e${version}en r\u00E9vision de travail${revision}. Preview et Publish sont toujours requis.`,
     absoluteURL: "Entrez un HTTP ou HTTPS URL absolu.", validURL: "Entrez un Website URL valide.",
-    captured: (revision: number) => `Capture d'un candidat en r\u00E9vision uniquement par rapport \u00E0 la r\u00E9vision de travail Website${revision}.`,
-    applied: "Appliqu\u00E9 le candidat \u00E0 ce formulaire de navigateur uniquement. Enregistrez la copie de travail, Preview et Publish sont toujours requis.",
     searchSaved: "Param\u00E8tres d'int\u00E9gration de recherche enregistr\u00E9s. Les soumissions externes s'ex\u00E9cutent de mani\u00E8re ind\u00E9pendante.",
     cssState: (disabled: boolean) => disabled ? "Le mode sans \u00E9chec Custom CSS est actif pour toutes les nouvelles demandes publiques." : "Custom CSS a \u00E9t\u00E9 r\u00E9activ\u00E9 pour les nouvelles demandes publiques.",
     workingConfiguration: "Configuration de travail Website", workingRevision: "R\u00E9vision de travail", activeVersion: "Version active", activeEpoch: "\u00C9poque du site actif",
@@ -359,16 +333,9 @@ defaultLocale: "站點預設語系", enabledLocales: "下次發布後的公開�
     defaultLocale: "Param\u00E8tres r\u00E9gionaux par d\u00E9faut du site", enabledLocales: "Param\u00E8tres r\u00E9gionaux Published apr\u00E8s le prochain Publish", contentEditingEnabled: "Activer la modification de la traduction du contenu client", activeLocales: "Lieux actuellement publics", saveLocalization: "Enregistrer la copie de travail de la langue", localizationSaved: (revision: number) => `R\u00E9vision de travail du langage Website enregistr\u00E9e${revision}. Le site public est inchang\u00E9.`,
     cssSafeMode: "Le mode sans \u00E9chec Custom CSS est actif", cssSafeDescription: "Les requ\u00EAtes publiques ne peuvent pas r\u00E9cup\u00E9rer la feuille de style personnalis\u00E9e active. Admin et les pages syst\u00E8me ne sont pas affect\u00E9s.",
     reenableCSS: "R\u00E9activer Custom CSS", disableCSSConfirm: "Arr\u00EAter imm\u00E9diatement de r\u00E9pondre \u00E0 Custom CSS aux nouvelles demandes publiques\u00A0?", disableCSS: "D\u00E9sactivez Custom CSS maintenant",
-    workingHelp: "Enregistrez les modifications dans la copie de travail durable. Preview est priv\u00E9. Seul Publish modifie les artefacts publics Website et Product.",
-    captureTitle: "Candidat \u00E0 la capture de marque", captureHelp: "R\u00E9cup\u00E9rez le HTML/CSS public limit\u00E9 pour sugg\u00E9rer une organisation, un th\u00E8me et une navigation. Il n'importe jamais de scripts sources, de param\u00E8tres canoniques/SEO, d'analyses, de HTML/CSS bruts ou d'actifs. Le contenu dynamique uniquement JavaScript peut rester indisponible.",
-    sourceURL: "Source Website URL", analyze: "Analyser", dirtyCapture: "Enregistrez ou rechargez les modifications du formulaire local avant de les capturer \u00E0 nouveau.",
+    workingHelp: "Enregistrez les modifications dans la copie de travail durable. Preview est priv\u00E9. Seul Publish modifie les artefacts publics Website et Product.", dirtyCapture: "Enregistrez ou rechargez les modifications du formulaire local avant de les capturer \u00E0 nouveau.",
     dirtyCaptureDescription: "Le serveur compare une capture avec la r\u00E9vision de travail durable Website, et non avec les champs du navigateur non enregistr\u00E9s.", reloadWorking: "Recharger le travail enregistr\u00E9",
-    dynamicUnavailable: "Certains contenus sources n\u00E9cessitent JavaScript et n'ont pas \u00E9t\u00E9 captur\u00E9s.", unavailable: "Indisponible", dynamicContent: "contenu dynamique", completeManually: "Remplissez ces champs manuellement.", stylesheetUnavailable: "Feuille de style indisponible\u00A0:",
-    organization: "Organisation", sourceTitle: "Titre source", colors: "Couleurs", fonts: "Polices", logoReferences: "R\u00E9f\u00E9rences de logos", manualCorrections: "Corrections manuelles",
-    manualInput: "Saisie manuelle requise", unavailableValue: "Pas disponible", manualUpload: "T\u00E9l\u00E9chargement manuel requis", noneIdentified: "Aucun identifi\u00E9",
-    noCaptureChanges: "La capture ne modifie pas la configuration de travail enregistr\u00E9e.", field: "Champ", currentWorking: "Current fonctionne", candidate: "Candidat",
-    rights: "Je confirme que nous avons le droit d'utiliser les marques et r\u00E9f\u00E9rences s\u00E9lectionn\u00E9es.", applyInfo: "L'application met uniquement \u00E0 jour ce formulaire de navigateur.",
-    applyInfoDescription: "Vous devez toujours enregistrer la copie de travail, Preview et Publish. Les URL des logos sont des r\u00E9f\u00E9rences \u00E0 examiner et ne sont pas t\u00E9l\u00E9charg\u00E9es ou jointes automatiquement.", applyCandidate: "Postuler au formulaire",
+    organization: "Organisation", field: "Champ",
     displayName: "Nom d'affichage", legalName: "Nom l\u00E9gal", officialWebsite: "Site officiel", privacyURL: "Confidentialit\u00E9 URL", termsURL: "Conditions URL",
     primaryLogo: "Logo principal", darkLogo: "Logo sur fond sombre", favicon: "Ic\u00F4ne de favori", socialImage: "Image sociale", assetID: "actif ID", upload: "T\u00E9l\u00E9charger",
     contactID: "Contacter ID", label: "\u00C9tiquette", url: "URL", order: "Commande", removeContact: "Supprimer le contact", addContact: "Ajouter un contact",
@@ -398,8 +365,6 @@ defaultLocale: "站點預設語系", enabledLocales: "下次發布後的公開�
     published: (epoch: number) => `Configurazione Published Website e ogni rappresentazione Product all'epoca del sito${epoch}.`,
     restored: (version: number, revision: number) => `Versione Website restaurata${version}nella revisione operativa${revision}. Preview e Publish sono ancora necessari.`,
     absoluteURL: "Inserisci un HTTP o HTTPS assoluto URL.", validURL: "Inserisci un Website URL valido.",
-    captured: (revision: number) => `Catturato un candidato di sola revisione rispetto alla revisione funzionante di Website${revision}.`,
-    applied: "Applicato il candidato solo a questo modulo del browser. Sono ancora necessari il salvataggio della copia di lavoro, Preview e Publish.",
     searchSaved: "Impostazioni di integrazione della ricerca salvate. Gli invii esterni vengono eseguiti in modo indipendente.",
     cssState: (disabled: boolean) => disabled ? "Custom CSS La modalit\u00E0 provvisoria \u00E8 attiva per tutte le nuove richieste pubbliche." : "Custom CSS \u00E8 stato riabilitato per nuove richieste pubbliche.",
     workingConfiguration: "Configurazione di lavoro Website", workingRevision: "Revisione funzionante", activeVersion: "Versione attiva", activeEpoch: "Epoca del sito attivo",
@@ -407,16 +372,9 @@ defaultLocale: "站點預設語系", enabledLocales: "下次發布後的公開�
     defaultLocale: "Impostazioni locali predefinite del sito", enabledLocales: "Impostazioni locali Published dopo il successivo Publish", contentEditingEnabled: "Abilita la modifica della traduzione del contenuto del cliente", activeLocales: "Localit\u00E0 attualmente pubbliche", saveLocalization: "Salva la copia di lavoro della lingua", localizationSaved: (revision: number) => `Revisione operativa della lingua Website salvata${revision}. Il sito pubblico \u00E8 invariato.`,
     cssSafeMode: "Custom CSS La modalit\u00E0 provvisoria \u00E8 attiva", cssSafeDescription: "Le richieste pubbliche non possono recuperare il foglio di stile personalizzato attivo. Admin e le pagine di sistema non sono interessate.",
     reenableCSS: "Riabilitare Custom CSS", disableCSSConfirm: "Interrompere immediatamente la fornitura di Custom CSS alle nuove richieste pubbliche?", disableCSS: "Disabilita Custom CSS ora",
-    workingHelp: "Salva le modifiche nella copia di lavoro durevole. Preview \u00E8 privato. Solo Publish modifica gli artefatti pubblici Website e Product.",
-    captureTitle: "Candidato alla cattura del marchio", captureHelp: "Recupera HTML/CSS pubblico delimitato per suggerire organizzazione, tema e navigazione. Non importa mai script sorgente, impostazioni canoniche/SEO, analisi, HTML/CSS grezzi o risorse. I contenuti dinamici solo JavaScript potrebbero rimanere non disponibili.",
-    sourceURL: "Fonte Website URL", analyze: "Analizzare", dirtyCapture: "Salva o ricarica le modifiche del modulo locale prima di ripetere l'acquisizione.",
+    workingHelp: "Salva le modifiche nella copia di lavoro durevole. Preview \u00E8 privato. Solo Publish modifica gli artefatti pubblici Website e Product.", dirtyCapture: "Salva o ricarica le modifiche del modulo locale prima di ripetere l'acquisizione.",
     dirtyCaptureDescription: "Il server confronta un'acquisizione con la revisione operativa durevole Website, non con i campi del browser non salvati.", reloadWorking: "Ricarica la lavorazione salvata",
-    dynamicUnavailable: "Alcuni contenuti di origine richiedono JavaScript e non sono stati acquisiti.", unavailable: "Non disponibile", dynamicContent: "contenuto dinamico", completeManually: "Compila questi campi manualmente.", stylesheetUnavailable: "Foglio di stile non disponibile:",
-    organization: "Organizzazione", sourceTitle: "Titolo della fonte", colors: "Colori", fonts: "Caratteri", logoReferences: "Riferimenti al logo", manualCorrections: "Correzioni manuali",
-    manualInput: "\u00C8 richiesto l'inserimento manuale", unavailableValue: "Non disponibile", manualUpload: "\u00C8 richiesto il caricamento manuale", noneIdentified: "Nessuno identificato",
-    noCaptureChanges: "L'acquisizione non modifica la configurazione di lavoro salvata.", field: "Campo", currentWorking: "Current funzionante", candidate: "Candidato",
-    rights: "Confermo che abbiamo il diritto di utilizzare il marchio e i riferimenti selezionati.", applyInfo: "L'applicazione aggiorna solo questo modulo del browser.",
-    applyInfoDescription: "\u00C8 comunque necessario salvare la copia di lavoro, Preview e Publish. Gli URL dei loghi sono riferimenti per la revisione e non vengono scaricati o allegati automaticamente.", applyCandidate: "Applicare il candidato al modulo",
+    organization: "Organizzazione", field: "Campo",
     displayName: "Nome da visualizzare", legalName: "Nome legale", officialWebsite: "Sito ufficiale", privacyURL: "Privacy URL", termsURL: "Termini URL",
     primaryLogo: "Marchio primario", darkLogo: "Logo con sfondo scuro", favicon: "Favicon", socialImage: "Immagine sociale", assetID: "risorsa ID", upload: "Caricamento",
     contactID: "Contatta ID", label: "Etichetta", url: "URL", order: "Ordine", removeContact: "Rimuovi contatto", addContact: "Aggiungi contatto",
@@ -446,8 +404,6 @@ defaultLocale: "站點預設語系", enabledLocales: "下次發布後的公開�
     published: (epoch: number) => `Configuraci\u00F3n de Published Website y cada representaci\u00F3n de Product en la \u00E9poca del sitio${epoch}.`,
     restored: (version: number, revision: number) => `Versi\u00F3n Website restaurada${version}en revisi\u00F3n de trabajo${revision}. A\u00FAn se requieren Preview y Publish.`,
     absoluteURL: "Ingrese un HTTP absoluto o HTTPS URL.", validURL: "Introduzca un Website URL v\u00E1lido.",
-    captured: (revision: number) => `Se captur\u00F3 un candidato de solo revisi\u00F3n contra la revisi\u00F3n de trabajo Website${revision}.`,
-    applied: "Se aplic\u00F3 el candidato a este formulario de navegador \u00FAnicamente. Guardar copia de trabajo, Preview y Publish a\u00FAn son necesarios.",
     searchSaved: "Se guard\u00F3 la configuraci\u00F3n de integraci\u00F3n de b\u00FAsqueda. Los env\u00EDos externos se realizan de forma independiente.",
     cssState: (disabled: boolean) => disabled ? "Custom CSS El modo seguro est\u00E1 activo para todas las solicitudes p\u00FAblicas nuevas." : "Custom CSS se volvi\u00F3 a habilitar para nuevas solicitudes p\u00FAblicas.",
     workingConfiguration: "Configuraci\u00F3n de trabajo Website", workingRevision: "Revisi\u00F3n de trabajo", activeVersion: "Versi\u00F3n activa", activeEpoch: "\u00C9poca del sitio activo",
@@ -455,16 +411,9 @@ defaultLocale: "站點預設語系", enabledLocales: "下次發布後的公開�
     defaultLocale: "Configuraci\u00F3n regional predeterminada del sitio", enabledLocales: "Configuraciones locales Published despu\u00E9s del siguiente Publish", contentEditingEnabled: "Habilitar la edici\u00F3n de traducci\u00F3n del contenido del cliente", activeLocales: "Lugares p\u00FAblicos actualmente", saveLocalization: "Guardar copia de trabajo del idioma", localizationSaved: (revision: number) => `Revisi\u00F3n de trabajo del lenguaje Website guardada${revision}. El sitio p\u00FAblico no ha cambiado.`,
     cssSafeMode: "Custom CSS El modo seguro est\u00E1 activo", cssSafeDescription: "Las solicitudes p\u00FAblicas no pueden recuperar la hoja de estilo personalizada activa. Admin y las p\u00E1ginas del sistema no se ven afectadas.",
     reenableCSS: "Vuelva a habilitar Custom CSS", disableCSSConfirm: "\u00BFDejar de servir inmediatamente Custom CSS a nuevas solicitudes p\u00FAblicas?", disableCSS: "Desactivar Custom CSS ahora",
-    workingHelp: "Guarde los cambios en la copia de trabajo duradera. Preview es privado. S\u00F3lo Publish cambia los artefactos p\u00FAblicos Website y Product.",
-    captureTitle: "Candidato a Captura de Marca", captureHelp: "",
-    sourceURL: "Fuente Website URL", analyze: "Analizar", dirtyCapture: "Guarde o vuelva a cargar las ediciones del formulario local antes de volver a capturarlas.",
+    workingHelp: "Guarde los cambios en la copia de trabajo duradera. Preview es privado. S\u00F3lo Publish cambia los artefactos p\u00FAblicos Website y Product.", dirtyCapture: "Guarde o vuelva a cargar las ediciones del formulario local antes de volver a capturarlas.",
     dirtyCaptureDescription: "", reloadWorking: "Recargar guardado trabajando",
-    dynamicUnavailable: "", unavailable: "Indisponible", dynamicContent: "contenido din\u00E1mico", completeManually: "Complete estos campos manualmente.", stylesheetUnavailable: "Hoja de estilo no disponible:",
-    organization: "Organizaci\u00F3n", sourceTitle: "T\u00EDtulo fuente", colors: "Bandera", fonts: "Fuentes", logoReferences: "Referencias del logotipo", manualCorrections: "Correcciones manuales",
-    manualInput: "Se requiere entrada manual", unavailableValue: "No disponible", manualUpload: "Se requiere carga manual", noneIdentified: "Ninguno identificado",
-    noCaptureChanges: "La captura no cambia la configuraci\u00F3n de trabajo guardada.", field: "Campo", currentWorking: "Current funcionando", candidate: "Candidato",
-    rights: "Confirmo que tenemos derecho a utilizar la marca y las referencias seleccionadas.", applyInfo: "La aplicaci\u00F3n solo actualiza el formulario de este navegador.",
-    applyInfoDescription: "A\u00FAn debe guardar la copia de trabajo, Preview y Publish. Las URL de los logotipos son referencias para revisi\u00F3n y no se descargan ni adjuntan autom\u00E1ticamente.", applyCandidate: "Aplicar candidato al formulario",
+    organization: "Organizaci\u00F3n", field: "Campo",
     displayName: "Nombre para mostrar", legalName: "Nombre legal", officialWebsite: "Sitio web oficial", privacyURL: "Privacidad URL", termsURL: "T\u00E9rminos URL",
     primaryLogo: "Logotipo principal", darkLogo: "Logotipo de fondo oscuro", favicon: "favicon", socialImage: "Imagen social", assetID: "activo ID", upload: "Subir",
     contactID: "Contacto ID", label: "Etiqueta", url: "URL", order: "Orden", removeContact: "Eliminar contacto", addContact: "A\u00F1adir contacto",
@@ -494,8 +443,6 @@ defaultLocale: "站點預設語系", enabledLocales: "下次發布後的公開�
     published: (epoch: number) => `Configura\u00E7\u00E3o Published Website e cada representa\u00E7\u00E3o Product na \u00E9poca do site${epoch}.`,
     restored: (version: number, revision: number) => `Vers\u00E3o Website restaurada${version}em revis\u00E3o de trabalho${revision}. Preview e Publish ainda s\u00E3o necess\u00E1rios.`,
     absoluteURL: "Insira um HTTP ou HTTPS absoluto URL.", validURL: "Insira um Website URL v\u00E1lido.",
-    captured: (revision: number) => `Capturou um candidato somente para revis\u00E3o em rela\u00E7\u00E3o \u00E0 revis\u00E3o de trabalho Website${revision}.`,
-    applied: "Aplicou o candidato apenas a este formul\u00E1rio de navegador. Salvar c\u00F3pia de trabalho, Preview e Publish ainda s\u00E3o necess\u00E1rios.",
     searchSaved: "Configura\u00E7\u00F5es de integra\u00E7\u00E3o de pesquisa salvas. Os envios externos s\u00E3o executados de forma independente.",
     cssState: (disabled: boolean) => disabled ? "O modo de seguran\u00E7a Custom CSS est\u00E1 ativo para todas as novas solicita\u00E7\u00F5es p\u00FAblicas." : "Custom CSS foi reativado para novas solicita\u00E7\u00F5es p\u00FAblicas.",
     workingConfiguration: "Configura\u00E7\u00E3o de trabalho Website", workingRevision: "Revis\u00E3o de trabalho", activeVersion: "Vers\u00E3o ativa", activeEpoch: "\u00C9poca do site ativo",
@@ -503,16 +450,9 @@ defaultLocale: "站點預設語系", enabledLocales: "下次發布後的公開�
     defaultLocale: "Local padr\u00E3o do site", enabledLocales: "Localidades Published ap\u00F3s o pr\u00F3ximo Publish", contentEditingEnabled: "Habilitar edi\u00E7\u00E3o de tradu\u00E7\u00E3o de conte\u00FAdo do cliente", activeLocales: "Atualmente locais p\u00FAblicos", saveLocalization: "Salvar c\u00F3pia de trabalho do idioma", localizationSaved: (revision: number) => `Revis\u00E3o de trabalho da linguagem Website salva${revision}. O site p\u00FAblico permanece inalterado.`,
     cssSafeMode: "O modo de seguran\u00E7a Custom CSS est\u00E1 ativo", cssSafeDescription: "As solicita\u00E7\u00F5es p\u00FAblicas n\u00E3o podem recuperar a folha de estilo personalizada ativa. Admin e as p\u00E1ginas do sistema n\u00E3o s\u00E3o afetadas.",
     reenableCSS: "Reativar Custom CSS", disableCSSConfirm: "Parar imediatamente de servir Custom CSS para novas solicita\u00E7\u00F5es p\u00FAblicas?", disableCSS: "Desative Custom CSS agora",
-    workingHelp: "Salve as altera\u00E7\u00F5es na c\u00F3pia de trabalho dur\u00E1vel. Preview \u00E9 privado. Somente Publish altera os artefatos p\u00FAblicos Website e Product.",
-    captureTitle: "Candidato \u00E0 Captura de Marca", captureHelp: "Busque HTML/CSS p\u00FAblico limitado para sugerir Organiza\u00E7\u00E3o, Tema e Navega\u00E7\u00E3o. Ele nunca importa scripts de origem, configura\u00E7\u00F5es can\u00F4nicas/SEO, an\u00E1lises, HTML/CSS brutos ou ativos. O conte\u00FAdo din\u00E2mico apenas em JavaScript pode permanecer indispon\u00EDvel.",
-    sourceURL: "Fonte Website URL", analyze: "Analisar", dirtyCapture: "Salve ou recarregue as edi\u00E7\u00F5es locais do formul\u00E1rio antes de captur\u00E1-las novamente.",
+    workingHelp: "Salve as altera\u00E7\u00F5es na c\u00F3pia de trabalho dur\u00E1vel. Preview \u00E9 privado. Somente Publish altera os artefatos p\u00FAblicos Website e Product.", dirtyCapture: "Salve ou recarregue as edi\u00E7\u00F5es locais do formul\u00E1rio antes de captur\u00E1-las novamente.",
     dirtyCaptureDescription: "O servidor compara uma captura com a revis\u00E3o de trabalho dur\u00E1vel Website, e n\u00E3o com campos n\u00E3o salvos do navegador.", reloadWorking: "Recarregar salvo funcionando",
-    dynamicUnavailable: "Algum conte\u00FAdo de origem requer JavaScript e n\u00E3o foi capturado.", unavailable: "Indispon\u00EDvel", dynamicContent: "conte\u00FAdo din\u00E2mico", completeManually: "Preencha esses campos manualmente.", stylesheetUnavailable: "Folha de estilo indispon\u00EDvel:",
-    organization: "Organiza\u00E7\u00E3o", sourceTitle: "T\u00EDtulo da fonte", colors: "Cores", fonts: "Fontes", logoReferences: "Refer\u00EAncias de logotipo", manualCorrections: "Corre\u00E7\u00F5es manuais",
-    manualInput: "Entrada manual necess\u00E1ria", unavailableValue: "N\u00E3o dispon\u00EDvel", manualUpload: "\u00C9 necess\u00E1rio fazer upload manual", noneIdentified: "Nenhum identificado",
-    noCaptureChanges: "A captura n\u00E3o altera a configura\u00E7\u00E3o de trabalho salva.", field: "Campo", currentWorking: "Current funcionando", candidate: "Candidato",
-    rights: "Confirmo que temos o direito de usar a marca e as refer\u00EAncias selecionadas.", applyInfo: "A aplica\u00E7\u00E3o apenas atualiza este formul\u00E1rio do navegador.",
-    applyInfoDescription: "Voc\u00EA ainda deve salvar a c\u00F3pia de trabalho, Preview e Publish. URLs de logotipo s\u00E3o refer\u00EAncias para revis\u00E3o e n\u00E3o s\u00E3o baixados ou anexados automaticamente.", applyCandidate: "Aplicar candidato ao formul\u00E1rio",
+    organization: "Organiza\u00E7\u00E3o", field: "Campo",
     displayName: "Nome de exibi\u00E7\u00E3o", legalName: "Nome legal", officialWebsite: "Site oficial", privacyURL: "Privacidade URL", termsURL: "Termos URL",
     primaryLogo: "Logotipo principal", darkLogo: "Logotipo com fundo escuro", favicon: "Favicon", socialImage: "Imagem social", assetID: "ativo ID", upload: "Carregar",
     contactID: "Contato ID", label: "R\u00F3tulo", url: "URL", order: "Ordem", removeContact: "Remover contato", addContact: "Adicionar contato",
@@ -537,29 +477,71 @@ defaultLocale: "站點預設語系", enabledLocales: "下次發布後的公開�
 },
 } as const;
 
+function NavigationTargetFields({ fieldName, copy, urlLabel, newWindowLabel }: {
+  fieldName: number;
+  copy: NavigationEditorCopy;
+  urlLabel: string;
+  newWindowLabel: string;
+}) {
+  const targetType = Form.useWatch(["navigation", fieldName, "target_type"]) ?? "link";
+
+  return (
+    <>
+      <Form.Item name={[fieldName, "target_type"]} label={copy.targetType} rules={[{ required: true }]}>
+        <Select
+          options={[
+            { value: "link", label: copy.link },
+            { value: "system_action", label: copy.systemAction },
+            { value: "group", label: copy.group },
+          ]}
+        />
+      </Form.Item>
+      {targetType === "link" ? (
+        <>
+          <Form.Item name={[fieldName, "url"]} label={urlLabel} rules={[{ required: true }]}><Input /></Form.Item>
+          <Form.Item name={[fieldName, "open_new_window"]} valuePropName="checked"><Checkbox>{newWindowLabel}</Checkbox></Form.Item>
+        </>
+      ) : null}
+      {targetType === "system_action" ? (
+        <Form.Item name={[fieldName, "system_action"]} label={copy.action} rules={[{ required: true }]}>
+          <Select
+            options={[
+              { value: "catalog", label: copy.catalog },
+              { value: "catalog_search", label: copy.catalogSearch },
+              { value: "rfq", label: copy.rfq },
+            ]}
+          />
+        </Form.Item>
+      ) : null}
+      <Form.Item name={[fieldName, "presentation"]} label={copy.presentation} rules={[{ required: true }]}>
+        <Select
+          options={[
+            { value: "direct", label: copy.direct },
+            { value: "dropdown", label: copy.dropdown },
+          ]}
+        />
+      </Form.Item>
+    </>
+  );
+}
+
 export function WebsitePanel({ locale, onError, onMessage }: Props) {
   const text = labels[locale];
-  const brandFieldNames: Record<string, string> = {
-    organization: text.organization,
-    logo: text.primaryLogo,
-    colors: text.colors,
-    fonts: text.fonts,
-    navigation: text.navigation,
-  };
-  const brandFieldList = (values?: string[]) => (values ?? []).map((value) => brandFieldNames[value] ?? value).join(", ");
-  const brandWarning = (warning: string) => warning.startsWith("Stylesheet unavailable:")
-    ? `${text.stylesheetUnavailable}${warning.slice("Stylesheet unavailable:".length)}`
-    : warning;
+  const brandText = brandImportCopy(locale);
+  const navigationText = navigationEditorCopy[locale];
   const [routeState, setRouteState] = useState<SiteRouteState>();
   const [websiteState, setWebsiteState] = useState<WebsiteState>();
   const [searchIntegrations, setSearchIntegrations] = useState<SearchIntegrationSettings>();
   const [versions, setVersions] = useState<WebsiteVersion[]>([]);
   const [routePreview, setRoutePreview] = useState<SiteRoutePreview>();
-	const [brandCapture, setBrandCapture] = useState<BrandCaptureResponse>();
+	const [brandRequest, setBrandRequest] = useState<BrandImportRequest>();
+	const [brandPayload, setBrandPayload] = useState("");
+	const [brandValidation, setBrandValidation] = useState<BrandImportValidation>();
 	const [brandSourceURL, setBrandSourceURL] = useState("");
-	const [brandRightsConfirmed, setBrandRightsConfirmed] = useState(false);
-	const [websiteFormDirty, setWebsiteFormDirty] = useState(false);
+  const [brandRightsConfirmed, setBrandRightsConfirmed] = useState(false);
+  const [websiteFormDirty, setWebsiteFormDirty] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [previewing, setPreviewing] = useState(false);
   const [routeForm] = Form.useForm<SiteRouteConfig>();
   const [websiteForm] = Form.useForm<SiteConfiguration>();
   const [localizationForm] = Form.useForm<WebsiteLocalization>();
@@ -579,11 +561,13 @@ export function WebsitePanel({ locale, onError, onMessage }: Props) {
       setVersions(history);
       setSearchIntegrations(integrations);
       routeForm.setFieldsValue(routes.config);
-      websiteForm.setFieldsValue(website.working);
+      replaceFormValues(websiteForm, website.working);
       localizationForm.setFieldsValue(website.working_localization);
       searchForm.setFieldsValue(integrations);
       setRoutePreview(undefined);
-		setBrandCapture(undefined);
+		setBrandRequest(undefined);
+		setBrandPayload("");
+		setBrandValidation(undefined);
 		setBrandRightsConfirmed(false);
 		setWebsiteFormDirty(false);
     } catch (error) {
@@ -598,19 +582,45 @@ export function WebsitePanel({ locale, onError, onMessage }: Props) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const saveWorking = async (configuration: SiteConfiguration) => {
-    if (!websiteState) return;
-    setLoading(true);
-    try {
-      const next = await putJSON<WebsiteState>("/admin/api/website/configuration", {
-        expected_revision: websiteState.working_revision,
-        configuration,
+	const saveWorking = async (configuration: SiteConfiguration) => {
+		const currentWebsiteState = websiteState;
+		if (!currentWebsiteState) return;
+		setLoading(true);
+		try {
+			const navigation = (configuration.navigation ?? currentWebsiteState.working.navigation ?? []).map((item) => {
+        const targetType = item.target_type ?? (item.system_action ? "system_action" : "link");
+        return {
+          ...item,
+          target_type: targetType,
+          url: targetType === "link" ? item.url : "",
+          system_action: targetType === "system_action" ? item.system_action : undefined,
+          open_new_window: targetType === "link" && item.open_new_window,
+          presentation: item.presentation ?? "direct",
+        };
       });
+      const completeConfiguration: SiteConfiguration = {
+				...currentWebsiteState.working,
+				...configuration,
+				organization: { ...currentWebsiteState.working.organization, ...configuration.organization },
+				header: configuration.header ?? currentWebsiteState.working.header,
+        navigation,
+				footer: configuration.footer ?? currentWebsiteState.working.footer,
+				theme: { ...currentWebsiteState.working.theme, ...configuration.theme },
+				seo: { ...currentWebsiteState.working.seo, ...configuration.seo },
+				category_listing_profiles: configuration.category_listing_profiles ?? currentWebsiteState.working.category_listing_profiles,
+				brand_import: configuration.brand_import ?? currentWebsiteState.working.brand_import,
+			};
+			const next = await putJSON<WebsiteState>("/admin/api/website/configuration", {
+				expected_revision: currentWebsiteState.working_revision,
+				configuration: completeConfiguration,
+			});
       setWebsiteState(next);
-      websiteForm.setFieldsValue(next.working);
+      replaceFormValues(websiteForm, next.working);
       localizationForm.setFieldsValue(next.working_localization);
       setRoutePreview(undefined);
-		setBrandCapture(undefined);
+		setBrandRequest(undefined);
+		setBrandPayload("");
+		setBrandValidation(undefined);
 		setBrandRightsConfirmed(false);
 		setWebsiteFormDirty(false);
       onMessage(text.saved(next.working_revision));
@@ -651,18 +661,17 @@ export function WebsitePanel({ locale, onError, onMessage }: Props) {
 
   const previewWebsite = async () => {
     if (!websiteState) return;
-    const previewWindow = window.open("about:blank", "_blank");
+    setPreviewing(true);
     setLoading(true);
     try {
       const receipt = await postJSON<{ url: string }>("/admin/api/website/preview", {
         expected_working_revision: websiteState.working_revision,
       });
-      if (previewWindow) previewWindow.location.assign(receipt.url);
-      else window.open(receipt.url, "_blank", "noopener,noreferrer");
+      window.location.assign(receipt.url);
     } catch (error) {
-      previewWindow?.close();
       onError(error);
     } finally {
+      setPreviewing(false);
       setLoading(false);
     }
   };
@@ -725,10 +734,12 @@ export function WebsitePanel({ locale, onError, onMessage }: Props) {
         version,
       });
       setWebsiteState(next);
-      websiteForm.setFieldsValue(next.working);
+      replaceFormValues(websiteForm, next.working);
       localizationForm.setFieldsValue(next.working_localization);
       setRoutePreview(undefined);
-		setBrandCapture(undefined);
+		setBrandRequest(undefined);
+		setBrandPayload("");
+		setBrandValidation(undefined);
 		setBrandRightsConfirmed(false);
 		setWebsiteFormDirty(false);
       onMessage(text.restored(version, next.working_revision));
@@ -740,26 +751,52 @@ export function WebsitePanel({ locale, onError, onMessage }: Props) {
     }
   };
 
-	const captureBrand = async () => {
+	const generateBrandPrompt = async () => {
 		if (!websiteState || websiteFormDirty) return;
 		const sourceURL = brandSourceURL.trim();
 		try {
 			const parsed = new URL(sourceURL);
-			if (parsed.protocol !== "http:" && parsed.protocol !== "https:") {
-        throw new Error(text.absoluteURL);
-			}
+			if (parsed.protocol !== "http:" && parsed.protocol !== "https:") throw new Error(text.absoluteURL);
 		} catch (error) {
-      onError(error instanceof Error ? error : new Error(text.validURL));
+			onError(error instanceof Error ? error : new Error(text.validURL));
 			return;
 		}
 		setLoading(true);
 		try {
-			const result = await postJSON<BrandCaptureResponse>("/admin/api/website/capture", { source_url: sourceURL });
-			setBrandCapture(result);
+			const result = await postJSON<BrandImportRequest>("/admin/api/website/brand-import/requests", { source_url: sourceURL });
+			setBrandRequest(result);
+			setBrandPayload("");
+			setBrandValidation(undefined);
 			setBrandRightsConfirmed(false);
-      onMessage(text.captured(result.working_revision));
 		} catch (error) {
-			setBrandCapture(undefined);
+			onError(error);
+		} finally {
+			setLoading(false);
+		}
+	};
+
+	const copyBrandPrompt = async () => {
+		if (!brandRequest) return;
+		try {
+			await navigator.clipboard.writeText(brandRequest.prompt);
+			onMessage(brandText.copied);
+		} catch (error) {
+			onError(error);
+		}
+	};
+
+	const validateBrandPayload = async () => {
+		if (!brandRequest || !brandPayload.trim() || websiteFormDirty) return;
+		setLoading(true);
+		try {
+			const result = await postJSON<BrandImportValidation>("/admin/api/website/brand-import/validate", {
+				request_id: brandRequest.request_id,
+				payload: brandPayload,
+			});
+			setBrandValidation(result);
+			setBrandRightsConfirmed(false);
+		} catch (error) {
+			setBrandValidation(undefined);
 			setBrandRightsConfirmed(false);
 			onError(error);
 		} finally {
@@ -767,12 +804,27 @@ export function WebsitePanel({ locale, onError, onMessage }: Props) {
 		}
 	};
 
-	const applyBrandCandidate = () => {
-		if (!brandCapture || !brandRightsConfirmed || websiteFormDirty || brandCapture.working_revision !== websiteState?.working_revision) return;
-		websiteForm.setFieldsValue(brandCapture.proposed_configuration);
-		setWebsiteFormDirty(true);
-		setRoutePreview(undefined);
-    onMessage(text.applied);
+	const applyBrandImport = async () => {
+		if (!brandRequest || !brandValidation?.proposed_configuration || !brandRightsConfirmed || websiteFormDirty || brandValidation.working_revision !== websiteState?.working_revision) return;
+		setLoading(true);
+		try {
+			const next = await postJSON<WebsiteState>("/admin/api/website/brand-import/apply", {
+				request_id: brandRequest.request_id,
+				expected_revision: brandValidation.working_revision,
+				rights_confirmed: true,
+			});
+			setWebsiteState(next);
+      replaceFormValues(websiteForm, next.working);
+			localizationForm.setFieldsValue(next.working_localization);
+			setWebsiteFormDirty(false);
+			setRoutePreview(undefined);
+			onMessage(brandText.applied);
+		} catch (error) {
+			onError(error);
+			await load();
+		} finally {
+			setLoading(false);
+		}
 	};
 
   const saveSearchIntegrations = async (values: SearchIntegrationSettings) => {
@@ -896,54 +948,50 @@ export function WebsitePanel({ locale, onError, onMessage }: Props) {
 				</Button>
 			</Card>
 		</Form>
-			<Card size="small" title={text.captureTitle}>
-			<Typography.Paragraph type="secondary">
-					{text.captureHelp}
-			</Typography.Paragraph>
+		<Card size="small" title={brandText.title}>
+			<Typography.Paragraph type="secondary">{brandText.help}</Typography.Paragraph>
+			<Alert type="info" showIcon message={brandText.exactSource} />
 			<Space.Compact block>
-				<Input
-					type="url"
-					value={brandSourceURL}
-					onChange={(event) => setBrandSourceURL(event.target.value)}
-					placeholder="https://www.example.com"
-						aria-label={text.sourceURL}
-				/>
-					<Button onClick={() => void captureBrand()} disabled={!brandSourceURL.trim() || websiteFormDirty} loading={loading}>{text.analyze}</Button>
+				<Input type="url" value={brandSourceURL} onChange={(event) => setBrandSourceURL(event.target.value)} placeholder="https://www.example.com/" aria-label={brandText.sourceURL} />
+				<Button onClick={() => void generateBrandPrompt()} disabled={!brandSourceURL.trim() || websiteFormDirty} loading={loading}>{brandText.generate}</Button>
 			</Space.Compact>
-			{websiteFormDirty && (
-					<Alert type="warning" showIcon message={text.dirtyCapture} description={text.dirtyCaptureDescription} action={<Button onClick={() => void load()} disabled={loading}>{text.reloadWorking}</Button>} />
-			)}
-			{brandCapture && (
+			{websiteFormDirty && <Alert type="warning" showIcon message={text.dirtyCapture} description={text.dirtyCaptureDescription} action={<Button onClick={() => void load()} disabled={loading}>{text.reloadWorking}</Button>} />}
+			{brandRequest && (
 				<Space direction="vertical" className="panel-stack">
-					{brandCapture.candidate.requires_browser && (
-							<Alert type="warning" showIcon message={text.dynamicUnavailable} description={`${text.unavailable}: ${brandFieldList(brandCapture.candidate.unavailable_dynamic_parts) || text.dynamicContent}. ${text.completeManually}`} />
-					)}
-						{(brandCapture.candidate.warnings ?? []).map((warning) => <Alert key={warning} type="warning" showIcon message={brandWarning(warning)} />)}
 					<Descriptions size="small" column={2} items={[
-							{ key: "organization", label: text.organization, children: brandCapture.candidate.organization || text.manualInput },
-							{ key: "title", label: text.sourceTitle, children: brandCapture.candidate.title || text.unavailableValue },
-							{ key: "colors", label: text.colors, children: (brandCapture.candidate.colors ?? []).join(", ") || text.manualInput },
-							{ key: "fonts", label: text.fonts, children: (brandCapture.candidate.fonts ?? []).join(", ") || text.manualInput },
-							{ key: "logos", label: text.logoReferences, children: (brandCapture.candidate.logo_urls ?? []).join(", ") || text.manualUpload },
-							{ key: "manual", label: text.manualCorrections, children: brandFieldList(brandCapture.candidate.manual_corrections) || text.noneIdentified },
+						{ key: "source", label: brandText.sourceURL, children: brandRequest.source_url },
+						{ key: "expires", label: brandText.expires, children: new Date(brandRequest.expires_at).toLocaleString(locale) },
 					]} />
-					<Table<BrandCaptureFieldChange>
-						rowKey="field"
-						size="small"
-						pagination={false}
-						dataSource={brandCapture.diff}
-							locale={{ emptyText: text.noCaptureChanges }}
+					<Typography.Title level={5}>{brandText.prompt}</Typography.Title>
+					<Input.TextArea value={brandRequest.prompt} readOnly autoSize={{ minRows: 10, maxRows: 18 }} />
+					<Button onClick={() => void copyBrandPrompt()}>{brandText.copyPrompt}</Button>
+					<Typography.Title level={5}>{brandText.pasteResult}</Typography.Title>
+					<Input.TextArea value={brandPayload} onChange={(event) => { setBrandPayload(event.target.value); setBrandValidation(undefined); setBrandRightsConfirmed(false); }} autoSize={{ minRows: 10, maxRows: 22 }} placeholder="{ ... }" />
+					<Button type="primary" onClick={() => void validateBrandPayload()} disabled={!brandPayload.trim() || websiteFormDirty} loading={loading}>{brandText.validate}</Button>
+				</Space>
+			)}
+			{brandValidation && (
+				<Space direction="vertical" className="panel-stack">
+					<Descriptions size="small" items={[{ key: "status", label: brandText.status, children: brandValidation.status }]} />
+					{brandValidation.status === "unavailable" && <Alert type="warning" showIcon message={brandText.unavailable} />}
+					{(brandValidation.limitations ?? []).map((limitation) => <Alert key={limitation} type="warning" showIcon message={brandText.limitations} description={limitation} />)}
+					<Table<BrandImportFieldChange>
+						rowKey="field" size="small" pagination={false} dataSource={brandValidation.diff} locale={{ emptyText: brandText.noChanges }}
 						columns={[
-								{ title: text.field, dataIndex: "field" },
-								{ title: text.currentWorking, dataIndex: "before", render: (value: string) => <Typography.Text code>{value}</Typography.Text> },
-								{ title: text.candidate, dataIndex: "after", render: (value: string) => <Typography.Text code>{value}</Typography.Text> },
+							{ title: text.field, dataIndex: "field" },
+							{ title: brandText.current, dataIndex: "before", render: (value: unknown) => <Typography.Text code>{JSON.stringify(value, null, 2)}</Typography.Text> },
+							{ title: brandText.proposed, dataIndex: "after", render: (value: unknown) => <Typography.Text code>{JSON.stringify(value, null, 2)}</Typography.Text> },
 						]}
 					/>
-					<Checkbox checked={brandRightsConfirmed} onChange={(event) => setBrandRightsConfirmed(event.target.checked)}>
-							{text.rights}
-					</Checkbox>
-						<Alert type="info" showIcon message={text.applyInfo} description={text.applyInfoDescription} />
-						<Button type="primary" onClick={applyBrandCandidate} disabled={!brandRightsConfirmed || websiteFormDirty || brandCapture.working_revision !== websiteState?.working_revision}>{text.applyCandidate}</Button>
+					{brandValidation.proposed_configuration && (
+						<>
+							<Checkbox checked={brandRightsConfirmed} onChange={(event) => setBrandRightsConfirmed(event.target.checked)}>{brandText.rights}</Checkbox>
+							<Space>
+								<Button type="primary" onClick={() => void applyBrandImport()} disabled={!brandRightsConfirmed || websiteFormDirty || brandValidation.working_revision !== websiteState?.working_revision} loading={loading}>{brandText.apply}</Button>
+								{brandValidation.working_revision !== websiteState?.working_revision && <Button onClick={() => void previewWebsite()} loading={previewing}>{previewing ? `${brandText.preview}…` : brandText.preview}</Button>}
+							</Space>
+						</>
+					)}
 				</Space>
 			)}
 		</Card>
@@ -1000,14 +1048,13 @@ export function WebsitePanel({ locale, onError, onMessage }: Props) {
                       <Form.Item {...field} name={[field.name, "id"]} label={text.id} rules={[{ required: true }]}><Input /></Form.Item>
                       <Form.Item {...field} name={[field.name, "parent_id"]} label={text.parentID}><Input /></Form.Item>
                       <Form.Item {...field} name={[field.name, "label"]} label={text.label} rules={[{ required: true }]}><Input /></Form.Item>
-                      <Form.Item {...field} name={[field.name, "url"]} label={text.url} rules={[{ required: true }]}><Input /></Form.Item>
+                      <NavigationTargetFields fieldName={field.name} copy={navigationText} urlLabel={text.url} newWindowLabel={text.newWindow} />
                       <Form.Item {...field} name={[field.name, "sort_order"]} label={text.order}><InputNumber /></Form.Item>
                       <Form.Item {...field} name={[field.name, "visible"]} valuePropName="checked"><Checkbox>{text.visible}</Checkbox></Form.Item>
-                      <Form.Item {...field} name={[field.name, "open_new_window"]} valuePropName="checked"><Checkbox>{text.newWindow}</Checkbox></Form.Item>
                       <Button danger onClick={() => remove(field.name)}>{text.removeLink}</Button>
                     </Space>
                   ))}
-                  <Button onClick={() => add({ id: "", label: "", url: "/", sort_order: fields.length * 10, visible: true, open_new_window: false })}>{text.addLink}</Button>
+                  <Button onClick={() => add({ id: "", label: "", url: "/", target_type: "link", presentation: "direct", sort_order: fields.length * 10, visible: true, open_new_window: false })}>{text.addLink}</Button>
                 </Space>
               )}
             </Form.List>
@@ -1028,7 +1075,7 @@ export function WebsitePanel({ locale, onError, onMessage }: Props) {
 
           <Space>
             <Button type="primary" htmlType="submit" loading={loading}>{text.saveWorking}</Button>
-            <Button onClick={() => void previewWebsite()} disabled={!websiteState} loading={loading}>{text.previewWorking}</Button>
+            <Button onClick={() => void previewWebsite()} disabled={!websiteState} loading={previewing}>{previewing ? `${text.previewWorking}…` : text.previewWorking}</Button>
           </Space>
         </Form>
       </Card>

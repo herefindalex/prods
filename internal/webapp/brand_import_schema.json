@@ -1,0 +1,873 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://prods.local/schemas/website-brand-import-v1.schema.json",
+  "title": "Prods Website Brand Import v1",
+  "description": "Structured, image-free Header, Footer, organization and theme proposal produced from one customer-specified official website URL.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "request",
+    "capture",
+    "observations",
+    "proposal",
+    "evidence"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "prods.website_brand_import.v1"
+    },
+    "request": {
+      "$ref": "#/$defs/request"
+    },
+    "capture": {
+      "$ref": "#/$defs/capture"
+    },
+    "observations": {
+      "$ref": "#/$defs/observations"
+    },
+    "proposal": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/proposal"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "evidence": {
+      "type": "array",
+      "maxItems": 200,
+      "items": {
+        "$ref": "#/$defs/evidence"
+      }
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "capture": {
+            "properties": {
+              "status": {
+                "const": "unavailable"
+              }
+            },
+            "required": ["status"]
+          }
+        },
+        "required": ["capture"]
+      },
+      "then": {
+        "properties": {
+          "proposal": {
+            "type": "null"
+          },
+          "evidence": {
+            "maxItems": 0
+          }
+        }
+      },
+      "else": {
+        "properties": {
+          "proposal": {
+            "$ref": "#/$defs/proposal"
+          },
+          "evidence": {
+            "minItems": 1
+          }
+        }
+      }
+    }
+  ],
+  "$defs": {
+    "request": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["request_id", "prompt_version", "requested_url"],
+      "properties": {
+        "request_id": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9_-]{16,96}$"
+        },
+        "prompt_version": {
+          "const": "website-brand-prompt.v1"
+        },
+        "requested_url": {
+          "type": "string",
+          "format": "uri",
+          "maxLength": 2048
+        }
+      }
+    },
+    "capture": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "observed_url", "observed_at", "source_locale"],
+      "properties": {
+        "status": {
+          "enum": ["complete", "partial", "unavailable"]
+        },
+        "observed_url": {
+          "type": "string",
+          "format": "uri",
+          "maxLength": 2048
+        },
+        "observed_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "source_locale": {
+          "type": "string",
+          "pattern": "^[A-Za-z]{2,3}(?:-[A-Za-z0-9]{2,8})*$",
+          "maxLength": 35
+        },
+        "page_title": {
+          "type": "string",
+          "maxLength": 300
+        },
+        "limitations": {
+          "type": "array",
+          "maxItems": 30,
+          "items": {
+            "type": "string",
+            "maxLength": 500
+          }
+        }
+      }
+    },
+    "observations": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["header", "footer", "unsupported_source_features"],
+      "properties": {
+        "header": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["row_types", "controls", "navigation_depth", "has_mega_menu"],
+          "properties": {
+            "row_types": {
+              "type": "array",
+              "uniqueItems": true,
+              "maxItems": 4,
+              "items": {
+                "enum": ["announcement", "utility", "main", "primary_navigation"]
+              }
+            },
+            "controls": {
+              "type": "array",
+              "uniqueItems": true,
+              "maxItems": 20,
+              "items": {
+                "enum": [
+                  "search",
+                  "account",
+                  "cart",
+                  "quote",
+                  "locale",
+                  "support",
+                  "contact",
+                  "upload_list",
+                  "manufacturer_index",
+                  "product_index"
+                ]
+              }
+            },
+            "navigation_depth": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 20
+            },
+            "has_mega_menu": {
+              "type": "boolean"
+            }
+          }
+        },
+        "footer": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["section_headings", "elements"],
+          "properties": {
+            "section_headings": {
+              "type": "array",
+              "maxItems": 30,
+              "items": {
+                "type": "string",
+                "maxLength": 120
+              }
+            },
+            "elements": {
+              "type": "array",
+              "uniqueItems": true,
+              "maxItems": 20,
+              "items": {
+                "enum": [
+                  "brand",
+                  "description",
+                  "link_columns",
+                  "contact",
+                  "address",
+                  "newsletter",
+                  "social",
+                  "app_store_links",
+                  "certifications",
+                  "payment_methods",
+                  "locale",
+                  "legal_links",
+                  "registration",
+                  "copyright",
+                  "disclaimer",
+                  "sitemap"
+                ]
+              }
+            }
+          }
+        },
+        "unsupported_source_features": {
+          "type": "array",
+          "maxItems": 30,
+          "items": {
+            "type": "string",
+            "maxLength": 300
+          }
+        }
+      }
+    },
+    "proposal": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["organization", "header", "footer", "theme"],
+      "properties": {
+        "organization": {
+          "$ref": "#/$defs/organization"
+        },
+        "header": {
+          "$ref": "#/$defs/header"
+        },
+        "footer": {
+          "$ref": "#/$defs/footer"
+        },
+        "theme": {
+          "$ref": "#/$defs/theme"
+        }
+      }
+    },
+    "organization": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["display_name", "official_website", "contacts", "social_links"],
+      "properties": {
+        "display_name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200
+        },
+        "legal_name": {
+          "type": "string",
+          "maxLength": 300
+        },
+        "official_website": {
+          "type": "string",
+          "format": "uri",
+          "maxLength": 2048
+        },
+        "description": {
+          "type": "string",
+          "maxLength": 1000
+        },
+        "contacts": {
+          "type": "array",
+          "maxItems": 30,
+          "items": {
+            "$ref": "#/$defs/contact"
+          }
+        },
+        "social_links": {
+          "type": "array",
+          "maxItems": 20,
+          "items": {
+            "$ref": "#/$defs/socialLink"
+          }
+        },
+        "registration_lines": {
+          "type": "array",
+          "maxItems": 10,
+          "items": {
+            "type": "string",
+            "maxLength": 300
+          }
+        }
+      }
+    },
+    "contact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["key", "type", "label", "value", "order"],
+      "properties": {
+        "key": {
+          "$ref": "#/$defs/key"
+        },
+        "type": {
+          "enum": ["address", "phone", "email", "sales", "support", "other"]
+        },
+        "label": {
+          "type": "string",
+          "maxLength": 120
+        },
+        "value": {
+          "type": "string",
+          "maxLength": 500
+        },
+        "url": {
+          "type": "string",
+          "format": "uri",
+          "maxLength": 2048
+        },
+        "order": {
+          "$ref": "#/$defs/order"
+        }
+      }
+    },
+    "socialLink": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["key", "network", "label", "url", "order"],
+      "properties": {
+        "key": {
+          "$ref": "#/$defs/key"
+        },
+        "network": {
+          "enum": [
+            "linkedin",
+            "youtube",
+            "facebook",
+            "instagram",
+            "x",
+            "wechat",
+            "line",
+            "blog",
+            "other"
+          ]
+        },
+        "label": {
+          "type": "string",
+          "maxLength": 120
+        },
+        "url": {
+          "type": "string",
+          "format": "uri",
+          "maxLength": 2048
+        },
+        "order": {
+          "$ref": "#/$defs/order"
+        }
+      }
+    },
+    "header": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "layout",
+        "sticky",
+        "brand_presentation",
+        "rows",
+        "navigation"
+      ],
+      "properties": {
+        "layout": {
+          "enum": ["commerce", "corporate", "compact"]
+        },
+        "sticky": {
+          "type": "boolean"
+        },
+        "brand_presentation": {
+          "const": "existing_logo_or_display_name"
+        },
+        "rows": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 4,
+          "items": {
+            "$ref": "#/$defs/headerRow"
+          }
+        },
+        "navigation": {
+          "type": "array",
+          "maxItems": 200,
+          "items": {
+            "$ref": "#/$defs/navigationItem"
+          }
+        }
+      }
+    },
+    "headerRow": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["key", "type", "order", "items"],
+      "properties": {
+        "key": {
+          "$ref": "#/$defs/key"
+        },
+        "type": {
+          "enum": ["announcement", "utility", "main", "primary_navigation"]
+        },
+        "order": {
+          "$ref": "#/$defs/order"
+        },
+        "items": {
+          "type": "array",
+          "maxItems": 20,
+          "items": {
+            "$ref": "#/$defs/headerItem"
+          }
+        }
+      }
+    },
+    "headerItem": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["key", "kind", "label", "url", "order"],
+          "properties": {
+            "key": {
+              "$ref": "#/$defs/key"
+            },
+            "kind": {
+              "const": "link"
+            },
+            "label": {
+              "type": "string",
+              "maxLength": 120
+            },
+            "url": {
+              "type": "string",
+              "format": "uri-reference",
+              "maxLength": 2048
+            },
+            "order": {
+              "$ref": "#/$defs/order"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["key", "kind", "action", "order"],
+          "properties": {
+            "key": {
+              "$ref": "#/$defs/key"
+            },
+            "kind": {
+              "const": "system_action"
+            },
+            "action": {
+              "enum": ["catalog_search", "catalog", "rfq", "locale"]
+            },
+            "order": {
+              "$ref": "#/$defs/order"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["key", "kind", "text", "order"],
+          "properties": {
+            "key": {
+              "$ref": "#/$defs/key"
+            },
+            "kind": {
+              "const": "text"
+            },
+            "text": {
+              "type": "string",
+              "maxLength": 300
+            },
+            "order": {
+              "$ref": "#/$defs/order"
+            }
+          }
+        }
+      ]
+    },
+    "navigationItem": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["key", "parent_key", "label", "order", "target", "presentation"],
+      "properties": {
+        "key": {
+          "$ref": "#/$defs/key"
+        },
+        "parent_key": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/key"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "label": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 120
+        },
+        "order": {
+          "$ref": "#/$defs/order"
+        },
+        "target": {
+          "$ref": "#/$defs/navigationTarget"
+        },
+        "presentation": {
+          "enum": ["direct", "dropdown"]
+        }
+      }
+    },
+    "navigationTarget": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["type", "url"],
+          "properties": {
+            "type": {
+              "const": "link"
+            },
+            "url": {
+              "type": "string",
+              "format": "uri-reference",
+              "maxLength": 2048
+            },
+            "open_new_window": {
+              "type": "boolean"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["type", "action"],
+          "properties": {
+            "type": {
+              "const": "system_action"
+            },
+            "action": {
+              "enum": ["catalog", "catalog_search", "rfq"]
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["type"],
+          "properties": {
+            "type": {
+              "const": "group"
+            }
+          }
+        }
+      ]
+    },
+    "footer": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "layout",
+        "brand_block",
+        "sections",
+        "show_social_links",
+        "legal_links",
+        "copyright_text",
+        "registration_lines",
+        "locale_control"
+      ],
+      "properties": {
+        "layout": {
+          "enum": ["brand_columns", "columns", "compact"]
+        },
+        "brand_block": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["show_brand", "show_description", "contact_keys"],
+          "properties": {
+            "show_brand": {
+              "type": "boolean"
+            },
+            "show_description": {
+              "type": "boolean"
+            },
+            "contact_keys": {
+              "type": "array",
+              "maxItems": 10,
+              "items": {
+                "$ref": "#/$defs/key"
+              }
+            }
+          }
+        },
+        "sections": {
+          "type": "array",
+          "maxItems": 6,
+          "items": {
+            "$ref": "#/$defs/footerSection"
+          }
+        },
+        "show_social_links": {
+          "type": "boolean"
+        },
+        "legal_links": {
+          "type": "array",
+          "maxItems": 20,
+          "items": {
+            "$ref": "#/$defs/linkItem"
+          }
+        },
+        "copyright_text": {
+          "type": "string",
+          "maxLength": 500
+        },
+        "registration_lines": {
+          "type": "array",
+          "maxItems": 10,
+          "items": {
+            "type": "string",
+            "maxLength": 300
+          }
+        },
+        "disclaimer": {
+          "type": "string",
+          "maxLength": 2000
+        },
+        "locale_control": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["enabled", "placement"],
+          "properties": {
+            "enabled": {
+              "type": "boolean"
+            },
+            "placement": {
+              "enum": ["footer", "header", "both"]
+            }
+          }
+        }
+      }
+    },
+    "footerSection": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["key", "heading", "order", "collapsible_on_mobile", "items"],
+      "properties": {
+        "key": {
+          "$ref": "#/$defs/key"
+        },
+        "heading": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 120
+        },
+        "order": {
+          "$ref": "#/$defs/order"
+        },
+        "collapsible_on_mobile": {
+          "type": "boolean"
+        },
+        "items": {
+          "type": "array",
+          "maxItems": 20,
+          "items": {
+            "$ref": "#/$defs/footerItem"
+          }
+        }
+      }
+    },
+    "footerItem": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/linkItem"
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["key", "kind", "text", "order"],
+          "properties": {
+            "key": {
+              "$ref": "#/$defs/key"
+            },
+            "kind": {
+              "const": "text"
+            },
+            "text": {
+              "type": "string",
+              "maxLength": 500
+            },
+            "order": {
+              "$ref": "#/$defs/order"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["key", "kind", "contact_key", "order"],
+          "properties": {
+            "key": {
+              "$ref": "#/$defs/key"
+            },
+            "kind": {
+              "const": "contact_ref"
+            },
+            "contact_key": {
+              "$ref": "#/$defs/key"
+            },
+            "order": {
+              "$ref": "#/$defs/order"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["key", "kind", "action", "order"],
+          "properties": {
+            "key": {
+              "$ref": "#/$defs/key"
+            },
+            "kind": {
+              "const": "system_action"
+            },
+            "action": {
+              "enum": ["catalog", "catalog_search", "rfq", "locale"]
+            },
+            "order": {
+              "$ref": "#/$defs/order"
+            }
+          }
+        }
+      ]
+    },
+    "linkItem": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["key", "kind", "label", "url", "order"],
+      "properties": {
+        "key": {
+          "$ref": "#/$defs/key"
+        },
+        "kind": {
+          "const": "link"
+        },
+        "label": {
+          "type": "string",
+          "maxLength": 120
+        },
+        "url": {
+          "type": "string",
+          "format": "uri-reference",
+          "maxLength": 2048
+        },
+        "order": {
+          "$ref": "#/$defs/order"
+        }
+      }
+    },
+    "theme": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "primary_color",
+        "accent_color",
+        "body_text_color",
+        "border_color",
+        "header_background",
+        "header_text_color",
+        "footer_background",
+        "footer_text_color",
+        "typography_profile",
+        "density",
+        "radius",
+        "content_width_px"
+      ],
+      "properties": {
+        "primary_color": {
+          "$ref": "#/$defs/color"
+        },
+        "accent_color": {
+          "$ref": "#/$defs/color"
+        },
+        "body_text_color": {
+          "$ref": "#/$defs/color"
+        },
+        "border_color": {
+          "$ref": "#/$defs/color"
+        },
+        "header_background": {
+          "$ref": "#/$defs/color"
+        },
+        "header_text_color": {
+          "$ref": "#/$defs/color"
+        },
+        "footer_background": {
+          "$ref": "#/$defs/color"
+        },
+        "footer_text_color": {
+          "$ref": "#/$defs/color"
+        },
+        "typography_profile": {
+          "enum": ["system_sans", "geometric_sans", "humanist_sans", "industrial_sans", "serif_accent"]
+        },
+        "density": {
+          "enum": ["compact", "comfortable", "spacious"]
+        },
+        "radius": {
+          "enum": ["none", "small", "medium"]
+        },
+        "content_width_px": {
+          "type": "integer",
+          "minimum": 960,
+          "maximum": 1440
+        }
+      }
+    },
+    "evidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["field_path", "source_url", "observation", "confidence"],
+      "properties": {
+        "field_path": {
+          "type": "string",
+          "pattern": "^proposal\\.",
+          "maxLength": 240
+        },
+        "source_url": {
+          "type": "string",
+          "format": "uri",
+          "maxLength": 2048
+        },
+        "observation": {
+          "type": "string",
+          "maxLength": 500
+        },
+        "confidence": {
+          "enum": ["high", "medium", "low"]
+        }
+      }
+    },
+    "key": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9_-]{0,63}$"
+    },
+    "order": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 10000
+    },
+    "color": {
+      "type": "string",
+      "pattern": "^#[0-9A-Fa-f]{6}$"
+    }
+  }
+}
