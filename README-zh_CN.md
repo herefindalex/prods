@@ -6,6 +6,15 @@ Prods 是供制造商与经销商自托管的技术产品目录与 RFQ（询价�
 
 单个 Go 进程提供公开网站、内嵌 Admin 应用程序与生命周期工具，SQLite 为主数据库。Public 由 Go 生成 HTML，通过 React 增强交互；Admin 使用 React、headless Refine Core 与 Ant Design v6。Node.js 是构建依赖，不是部署后的运行要求。
 
+## 为什么选择 Prods
+
+- **沿用现有数据开始。** 管理产品、分类、规格、字典、文件、翻译与 Website 配置。XLSX 导入／导出及批量操作可维护大型产品目录，不必逐条开表单修改。
+- **精确控制公开状态。** 产品页、结构化数据、JSON、Markdown 与路由状态一起切换。更新已发布产品时，旧的有效版本会保留到新版本完成；Hide 与 Archive 会立即停止新的公开访问。
+- **同时服务工程师、采购、搜索引擎与 AI 工具。** 产品目录浏览、搜索、分页、文件及 RFQ 都有服务器端语意 HTML，没有 JavaScript 仍能使用。同一份已发布模型也供应 JSON-LD、JSON、Markdown、Sitemap、manifest 与 `llms.txt`。
+- **先获取需求，不假装成电商。** 访客可以询问一个或多个产品目录产品；搜索无结果时也能主动提交 Requested Part。Prods 以可重播且耐久的方式记录 RFQ，价格、供货、资格审查与后续联系仍由企业决定。
+- **运维方式清楚可掌握。** 单个进程负责 migration、写入节流、持久化任务、审计、备份、restore journal 与健康检查。Terminal 会显示当前状态、下一步、URL、Admin 路径、主机信息、资源路径与实时日志。
+- **掌握部署与数据。** Prods Community 采 AGPL 许可，以 SQLite 储存主要状态，将资产与备份放在明确的本机目录，可在 Windows 或 Linux 上执行并搭配自选的反向代理。
+
 ## 工程文档与当前状态
 
 | 文档 | 用途 |

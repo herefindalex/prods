@@ -6,6 +6,15 @@ Prods is a self-hosted technical product catalog and request-for-quotation (RFQ)
 
 One Go process serves the public website, embedded Admin application and lifecycle tools, with SQLite as the primary database. Public content is Go-generated HTML with React enhancements; Admin uses React, headless Refine Core and Ant Design v6. Node.js is a build dependency, not a deployed runtime requirement.
 
+## Why Prods
+
+- **Launch with the data you already have.** Manage Products, categories, specifications, dictionaries, documents, translations, and Website settings. XLSX import/export and bulk actions support catalog maintenance without forcing every change through individual forms.
+- **Publish with controlled visibility.** Product pages, structured data, JSON, Markdown, and route state move together. Updating a Published Product keeps the previous valid revision online until the replacement is ready; Hide and Archive stop new public access immediately.
+- **Serve engineers, buyers, crawlers, and AI tools.** Core browsing, search, pagination, documents, and RFQ work from server-rendered semantic HTML without JavaScript. The same published model feeds JSON-LD, JSON, Markdown, Sitemap, manifest, and `llms.txt` outputs.
+- **Capture demand without pretending to be a commerce platform.** Visitors can request one or more catalog Products or submit a Requested Part when search has no result. Prods records durable, replay-safe RFQs and leaves pricing, availability, qualification, and follow-up to the business.
+- **Keep operations understandable.** One process owns migrations, bounded writes, durable jobs, audit records, backups, restore journals, and health checks. The terminal shows the current state, next action, URLs, Admin path, host details, resource paths, and live logs.
+- **Own the deployment and the data.** Prods Community is AGPL-licensed, stores primary state in SQLite, and keeps assets and backups in explicit local roots. Release builds target Linux, Windows, and macOS behind the reverse proxy you choose.
+
 ## Engineering documentation and current status
 
 | Read | Purpose |

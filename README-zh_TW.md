@@ -6,6 +6,15 @@ Prods 是供製造商與經銷商自架的技術產品型錄與 RFQ（詢價請�
 
 單一 Go 行程提供公開網站、內嵌 Admin 應用程式與生命週期工具，SQLite 為主要資料庫。Public 由 Go 生成 HTML，以 React 增強互動；Admin 使用 React、headless Refine Core 與 Ant Design v6。Node.js 是建置相依工具，不是部署後的執行需求。
 
+## 為什麼選擇 Prods
+
+- **沿用既有資料開始。** 管理產品、分類、規格、字典、文件、翻譯與 Website 設定。XLSX 匯入／匯出及批次操作可處理大量型錄，不必逐筆開表單修改。
+- **精準控制公開狀態。** 產品頁、結構化資料、JSON、Markdown 與路由狀態一起切換。更新已發布產品時，舊的有效版本會保留到新版本完成；Hide 與 Archive 會立即停止新的公開存取。
+- **同時服務工程師、採購、搜尋引擎與 AI 工具。** 型錄瀏覽、搜尋、分頁、文件及 RFQ 都有伺服器端語意 HTML，沒有 JavaScript 仍能使用。同一份已發布模型也供應 JSON-LD、JSON、Markdown、Sitemap、manifest 與 `llms.txt`。
+- **先取得需求，不假裝成電商。** 訪客可以詢問一個或多個型錄產品；搜尋無結果時也能主動提交 Requested Part。Prods 以可重播且耐久的方式記錄 RFQ，價格、供貨、資格審查與後續聯絡仍由企業決定。
+- **維運方式清楚可掌握。** 單一行程負責 migration、寫入節流、耐久工作、稽核、備份、restore journal 與健康檢查。Terminal 會顯示目前狀態、下一步、網址、Admin 路徑、主機資訊、資源路徑與即時 log。
+- **掌握部署與資料。** Prods Community 採 AGPL 授權，以 SQLite 儲存主要狀態，將資產與備份放在明確的本機目錄，可在 Windows 或 Linux 上執行並搭配自選的反向代理。
+
 ## 工程文件與目前狀態
 
 | 文件 | 用途 |
