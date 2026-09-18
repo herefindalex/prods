@@ -2,11 +2,9 @@
 
 English | [繁體中文](README-zh_TW.md) | [简体中文](README-zh_CN.md)
 
-**Turn product data into an official, searchable catalog and RFQ website without operating an application stack.**
+Prods is a self-hosted technical product catalog and request-for-quotation (RFQ) system for manufacturers and distributors. Administrators maintain product data, category-specific specifications and documents; buyers discover published products and submit inquiries. Semiconductor and electronic-component catalogs need more than a flat product list: part identity, applicable specifications, raw values, datasheets and publication state all carry meaning.
 
-Prods is a self-hosted product catalog and request-for-quotation system for manufacturers, distributors, and other B2B product teams. It helps a small team import and maintain technical product data, publish it safely across human- and machine-readable formats, and capture real buyer requests from one portable Go binary.
-
-The runtime includes the Admin application, public website, SQLite support, search, publishing, RFQ intake, backup, recovery, and operational tooling. Node.js is only needed when building from source. A deployed site does not require Node.js, a separate database server, Docker, a queue, or an external search service.
+One Go process serves the public website, embedded Admin application and lifecycle tools, with SQLite as the primary database. Public content is Go-generated HTML with React enhancements; Admin uses React, headless Refine Core and Ant Design v6. Node.js is a build dependency, not a deployed runtime requirement.
 
 ## Why Prods
 
@@ -17,25 +15,31 @@ The runtime includes the Admin application, public website, SQLite support, sear
 - **Keep operations understandable.** One process owns migrations, bounded writes, durable jobs, audit records, backups, restore journals, and health checks. The terminal shows the current state, next action, URLs, Admin path, host details, resource paths, and live logs.
 - **Own the deployment and the data.** Prods Community is AGPL-licensed, stores primary state in SQLite, and keeps assets and backups in explicit local roots. Release builds target Linux, Windows, and macOS behind the reverse proxy you choose.
 
-## Who it is for
+## Engineering documentation and current status
 
-Prods is designed for product businesses that need an official catalog and RFQ channel but do not want to assemble and operate a CMS, custom database application, search service, and separate back office. It is especially suited to component, industrial, technical, and B2B catalogs where part numbers, taxonomy, specifications, documents, publication control, and inquiry context matter.
-
-V1 deliberately does not implement checkout, pricing, inventory availability, CRM, a generic page builder, arbitrary custom JavaScript, or automated Product creation from an RFQ. Those boundaries keep catalog truth, public publishing, and buyer inquiries explicit.
-
-## Capabilities
-
-| Area | What Prods provides |
+| Read | Purpose |
 | --- | --- |
-| Catalog operations | Current and Archived Products, arbitrary-depth categories, specifications and spec sets, dictionaries, images/documents, pagination, sorting, XLSX import/export, and bulk Publish/Hide/Archive/category/lifecycle actions |
-| Website and languages | Versioned Website settings, preview/publish flow, Public Copy overrides, navigation and theme controls, a separate Admin UI locale, and ten built-in public locales |
-| Public discovery | Server-rendered search and catalog pages, Product/category/manufacturer/brand/application routes, Unicode-folded search, JSON-LD, JSON, Markdown, Sitemap, robots, manifest, and `llms.txt` |
-| RFQ | Multi-product requests, Requested Part intake from no-result searches, high-entropy idempotency keys, durable receipts, Admin review, and explicit optional SMTP sending |
-| Access and accountability | Opaque server-side sessions, CSRF protection, capability-based roles, scoped Admin access, and records for required Admin actions |
-| Operations | Liveness/readiness, runtime logs, scheduled and one-shot backup, verified restore, Recovery, Owner recovery, Maintenance, asset cleanup, and on-demand update checking |
-| Distribution | Empty installation by default, optional exact-version sample data, embedded source revision/version, checksums, and Linux/Windows/macOS release artifacts |
+| [Architecture overview](docs/en/architecture.md) | Components, request/data flows, persistence, authentication and system boundaries |
+| [Engineering case study](docs/en/engineering-case-study.md) | Six decisions with evidence, alternatives, trade-offs and evolution triggers |
+| [Operations and production evidence](docs/en/operations.md) | Installation, backup/recovery, deployment controls and unverified operational claims |
 
-The built-in locales are `en-US`, `zh-TW`, `zh-CN`, `ja-JP`, `ko-KR`, `de-DE`, `fr-FR`, `it-IT`, `es-ES`, and `pt-BR`. Their bundled defaults have passed key, placeholder, plural, formatting, and layout checks, but have not received professional native-language, legal, or marketing review. Review customer-facing copy before a production launch.
+These guides describe the working tree reviewed on 2026-09-17 (`VERSION`: `v0.6.8`). Source, tests and release workflows demonstrate implemented mechanisms; this review did not verify a live production deployment, customer workload or availability target. Release workflows publish artifacts, not a running site. Historical requirements and ADRs remain internal; the guides provide source-linked explanations without republishing them.
+
+## Implemented scope
+
+| Area | Implementation in this repository |
+| --- | --- |
+| Catalog | Current/Archived products, categories, Spec Sets, raw specification values, dictionaries, images/documents, XLSX import/export and per-product bulk outcomes |
+| Website and languages | Working/preview/publish settings, Public Copy overrides, category listing profiles, independent Admin locale and ten built-in public locales |
+| Public discovery | Semantic HTML, search/listing/pagination, product and taxonomy routes, JSON-LD, JSON, Markdown, Sitemap, manifest and `llms.txt` |
+| RFQ | Catalog products and explicitly requested uncatalogued parts, canonical-payload idempotency, durable receipts, Admin review and optional explicit SMTP sending |
+| Access | Opaque server-side sessions, server-side capabilities, CSRF checks and audit records |
+| Operations | Installer, health/readiness, runtime logs, backup, journaled restore, Recovery, Maintenance and optional service integration |
+| Distribution | Embedded UI/sample payload, source/version metadata, checksums and Linux/Windows/macOS build targets; cross-builds are not native runtime acceptance |
+
+V1 excludes checkout, pricing/inventory promises, CRM, a generic page builder, arbitrary JavaScript/templates and external write tokens. An RFQ does not create a Product or automatically send email. Machine-readable outputs are not an AI/RAG implementation; semantic similarity is not evidence of electrical compatibility. These boundaries and the distinction between implemented, deferred and exploratory work are detailed in the case study.
+
+The built-in locales are `en-US`, `zh-TW`, `zh-CN`, `ja-JP`, `ko-KR`, `de-DE`, `fr-FR`, `it-IT`, `es-ES`, and `pt-BR`. The repository includes resource-contract checks; no professional native-language, legal or marketing review is claimed. The engineering guides and READMEs are synchronized in English, Traditional Chinese and Simplified Chinese.
 
 ## Quick start
 
@@ -48,7 +52,7 @@ Download the files for your version from [GitHub Releases](https://github.com/he
 Verify the downloaded files before running them. On Linux:
 
 ```sh
-sha256sum --check SHA256SUMS
+sha256sum --check --ignore-missing SHA256SUMS
 chmod +x prods-linux-amd64
 ./prods-linux-amd64
 ```
@@ -137,7 +141,7 @@ RFQ submission never creates a Product, invents a price or availability state, o
 
 ## Backup, recovery, and maintenance
 
-Create and monitor backups in Admin, or run a one-shot backup:
+Create and monitor online backups in Admin. For command-line backup, restore or Owner recovery, first stop the running instance and use the same configuration/data paths; these commands acquire the instance ownership lock. To create a one-shot backup:
 
 ```sh
 ./prods-linux-amd64 --backup-now
@@ -200,6 +204,7 @@ Required tools:
 
 - Go 1.27.1
 - Node.js 24
+- Python 3 for license-policy validation
 - pnpm 10.28.1, pinned by `packageManager`
 
 ```sh
