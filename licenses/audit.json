@@ -23,14 +23,14 @@
     }
   },
   "npm": {
-    "all_package_records": 197,
+    "all_package_records": 198,
     "all_license_groups": {
       "0BSD": 1,
       "Apache-2.0": 3,
       "BSD-3-Clause": 2,
       "CC-BY-4.0": 1,
       "ISC": 6,
-      "MIT": 184
+      "MIT": 185
     },
     "production_package_records": 106,
     "production_license_groups": {
