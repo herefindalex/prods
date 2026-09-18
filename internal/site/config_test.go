@@ -1,9 +1,32 @@
 package site
 
 import (
+	"encoding/json"
 	"strings"
 	"testing"
 )
+
+func TestConfigurationJSONIncludesEmptyNavigation(t *testing.T) {
+	configuration := DefaultConfiguration()
+	configuration.Navigation = []NavigationItem{}
+
+	encoded, err := json.Marshal(configuration)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var decoded map[string]any
+	if err := json.Unmarshal(encoded, &decoded); err != nil {
+		t.Fatal(err)
+	}
+	navigation, exists := decoded["navigation"]
+	if !exists {
+		t.Fatal("empty navigation was omitted from configuration JSON")
+	}
+	items, ok := navigation.([]any)
+	if !ok || len(items) != 0 {
+		t.Fatalf("navigation = %#v, want empty array", navigation)
+	}
+}
 
 func TestConfigurationPrepareValidatesNavigationAndCustomCSS(t *testing.T) {
 	configuration := DefaultConfiguration()

@@ -28,7 +28,6 @@ import (
 	"sync/atomic"
 	"time"
 
-	"prods/internal/brandcapture"
 	"prods/internal/catalog"
 	"prods/internal/distribution"
 	"prods/internal/identity"
@@ -81,11 +80,6 @@ type Config struct {
 	BackupExternalRequirements []string
 	RuntimeLogPath             string
 	RuntimeLogFiles            int
-	BrandCapturer              BrandCapturer
-}
-
-type BrandCapturer interface {
-	Capture(context.Context, string) (brandcapture.Candidate, error)
 }
 
 type session struct {
@@ -104,6 +98,20 @@ type loginAttempt struct {
 	BlockedUntil time.Time
 }
 
+func safeContactURL(value string) template.URL {
+	if value == "" || !site.ValidContactURL(value) {
+		return ""
+	}
+	return template.URL(value) // #nosec G203 -- restricted by site.ValidContactURL.
+}
+
+func safeHeaderURL(value string) template.URL {
+	if value == "" || !site.ValidHeaderLinkURL(value) {
+		return ""
+	}
+	return template.URL(value) // #nosec G203 -- restricted by site.ValidHeaderLinkURL.
+}
+
 type Server struct {
 	searchManager  *searchnotify.Manager
 	publisher      *publishing.Engine
@@ -111,7 +119,8 @@ type Server struct {
 	assetGC        *recovery.AssetGCManager
 	mailManager    *maildelivery.Manager
 	mailSender     maildelivery.Sender
-	brandCapturer  BrandCapturer
+	brandImportMu  sync.Mutex
+	brandImports   map[string]*pendingBrandImport
 	store          *sqlite.Store
 	config         Config
 	templates      *template.Template
@@ -157,9 +166,6 @@ func New(store *sqlite.Store, config Config) (*Server, string, error) {
 	if config.RuntimeLogFiles <= 0 {
 		config.RuntimeLogFiles = platform.DefaultRuntimeLogFiles
 	}
-	if config.BrandCapturer == nil {
-		config.BrandCapturer = brandcapture.NewFetcher()
-	}
 	if !config.EnablePOCAdmin && config.AdminToken != "" {
 		return nil, "", errors.New("temporary Admin token requires explicit PoC mode")
 	}
@@ -179,7 +185,7 @@ func New(store *sqlite.Store, config Config) (*Server, string, error) {
 	if err != nil {
 		return nil, "", err
 	}
-	tmpl, err := template.New("pages").Funcs(template.FuncMap{"urlquery": url.QueryEscape}).ParseFS(content, "templates/*.tmpl")
+	tmpl, err := template.New("pages").Funcs(template.FuncMap{"urlquery": url.QueryEscape, "contactURL": safeContactURL, "headerURL": safeHeaderURL}).ParseFS(content, "templates/*.tmpl")
 	if err != nil {
 		return nil, "", fmt.Errorf("parse templates: %w", err)
 	}
@@ -195,7 +201,7 @@ func New(store *sqlite.Store, config Config) (*Server, string, error) {
 		return nil, "", fmt.Errorf("load site maintenance state: %w", err)
 	}
 	server := &Server{
-		store: store, config: config, templates: tmpl, mux: http.NewServeMux(), brandCapturer: config.BrandCapturer,
+		store: store, config: config, templates: tmpl, mux: http.NewServeMux(), brandImports: make(map[string]*pendingBrandImport),
 		mailSender: config.MailSender,
 		sessions:   make(map[string]session), loginAttempts: make(map[string]loginAttempt),
 		rfqLimiter: newRFQRateLimiter(), proxyTrust: proxyPolicy,
@@ -381,7 +387,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	s.mux.ServeHTTP(w, r)
-	if s.publisher != nil && isStateChanging(r.Method) && strings.HasPrefix(r.URL.Path, "/admin/") && r.URL.Path != "/admin/api/website/capture" {
+	if s.publisher != nil && isStateChanging(r.Method) && strings.HasPrefix(r.URL.Path, "/admin/") {
 		s.publisher.Wake()
 	}
 	if s.searchManager != nil && isStateChanging(r.Method) && strings.HasPrefix(r.URL.Path, "/admin/") {
@@ -615,7 +621,9 @@ func (s *Server) routes(static fs.FS) {
 	s.mux.HandleFunc("POST /admin/api/website/public-copy/export/{format}", s.adminExportPublicCopy)
 	s.mux.HandleFunc("POST /admin/api/website/public-copy/import/preview", s.adminPreviewPublicCopyImport)
 	s.mux.HandleFunc("POST /admin/api/website/public-copy/import/commit", s.adminCommitPublicCopyImport)
-	s.mux.HandleFunc("POST /admin/api/website/capture", s.adminCaptureWebsiteBrand)
+	s.mux.HandleFunc("POST /admin/api/website/brand-import/requests", s.adminCreateBrandImportRequest)
+	s.mux.HandleFunc("POST /admin/api/website/brand-import/validate", s.adminValidateBrandImport)
+	s.mux.HandleFunc("POST /admin/api/website/brand-import/apply", s.adminApplyBrandImport)
 	s.mux.HandleFunc("PUT /admin/api/website/configuration", s.adminSaveWebsiteConfiguration)
 	s.mux.HandleFunc("GET /admin/api/website/versions", s.adminWebsiteVersions)
 	s.mux.HandleFunc("POST /admin/api/website/versions/restore", s.adminRestoreWebsiteVersion)
@@ -635,17 +643,20 @@ func (s *Server) routes(static fs.FS) {
 }
 
 type publicPage struct {
-	Site            site.Configuration
-	SiteEpoch       int64
-	Language        string
-	Navigation      []site.NavigationItem
-	Stylesheet      template.CSS
-	Text            localization.Messages
-	CatalogURL      string
-	RFQURL          string
-	JSONURL         string
-	MarkdownURL     string
-	LanguageOptions []publicLanguageOption
+	Site             site.Configuration
+	SiteEpoch        int64
+	Language         string
+	NavigationTree   []*site.NavigationNode
+	Stylesheet       template.CSS
+	Text             localization.Messages
+	CatalogURL       string
+	SearchURL        string
+	RFQURL           string
+	JSONURL          string
+	MarkdownURL      string
+	LanguageOptions  []publicLanguageOption
+	ShowHeaderLocale bool
+	ShowFooterLocale bool
 }
 
 type publicLanguageOption struct {
@@ -705,8 +716,9 @@ func (s *Server) currentPublicPage(r *http.Request, views []publishing.PublicVie
 	}
 	page := publicPage{
 		Site: configuration, SiteEpoch: epoch, Language: language,
-		Navigation: configuration.VisibleNavigation(), Stylesheet: template.CSS(configuration.Stylesheet()),
-		Text: localization.ApplyPublicCopy(localization.For(language), publicCopy), CatalogURL: withLanguage("/catalog", language), RFQURL: withLanguage("/rfq", language),
+		NavigationTree: configuration.VisibleNavigationTree(), Stylesheet: template.CSS(configuration.Stylesheet()),
+		ShowHeaderLocale: configuration.ShowHeaderLocale(), ShowFooterLocale: configuration.ShowFooterLocale(),
+		Text: localization.ApplyPublicCopy(localization.For(language), publicCopy), CatalogURL: withLanguage("/catalog", language), SearchURL: withLanguage("/search", language), RFQURL: withLanguage("/rfq", language),
 	}
 	for _, locale := range supportedLocales {
 		page.LanguageOptions = append(page.LanguageOptions, publicLanguageOption{

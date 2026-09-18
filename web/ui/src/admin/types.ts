@@ -220,9 +220,65 @@ export type SiteNavigationItem = {
   parent_id?: string;
   label: string;
   url: string;
+  target_type?: "link" | "system_action" | "group";
+  system_action?: "catalog" | "catalog_search" | "rfq";
+  presentation?: "direct" | "dropdown";
   sort_order: number;
   open_new_window: boolean;
   visible: boolean;
+};
+
+export type SiteContactMethod = {
+  id: string;
+  type: "address" | "phone" | "email" | "sales" | "support" | "other";
+  label: string;
+  value: string;
+  url?: string;
+  sort_order: number;
+};
+
+export type SiteSocialLink = {
+  id: string;
+  network: "linkedin" | "youtube" | "facebook" | "instagram" | "x" | "wechat" | "line" | "blog" | "other";
+  label: string;
+  url: string;
+  sort_order: number;
+};
+
+export type SiteHeaderItem = {
+  id: string;
+  kind: "link" | "system_action" | "text";
+  label?: string;
+  url?: string;
+  system_action?: "catalog_search" | "catalog" | "rfq" | "locale";
+  text?: string;
+  sort_order: number;
+};
+
+export type SiteHeaderRow = {
+  id: string;
+  type: "announcement" | "utility" | "main" | "primary_navigation";
+  sort_order: number;
+  items?: SiteHeaderItem[];
+};
+
+export type SiteFooterItem = {
+  id: string;
+  kind: "link" | "text" | "contact_ref" | "system_action";
+  label?: string;
+  url?: string;
+  text?: string;
+  contact_id?: string;
+  system_action?: "catalog" | "catalog_search" | "rfq" | "locale";
+  sort_order: number;
+};
+
+export type SiteFooterSection = {
+  id: string;
+  heading: string;
+  sort_order: number;
+  collapsible_on_mobile: boolean;
+  items?: SiteFooterItem[];
 };
 
 export type SiteConfiguration = {
@@ -231,6 +287,7 @@ export type SiteConfiguration = {
     display_name: string;
     legal_name?: string;
     official_website?: string;
+    description?: string;
     privacy_url?: string;
     terms_url?: string;
     primary_logo_asset_id?: string;
@@ -238,19 +295,53 @@ export type SiteConfiguration = {
     favicon_asset_id?: string;
     social_image_asset_id?: string;
     contact_links?: SiteContactLink[];
+    contacts?: SiteContactMethod[];
+    social_links?: SiteSocialLink[];
+    registration_lines?: string[];
+  };
+  header: {
+    layout: "commerce" | "corporate" | "compact";
+    sticky: boolean;
+    brand_presentation: "existing_logo_or_display_name";
+    rows?: SiteHeaderRow[];
   };
   navigation?: SiteNavigationItem[];
+  footer: {
+    layout: "brand_columns" | "columns" | "compact";
+    brand_block: { show_brand: boolean; show_description: boolean; contact_ids?: string[] };
+    sections?: SiteFooterSection[];
+    show_social_links: boolean;
+    legal_links?: SiteContactLink[];
+    copyright_text?: string;
+    registration_lines?: string[];
+    disclaimer?: string;
+    locale_control: { enabled: boolean; placement: "footer" | "header" | "both" };
+  };
   theme: {
     primary_color: string;
     secondary_color: string;
+    accent_color?: string;
+    body_text_color?: string;
+    border_color?: string;
+    header_background?: string;
+    header_text_color?: string;
+    footer_background?: string;
+    footer_text_color?: string;
+    typography_profile?: "system_sans" | "geometric_sans" | "humanist_sans" | "industrial_sans" | "serif_accent";
+    density?: "compact" | "comfortable" | "spacious";
+    radius?: "none" | "small" | "medium";
     font_family: string;
     content_width_px: number;
     custom_css?: string;
     custom_css_enabled: boolean;
   };
-  seo: {
-    default_title?: string;
-    default_description?: string;
+  seo: { default_title?: string; default_description?: string };
+  brand_import?: {
+    source_url: string;
+    observed_url: string;
+    source_locale: string;
+    prompt_version: string;
+    imported_at: string;
   };
 };
 
@@ -362,40 +453,29 @@ export type WebsiteVersion = {
   created_at: string;
 };
 
-export type BrandCaptureNavigation = {
-  label: string;
-  url: string;
-};
-
-export type BrandCaptureCandidate = {
-  source_url: string;
-  organization?: string;
-  title?: string;
-  logo_urls?: string[];
-  colors?: string[];
-  fonts?: string[];
-  navigation?: BrandCaptureNavigation[];
-  footer_text?: string;
-  stylesheet_urls?: string[];
-  warnings?: string[];
-  requires_browser: boolean;
-  unavailable_dynamic_parts?: string[];
-  manual_corrections?: string[];
-  needs_rights_confirmation: boolean;
-  working_copy_only: boolean;
-};
-
-export type BrandCaptureFieldChange = {
+export type BrandImportFieldChange = {
   field: string;
-  before: string;
-  after: string;
+  before: unknown;
+  after: unknown;
 };
 
-export type BrandCaptureResponse = {
+export type BrandImportRequest = {
+  request_id: string;
+  source_url: string;
+  source_locale: string;
+  schema_version: string;
+  prompt_version: string;
+  prompt: string;
+  expires_at: string;
+};
+
+export type BrandImportValidation = {
+  request_id: string;
   working_revision: number;
-  candidate: BrandCaptureCandidate;
-  proposed_configuration: SiteConfiguration;
-  diff: BrandCaptureFieldChange[];
+  status: "complete" | "partial" | "unavailable";
+  limitations?: string[];
+  proposed_configuration?: SiteConfiguration;
+  diff: BrandImportFieldChange[];
 };
 
 export type SystemResourceHealth = {
