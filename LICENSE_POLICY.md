@@ -17,14 +17,14 @@ MIT, ISC, 0BSD, BSD-2-Clause, BSD-3-Clause, and Apache-2.0 dependencies are norm
 
 ## Audited dependency snapshot
 
-Audit date: 2026-09-16. Exact inputs and expected counts are recorded in [`licenses/audit.json`](licenses/audit.json).
+Audit date: 2026-09-18. Exact inputs and expected counts are recorded in [`licenses/audit.json`](licenses/audit.json).
 
 | Scope | Result |
 | --- | --- |
 | Linux/Windows/macOS Go release closure | 37 external modules: MIT, BSD-3-Clause, and Apache-2.0 only |
 | Full Go module graph | 60 external modules; one reviewed MPL-2.0 module is used by build/test paths and is verified absent from both release closures |
 | Embedded production UI graph | 106 package records: MIT, BSD-3-Clause, and 0BSD only |
-| Full frontend build/test graph | 198 package records: production licenses plus Apache-2.0, ISC, and one CC-BY-4.0 build-data package |
+| Full frontend build/test graph | 197 package records: production licenses plus Apache-2.0, ISC, and one CC-BY-4.0 build-data package |
 | GitHub Actions and release CLI | `checkout`, `setup-go`, `action-setup`, `setup-node`, `upload-artifact`, and GitHub CLI are MIT-licensed |
 | Fonts and remote browser assets | No bundled web font or remotely loaded font dependency was found |
 
