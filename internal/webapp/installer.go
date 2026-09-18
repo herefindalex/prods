@@ -96,7 +96,7 @@ func NewInstaller(store *sqlite.Store, config InstallerConfig) (*InstallerServer
 		config.BootstrapToken = token
 		generated = token
 	}
-	tmpl, err := template.New("pages").Funcs(template.FuncMap{"urlquery": url.QueryEscape}).ParseFS(content, "templates/*.tmpl")
+	tmpl, err := template.New("pages").Funcs(template.FuncMap{"urlquery": url.QueryEscape, "contactURL": safeContactURL, "headerURL": safeHeaderURL}).ParseFS(content, "templates/*.tmpl")
 	if err != nil {
 		return nil, "", fmt.Errorf("parse installer templates: %w", err)
 	}
