@@ -221,6 +221,8 @@ type publicIndex struct {
 	byID              map[string]ActivePublication
 	byRoute           map[string]routeTarget
 	byAsset           map[string]assetTarget
+	assetReferences   map[string]int
+	productAssets     map[string][]string
 	history           map[string]RouteHistory
 	views             []PublicView
 	invalid           []ActivePublication
@@ -252,6 +254,8 @@ type Engine struct {
 	specCandidateQueries       atomic.Uint64
 	specFallbackQueries        atomic.Uint64
 	processMu                  sync.Mutex
+	machineRefreshMu           sync.Mutex
+	pendingDependencies        map[string]int64 // protected by gate
 	deferVisibility            atomic.Bool
 	deferredVisibilityDirty    atomic.Bool
 	repository                 Repository
@@ -409,6 +413,11 @@ func (e *Engine) processWorkerBatch(ctx context.Context) (processed bool, err er
 	e.processMu.Lock()
 	defer e.processMu.Unlock()
 	defer e.refreshSpecSearch(ctx, false)
+	defer func() {
+		if refreshErr := e.refreshMachine(ctx); err == nil {
+			err = refreshErr
+		}
+	}()
 	for i := 0; i < 100; i++ {
 		if err := ctx.Err(); err != nil {
 			return processed, err
@@ -426,6 +435,9 @@ func (e *Engine) ProcessOne(ctx context.Context) (bool, error) {
 	e.processMu.Lock()
 	defer e.processMu.Unlock()
 	processed, err := e.processOne(ctx)
+	if refreshErr := e.refreshMachine(ctx); err == nil {
+		err = refreshErr
+	}
 	e.refreshSpecSearch(ctx, false)
 	return processed, err
 }
@@ -480,8 +492,8 @@ func (e *Engine) processOne(ctx context.Context) (bool, error) {
 	}
 	if !activated {
 		_ = e.repository.CompletePublicationIntent(ctx, intent.ID, "superseded")
-	} else if err := e.repository.ConvergePublicationDependencies(ctx, activation.ProductID, activation.SourceRevision); err != nil {
-		return true, err
+	} else {
+		e.trackPublicationDependencies(activation.ProductID, activation.SourceRevision)
 	}
 	return true, nil
 }
@@ -507,6 +519,11 @@ func (e *Engine) ProcessBatch(ctx context.Context, limit int) (processed int, er
 	e.deferVisibility.Store(true)
 	defer func() {
 		defer e.refreshSpecSearch(ctx, false)
+		defer func() {
+			if refreshErr := e.refreshMachine(ctx); err == nil {
+				err = refreshErr
+			}
+		}()
 		e.deferVisibility.Store(false)
 		if !e.deferredVisibilityDirty.Swap(false) {
 			return
@@ -535,7 +552,8 @@ func (e *Engine) Revoke(ctx context.Context, request RevokeRequest) error {
 	if err := e.repository.RevokeProduct(ctx, request, e); err != nil {
 		return err
 	}
-	return e.repository.ConvergePublicationDependencies(ctx, request.ProductID, request.ExpectedRevision+1)
+	e.trackPublicationDependencies(request.ProductID, request.ExpectedRevision+1)
+	return e.refreshMachine(ctx)
 }
 
 func (e *Engine) PreviewSiteRoutes(ctx context.Context, config SiteRouteConfig) (SiteRoutePreview, error) {
@@ -590,6 +608,18 @@ func (e *Engine) PublishSiteRoutes(ctx context.Context, request SiteRouteRequest
 
 func (e *Engine) Reconcile(ctx context.Context) error {
 	e.gate.Lock()
+	var revoked map[string]int64
+	if repository, ok := e.repository.(interface {
+		RevokedPublicationDependencies(context.Context) (map[string]int64, error)
+	}); ok {
+		var err error
+		revoked, err = repository.RevokedPublicationDependencies(ctx)
+		if err != nil {
+			e.index = &publicIndex{unhealthy: err}
+			e.gate.Unlock()
+			return err
+		}
+	}
 	err := e.installLocked(ctx)
 	var invalid []ActivePublication
 	var active []ActivePublication
@@ -624,6 +654,11 @@ func (e *Engine) Reconcile(ctx context.Context) error {
 	e.refreshSpecSearch(ctx, false)
 	for _, activation := range active {
 		if err := e.repository.ConvergePublicationDependencies(ctx, activation.ProductID, activation.SourceRevision); err != nil {
+			return err
+		}
+	}
+	for id, revision := range revoked {
+		if err := e.repository.ConvergePublicationDependencies(ctx, id, revision); err != nil {
 			return err
 		}
 	}
@@ -665,7 +700,7 @@ func (e *Engine) installLocked(ctx context.Context) error {
 		e.index = &publicIndex{unhealthy: err}
 		return err
 	}
-	next := &publicIndex{byID: make(map[string]ActivePublication), byRoute: make(map[string]routeTarget), byAsset: make(map[string]assetTarget), history: make(map[string]RouteHistory), site: configuration, siteEpoch: siteEpoch, customCSSDisabled: customCSSDisabled, runtimeGeneration: runtimeGeneration}
+	next := &publicIndex{byID: make(map[string]ActivePublication), byRoute: make(map[string]routeTarget), byAsset: make(map[string]assetTarget), assetReferences: make(map[string]int), productAssets: make(map[string][]string), history: make(map[string]RouteHistory), site: configuration, siteEpoch: siteEpoch, customCSSDisabled: customCSSDisabled, runtimeGeneration: runtimeGeneration}
 	siteAssets, err := e.assetsForSite(ctx, configuration, false)
 	if err != nil {
 		e.index = &publicIndex{unhealthy: err}
@@ -673,6 +708,7 @@ func (e *Engine) installLocked(ctx context.Context) error {
 	}
 	for _, asset := range siteAssets {
 		next.byAsset[asset.asset.ID] = asset
+		next.assetReferences[asset.asset.ID]++
 	}
 	for _, activation := range activations {
 		if err := e.validateUnit(activation); err != nil {
@@ -694,6 +730,8 @@ func (e *Engine) installLocked(ctx context.Context) error {
 		next.byRoute[activation.Route+".md"] = routeTarget{publication: activation, file: "product.md", contentType: "text/markdown; charset=utf-8"}
 		for _, asset := range assets {
 			next.byAsset[asset.asset.ID] = asset
+			next.assetReferences[asset.asset.ID]++
+			next.productAssets[activation.ProductID] = append(next.productAssets[activation.ProductID], asset.asset.ID)
 		}
 	}
 	history, err := e.repository.ActiveRouteHistory(ctx)
@@ -702,14 +740,6 @@ func (e *Engine) installLocked(ctx context.Context) error {
 		return err
 	}
 	for _, item := range history {
-		if _, active := next.byRoute[item.Route]; active {
-			continue
-		}
-		if item.State == "redirect" {
-			if _, targetActive := next.byRoute[item.TargetRoute]; !targetActive {
-				continue
-			}
-		}
 		if item.State == "redirect" || item.State == "gone" {
 			next.history[item.Route] = item
 		}
@@ -1107,6 +1137,13 @@ func (e *Engine) ServePath(w http.ResponseWriter, r *http.Request) bool {
 	if errors.Is(err, os.ErrNotExist) {
 		e.gate.RLock()
 		history, exists := e.index.history[r.URL.Path]
+		if _, active := e.index.byRoute[r.URL.Path]; active || e.index.unhealthy != nil {
+			exists = false
+		}
+		if history.State == "redirect" {
+			target, active := e.index.byRoute[history.TargetRoute]
+			exists = exists && active && target.publication.ProductID == history.ProductID
+		}
 		e.gate.RUnlock()
 		if !exists {
 			return false
@@ -1245,7 +1282,12 @@ func (e *Engine) ServeMachinePath(w http.ResponseWriter, r *http.Request) bool {
 		return true
 	}
 	representation, exists := e.index.machine[r.URL.Path]
+	pending := e.index.machine == nil && isMachinePath(r.URL.Path)
 	e.gate.RUnlock()
+	if pending {
+		http.Error(w, "public machine output temporarily unavailable", http.StatusServiceUnavailable)
+		return true
+	}
 	if !exists {
 		return false
 	}

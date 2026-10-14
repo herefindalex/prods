@@ -61,7 +61,20 @@ func (r *workerRefreshRepository) ActivatePublication(ctx context.Context, _ Int
 	defer coordinator.UnlockVisibility()
 	a.VisibilityGeneration = int64(len(r.active) + 10)
 	r.active = append(r.active, a)
-	return true, coordinator.InstallVisibility(ctx)
+	return true, installTestProduct(ctx, coordinator, a.ProductID)
+}
+
+func (r *workerRefreshRepository) ActivePublication(_ context.Context, id string) (ActivePublication, bool, error) {
+	for _, a := range r.active {
+		if a.ProductID == id {
+			return a, true, nil
+		}
+	}
+	return ActivePublication{}, false, nil
+}
+
+func (r *workerRefreshRepository) ActiveProductRouteHistory(context.Context, string) ([]RouteHistory, error) {
+	return nil, nil
 }
 
 func (r *workerRefreshRepository) FailPublicationIntent(context.Context, string, string) error {

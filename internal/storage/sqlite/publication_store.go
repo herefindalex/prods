@@ -771,7 +771,7 @@ func (s *Store) ActivatePublication(ctx context.Context, intent publishing.Inten
 		return false, err
 	}
 	activated := false
-	err = s.withVisibilityTransaction(ctx, coordinator, func(tx *sql.Tx) error {
+	err = s.withProductVisibilityTransaction(ctx, coordinator, intent.ProductID, func(tx *sql.Tx) error {
 		var revision int64
 		var recordState catalog.RecordState
 		var status catalog.Status
@@ -884,12 +884,34 @@ func (s *Store) FailPublicationIntent(ctx context.Context, intentID, message str
 }
 
 func (s *Store) ActivePublications(ctx context.Context) ([]publishing.ActivePublication, error) {
-	rows, err := s.db.QueryContext(ctx, `SELECT a.product_id,a.source_revision,a.public_revision,a.site_epoch,a.route,
+	return s.activePublications(ctx, "")
+}
+
+// ActivePublication uses the same authoritative visibility predicate as the
+// full startup read, but attaches content metadata for only one Product.
+func (s *Store) ActivePublication(ctx context.Context, productID string) (publishing.ActivePublication, bool, error) {
+	if productID == "" {
+		return publishing.ActivePublication{}, false, errors.New("Product ID required for visibility read")
+	}
+	activations, err := s.activePublications(ctx, productID)
+	if err != nil || len(activations) == 0 {
+		return publishing.ActivePublication{}, false, err
+	}
+	return activations[0], true, nil
+}
+
+func (s *Store) activePublications(ctx context.Context, productID string) ([]publishing.ActivePublication, error) {
+	query := `SELECT a.product_id,a.source_revision,a.public_revision,a.site_epoch,a.route,
 		a.artifact_id,a.manifest_hash,a.visibility_generation,a.view_json,a.activated_at
 		FROM public_activations a JOIN public_visibility v ON v.product_id=a.product_id
 		JOIN products p ON p.id=a.product_id
-		WHERE v.visible=1 AND v.generation=a.visibility_generation AND p.record_state='current' AND p.status='published'
-		ORDER BY a.route,a.product_id`)
+		WHERE v.visible=1 AND v.generation=a.visibility_generation AND p.record_state='current' AND p.status='published'`
+	var args []any
+	if productID != "" {
+		query += ` AND a.product_id=?`
+		args = append(args, productID)
+	}
+	rows, err := s.db.QueryContext(ctx, query+` ORDER BY a.route,a.product_id`, args...)
 	if err != nil {
 		return nil, err
 	}
@@ -1090,8 +1112,48 @@ func (s *Store) ConvergePublicationDependencies(ctx context.Context, productID s
 	})
 }
 
+// A restart rebuilds every aggregate from the current admitted set. Retain the
+// dirty watermarks for revoked Products too, since they have no active unit
+// whose revision could otherwise complete their durable dependency work.
+func (s *Store) RevokedPublicationDependencies(ctx context.Context) (map[string]int64, error) {
+	rows, err := s.db.QueryContext(ctx, `SELECT d.entity_id,MAX(d.desired_revision)
+		FROM publication_dirty d JOIN products p ON p.id=d.entity_id
+		WHERE p.record_state='archived' OR p.status='hidden' GROUP BY d.entity_id`)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	revisions := make(map[string]int64)
+	for rows.Next() {
+		var id string
+		var revision int64
+		if err := rows.Scan(&id, &revision); err != nil {
+			return nil, err
+		}
+		revisions[id] = revision
+	}
+	return revisions, rows.Err()
+}
+
 func (s *Store) ActiveRouteHistory(ctx context.Context) ([]publishing.RouteHistory, error) {
-	rows, err := s.db.QueryContext(ctx, `SELECT route,product_id,target_route,state,site_epoch FROM public_route_history ORDER BY route`)
+	return s.activeRouteHistory(ctx, "")
+}
+
+func (s *Store) ActiveProductRouteHistory(ctx context.Context, productID string) ([]publishing.RouteHistory, error) {
+	if productID == "" {
+		return nil, errors.New("Product ID required for route history read")
+	}
+	return s.activeRouteHistory(ctx, productID)
+}
+
+func (s *Store) activeRouteHistory(ctx context.Context, productID string) ([]publishing.RouteHistory, error) {
+	query := `SELECT route,product_id,target_route,state,site_epoch FROM public_route_history`
+	var args []any
+	if productID != "" {
+		query += ` WHERE product_id=?`
+		args = append(args, productID)
+	}
+	rows, err := s.db.QueryContext(ctx, query+` ORDER BY route`, args...)
 	if err != nil {
 		return nil, err
 	}
@@ -1177,7 +1239,7 @@ func (s *Store) QueuePublicationRepair(ctx context.Context, activation publishin
 }
 
 func (s *Store) RevokeProduct(ctx context.Context, request publishing.RevokeRequest, coordinator publishing.VisibilityCoordinator) error {
-	return s.withVisibilityTransaction(ctx, coordinator, func(tx *sql.Tx) error {
+	return s.withProductVisibilityTransaction(ctx, coordinator, request.ProductID, func(tx *sql.Tx) error {
 		if err := requireActorCapability(ctx, tx, request.ActorID, identity.CapabilityCatalogEdit); err != nil {
 			return err
 		}
@@ -1311,6 +1373,10 @@ func saveRouteHistory(ctx context.Context, tx *sql.Tx, productID, oldRoute, targ
 }
 
 func (s *Store) withVisibilityTransaction(ctx context.Context, coordinator publishing.VisibilityCoordinator, apply func(*sql.Tx) error) error {
+	return s.withProductVisibilityTransaction(ctx, coordinator, "", apply)
+}
+
+func (s *Store) withProductVisibilityTransaction(ctx context.Context, coordinator publishing.VisibilityCoordinator, productID string, apply func(*sql.Tx) error) error {
 	if coordinator == nil {
 		return errors.New("visibility coordinator required")
 	}
@@ -1333,7 +1399,15 @@ func (s *Store) withVisibilityTransaction(ctx context.Context, coordinator publi
 	if err := tx.Commit(); err != nil {
 		return err
 	}
-	if err := coordinator.InstallVisibility(context.WithoutCancel(ctx)); err != nil {
+	install := coordinator.InstallVisibility
+	if productID != "" {
+		if incremental, ok := coordinator.(interface {
+			InstallProductVisibility(context.Context, string) error
+		}); ok {
+			install = func(ctx context.Context) error { return incremental.InstallProductVisibility(ctx, productID) }
+		}
+	}
+	if err := install(context.WithoutCancel(ctx)); err != nil {
 		return fmt.Errorf("visibility state committed but public index installation failed: %w", err)
 	}
 	return nil
