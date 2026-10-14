@@ -2,6 +2,29 @@ package specnumeric
 
 import "testing"
 
+func TestCatalogValueRoundTrip(t *testing.T) {
+	p := catalogProfileForTest("ratio", "%")
+	p.SemanticRole = RoleErrorMagnitude
+	p.AllowedShapes = []Shape{ShapeBoundClaim}
+	p.AllowedOperators = []Operator{OperatorLessEqual}
+	result := Normalize("±0.5 %", p)
+	if result.Candidate == nil {
+		t.Fatalf("normalize: %+v", result)
+	}
+	encoded, err := MarshalValue(*result.Candidate)
+	if err != nil {
+		t.Fatal(err)
+	}
+	value, err := UnmarshalValue(encoded, p)
+	if err != nil {
+		t.Fatal(err)
+	}
+	ceiling, _ := ParseDecimal("1")
+	if Evaluate(&value, p, Predicate{SpecID: "accuracy", Operator: OperatorLessEqual, Value: &ceiling, Unit: "%"}) != Match {
+		t.Fatal("stored accuracy lost meaning")
+	}
+}
+
 func catalogProfileForTest(quantity, unit string) Profile {
 	p := electricalProfile(quantity, unit)
 	p.ParserVersion, p.UnitRegistryVersion = "catalog-parser-2", "catalog-units-2"

@@ -329,6 +329,12 @@ func validateTolerance(tolerance Tolerance) error {
 
 func MarshalValue(value Value) (string, error) {
 	profile := Profile{Quantity: value.Quantity, SemanticRole: value.SemanticRole, AllowedShapes: []Shape{value.Shape}, AllowedOperators: []Operator{OperatorEqual}, CanonicalUnit: value.Unit, NumericFormat: NumericFormatDecimalDot, SchemaVersion: value.SchemaVersion, ParserVersion: ParserVersion, UnitRegistryVersion: value.UnitRegistryVersion}
+	if value.UnitRegistryVersion == CatalogUnitRegistryVersion {
+		profile.ParserVersion = CatalogParserVersion
+	}
+	if value.SemanticRole == RoleErrorMagnitude {
+		profile.AllowedOperators = []Operator{OperatorLessEqual}
+	}
 	if err := ValidateValue(value, profile); err != nil {
 		return "", err
 	}
