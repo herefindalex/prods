@@ -110,6 +110,9 @@ func (e *Engine) refreshSpecSearch(ctx context.Context, force bool) error {
 		}
 	}
 	e.gate.RUnlock()
+	if err == nil && digest == "" {
+		digest, err = specActiveDigest(active)
+	}
 	if err == nil {
 		err = ctx.Err()
 	}
@@ -155,6 +158,17 @@ func (e *Engine) refreshSpecSearch(ctx context.Context, force bool) error {
 		}
 		return err
 	}
+	e.gate.Lock()
+	if e.index != index {
+		// Aggregate consolidation can replace the pointer without changing
+		// authority or setting dirty. Retry the deferred digest on that snapshot.
+		e.specDirty.Store(true)
+	} else if index.specDigest == "" {
+		next := *index
+		next.specDigest = digest
+		e.index = &next
+	}
+	e.gate.Unlock()
 	e.specStatus.Store(&specSearchStatus{digest: digest})
 	return nil
 }
