@@ -25,6 +25,8 @@ Prods 是供製造商與經銷商自架的技術產品型錄與 RFQ（詢價請�
 
 指南描述 2026-09-17 檢視的工作目錄（`VERSION`：`v0.6.8`）。原始碼、測試與發布 workflow 呈現已實作機制；本次查核未驗證運行中的正式部署、客戶負載或可用性目標。Release workflow 發布成品，不部署運行中的站點。歷史需求與 ADR 保持內部文件身分；指南提供原始碼連結與說明，不重新公開內部內容。
 
+架構與工程案例指南保留 2026-09-17、`v0.6.8` 的查核範圍。本 README 的數值搜尋概覽與對應維運章節描述 2026-10-14 查核的 `v0.7.0` 後端變更；這不代表歷史指南已重新全面查核，也不構成正式部署證據。
+
 ## 已實作範圍
 
 | 領域 | 儲存庫中的實作 |
@@ -125,11 +127,20 @@ data_dir=data
 backup_dir=backups
 trusted_proxies=127.0.0.1/32
 asset_gc_grace_days=7
+spec_search_backend=bleve
 ```
 
 對應環境變數包含 `PRODS_LISTEN`、`PRODS_BASE_URL`、`PRODS_DATA_DIR`、`PRODS_BACKUP_DIR`、`PRODS_CONFIG`、`PRODS_TRUSTED_PROXIES`。
 
 對外服務時，請由受信任的反向代理終止 HTTPS，明確設定正式 HTTPS Base URL，只接受已知 proxy IP／CIDR 提供的 forwarded client 資訊。不要用通用檔案伺服器公開 data、backup、secret 或 generated-history 目錄。
+
+## 數值規格搜尋（後端）
+
+`v0.7.0` 新增受控數值 profile、正規化／採用命令與 `POST /api/search/specs`。每個 Product + Spec 明確選擇一份共用 Raw 來源；來源語系記錄 provenance，翻譯仍是展示內容。搜尋使用已啟用公開 `PublicView` 中採用的數值事實及凍結 profile，所有條件以 AND 結合，只納入 `MATCH`。缺失、過期、有條件或不相容的事實為 `UNKNOWN`，不納入結果。精確判定後才計數、分頁；待發布修改不取代目前公開版本。
+
+候選後端預設為 `bleve`；可用 `--spec-search-backend`、`PRODS_SPEC_SEARCH_BACKEND` 或 `prods.ini` 的 `[prods] spec_search_backend` 選擇 `sqlite`，優先序為 CLI > ENV > INI > 預設值。Bleve 私有衍生檔位於 `<data_dir>/generated/search/specs`；SQLite 仍是正式資料來源。候選不可用或不符時，改以已准入公開事實完整精確掃描。Adapter 初次開啟失敗時，必須修正原因並重啟；內部診斷／重建方法沒有 Admin／Public endpoint。
+
+數值 profile 編輯器、採用／來源選擇控制與 Public 數值篩選 UI 延後提供。既有文字搜尋仍獨立運作。設定、migration 及具 Admin 認證／Public API 範例見[維運：數值規格搜尋](docs/zh-TW/operations.md#數值規格搜尋後端)。內建合成樣本不會自動設定數值 profile 或填入已採用數值事實。
 
 ## 發布與 RFQ 行為
 
@@ -249,7 +260,7 @@ CGO_ENABLED=0 go build -trimpath -o prods ./cmd/prods
 建立含內嵌版本、對應 sample data、原始碼 metadata、授權文件與 checksum 的 Linux amd64、Windows amd64、macOS Intel 與 macOS Apple Silicon release：
 
 ```sh
-./scripts/build-release.sh v0.6.8
+./scripts/build-release.sh v0.7.0
 ```
 
 輸出位於 `dist/<version>/`。根目錄 [`VERSION`](VERSION) 是唯一版本來源；script 會拒絕不同參數，GitHub Actions 也會拒絕不同 tag。同一版本會寫入每個 binary、sample payload、`BUILD_INFO.txt`、產物目錄與 GitHub Release tag。Cross-build 只能證明可編譯；Windows 必須在 Windows 實際執行後才能宣稱通過 runtime 驗證，兩個 macOS 產物在 native macOS 驗收前均明確列為未測試。
@@ -266,6 +277,6 @@ Release script 要求 tracked working tree 乾淨，並將版本與 source revis
 
 Prods Community 採 [GNU Affero General Public License v3.0 only](LICENSE)，SPDX 識別為 `AGPL-3.0-only`。透過網路使用修改版 Community 程式的使用者，有權取得對應原始碼。
 
-目前 release closure 的第三方元件僅使用 MIT、BSD、Apache-2.0、ISC／0BSD 或 public-domain 類型授權，未發現 GPL、AGPL、LGPL、SSPL、BSL、Commons Clause、PolyForm、非商用或禁止衍生授權。完整範圍、build-only 例外、未來封閉商用條件與自動檢查方式請見 [LICENSE_POLICY.md](LICENSE_POLICY.md)；保留聲明與授權文字請見 [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)。
+已稽核 Go release closure 採 MIT、BSD-3-Clause 與 Apache-2.0；production UI 採 MIT、BSD-3-Clause 與 0BSD。完整 build／test graph 另有經審查的例外及 source-only fixture，包含 MPL-2.0、CC-BY-4.0 與 CC-BY-SA 素材；不能將這些條款概括為已交付 runtime code 的授權。選用授權、精確範圍、source-only 義務、未來封閉商用條件及自動檢查方式見 [LICENSE_POLICY.md](LICENSE_POLICY.md)；保留的 runtime 聲明與授權文字見 [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)。
 
 第三方授權不會自動阻止未來另行授權的 proprietary edition；主要條件是 Prods 本身所有貢獻都必須具有可重新授權的權利。在正式 Contributor License Agreement、接受 CLA 的法律實體及紀錄流程建立前，不應合併實質外部貢獻。Product data、圖片、datasheet、RFQ、backup 與其他客戶內容不會因使用 Prods 而自動改採 AGPL。

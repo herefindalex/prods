@@ -104,3 +104,166 @@ The full source-verification commands remain in the [README](../../README.md). F
 ## Evidence still needed for a production account
 
 An operator can supplement this repository with the deployed version/source revision, host/platform, service/proxy configuration, TLS validation, persistent-root mapping, backup retention/off-host destination, a dated restore exercise and measured workload/incident evidence. Keep credentials and customer data private. Until that evidence exists, describe the implementation and its tests rather than an unverified production success story.
+
+## Numeric specification search (backend)
+
+This section documents the `v0.7.0` backend reviewed on 2026-10-14. Earlier sections and the architecture/case-study guides retain their historical `v0.6.8` review scope. Numeric profile editing, shared-source/adoption controls and Public numeric filter UI are deferred; existing text search is separate.
+
+### Configure the candidate backend
+
+`bleve` is the default. The flag `--spec-search-backend`, environment variable `PRODS_SPEC_SEARCH_BACKEND` and INI key `[prods] spec_search_backend` accept `bleve` or `sqlite` with CLI > ENV > INI > default precedence. Select one of these alternatives and restart using the same site paths:
+
+```ini
+[prods]
+spec_search_backend=bleve
+```
+
+```sh
+PRODS_SPEC_SEARCH_BACKEND=sqlite ./prods-linux-amd64
+./prods-linux-amd64 --spec-search-backend sqlite
+```
+
+Bleve is embedded in the Go process and writes a private, rebuildable candidate index at `<data_dir>/generated/search/specs`. SQLite remains the primary store; `sqlite` uses its derived Spec-ID projection instead. Never expose the generated/search directory through a filesystem server. Candidate replacement/rebuild runs in the publication worker after active public state changes.
+
+If candidates fail, are incomplete, or do not match the admitted inventory/revisions, queries scan the complete active public inventory and evaluate it exactly. This preserves results and counts at additional scan cost; it is not a latency guarantee. Logs report candidate-index failures. Later worker ticks retry refresh on an opened adapter; a Bleve adapter that failed its initial open is not reopened by those ticks. Fix its filesystem/ownership/resource cause and restart, or restart with `sqlite`. `SpecSearchDiagnostics` and `RebuildSpecSearchIndex` are internal methods, with no Admin/Public diagnostics or rebuild endpoint. An unhealthy authoritative public index still returns 503.
+
+### Prepare and adopt a numeric fact
+
+A Product + Spec has one selected shared Raw source. `source_origin_locale` records the source provenance; it does not create a different numeric fact per public language. Localized display text stays separate. Migration 19 retains legacy Raw/history, selects the source only where there is exactly one row per Product + Spec, and leaves multiple-source legacy groups unselected until an explicit command. It creates no numeric profiles or adopted facts from old display units/history. Published Current Products receive a new source revision and publication intent; the previous valid public activation remains until replacement. The bundled synthetic sample likewise provides Raw specifications, not configured profiles/adopted numeric facts.
+
+Use a legitimate same-origin Admin login and its private cookie jar (`admin_cookie_jar`); obtain `admin_csrf` from the signed-in Admin page's `csrf-token` meta value. Set `base` to the configured Base URL and the ID variables to existing domain IDs. Admin reads require `catalog.view`; writes require `catalog.edit`, the session cookie and `X-CSRF-Token`. These are browser Admin commands, not external write tokens. The following bodies are illustrative files: substitute actual IDs and the revisions observed when opening the operation. Each mutation example is a separate operation, not a script to run blindly in sequence.
+
+| Method / path | Capability / body |
+| --- | --- |
+| `PUT /admin/api/specs/{id}/numeric-profile` | `catalog.edit`; `expected_revision`, `profile` |
+| `GET /admin/api/products/{id}/spec-values` | `catalog.view`; inspect stored Raw sources |
+| `POST /admin/api/products/{id}/spec-source` | `catalog.edit`; `spec_id`, `spec_value_id`, `expected_product_revision`, `expected_source_revision`, `expected_source_selection_revision` |
+| `GET /admin/api/spec-values/{id}/normalization-context` | `catalog.view`; frozen Raw, profile, `expected`, `selection`, `source_selection` |
+| `POST /admin/api/spec-values/{id}/normalize` | `catalog.edit`; `expected` |
+| `POST /admin/api/spec-values/{id}/normalized` | `catalog.edit`; `expected`, `value_json` (JSON encoded as a string) |
+| `POST /admin/api/spec-values/{id}/normalization/automatic` | `catalog.edit`; `expected`, `candidate_id` |
+
+Example `profile-command.json` for an operating-voltage Spec (use the Spec definition's actual `revision` as `expected_revision`):
+
+```json
+{
+  "expected_revision": 1,
+  "profile": {
+    "quantity": "voltage",
+    "semantic_role": "operating_support",
+    "allowed_shapes": ["scalar", "discrete_set", "interval_set"],
+    "allowed_operators": ["contains_point", "contains_range", "overlaps_range"],
+    "canonical_unit": "V",
+    "declared_input_unit": "V",
+    "numeric_format": "decimal-dot",
+    "schema_version": 1,
+    "parser_version": "electrical-parser-1",
+    "unit_registry_version": "electrical-1"
+  }
+}
+```
+
+```sh
+curl -b "$admin_cookie_jar" -H "X-CSRF-Token: $admin_csrf" \
+  -H 'Content-Type: application/json' -X PUT   "$base/admin/api/specs/$spec_id/numeric-profile" --data-binary @profile-command.json
+curl -b "$admin_cookie_jar" \
+  "$base/admin/api/products/$product_id/spec-values"
+curl -b "$admin_cookie_jar" \
+  "$base/admin/api/spec-values/$spec_value_id/normalization-context"
+```
+
+If the context has no selected shared source, select one first with `source-command.json`. Use context `expected.product_revision`, `expected.source_revision` and `source_selection.revision` for the three expectations, then open a new normalization context after success:
+
+```json
+{
+  "spec_id": "spec_input_voltage",
+  "spec_value_id": "spv_selected_source",
+  "expected_product_revision": 7,
+  "expected_source_revision": 1,
+  "expected_source_selection_revision": 0
+}
+```
+
+```sh
+curl -b "$admin_cookie_jar" -H "X-CSRF-Token: $admin_csrf" \
+  -H 'Content-Type: application/json'   "$base/admin/api/products/$product_id/spec-source" --data-binary @source-command.json
+```
+
+Save the following as `normalize-command.json`, replacing all five values with the entire `expected` object returned by `normalization-context`: `product_revision`, `source_revision`, `spec_semantic_version`, `profile_revision`, and `selection_revision`. The first four must be positive; the selection revision may be zero. The write transaction rechecks every expectation and the selected shared source.
+
+```json
+{
+  "expected": {
+    "product_revision": 7,
+    "source_revision": 1,
+    "spec_semantic_version": 2,
+    "profile_revision": 1,
+    "selection_revision": 0
+  }
+}
+```
+
+```sh
+curl -b "$admin_cookie_jar" -H "X-CSRF-Token: $admin_csrf" \
+  -H 'Content-Type: application/json'   "$base/admin/api/spec-values/$spec_value_id/normalize" --data-binary @normalize-command.json
+```
+
+Normalization may adopt a valid automatic result, record a candidate when manual preference is active, or return HTTP 200 with `state: "failed"` and `reason_code` for unparseable Raw. It does not overwrite a manually adopted selection. Manual adoption uses a validated, canonical-unit `Value` encoded in `value_json`; for the voltage profile above, `manual-command.json` can be:
+
+```json
+{
+  "expected": {"product_revision": 7, "source_revision": 1, "spec_semantic_version": 2, "profile_revision": 1, "selection_revision": 0},
+  "value_json": "{\"schema_version\":1,\"quantity\":\"voltage\",\"semantic_role\":\"operating_support\",\"shape\":\"scalar\",\"unit\":\"V\",\"unit_registry_version\":\"electrical-1\",\"scalar\":\"5\",\"context\":{\"kind\":\"unconditional\"}}"
+}
+```
+
+```sh
+curl -b "$admin_cookie_jar" -H "X-CSRF-Token: $admin_csrf" \
+  -H 'Content-Type: application/json'   "$base/admin/api/spec-values/$spec_value_id/normalized" --data-binary @manual-command.json
+```
+
+To replace manual preference with a current automatic candidate, explicitly choose its server-recorded ID and a newly reviewed context in `automatic-command.json`; an arbitrary, stale or incompatible candidate is rejected:
+
+```json
+{
+  "expected": {"product_revision": 8, "source_revision": 1, "spec_semantic_version": 2, "profile_revision": 1, "selection_revision": 1},
+  "candidate_id": "nrm_current_automatic_candidate"
+}
+```
+
+```sh
+curl -b "$admin_cookie_jar" -H "X-CSRF-Token: $admin_csrf" \
+  -H 'Content-Type: application/json'   "$base/admin/api/spec-values/$spec_value_id/normalization/automatic" --data-binary @automatic-command.json
+```
+
+Successful adoption increments Product/selection revisions and may return `publication_pending: true`. Saved or scheduled does not mean publicly active. Do not retry writes automatically. On 409, retain edits, read a new context and review the changed versions before issuing a new command.
+
+### Query frozen public facts
+
+`POST /api/search/specs` is a bounded read command and does not require an Admin session or Admin CSRF token. Replace the example Spec/category IDs with published IDs whose profiles allow those operators and units. The output-current example requires a separate current profile allowing `>=`:
+
+```sh
+curl -H 'Content-Type: application/json' "$base/api/search/specs" --data-binary '{
+  "predicates": [
+    {"spec_id":"spec_input_voltage","operator":"contains_point","value":"5","unit":"V"},
+    {"spec_id":"spec_output_current","operator":">=","value":"0.5","unit":"A"}
+  ],
+  "page":1,"page_size":20
+}'
+curl -H 'Content-Type: application/json' "$base/api/search/specs" --data-binary '{
+  "predicates":[{"spec_id":"spec_input_voltage","operator":"contains_range","lower":"3","upper":"5","unit":"V"}],
+  "category_id":"cat_power","locale":"en-US","page":1,"page_size":20
+}'
+```
+
+Requests require 1–16 predicates, positive `page`, and `page_size` of 1–100. Decimal operands are JSON strings with an explicit unit. Point operators (`contains_point`, `=`, `<`, `<=`, `>`, `>=`) use only `value`; range operators (`contains_range`, `overlaps_range`, `between`) use only `lower` and `upper`. Do not send unrelated operand keys even as `null`. Optional `category_id` includes that category and descendants; `manufacturer_id` is an exact ID scope. `locale` must be publicly enabled; omission resolves the active Site Default.
+
+All predicates must evaluate `MATCH` against adopted facts and profiles frozen in the admitted active `PublicView`. Missing, stale, conditional or incompatible facts yield `UNKNOWN` and are excluded. Disjoint operating ranges keep their gaps; nominal/tolerance and one-sided limit claims follow their declared roles, not an inferred operating range. Candidate indexes never establish numeric truth. Exact evaluation and visibility/scope checks precede `total` and pagination in one admitted snapshot. Results are `{rows,total,page,page_size}`, ordered by Part Number then stable Product ID; an out-of-range page has empty rows and retains the exact total. Pending source/profile edits affect future publication, not the currently active frozen facts.
+
+### Interpret API outcomes
+
+Admin: 400 `invalid_json` covers malformed bodies/expectations and invalid controlled value JSON; 401 `unauthorized` means no valid session; 403 `forbidden` or `invalid_csrf` means capability/security rejection; 404 `not_found` includes a missing source/profile context; 409 `revision_conflict` covers stale expectations or an unselected shared source; 422 `validation_failed` covers domain/profile incompatibility. Manual unit/quantity/role/allowed-shape incompatibility is 422, while a malformed tagged Value is 400. A normalization parse failure is the successful 200 outcome described above, not a transport error.
+
+Public search: malformed JSON/operand shape, decimal encoding or page bounds returns 400 `invalid_json`; an explicitly disabled/unknown locale returns 400 `validation_failed` (an admitted locale-policy race may instead be 400 `invalid_json`). Unknown operators or an operator/unit incompatible with a scoped frozen definition return 422 `validation_failed`. No scoped definition/fact establishes no match, rather than inventing profile semantics. Unavailable authoritative publication returns 503 `service_unavailable`; unexpected server errors return 500 `internal_error`. Maintenance intercepts the route with HTTP 503 HTML and `Retry-After: 300`; draining may return a plain-text 503 before API handling. A degraded candidate index alone triggers exact fallback, not an approximate answer.
+
+Evidence: [`spec_numeric.go`](../../internal/webapp/spec_numeric.go), [`spec_search.go`](../../internal/webapp/spec_search.go), [`numeric profile`](../../internal/specnumeric/profile.go), [`numeric value`](../../internal/specnumeric/value.go), [`exact evaluation`](../../internal/specnumeric/predicate.go), [`search engine`](../../internal/publishing/spec_search.go), [`backend lifecycle`](../../internal/publishing/spec_search_backend.go) and [`migration 19`](../../internal/storage/sqlite/migrations.go). These links describe implementation; production scale and native Windows/macOS acceptance remain separate evidence.

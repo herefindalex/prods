@@ -8,10 +8,13 @@ The v1 installer payload contains the complete synthetic catalog needed to explo
 
 All referenced IDs must exist in the same payload, IDs must be unique, category parents must precede children, SpecSet members must reference declared specifications, each category has at most one SpecSet, and every Product specification value must be a member of that Product category's assigned SpecSet. The installer validates these relationships again inside the same SQLite transaction that creates the Owner and Ready marker, so an invalid reference rolls back the entire installation.
 
-Generate a payload locally:
+The current application release is `v0.7.0`; schema v1, the dataset revision and synthetic seed are unchanged. Sample Raw specification values do not automatically create numeric profiles or adopted numeric search facts. Configure profiles and use the controlled normalization/adoption commands described in [Operations](../docs/en/operations.md#numeric-specification-search-backend) before expecting numeric matches.
+
+Generate a payload locally into a new path (the generator refuses to overwrite an existing file):
 
 ```sh
-go run ./cmd/prods-sample -release-version v0.6.8 -output /tmp/prods-sample-data-v1.json
+sample_dir="$(mktemp -d)"
+go run ./cmd/prods-sample -release-version v0.7.0 -output "$sample_dir/prods-sample-data-v1.json"
 ```
 
 Before publishing, `scripts/build-release.sh` regenerates the payload and checksum, then compares them byte-for-byte with the files in this directory. It also regenerates deterministic gzip bytes and compares them with the file embedded by the Go package. A stale payload, schema, checksum, embedded gzip, version, or nondeterministic generator stops the release.

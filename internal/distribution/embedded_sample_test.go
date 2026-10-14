@@ -6,11 +6,11 @@ import (
 )
 
 func TestEmbeddedSampleMatchesCompiledRelease(t *testing.T) {
-	sample, err := LoadEmbeddedSample("v0.6.8")
+	sample, err := LoadEmbeddedSample("v0.7.0")
 	if err != nil {
 		t.Fatal(err)
 	}
-	if sample.Data.SchemaVersion != 1 || sample.Data.ReleaseVersion != "v0.6.8" || sample.Data.DatasetVersion == "" {
+	if sample.Data.SchemaVersion != 1 || sample.Data.ReleaseVersion != "v0.7.0" || sample.Data.DatasetVersion == "" {
 		t.Fatalf("embedded sample metadata = %+v", sample.Data)
 	}
 	if len(sample.Data.Dictionaries) != 64 || len(sample.Data.Categories) != 58 || len(sample.Data.Specs) != 34 ||
