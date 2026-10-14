@@ -86,28 +86,7 @@ func (e *Engine) SearchSpecs(ctx context.Context, request SpecSearchRequest) (Sp
 		}
 		ids = append(ids, predicate.SpecID)
 	}
-	var snapshot SpecCandidateSnapshot
-	var projected bool
-	var candidateErr error
-	switch e.specBackend {
-	case "bleve":
-		if e.specBleve != nil {
-			snapshot, candidateErr = e.specBleve.candidates(ctx, request)
-			projected = candidateErr == nil
-		} else {
-			candidateErr = errors.New("Bleve spec search adapter unavailable")
-			if status := e.specStatus.Load(); status != nil && status.lastError != "" {
-				candidateErr = errors.New(status.lastError)
-			}
-		}
-	case "sqlite":
-		if repository, ok := e.repository.(SpecSearchRepository); ok {
-			snapshot, candidateErr = repository.SpecSearchCandidates(ctx, ids, SpecProjectionVersion)
-			projected = candidateErr == nil
-		} else {
-			candidateErr = errors.New("SQLite spec search repository unavailable")
-		}
-	}
+	snapshot, projected, candidateErr := e.readSpecCandidates(ctx, request)
 	// The database read is outside the gate. Everything establishing truth,
 	// visibility, scope, count and pagination uses this one current index.
 	e.gate.RLock()
@@ -162,33 +141,7 @@ func (e *Engine) SearchSpecs(ctx context.Context, request SpecSearchRequest) (Sp
 			}
 		}
 	}
-	candidates := make(map[string]bool)
-	if projected && e.index.specDigestError == nil && e.completeSpecInventory(snapshot) && (e.specBackend != "bleve" || snapshot.SourceDigest == e.index.specDigest) {
-		for _, candidate := range snapshot.Candidates {
-			current, exists := e.index.byID[candidate.ProductID]
-			if !exists || !specBindingMatches(candidate, current) {
-				projected = false
-				break
-			}
-			candidates[candidate.ProductID] = true
-		}
-	} else {
-		projected = false
-	}
-	if projected {
-		e.specCandidateQueries.Add(1)
-		e.specStatus.Store(&specSearchStatus{digest: e.index.specDigest})
-	} else {
-		e.specFallbackQueries.Add(1)
-		if candidateErr == nil {
-			candidateErr = errors.New("spec search candidate snapshot does not match admitted public inventory")
-		}
-		if e.index.specDigestError != nil {
-			candidateErr = e.index.specDigestError
-		}
-		// Atomic diagnostics cannot wait on refresh/adapter while the gate is held.
-		e.specStatus.Store(&specSearchStatus{digest: snapshot.SourceDigest, lastError: candidateErr.Error()})
-	}
+	candidates, projected := e.admitSpecCandidatesLocked(snapshot, projected, candidateErr)
 	matches := make([]PublicView, 0)
 	for id, active := range e.index.byID {
 		if err := ctx.Err(); err != nil {

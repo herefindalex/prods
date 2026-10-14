@@ -81,6 +81,14 @@ type CategoryNode struct {
 }
 
 func Resolve(views []publishing.PublicView, configuration site.Configuration, request Request) (Result, error) {
+	return resolve(views, nil, configuration, request)
+}
+
+func ResolveSnapshot(snapshot publishing.CatalogSnapshot, request Request) (Result, error) {
+	return resolve(snapshot.Views, snapshot.ScopeViews, snapshot.Site, request)
+}
+
+func resolve(views, columnViews []publishing.PublicView, configuration site.Configuration, request Request) (Result, error) {
 	if request.Page < 1 {
 		request.Page = 1
 	}
@@ -104,6 +112,9 @@ func Resolve(views []publishing.PublicView, configuration site.Configuration, re
 	}
 	profile, hasProfile := configuration.CategoryListingProfiles[request.Scope.ID]
 	common := commonApplicable(localized)
+	if columnViews != nil {
+		common = commonApplicable(columnViews)
+	}
 	columns := resolveColumns(request.Scope, profile, hasProfile, common)
 	sortKey, direction, err := resolveSort(request, profile, hasProfile)
 	if err != nil {
@@ -214,7 +225,7 @@ func commonApplicable(views []publishing.PublicView) map[string]publishing.Appli
 			applicable[spec.ID] = spec
 		}
 		for id := range common {
-			if _, exists := applicable[id]; !exists {
+			if other, exists := applicable[id]; !exists || other.SemanticVersion != common[id].SemanticVersion {
 				delete(common, id)
 			}
 		}
