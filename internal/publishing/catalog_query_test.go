@@ -8,6 +8,17 @@ import (
 	"testing"
 )
 
+func TestCatalogSourceKeywordSurvivesDisplayLocale(t *testing.T) {
+	v := PublicView{ID: "p", PartNumber: "ABC", Name: "SourceWidget", Language: "en-US", DefaultLocale: "en-US", SupportedLocales: []string{"en-US", "zh-TW"}, Localizations: map[string]LocalizedContent{"zh-TW": {Name: "中文元件"}}}
+	result, err := AdmitCatalogViews(t.Context(), []PublicView{v}, site.DefaultConfiguration(), CatalogQuery{Scope: catalogfilter.Scope{Kind: "search", Query: "SourceWidget"}, Locale: "zh-TW"})
+	if err != nil || len(result.Views) != 1 {
+		t.Fatalf("source keyword in translated locale: %+v %v", result.Views, err)
+	}
+	if result.Views[0].Name != "中文元件" {
+		t.Fatalf("display name = %q", result.Views[0].Name)
+	}
+}
+
 func TestCatalogPreservesCombinedKeywordProjection(t *testing.T) {
 	v := PublicView{ID: "p", PartNumber: "ABC", Name: "Precision", Description: "private-search-boundary", Language: "en-US", SupportedLocales: []string{"en-US"}}
 	result, err := AdmitCatalogViews(t.Context(), []PublicView{v}, site.DefaultConfiguration(), CatalogQuery{Scope: catalogfilter.Scope{Kind: "search", Query: "ABC Precision"}})

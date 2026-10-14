@@ -170,20 +170,25 @@ func (e *Engine) AdmitCatalog(ctx context.Context, request CatalogQuery) (Catalo
 	default:
 		return snapshot, &CatalogFilterError{Message: "unknown scope"}
 	}
+	keywordRanks := map[string]int{}
 	for _, view := range e.index.views {
 		view = e.admittedViewLocked(view)
 		view.Applications = slices.Clone(view.Applications)
 		view.CategoryTrail = slices.Clone(view.CategoryTrail)
+		// Match the admitted source projection before replacing display labels.
+		matchesScope := catalogScopeMatches(view, request.Scope)
+		rank := catalogKeywordRank(view, request.Scope.Query)
+		keywordRanks[view.ID] = rank
 		view = view.ForLocale(locale)
 		snapshot.AllViews = append(snapshot.AllViews, view)
-		if catalogScopeMatches(view, request.Scope) && (request.Scope.Kind == "search" || strings.TrimSpace(request.Scope.Query) == "" || catalogKeywordRank(view, request.Scope.Query) >= 0) {
+		if matchesScope && (request.Scope.Kind == "search" || strings.TrimSpace(request.Scope.Query) == "" || rank >= 0) {
 			snapshot.ScopeViews = append(snapshot.ScopeViews, view)
 		}
 	}
 	sort.SliceStable(snapshot.ScopeViews, func(i, j int) bool {
 		a, b := snapshot.ScopeViews[i], snapshot.ScopeViews[j]
 		if request.Scope.Kind == "search" {
-			ar, br := catalogKeywordRank(a, request.Scope.Query), catalogKeywordRank(b, request.Scope.Query)
+			ar, br := keywordRanks[a.ID], keywordRanks[b.ID]
 			if ar != br {
 				return ar < br
 			}

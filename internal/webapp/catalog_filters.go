@@ -34,8 +34,12 @@ func filterField(key string) (string, string, bool) {
 	if !strings.HasPrefix(key, "f.") {
 		return "", "", false
 	}
-	field, property, ok := strings.Cut(strings.TrimPrefix(key, "f."), ".")
-	return field, property, ok && field != ""
+	key = strings.TrimPrefix(key, "f.")
+	separator := strings.LastIndexByte(key, '.')
+	if separator <= 0 {
+		return "", "", false
+	}
+	return key[:separator], key[separator+1:], true
 }
 func parseCatalogFilters(values url.Values) ([]catalogfilter.Clause, error) {
 	grouped := map[string]url.Values{}
@@ -230,13 +234,15 @@ func catalogFilterForm(snapshot publishing.CatalogSnapshot, values url.Values) [
 			control.Options = append(control.Options, catalogFilterOption{Value: option.Value, Label: option.Label, Selected: slices.Contains(selected, option.Value)})
 		}
 		for _, hidden := range catalogFilterHiddenFields(values) {
-			if !strings.HasPrefix(hidden.Name, "f."+d.Field+".") && hidden.Name != d.Field+"_id" {
+			field, _, isFilter := filterField(hidden.Name)
+			if !(isFilter && field == d.Field) && hidden.Name != d.Field+"_id" {
 				control.Hidden = append(control.Hidden, hidden)
 			}
 		}
 		clear := url.Values{}
 		for key, items := range values {
-			if key != "page" && !strings.HasPrefix(key, "f."+d.Field+".") && key != d.Field+"_id" {
+			field, _, isFilter := filterField(key)
+			if key != "page" && !(isFilter && field == d.Field) && key != d.Field+"_id" {
 				clear[key] = slices.Clone(items)
 			}
 		}
@@ -276,7 +282,7 @@ func catalogFilterHiddenFields(values url.Values) []catalogHiddenField {
 	keys := []string{}
 	for key := range values {
 		field, _, isFilter := filterField(key)
-		if (isFilter && active[field]) || slices.Contains([]string{"manufacturer_id", "brand_id", "category_id", "page_size"}, key) {
+		if (isFilter && active[field]) || slices.Contains([]string{"manufacturer_id", "brand_id", "category_id", "page_size", "sort", "direction"}, key) {
 			keys = append(keys, key)
 		}
 	}
