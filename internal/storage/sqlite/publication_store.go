@@ -195,7 +195,7 @@ func (s *Store) PublicationSource(ctx context.Context, productID string) (publis
 	if routeReason != "" {
 		return publishing.Source{}, errors.New(routeReason)
 	}
-	applicableRows, err := tx.QueryContext(ctx, `SELECT sd.id,sd.name,sd.preferred_unit
+	applicableRows, err := tx.QueryContext(ctx, `SELECT sd.id,sd.name,sd.preferred_unit,sd.semantic_version
 		FROM products p
 		JOIN category_spec_sets cs ON cs.category_id=p.category_id
 		JOIN spec_set_members sm ON sm.spec_set_id=cs.spec_set_id
@@ -206,7 +206,7 @@ func (s *Store) PublicationSource(ctx context.Context, productID string) (publis
 	}
 	for applicableRows.Next() {
 		var spec publishing.SourceSpec
-		if err := applicableRows.Scan(&spec.ID, &spec.Name, &spec.PreferredUnit); err != nil {
+		if err := applicableRows.Scan(&spec.ID, &spec.Name, &spec.PreferredUnit, &spec.SemanticVersion); err != nil {
 			applicableRows.Close()
 			return publishing.Source{}, err
 		}
@@ -238,6 +238,9 @@ func (s *Store) PublicationSource(ctx context.Context, productID string) (publis
 		return publishing.Source{}, err
 	}
 	if err := specRows.Err(); err != nil {
+		return publishing.Source{}, err
+	}
+	if err := loadPublicationFilterSnapshot(ctx, tx, productID, &source); err != nil {
 		return publishing.Source{}, err
 	}
 	if err := loadPublicationNumericSnapshot(ctx, tx, productID, &source); err != nil {
@@ -1400,5 +1403,39 @@ func publicationNumericSnapshotCurrent(ctx context.Context, tx *sql.Tx, activati
 	if err := loadPublicationNumericSnapshot(ctx, tx, activation.ProductID, &current); err != nil {
 		return false, err
 	}
-	return reflect.DeepEqual(current.NumericDefinitions, activation.View.NumericDefinitions) && reflect.DeepEqual(current.NumericFacts, activation.View.NumericFacts), nil
+	if err := loadPublicationFilterSnapshot(ctx, tx, activation.ProductID, &current); err != nil {
+		return false, err
+	}
+	return reflect.DeepEqual(current.FilterDefinitions, activation.View.FilterDefinitions) && reflect.DeepEqual(current.NumericDefinitions, activation.View.NumericDefinitions) && reflect.DeepEqual(current.NumericFacts, activation.View.NumericFacts), nil
+}
+
+// Read through the same transaction as Product and adopted facts. This is also
+// checked at activation, before bounded profile fanout has bumped each Product.
+func loadPublicationFilterSnapshot(ctx context.Context, tx *sql.Tx, productID string, source *publishing.Source) error {
+	rows, err := tx.QueryContext(ctx, `SELECT DISTINCT sd.id FROM products p JOIN category_spec_sets cs ON cs.category_id=p.category_id JOIN spec_set_members sm ON sm.spec_set_id=cs.spec_set_id JOIN spec_definitions sd ON sd.id=sm.spec_id AND sd.status='active' AND sd.filterable=1 WHERE p.id=? ORDER BY sd.id`, productID)
+	if err != nil {
+		return err
+	}
+	var ids []string
+	for rows.Next() {
+		var id string
+		if err = rows.Scan(&id); err != nil {
+			rows.Close()
+			return err
+		}
+		ids = append(ids, id)
+	}
+	err = rows.Err()
+	rows.Close()
+	if err != nil {
+		return err
+	}
+	for _, id := range ids {
+		profile, err := readSpecSearchProfile(ctx, tx, id)
+		if err != nil {
+			return err
+		}
+		source.FilterDefinitions = append(source.FilterDefinitions, publishing.PublicFilterDefinition{Field: "spec:" + id, SemanticVersion: profile.SpecSemanticVersion, ProfileRevision: profile.Revision, Profile: profile.Profile})
+	}
+	return nil
 }

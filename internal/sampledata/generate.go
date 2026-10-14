@@ -45,8 +45,9 @@ func Generate(releaseVersion string) (distribution.SampleData, error) {
 		}
 	}
 	for _, spec := range dataset.Specs {
+		profile := dataset.SpecSearchProfiles[spec.ID]
 		sample.Specs = append(sample.Specs, distribution.SpecDefinition{
-			ID: spec.ID, Name: spec.Name, PreferredUnit: spec.PreferredUnit, Filterable: spec.Filterable,
+			ID: spec.ID, Name: spec.Name, SearchProfile: &profile, PreferredUnit: spec.PreferredUnit, Filterable: spec.Filterable,
 			SemanticVersion: spec.SemanticVer, Status: string(spec.Status),
 		})
 	}

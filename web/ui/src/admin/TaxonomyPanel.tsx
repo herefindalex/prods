@@ -1,3 +1,5 @@
+import {SpecSearchSettings} from "./SpecSearchSettings";
+import {specMessages} from "./locales";
 import { useEffect, useState } from "react";
 import { Button, Card, Checkbox, Form, Input, InputNumber, Modal, Popconfirm, Select, Space, Table, Tabs, Tag } from "antd";
 import { useInvalidate, useList } from "@refinedev/core";
@@ -250,7 +252,8 @@ export function TaxonomyPanel({ locale, onError, onMessage }: Feedback & { local
   const { capabilities } = useAdminIdentity();
   const canEdit = Boolean(capabilities["catalog.edit"]);
   const invalidate = useInvalidate();
-  const [kind, setKind] = useState<DictionaryKind>("manufacturer");
+  const [searchSpec,setSearchSpec]=useState<SpecDefinition>();
+ const [kind, setKind] = useState<DictionaryKind>("manufacturer");
 	const categoriesList = useList<Category, APIError>({ resource: "categories", pagination: { mode: "off" }, queryOptions: { retry: false } });
 	const dictionaryList = useList<DictionaryEntry, APIError>({ resource: "dictionary-entries", pagination: { mode: "off" }, meta: { kind }, queryOptions: { retry: false } });
 	const specsList = useList<SpecDefinition, APIError>({ resource: "spec-definitions", pagination: { mode: "off" }, queryOptions: { retry: false } });
@@ -566,6 +569,7 @@ export function TaxonomyPanel({ locale, onError, onMessage }: Feedback & { local
                     { title: text.unit, dataIndex: "preferred_unit", render: (value: string) => value || "—" },
                     { title: text.semanticVersion, dataIndex: "semantic_version" },
                     { title: text.filterable, dataIndex: "filterable", render: (value: boolean) => value ? text.yes : text.no },
+ {title:specMessages(locale).settings,render:(_,row)=><Button size="small" onClick={()=>setSearchSpec(row)}>{specMessages(locale).settings}</Button>},
                     { title: text.status, dataIndex: "status", render: (value: string) => value === "active" ? text.active : text.disabled },
                   ]}
                 />
@@ -588,6 +592,7 @@ export function TaxonomyPanel({ locale, onError, onMessage }: Feedback & { local
         },
       ]}
     />
+    {searchSpec&&<SpecSearchSettings spec={searchSpec} locale={locale} canEdit={canEdit} onClose={()=>setSearchSpec(undefined)} onChanged={async()=>{await loadSpecs();}}/>}
     <Modal
       open={Boolean(editingCategory)}
       title={text.editCategory}

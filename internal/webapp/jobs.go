@@ -35,11 +35,12 @@ func (s *Server) adminJobs(w http.ResponseWriter, r *http.Request) {
 		limit = parsed
 	}
 	jobs, err := s.store.RecentJobs(r.Context(), sqlite.JobKinds{
-		Publication: current.can(identity.CapabilityCatalogPublish),
-		Import:      current.can(identity.CapabilityCatalogImport),
-		Backup:      current.can(identity.CapabilitySystemManage),
-		SMTP:        current.can(identity.CapabilityRFQManage),
-		Search:      current.can(identity.CapabilitySystemManage),
+		Normalization: current.can(identity.CapabilityCatalogView),
+		Publication:   current.can(identity.CapabilityCatalogPublish),
+		Import:        current.can(identity.CapabilityCatalogImport),
+		Backup:        current.can(identity.CapabilitySystemManage),
+		SMTP:          current.can(identity.CapabilityRFQManage),
+		Search:        current.can(identity.CapabilitySystemManage),
 	}, limit)
 	if err != nil {
 		s.internalAPIError(w, r, err)
@@ -49,7 +50,7 @@ func (s *Server) adminJobs(w http.ResponseWriter, r *http.Request) {
 		Jobs: jobs,
 		RetryPolicy: jobRetryPolicy{
 			SafeKinds:      []string{"publication", "search_submission"},
-			NewOperation:   []string{"backup"},
+			NewOperation:   []string{"backup", "spec_normalization"},
 			NeverAutomatic: []string{"import_commit", "smtp_unknown", "restore", "migration"},
 		},
 	})

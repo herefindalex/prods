@@ -8,6 +8,7 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"prods/internal/catalogfilter"
 	"runtime"
 	"strings"
 	"sync"
@@ -70,12 +71,13 @@ type DictionaryEntry struct {
 }
 
 type SpecDefinition struct {
-	ID              string `json:"id"`
-	Name            string `json:"name"`
-	PreferredUnit   string `json:"preferred_unit,omitempty"`
-	Filterable      bool   `json:"filterable"`
-	SemanticVersion int64  `json:"semantic_version"`
-	Status          string `json:"status,omitempty"`
+	SearchProfile   *catalogfilter.Profile `json:"search_profile,omitempty"`
+	ID              string                 `json:"id"`
+	Name            string                 `json:"name"`
+	PreferredUnit   string                 `json:"preferred_unit,omitempty"`
+	Filterable      bool                   `json:"filterable"`
+	SemanticVersion int64                  `json:"semantic_version"`
+	Status          string                 `json:"status,omitempty"`
 }
 
 type SpecSet struct {
@@ -244,6 +246,11 @@ func validateSampleData(sample SampleData, version string) error {
 	}
 	specIDs := make(map[string]struct{}, len(sample.Specs))
 	for _, spec := range sample.Specs {
+		if spec.SearchProfile != nil {
+			if err := catalogfilter.ValidateProfile(*spec.SearchProfile); err != nil {
+				return fmt.Errorf("sample specification %q search profile: %w", spec.ID, err)
+			}
+		}
 		if !validSampleID(spec.ID) || !validSampleText(spec.Name, 1, 500) ||
 			!validSampleText(spec.PreferredUnit, 0, 120) || spec.SemanticVersion < 1 ||
 			(spec.Status != "" && !oneOf(spec.Status, "active", "disabled")) {

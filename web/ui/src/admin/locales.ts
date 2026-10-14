@@ -65,3 +65,5 @@ export function antDesignLocale(locale: AdminLocale) {
     default: return enUS;
   }
 }
+
+export {specMessages} from "./specLocale";

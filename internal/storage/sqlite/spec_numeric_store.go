@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"prods/internal/catalog"
+	"prods/internal/catalogfilter"
 	"prods/internal/identity"
 	"prods/internal/specnumeric"
 )
@@ -17,56 +18,9 @@ func (s *Store) ConfigureSpecNumericProfile(ctx context.Context, actorID, specID
 	if err := specnumeric.ValidateProfile(profile); err != nil {
 		return catalog.SpecNumericProfile{}, fmt.Errorf("%w: %v", catalog.ErrInvalidSpec, err)
 	}
-	encoded, err := json.Marshal(profile)
-	if err != nil {
-		return catalog.SpecNumericProfile{}, err
-	}
 	var result catalog.SpecNumericProfile
-	err = s.withWriteTx(ctx, func(tx *sql.Tx) error {
-		if err := requireActorCapability(ctx, tx, actorID, identity.CapabilityCatalogEdit); err != nil {
-			return err
-		}
-		var revision, semantic int64
-		if err := tx.QueryRowContext(ctx, `SELECT revision,semantic_version FROM spec_definitions WHERE id=?`, specID).Scan(&revision, &semantic); err != nil {
-			return err
-		}
-		if revision != expectedRevision {
-			return catalog.ErrRevisionConflict
-		}
-		var previousJSON string
-		var profileRevision int64
-		err := tx.QueryRowContext(ctx, `SELECT profile_json,revision FROM spec_numeric_profiles WHERE spec_id=?`, specID).Scan(&previousJSON, &profileRevision)
-		if err != nil && !errors.Is(err, sql.ErrNoRows) {
-			return err
-		}
-		if err == nil {
-			var previous specnumeric.Profile
-			if err := json.Unmarshal([]byte(previousJSON), &previous); err != nil {
-				return err
-			}
-			if previous.Quantity != profile.Quantity || previous.SemanticRole != profile.SemanticRole {
-				return catalog.ErrInvalidSpec
-			}
-		}
-		semantic++
-		profileRevision++
-		now := time.Now().UTC().Format(time.RFC3339Nano)
-		if _, err := tx.ExecContext(ctx, `INSERT INTO spec_numeric_profiles(spec_id,spec_semantic_version,revision,profile_json,updated_by,updated_at)
-		 VALUES(?,?,?,?,?,?) ON CONFLICT(spec_id) DO UPDATE SET spec_semantic_version=excluded.spec_semantic_version,
-		 revision=excluded.revision,profile_json=excluded.profile_json,updated_by=excluded.updated_by,updated_at=excluded.updated_at`, specID, semantic, profileRevision, string(encoded), actorID, now); err != nil {
-			return err
-		}
-		if _, err := tx.ExecContext(ctx, `UPDATE spec_definitions SET semantic_version=?,revision=revision+1,updated_by=?,updated_at=? WHERE id=? AND revision=?`, semantic, actorID, now, specID, expectedRevision); err != nil {
-			return err
-		}
-		if _, err := tx.ExecContext(ctx, `INSERT INTO spec_numeric_profile_work(spec_id,profile_revision,spec_semantic_version,status,created_at,updated_at) VALUES(?,?,?,'pending',?,?)`, specID, profileRevision, semantic, now, now); err != nil {
-			return err
-		}
-		if err := appendAudit(ctx, tx, actorID, "spec.numeric_profile_configured", "spec", specID, map[string]any{"profile_revision": profileRevision, "spec_semantic_version": semantic}); err != nil {
-			return err
-		}
-		result = catalog.SpecNumericProfile{SpecID: specID, SpecSemanticVersion: semantic, Revision: profileRevision, Profile: profile}
-		return nil
+	err := s.withWriteTx(ctx, func(tx *sql.Tx) error {
+		return configureSpecNumericProfileTx(ctx, tx, actorID, specID, expectedRevision, profile, &result)
 	})
 	if err != nil {
 		return catalog.SpecNumericProfile{}, err
@@ -74,15 +28,70 @@ func (s *Store) ConfigureSpecNumericProfile(ctx context.Context, actorID, specID
 	return result, nil
 }
 
+func configureSpecNumericProfileTx(ctx context.Context, tx *sql.Tx, actorID, specID string, expectedRevision int64, profile specnumeric.Profile, result *catalog.SpecNumericProfile) error {
+	encoded, err := json.Marshal(profile)
+	if err != nil {
+		return err
+	}
+	if err := requireActorCapability(ctx, tx, actorID, identity.CapabilityCatalogEdit); err != nil {
+		return err
+	}
+	var revision, semantic int64
+	if err := tx.QueryRowContext(ctx, `SELECT revision,semantic_version FROM spec_definitions WHERE id=?`, specID).Scan(&revision, &semantic); err != nil {
+		return err
+	}
+	if revision != expectedRevision {
+		return catalog.ErrRevisionConflict
+	}
+	var previousJSON string
+	var profileRevision int64
+	err = tx.QueryRowContext(ctx, `SELECT profile_json,revision FROM spec_numeric_profiles WHERE spec_id=?`, specID).Scan(&previousJSON, &profileRevision)
+	if err != nil && !errors.Is(err, sql.ErrNoRows) {
+		return err
+	}
+	if err == nil {
+		var previous specnumeric.Profile
+		if err := json.Unmarshal([]byte(previousJSON), &previous); err != nil {
+			return err
+		}
+		if previous.Quantity != profile.Quantity || previous.SemanticRole != profile.SemanticRole {
+			return catalog.ErrInvalidSpec
+		}
+	}
+	semantic++
+	profileRevision++
+	now := time.Now().UTC().Format(time.RFC3339Nano)
+	if _, err := tx.ExecContext(ctx, `INSERT INTO spec_numeric_profiles(spec_id,spec_semantic_version,revision,profile_json,updated_by,updated_at)
+	 VALUES(?,?,?,?,?,?) ON CONFLICT(spec_id) DO UPDATE SET spec_semantic_version=excluded.spec_semantic_version,
+	 revision=excluded.revision,profile_json=excluded.profile_json,updated_by=excluded.updated_by,updated_at=excluded.updated_at`, specID, semantic, profileRevision, string(encoded), actorID, now); err != nil {
+		return err
+	}
+	if _, err := tx.ExecContext(ctx, `UPDATE spec_definitions SET semantic_version=?,revision=revision+1,updated_by=?,updated_at=? WHERE id=? AND revision=?`, semantic, actorID, now, specID, expectedRevision); err != nil {
+		return err
+	}
+	if _, err := tx.ExecContext(ctx, `INSERT INTO spec_numeric_profile_work(spec_id,profile_revision,spec_semantic_version,status,created_at,updated_at) VALUES(?,?,?,'pending',?,?)`, specID, profileRevision, semantic, now, now); err != nil {
+		return err
+	}
+	if err := appendAudit(ctx, tx, actorID, "spec.numeric_profile_configured", "spec", specID, map[string]any{"profile_revision": profileRevision, "spec_semantic_version": semantic}); err != nil {
+		return err
+	}
+	if err := saveSpecSearchMetadataTx(ctx, tx, actorID, specID, expectedRevision+1, catalogfilter.NumericProfile(profile), now); err != nil {
+		return err
+	}
+	*result = catalog.SpecNumericProfile{SpecID: specID, SpecSemanticVersion: semantic, Revision: profileRevision, Profile: profile}
+	return nil
+}
+
 // One statement freezes Raw, profile and all expectations in one read snapshot.
 // Neither legacy normalized history nor display units infer a selection/profile.
 func (s *Store) SpecNormalizationContext(ctx context.Context, specValueID string) (catalog.SpecNormalizationContext, error) {
 	var result catalog.SpecNormalizationContext
 	var encoded string
+	var profileSemantic int64
 	err := s.db.QueryRowContext(ctx, `SELECT pv.id,pv.product_id,pv.spec_id,pv.raw_value,pv.source_origin_locale,
 	 p.revision,pv.source_revision,sd.semantic_version,np.revision,np.profile_json,
 	 COALESCE(ns.selected_normalized_value_id,''),COALESCE(ns.preference,''),COALESCE(ns.revision,0),
-	 COALESCE(ps.spec_value_id,''),COALESCE(ps.revision,0)
+	 COALESCE(ps.spec_value_id,''),COALESCE(ps.revision,0),np.spec_semantic_version
 	 FROM product_spec_values pv JOIN products p ON p.id=pv.product_id JOIN spec_definitions sd ON sd.id=pv.spec_id
 	 JOIN spec_numeric_profiles np ON np.spec_id=pv.spec_id
 	 LEFT JOIN spec_normalization_selections ns ON ns.spec_value_id=pv.id
@@ -90,9 +99,12 @@ func (s *Store) SpecNormalizationContext(ctx context.Context, specValueID string
 	 WHERE pv.id=?`, specValueID).Scan(&result.SpecValueID, &result.ProductID, &result.SpecID, &result.Raw, &result.SourceLocale,
 		&result.Expected.ProductRevision, &result.Expected.SourceRevision, &result.Expected.SpecSemanticVersion,
 		&result.Expected.ProfileRevision, &encoded, &result.Selection.SelectedNormalizedValueID, &result.Selection.Preference,
-		&result.Expected.SelectionRevision, &result.SourceSelection.SpecValueID, &result.SourceSelection.Revision)
+		&result.Expected.SelectionRevision, &result.SourceSelection.SpecValueID, &result.SourceSelection.Revision, &profileSemantic)
 	if err != nil {
 		return catalog.SpecNormalizationContext{}, err
+	}
+	if profileSemantic != result.Expected.SpecSemanticVersion {
+		return catalog.SpecNormalizationContext{}, catalog.ErrRevisionConflict
 	}
 	if err := json.Unmarshal([]byte(encoded), &result.Profile); err != nil {
 		return catalog.SpecNormalizationContext{}, err
@@ -188,63 +200,67 @@ func checkNormalizationContextTx(ctx context.Context, tx *sql.Tx, actorID string
 }
 
 func (s *Store) recordControlledNormalization(ctx context.Context, actorID string, frozen catalog.SpecNormalizationContext, expected catalog.NormalizationExpectation, encoded, reason string, source catalog.NormalizedSource, explicit bool) (catalog.NormalizationOutcome, error) {
-	id, err := randomID("nrm")
-	if err != nil {
-		return catalog.NormalizationOutcome{}, err
-	}
 	var outcome catalog.NormalizationOutcome
-	err = s.withWriteTx(ctx, func(tx *sql.Tx) error {
-		if err := checkNormalizationContextTx(ctx, tx, actorID, frozen, expected); err != nil {
-			return err
-		}
-		status := catalog.NormalizedCurrent
-		state := "candidate"
-		if reason != "" || encoded == "" {
-			status = catalog.NormalizedFailed
-			state = "failed"
-		}
-		now := time.Now().UTC().Format(time.RFC3339Nano)
-		if source == catalog.NormalizedAutomatic {
-			var previous string
-			err := tx.QueryRowContext(ctx, `SELECT id FROM normalized_values WHERE spec_value_id=? AND value_json=? AND source_revision=?
-			 AND spec_semantic_version=? AND profile_revision=? AND source_origin_locale=? AND numeric_schema_version=?
-			 AND normalizer_version=? AND source='automatic' AND status=? AND failure_reason=? ORDER BY created_at DESC,id DESC LIMIT 1`,
-				frozen.SpecValueID, encoded, expected.SourceRevision, expected.SpecSemanticVersion, expected.ProfileRevision, frozen.SourceLocale, specnumeric.SchemaVersion, frozen.Profile.ParserVersion, status, reason).Scan(&previous)
-			if err != nil && !errors.Is(err, sql.ErrNoRows) {
-				return err
-			}
-			if err == nil {
-				outcome = catalog.NormalizationOutcome{State: state, ReasonCode: reason, NormalizedValueID: previous, ProductRevision: expected.ProductRevision, SelectionRevision: expected.SelectionRevision}
-				if status == catalog.NormalizedCurrent && frozen.Selection.Preference != catalog.NormalizedManual {
-					if frozen.Selection.SelectedNormalizedValueID == previous {
-						outcome.State = "recorded"
-						return nil
-					}
-					return adoptNormalizationTx(ctx, tx, actorID, frozen, previous, source, "product.spec_normalized", now, &outcome)
-				}
-				return nil
-			}
-		}
-		if _, err := tx.ExecContext(ctx, `INSERT INTO normalized_values(id,spec_value_id,value_json,source_revision,spec_semantic_version,
-		 normalizer_version,source,status,failure_reason,created_by,created_at,profile_revision,source_origin_locale,numeric_schema_version)
-		 VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?)`, id, frozen.SpecValueID, encoded, expected.SourceRevision, expected.SpecSemanticVersion,
-			frozen.Profile.ParserVersion, source, status, reason, actorID, now, expected.ProfileRevision, frozen.SourceLocale, specnumeric.SchemaVersion); err != nil {
-			return err
-		}
-		outcome = catalog.NormalizationOutcome{State: state, ReasonCode: reason, NormalizedValueID: id, ProductRevision: expected.ProductRevision, SelectionRevision: expected.SelectionRevision}
-		if status == catalog.NormalizedCurrent && (explicit || frozen.Selection.Preference != catalog.NormalizedManual) {
-			action := "product.spec_normalized"
-			if source == catalog.NormalizedManual {
-				action = "product.spec_manual_adopted"
-			}
-			return adoptNormalizationTx(ctx, tx, actorID, frozen, id, source, action, now, &outcome)
-		}
-		return appendAudit(ctx, tx, actorID, "product.spec_normalization_recorded", "product", frozen.ProductID, map[string]any{"spec_value_id": frozen.SpecValueID, "normalized_value_id": id, "state": state, "reason": reason})
+	err := s.withWriteTx(ctx, func(tx *sql.Tx) error {
+		return recordControlledNormalizationTx(ctx, tx, actorID, frozen, expected, encoded, reason, source, explicit, &outcome)
 	})
 	if err != nil {
 		return catalog.NormalizationOutcome{}, err
 	}
 	return outcome, nil
+}
+
+func recordControlledNormalizationTx(ctx context.Context, tx *sql.Tx, actorID string, frozen catalog.SpecNormalizationContext, expected catalog.NormalizationExpectation, encoded, reason string, source catalog.NormalizedSource, explicit bool, outcome *catalog.NormalizationOutcome) error {
+	id, err := randomID("nrm")
+	if err != nil {
+		return err
+	}
+	if err := checkNormalizationContextTx(ctx, tx, actorID, frozen, expected); err != nil {
+		return err
+	}
+	status := catalog.NormalizedCurrent
+	state := "candidate"
+	if reason != "" || encoded == "" {
+		status = catalog.NormalizedFailed
+		state = "failed"
+	}
+	now := time.Now().UTC().Format(time.RFC3339Nano)
+	if source == catalog.NormalizedAutomatic {
+		var previous string
+		err := tx.QueryRowContext(ctx, `SELECT id FROM normalized_values WHERE spec_value_id=? AND value_json=? AND source_revision=?
+		 AND spec_semantic_version=? AND profile_revision=? AND source_origin_locale=? AND numeric_schema_version=?
+		 AND normalizer_version=? AND source='automatic' AND status=? AND failure_reason=? ORDER BY created_at DESC,id DESC LIMIT 1`,
+			frozen.SpecValueID, encoded, expected.SourceRevision, expected.SpecSemanticVersion, expected.ProfileRevision, frozen.SourceLocale, specnumeric.SchemaVersion, frozen.Profile.ParserVersion, status, reason).Scan(&previous)
+		if err != nil && !errors.Is(err, sql.ErrNoRows) {
+			return err
+		}
+		if err == nil {
+			*outcome = catalog.NormalizationOutcome{State: state, ReasonCode: reason, NormalizedValueID: previous, ProductRevision: expected.ProductRevision, SelectionRevision: expected.SelectionRevision}
+			if status == catalog.NormalizedCurrent && frozen.Selection.Preference != catalog.NormalizedManual {
+				if frozen.Selection.SelectedNormalizedValueID == previous {
+					outcome.State = "recorded"
+					return nil
+				}
+				return adoptNormalizationTx(ctx, tx, actorID, frozen, previous, source, "product.spec_normalized", now, outcome)
+			}
+			return nil
+		}
+	}
+	if _, err := tx.ExecContext(ctx, `INSERT INTO normalized_values(id,spec_value_id,value_json,source_revision,spec_semantic_version,
+	 normalizer_version,source,status,failure_reason,created_by,created_at,profile_revision,source_origin_locale,numeric_schema_version)
+	 VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?)`, id, frozen.SpecValueID, encoded, expected.SourceRevision, expected.SpecSemanticVersion,
+		frozen.Profile.ParserVersion, source, status, reason, actorID, now, expected.ProfileRevision, frozen.SourceLocale, specnumeric.SchemaVersion); err != nil {
+		return err
+	}
+	*outcome = catalog.NormalizationOutcome{State: state, ReasonCode: reason, NormalizedValueID: id, ProductRevision: expected.ProductRevision, SelectionRevision: expected.SelectionRevision}
+	if status == catalog.NormalizedCurrent && (explicit || frozen.Selection.Preference != catalog.NormalizedManual) {
+		action := "product.spec_normalized"
+		if source == catalog.NormalizedManual {
+			action = "product.spec_manual_adopted"
+		}
+		return adoptNormalizationTx(ctx, tx, actorID, frozen, id, source, action, now, outcome)
+	}
+	return appendAudit(ctx, tx, actorID, "product.spec_normalization_recorded", "product", frozen.ProductID, map[string]any{"spec_value_id": frozen.SpecValueID, "normalized_value_id": id, "state": state, "reason": reason})
 }
 
 func adoptNormalizationTx(ctx context.Context, tx *sql.Tx, actorID string, frozen catalog.SpecNormalizationContext, id string, preference catalog.NormalizedSource, action, now string, outcome *catalog.NormalizationOutcome) error {

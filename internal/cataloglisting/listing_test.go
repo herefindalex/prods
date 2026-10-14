@@ -1,6 +1,7 @@
 package cataloglisting
 
 import (
+	"fmt"
 	"reflect"
 	"testing"
 
@@ -8,6 +9,24 @@ import (
 	"prods/internal/publishing"
 	"prods/internal/site"
 )
+
+func TestFilteredSnapshotPaginatesWithScopeColumns(t *testing.T) {
+	var views []publishing.PublicView
+	for i := range 27 {
+		views = append(views, listingView(fmt.Sprintf("p%02d", i), fmt.Sprintf("P%02d", i), "cat", []publishing.ApplicableSpecification{spec("common"), spec("only_filtered")}, nil))
+	}
+	scope := append(append([]publishing.PublicView{}, views...), listingView("other", "OTHER", "other", []publishing.ApplicableSpecification{spec("common")}, nil))
+	snapshot := publishing.CatalogSnapshot{Views: views, ScopeViews: scope, Site: site.DefaultConfiguration()}
+	got, err := ResolveSnapshot(snapshot, Request{Scope: Scope{Kind: ScopeAll}, Page: 2, PageSize: 24})
+	if err != nil || got.Total != 27 || len(got.Rows) != 3 || got.Rows[0].ProductID != "p24" {
+		t.Fatalf("page: %+v %v", got, err)
+	}
+	for _, column := range got.Columns {
+		if column.Key == "spec:only_filtered" {
+			t.Fatal("filtered subset expanded common fields")
+		}
+	}
+}
 
 func TestCommonUsesApplicabilityAcrossFullScopeNotCurrentPageValues(t *testing.T) {
 	input := []publishing.PublicView{

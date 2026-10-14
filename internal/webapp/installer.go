@@ -20,6 +20,7 @@ import (
 	"golang.org/x/text/language"
 
 	"prods/internal/catalog"
+	"prods/internal/catalogfilter"
 	"prods/internal/distribution"
 	"prods/internal/identity"
 	"prods/internal/localization"
@@ -327,8 +328,12 @@ func (s *InstallerServer) complete(w http.ResponseWriter, r *http.Request) {
 				SourceLocale: source.SourceLocale, Slug: source.Slug, Status: catalog.EntryStatus(source.Status),
 			})
 		}
+		specProfiles := map[string]catalogfilter.Profile{}
 		specs := make([]catalog.SpecDefinition, 0, len(item.Data.Specs))
 		for _, source := range item.Data.Specs {
+			if source.SearchProfile != nil {
+				specProfiles[source.ID] = *source.SearchProfile
+			}
 			specs = append(specs, catalog.SpecDefinition{
 				ID: source.ID, Name: source.Name, PreferredUnit: source.PreferredUnit, Filterable: source.Filterable,
 				SemanticVer: source.SemanticVersion, Status: catalog.EntryStatus(source.Status),
@@ -368,7 +373,7 @@ func (s *InstallerServer) complete(w http.ResponseWriter, r *http.Request) {
 		sampleInstallation = &sqlite.InstallationSampleData{
 			Version: item.Data.ReleaseVersion, DatasetVersion: item.Data.DatasetVersion,
 			SourceURL: item.SourceURL, SHA256: item.SHA256, Dictionaries: dictionaries, Categories: categories,
-			Specs: specs, SpecSets: specSets, CategorySpecSets: categorySpecSets, Products: products, SpecValues: specValues,
+			SpecSearchProfiles: specProfiles, Specs: specs, SpecSets: specSets, CategorySpecSets: categorySpecSets, Products: products, SpecValues: specValues,
 		}
 	}
 	_, err = s.store.CompleteInstallation(r.Context(), sqlite.Installation{

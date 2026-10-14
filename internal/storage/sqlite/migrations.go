@@ -13,7 +13,7 @@ import (
 
 const (
 	MinimumSupportedSchemaVersion = 1
-	CurrentSchemaVersion          = 19
+	CurrentSchemaVersion          = 20
 )
 
 var (
@@ -552,6 +552,59 @@ FROM products p WHERE p.record_state='current' AND p.status='published'
   AND pi.desired_revision=p.revision+1 AND pi.status IN ('pending','processing'));
 UPDATE products SET revision=revision+1,updated_by=NULL,updated_at=strftime('%Y-%m-%dT%H:%M:%fZ','now')
 WHERE record_state='current' AND status='published';`,
+	},
+	{
+		Version: 20, Name: "published-field-filter-profiles-and-normalization-work", Transactional: true,
+		SQL: `CREATE TABLE spec_filter_profiles (
+ spec_id TEXT PRIMARY KEY REFERENCES spec_definitions(id),
+ revision INTEGER NOT NULL CHECK(revision>=1),
+ profile_json TEXT NOT NULL,
+ updated_by TEXT REFERENCES users(id),
+ updated_at TEXT NOT NULL
+);
+INSERT INTO spec_filter_profiles(spec_id,revision,profile_json,updated_at)
+SELECT sd.id,sd.revision,CASE WHEN np.spec_id IS NULL
+ THEN '{"version":1,"kind":"text","text_rule":"unicode-fold-space-1","operators":["equals","contains"]}'
+ ELSE json_object('version',1,'kind','numeric','operators',json_extract(np.profile_json,'$.allowed_operators')) END,
+ strftime('%Y-%m-%dT%H:%M:%fZ','now')
+FROM spec_definitions sd LEFT JOIN spec_numeric_profiles np ON np.spec_id=sd.id;
+CREATE TABLE spec_filter_profile_work (
+ spec_id TEXT NOT NULL REFERENCES spec_definitions(id),profile_revision INTEGER NOT NULL,
+ spec_semantic_version INTEGER NOT NULL,cursor_product_id TEXT NOT NULL DEFAULT '',
+ status TEXT NOT NULL CHECK(status IN ('pending','completed')),
+ created_at TEXT NOT NULL,updated_at TEXT NOT NULL,PRIMARY KEY(spec_id,profile_revision)
+);
+CREATE INDEX spec_filter_profile_work_pending_idx ON spec_filter_profile_work(status,spec_id,profile_revision);
+CREATE TABLE spec_normalization_work (
+ id TEXT PRIMARY KEY,spec_id TEXT NOT NULL REFERENCES spec_definitions(id),
+ actor_id TEXT NOT NULL REFERENCES users(id),profile_revision INTEGER NOT NULL,spec_semantic_version INTEGER NOT NULL,
+ initial_seed INTEGER NOT NULL DEFAULT 0 CHECK(initial_seed IN (0,1)),
+ status TEXT NOT NULL CHECK(status IN ('pending','completed','superseded')),
+ cursor_spec_value_id TEXT NOT NULL DEFAULT '',processed INTEGER NOT NULL DEFAULT 0,
+ failed INTEGER NOT NULL DEFAULT 0,skipped INTEGER NOT NULL DEFAULT 0,total INTEGER NOT NULL,
+ created_at TEXT NOT NULL,updated_at TEXT NOT NULL
+);
+CREATE INDEX spec_normalization_work_pending_idx ON spec_normalization_work(status,created_at,id);
+CREATE TABLE spec_normalization_work_items (
+ work_id TEXT NOT NULL REFERENCES spec_normalization_work(id),spec_value_id TEXT NOT NULL REFERENCES product_spec_values(id),
+ status TEXT NOT NULL CHECK(status IN ('pending','completed','failed','skipped')),
+ reason TEXT NOT NULL DEFAULT '',PRIMARY KEY(work_id,spec_value_id)
+);
+INSERT INTO admin_log(id,actor_id,action,target_type,target_id,result,details_json,created_at)
+SELECT 'log_'||lower(hex(randomblob(16))),NULL,'product.filter_model_migrated','product',p.id,'success',
+ json_object('migration',20,'old_revision',p.revision,'new_revision',p.revision+1),strftime('%Y-%m-%dT%H:%M:%fZ','now')
+FROM products p WHERE p.record_state='current' AND p.status='published'
+ AND NOT EXISTS(SELECT 1 FROM publication_intents pi WHERE pi.entity_type='product' AND pi.entity_id=p.id AND pi.desired_revision=p.revision AND pi.status IN ('pending','processing'));
+INSERT INTO publication_intents(id,entity_type,entity_id,desired_revision,cause,status,created_at,updated_at)
+SELECT 'out_'||lower(hex(randomblob(16))),'product',p.id,p.revision+1,'product.filter_model_migrated','pending',
+ strftime('%Y-%m-%dT%H:%M:%fZ','now'),strftime('%Y-%m-%dT%H:%M:%fZ','now')
+FROM products p WHERE p.record_state='current' AND p.status='published'
+ AND NOT EXISTS(SELECT 1 FROM publication_intents pi WHERE pi.entity_type='product' AND pi.entity_id=p.id AND pi.desired_revision=p.revision AND pi.status IN ('pending','processing'))
+ AND NOT EXISTS(SELECT 1 FROM publication_intents pi WHERE pi.entity_type='product' AND pi.entity_id=p.id
+ AND pi.desired_revision=p.revision+1 AND pi.status IN ('pending','processing'));
+UPDATE products SET revision=revision+1,updated_by=NULL,updated_at=strftime('%Y-%m-%dT%H:%M:%fZ','now')
+WHERE record_state='current' AND status='published'
+ AND NOT EXISTS(SELECT 1 FROM publication_intents pi WHERE pi.entity_type='product' AND pi.entity_id=products.id AND pi.desired_revision=products.revision AND pi.status IN ('pending','processing'));`,
 	},
 }
 

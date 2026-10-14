@@ -4,6 +4,7 @@ import (
 	"crypto/sha256"
 	"database/sql"
 	"encoding/hex"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
@@ -13,13 +14,18 @@ import (
 	"strings"
 
 	"prods/internal/catalog"
+	"prods/internal/catalogfilter"
 	"prods/internal/cataloglisting"
 	"prods/internal/publishing"
+	"prods/internal/site"
 )
 
 const publicListingPageSize = 24
 
 type catalogPage struct {
+	FilterControls []catalogFilterControl
+	FilterError    string
+	FilterHidden   []catalogHiddenField
 	publicPage
 	Title               string
 	Query               string
@@ -51,109 +57,147 @@ type publicCategoryLink struct {
 }
 
 func (s *Server) renderCatalogSearch(w http.ResponseWriter, r *http.Request) {
-	query := r.URL.Query().Get("q")
-	filters := publicSearchFilters{
-		ManufacturerID: strings.TrimSpace(r.URL.Query().Get("manufacturer_id")),
-		BrandID:        strings.TrimSpace(r.URL.Query().Get("brand_id")),
-		CategoryID:     strings.TrimSpace(r.URL.Query().Get("category_id")),
-	}
-	allViews, err := s.publicViews(r.Context())
-	if err != nil {
-		s.internalError(w, err)
-		return
-	}
-	views := allViews
-	if strings.TrimSpace(query) != "" && s.publisher != nil {
-		views, err = s.publisher.Search(r.Context(), query)
-	}
-	if err != nil {
-		s.internalError(w, err)
-		return
-	}
-	if strings.TrimSpace(query) != "" && s.publisher == nil {
-		views = fallbackPublicSearch(views, query)
-	}
-	views = filterPublicViews(views, filters)
-	presentation, err := s.currentPublicPage(r, views)
-	if err != nil {
-		s.writePublicPageError(w, err)
-		return
-	}
-	scope := cataloglisting.Scope{Kind: cataloglisting.ScopeAll}
-	if strings.TrimSpace(query) != "" {
-		scope = cataloglisting.Scope{Kind: cataloglisting.ScopeSearch, Query: query}
-	}
-	listing, err := cataloglisting.Resolve(views, presentation.Site, catalogListingRequest(r, scope, presentation.Language))
-	if err != nil {
-		http.Error(w, "invalid catalog listing request", http.StatusBadRequest)
-		return
-	}
-	preparePublicListing(&listing, presentation)
-	manufacturerOptions, brandOptions, categoryOptions := publicSearchFilterOptions(allViews, filters)
-	categories, categoryErr := s.store.ListCategories(r.Context())
-	if categoryErr != nil && !errors.Is(categoryErr, sql.ErrNoRows) {
-		s.internalError(w, categoryErr)
-		return
-	}
-	categoryLinks, _, _, _ := publicCategoryNavigation(categories, allViews, "")
-	data := catalogPage{
-		publicPage: presentation, Title: presentation.Text.Catalog, Query: query, Listing: listing,
-		NoResults:  strings.TrimSpace(query) != "" && listing.Total == 0,
-		RequestURL: withLanguage("/rfq?query="+url.QueryEscape(query), presentation.Language),
-		FormAction: r.URL.Path, ShowFilters: true, ManufacturerID: filters.ManufacturerID, BrandID: filters.BrandID, CategoryID: filters.CategoryID,
-		ManufacturerOptions: manufacturerOptions, BrandOptions: brandOptions, CategoryOptions: categoryOptions,
-		CategoryLinks: categoryLinks,
-	}
-	if strings.TrimSpace(query) != "" || filters.ManufacturerID != "" || filters.BrandID != "" || filters.CategoryID != "" ||
-		strings.TrimSpace(r.URL.Query().Get("sort")) != "" || strings.TrimSpace(r.URL.Query().Get("direction")) != "" ||
-		strings.TrimSpace(r.URL.Query().Get("page")) != "" || strings.TrimSpace(r.URL.Query().Get("page_size")) != "" {
-		data.ClearURL = withLanguage(r.URL.Path, presentation.Language)
-	}
-	setCatalogPagination(r, &data)
-	w.Header().Set("Content-Language", presentation.Language)
-	s.render(w, "catalog-listing", data)
+	s.renderFilteredCatalog(w, r, "")
+}
+func (s *Server) renderCatalogAggregate(w http.ResponseWriter, r *http.Request, kind string) {
+	s.renderFilteredCatalog(w, r, kind)
 }
 
-func (s *Server) renderCatalogAggregate(w http.ResponseWriter, r *http.Request, kind string) {
-	allViews, err := s.publicViews(r.Context())
-	if err != nil {
-		s.internalError(w, err)
+func (s *Server) renderFilteredCatalog(w http.ResponseWriter, r *http.Request, kind string) {
+	if len(r.URL.RawQuery) > 8192 {
+		http.Error(w, "catalog query exceeds 8192 bytes", http.StatusBadRequest)
 		return
 	}
-	targetURL := strings.TrimRight(s.config.BaseURL, "/") + r.URL.Path
-	scope, title, categories, err := s.resolvePublicAggregate(r, kind, targetURL, allViews)
-	if err != nil {
-		if errors.Is(err, errPublicAggregateNotFound) {
-			http.NotFound(w, r)
-			return
+	values := r.URL.Query()
+	query := values.Get("q")
+	scope := catalogfilter.Scope{Kind: "all", Query: query}
+	if strings.TrimSpace(query) != "" {
+		scope.Kind = "search"
+	}
+	var categories []catalog.Category
+	var err error
+	title := ""
+	scopeURL := ""
+	if kind != "" {
+		scope.Kind = kind
+		if kind == "category" {
+			categories, err = s.store.ListCategories(r.Context())
+			if err != nil {
+				s.internalError(w, err)
+				return
+			}
+			urls := categoryURLs(categories)
+			for _, category := range categories {
+				if category.Status == catalog.EntryActive && urls[category.ID] == r.URL.Path {
+					scope.ID = category.ID
+					title = category.Name
+					break
+				}
+			}
+			if scope.ID == "" {
+				http.NotFound(w, r)
+				return
+			}
+		} else {
+			scopeURL = strings.TrimRight(s.config.BaseURL, "/") + r.URL.Path
 		}
-		s.internalError(w, err)
+	}
+	clauses, filterErr := parseCatalogFilters(values)
+	request := publishing.CatalogQuery{Scope: scope, ScopeURL: scopeURL, Locale: values.Get("lang"), Clauses: clauses}
+	var snapshot publishing.CatalogSnapshot
+	if s.publisher != nil {
+		snapshot, err = s.publisher.AdmitCatalog(r.Context(), request)
+	} else {
+		var views []publishing.PublicView
+		views, err = s.publicViews(r.Context())
+		if err == nil {
+			configuration := site.DefaultConfiguration()
+			if len(views) > 0 {
+				configuration = views[0].Site
+			}
+			snapshot, err = publishing.AdmitCatalogViews(r.Context(), views, configuration, request)
+		}
+	}
+	var conditionErr *publishing.CatalogFilterError
+	if errors.As(err, &conditionErr) {
+		filterErr = err
+	} else if errors.Is(err, publishing.ErrCatalogScopeNotFound) {
+		http.NotFound(w, r)
+		return
+	} else if err != nil {
+		s.writePublicPageError(w, err)
 		return
 	}
-	presentation, err := s.currentPublicPage(r, allViews)
+	if filterErr == nil {
+		filterErr = validateCatalogFilterFields(snapshot, values)
+	}
+	presentation, err := s.currentPublicPage(r, []publishing.PublicView{snapshot.Presentation})
 	if err != nil {
 		s.writePublicPageError(w, err)
 		return
 	}
-	listing, err := cataloglisting.Resolve(allViews, presentation.Site, catalogListingRequest(r, scope, presentation.Language))
+	if kind == "" {
+		title = presentation.Text.Catalog
+	} else if title == "" && len(snapshot.ScopeViews) > 0 {
+		v := snapshot.ScopeViews[0]
+		switch kind {
+		case "manufacturer":
+			title = v.Manufacturer
+		case "brand":
+			title = v.Brand
+		case "application":
+			for _, a := range v.Applications {
+				if a.ID == snapshot.Scope.ID {
+					title = a.Name
+				}
+			}
+		}
+	}
+	listingScope := cataloglisting.Scope{Kind: cataloglisting.ScopeKind(snapshot.Scope.Kind), ID: snapshot.Scope.ID, Query: snapshot.Scope.Query}
+	if filterErr != nil {
+		snapshot.Views = nil
+	}
+	listing, err := cataloglisting.ResolveSnapshot(snapshot, catalogListingRequest(r, listingScope, presentation.Language))
 	if err != nil {
 		http.Error(w, "invalid catalog listing request", http.StatusBadRequest)
 		return
 	}
 	preparePublicListing(&listing, presentation)
-	etag := aggregateListingETag(targetURL, listing, categories)
-	w.Header().Set("ETag", etag)
-	w.Header().Set("Cache-Control", "public, max-age=0, must-revalidate")
-	if r.Header.Get("If-None-Match") == etag {
-		w.WriteHeader(http.StatusNotModified)
-		return
+	data := catalogPage{publicPage: presentation, Title: title, Query: query, Listing: listing, NoResults: filterErr == nil && strings.TrimSpace(query) != "" && listing.Total == 0, RequestURL: withLanguage("/rfq?query="+url.QueryEscape(query), presentation.Language), FormAction: r.URL.Path, ShowFilters: true, FilterControls: catalogFilterForm(snapshot, values), FilterHidden: catalogFilterHiddenFields(values), ClearURL: withLanguage(r.URL.Path, presentation.Language)}
+	if kind == "" {
+		if categories == nil {
+			categories, err = s.store.ListCategories(r.Context())
+			if err != nil && !errors.Is(err, sql.ErrNoRows) {
+				s.internalError(w, err)
+				return
+			}
+		}
+		data.CategoryLinks, _, _, _ = publicCategoryNavigation(categories, snapshot.AllViews, "")
 	}
-	data := catalogPage{publicPage: presentation, Title: title, Listing: listing, FormAction: r.URL.Path}
 	if kind == "category" {
-		_, data.Breadcrumbs, data.ChildCategories, _ = publicCategoryNavigation(categories, allViews, scope.ID)
+		_, data.Breadcrumbs, data.ChildCategories, _ = publicCategoryNavigation(categories, snapshot.AllViews, scope.ID)
 	}
 	setCatalogPagination(r, &data)
 	w.Header().Set("Content-Language", presentation.Language)
+	w.Header().Set("Cache-Control", "public, max-age=0, must-revalidate")
+	if filterErr != nil {
+		data.FilterError = catalogFilterErrorLabel(filterErr, presentation.Text)
+		w.WriteHeader(http.StatusUnprocessableEntity)
+	} else {
+		material, _ := json.Marshal(struct {
+			Query      string
+			Snapshot   publishing.CatalogSnapshot
+			Listing    cataloglisting.Result
+			Categories []catalog.Category
+		}{r.URL.RawQuery, snapshot, listing, categories})
+		sum := sha256.Sum256(material)
+		etag := `"c-` + hex.EncodeToString(sum[:])[:32] + `"`
+		w.Header().Set("ETag", etag)
+		if r.Header.Get("If-None-Match") == etag {
+			w.WriteHeader(http.StatusNotModified)
+			return
+		}
+	}
 	s.render(w, "catalog-listing", data)
 }
 

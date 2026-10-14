@@ -9,10 +9,11 @@ import (
 	"time"
 
 	"prods/internal/catalog"
+	"prods/internal/catalogfilter"
 )
 
 const (
-	Version         = "a01-r1"
+	Version         = "a01-r2"
 	DefaultSeed     = int64(20260916)
 	ProductCount    = 1200
 	PublishedCount  = 1020
@@ -46,15 +47,16 @@ type SpecValueSeed struct {
 }
 
 type Dataset struct {
-	Version         string
-	Seed            int64
-	ReferenceTime   time.Time
-	Categories      []catalog.Category
-	Dictionaries    []catalog.DictionaryEntry
-	Specs           []catalog.SpecDefinition
-	SpecSets        []catalog.SpecSet
-	CategorySpecSet map[string]string
-	Products        []ProductSeed
+	SpecSearchProfiles map[string]catalogfilter.Profile
+	Version            string
+	Seed               int64
+	ReferenceTime      time.Time
+	Categories         []catalog.Category
+	Dictionaries       []catalog.DictionaryEntry
+	Specs              []catalog.SpecDefinition
+	SpecSets           []catalog.SpecSet
+	CategorySpecSet    map[string]string
+	Products           []ProductSeed
 }
 
 type categoryDefinition struct {
@@ -133,14 +135,15 @@ func Build(seed int64) (Dataset, Manifest, error) {
 		return Dataset{}, Manifest{}, err
 	}
 	dataset := Dataset{
-		Version:         Version,
-		Seed:            seed,
-		ReferenceTime:   referenceTime,
-		Categories:      buildCategories(),
-		Dictionaries:    buildDictionaries(),
-		Specs:           buildSpecs(),
-		SpecSets:        buildSpecSets(),
-		CategorySpecSet: make(map[string]string),
+		Version:            Version,
+		Seed:               seed,
+		ReferenceTime:      referenceTime,
+		Categories:         buildCategories(),
+		Dictionaries:       buildDictionaries(),
+		Specs:              buildSpecs(),
+		SpecSearchProfiles: searchProfiles(),
+		SpecSets:           buildSpecSets(),
+		CategorySpecSet:    make(map[string]string),
 	}
 	for _, definition := range categoryDefinitions {
 		dataset.CategorySpecSet[categoryID(definition.Key)] = specSetForCategory(definition.Key)
@@ -461,31 +464,37 @@ func assignDesiredStates(seed int64, products []ProductSeed) {
 }
 
 func rawSpecValue(specID string, index int) string {
-	switch specID {
-	case "spc_input_voltage":
-		if index%9 == 0 {
-			return "3.0–3.6 V, 4.5–5.5 V"
-		}
-		return fmt.Sprintf("%d–%d V", 2+index%5, 8+index%17)
-	case "spc_output_voltage":
-		return []string{"0.8 V", "1.2 V", "1.8 V", "3.3 V", "5 V"}[index%5]
-	case "spc_output_current", "spc_rated_contact_current":
-		return fmt.Sprintf("%d.%d A", index%5, index%10)
-	case "spc_measurement_range":
-		return []string{"−40…125 °C", "0…100 kPa", "±2 g / ±4 g", "10–90 %RH"}[index%4]
-	case "spc_interface":
-		return []string{"I²C", "SPI", "UART", "Analog"}[index%4]
-	case "spc_package":
-		return []string{"QFN-24", "SOT-23-5", "0603", "Module"}[index%4]
-	case "spc_positions":
-		return fmt.Sprintf("%d", 2+(index%40))
-	case "spc_pitch":
-		return []string{"0.50 mm", "1.00 mm", "2.00 mm", "2.54 mm"}[index%4]
-	case "spc_tolerance":
-		return []string{"±0.1 %", "±1 %", "±5 %", "asymmetric +10/−5 %"}[index%4]
-	default:
-		return fmt.Sprintf("%d %s", 1+index%97, strings.TrimPrefix(specID, "spc_"))
+	values := map[string][]string{
+		"spc_input_voltage":       {"3.0–3.6 V, 4.5–5.5 V", "2–12 V", "4–18 V", "3–24 V"},
+		"spc_output_voltage":      {"0.8 V", "1.2 V", "1.8 V", "3.3 V", "5 V"},
+		"spc_output_current":      {"0.5 A", "1 A", "2 A", "3 A"},
+		"spc_quiescent_current":   {"5 uA", "15 uA", "50 uA", "100 uA"},
+		"spc_dropout":             {"100 mV", "200 mV", "300 mV"},
+		"spc_switching_frequency": {"400 kHz", "800 kHz", "1.2 MHz"},
+		"spc_efficiency":          {"85 %", "92 %", "96 %"}, "spc_gain": {"10 dB", "20 dB", "40 dB"},
+		"spc_bandwidth": {"1 MHz", "10 MHz", "100 MHz"}, "spc_logic_family": {"74HC", "74LVC", "4000B"},
+		"spc_memory_density": {"256 kbit", "1 Mbit", "8 Mbit"}, "spc_rds_on": {"10 mOhm", "25 mOhm", "100 mOhm"},
+		"spc_reverse_voltage": {"20 V", "40 V", "100 V"}, "spc_power": {"0.125 W", "0.25 W", "1 W"},
+		"spc_measurement_range": {"−40…125 °C", "0…100 kPa", "±2 g / ±4 g", "10–90 %RH"},
+		"spc_interface":         {"I²C", "SPI", "UART", "I²C; SPI"}, "spc_accuracy": {"±0.1 %", "±0.5 %", "±1 %"},
+		"spc_pitch": {"0.50 mm", "1.00 mm", "2.00 mm", "2.54 mm"}, "spc_rated_contact_current": {"0.5 A", "1 A", "3 A"},
+		"spc_mounting": {"Surface mount", "Through hole", "Panel mount"}, "spc_resistance": {"100 Ohm", "4.7 kOhm", "10 kOhm"},
+		"spc_capacitance": {"100 nF", "1 uF", "10 uF"}, "spc_inductance": {"1 uH", "10 uH", "100 uH"},
+		"spc_tolerance":  {"±0.1 %", "±1 %", "±5 %", "asymmetric +10/−5 %"},
+		"spc_wavelength": {"470 nm", "525 nm", "630 nm"}, "spc_luminous_intensity": {"100 mcd", "500 mcd", "1 cd"},
+		"spc_coil_voltage": {"3 V", "5 V", "12 V", "24 V"}, "spc_contact_rating": {"1 A at 30 V DC", "3 A at 250 V AC", "5 A resistive at 24 V DC"},
+		"spc_core": {"Cortex-M0+", "Cortex-M4", "RISC-V RV32IM"}, "spc_clock": {"16 MHz", "48 MHz", "120 MHz"},
+		"spc_wireless_standard": {"IEEE 802.11n", "Bluetooth LE 5.3", "IEEE 802.15.4; Bluetooth LE 5.3"},
+		"spc_breakdown_voltage": {"30 V", "60 V", "100 V"}, "spc_package": {"QFN-24", "SOT-23-5", "0603", "Module"},
 	}
+	if specID == "spc_positions" {
+		return fmt.Sprintf("%d", 2+index%40)
+	}
+	options := values[specID]
+	if len(options) == 0 {
+		panic("missing explicit sample value: " + specID)
+	}
+	return options[index%len(options)]
 }
 
 func shortFamily(specSetID string) string {
