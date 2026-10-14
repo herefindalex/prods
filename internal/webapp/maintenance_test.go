@@ -112,6 +112,20 @@ func TestMaintenanceAPIPreservesCategoryAndDisabledReferenceContracts(t *testing
 		t.Fatalf("saved spec value = %#v", value)
 	}
 
+	// Raw source selection metadata is readable without a numeric profile.
+	sources, err := client.Get(server.URL + "/admin/api/products/" + product.ID + "/spec-values")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if sources.StatusCode != http.StatusOK {
+		t.Fatalf("sources status=%d", sources.StatusCode)
+	}
+	var details []catalog.SpecValueDetail
+	decodeResponseJSON(t, sources, &details)
+	if len(details) != 1 || details[0].SourceSelection.SpecValueID != value.ID || details[0].SourceSelection.Revision != 1 {
+		t.Fatalf("shared source selection=%+v", details)
+	}
+
 	documentType := postAdminJSON(t, client, server.URL+"/admin/api/dictionaries", csrf,
 		`{"id":"dic_datasheet","kind":"document_type","name":"Datasheet","slug":"datasheet","status":"active","revision":1}`)
 	if documentType.StatusCode != http.StatusCreated {

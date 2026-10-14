@@ -17,12 +17,12 @@ MIT, ISC, 0BSD, BSD-2-Clause, BSD-3-Clause, and Apache-2.0 dependencies are norm
 
 ## Audited dependency snapshot
 
-Audit date: 2026-09-18. Exact inputs and expected counts are recorded in [`licenses/audit.json`](licenses/audit.json).
+Audit date: 2026-10-14. Exact inputs and expected counts are recorded in [`licenses/audit.json`](licenses/audit.json).
 
 | Scope | Result |
 | --- | --- |
-| Linux/Windows/macOS Go release closure | 37 external modules: MIT, BSD-3-Clause, and Apache-2.0 only |
-| Full Go module graph | 60 external modules; one reviewed MPL-2.0 module is used by build/test paths and is verified absent from both release closures |
+| Linux/Windows/macOS Go release closure | 62 external modules: MIT, BSD-3-Clause, and Apache-2.0 only |
+| Full Go module graph | 100 external modules; one reviewed MPL-2.0 module is used by build/test paths and is verified absent from all four release closures |
 | Embedded production UI graph | 106 package records: MIT, BSD-3-Clause, and 0BSD only |
 | Full frontend build/test graph | 198 package records: production licenses plus Apache-2.0, ISC, and one CC-BY-4.0 build-data package |
 | GitHub Actions and release CLI | `checkout`, `setup-go`, `action-setup`, `setup-node`, `upload-artifact`, and GitHub CLI are MIT-licensed |
@@ -32,7 +32,11 @@ The MPL-2.0 module is `github.com/hashicorp/golang-lru/v2@v2.0.7`. It is reached
 
 The CC-BY-4.0 component is `caniuse-lite@1.0.30001810`, used as browser-compatibility build data. It is absent from the production package set and is not shipped as a runtime package. Its attribution remains available through the pinned source package and lockfile.
 
-No third-party GPL, AGPL, LGPL, SSPL, Business Source License, Commons Clause, PolyForm, non-commercial, or no-derivatives dependency was found in the audited graphs.
+The 2026-10-14 review covers all 40 newly introduced Go modules and the updated `github.com/bits-and-blooms/bitset@v1.24.2`, including modules outside the release closure. The selected module licenses in the full graph are Apache-2.0, BSD-2-Clause, BSD-3-Clause, ISC, MIT, and the existing build-only MPL-2.0 exception; the release closure uses only Apache-2.0, BSD-3-Clause, and MIT. Roaring retains an additional Go BSD-3-Clause notice, and the pinned Bleve source retains Apache-licensed Lucene, OpenSearch/Elasticsearch, and historical Cockroach attributions.
+
+The build-only `github.com/blevesearch/stempel@v0.2.0` includes Polish dictionary data offered under multiple licenses; this audit selects its stated Apache-2.0 option. Bleve also contains a Wikipedia-derived CC-BY-SA benchmark fixture in `search/facet/benchmark_data.txt`, read only by test code and absent from every release target's selected source and embedded files. The build-only `go.etcd.io/gofail@v0.2.0` has a CoreOS NOTICE, retained in its pinned source distribution. These source-only materials must retain their own attribution and license terms if redistributed.
+
+No dependency requiring GPL, AGPL, LGPL, SSPL, Business Source License, Commons Clause, PolyForm, non-commercial, or no-derivatives terms was found in the audited release closure.
 
 ## Release obligations
 

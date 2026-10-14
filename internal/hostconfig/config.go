@@ -11,9 +11,12 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
+
+	"prods/internal/publishing"
 )
 
 const (
+	EnvSpecSearchBackend            = "PRODS_SPEC_SEARCH_BACKEND"
 	EnvGoogleSearchClientID         = "PRODS_GOOGLE_SEARCH_CLIENT_ID"
 	EnvGoogleSearchClientSecretFile = "PRODS_GOOGLE_SEARCH_CLIENT_SECRET_FILE"
 	EnvGoogleSearchRefreshTokenFile = "PRODS_GOOGLE_SEARCH_REFRESH_TOKEN_FILE"
@@ -35,6 +38,7 @@ const (
 )
 
 type Options struct {
+	SpecSearchBackend            string
 	GoogleSearchClientID         string
 	GoogleSearchClientSecretFile string
 	GoogleSearchRefreshTokenFile string
@@ -109,6 +113,7 @@ func (resolver Resolver) Resolve() (Options, error) {
 	dataDirFlag := flags.String("data-dir", "", "private data directory")
 	backupDirFlag := flags.String("backup-dir", "", "backup directory")
 	baseURLFlag := flags.String("base-url", "", "canonical public base URL")
+	specSearchBackendFlag := flags.String("spec-search-backend", "", "spec search candidate backend: bleve or sqlite (default bleve)")
 	adminTokenFlag := flags.String("admin-token", "", "one-time Admin token for explicit PoC mode only")
 	pocFixtures := flags.Bool("poc-fixtures", false, "explicitly create or reopen an isolated PoC database with synthetic fixtures")
 	restoreBackup := flags.String("restore-backup", "", "offline restore from a backup ID or path; exits after verified roll-forward")
@@ -159,13 +164,14 @@ func (resolver Resolver) Resolve() (Options, error) {
 	}
 
 	options := Options{
-		Listen:           ":8080",
-		ListenSource:     "default",
-		DataDir:          filepath.Join(executableDir, "data"),
-		BackupDir:        filepath.Join(executableDir, "backups"),
-		BaseURL:          "http://127.0.0.1:8080",
-		BaseURLSource:    "default",
-		AssetGCGraceDays: 7,
+		SpecSearchBackend: "bleve",
+		Listen:            ":8080",
+		ListenSource:      "default",
+		DataDir:           filepath.Join(executableDir, "data"),
+		BackupDir:         filepath.Join(executableDir, "backups"),
+		BaseURL:           "http://127.0.0.1:8080",
+		BaseURLSource:     "default",
+		AssetGCGraceDays:  7,
 	}
 	configPath := strings.TrimSpace(*configFlag)
 	configRequired := explicit["config"]
@@ -192,6 +198,9 @@ func (resolver Resolver) Resolve() (Options, error) {
 		}
 	} else {
 		options.ConfigLoaded = true
+		if value := fileValues["spec_search_backend"]; value != "" {
+			options.SpecSearchBackend = value
+		}
 		configDir := filepath.Dir(configPath)
 		if value := fileValues["listen"]; value != "" {
 			options.Listen = value
@@ -276,6 +285,9 @@ func (resolver Resolver) Resolve() (Options, error) {
 		options.BaseURL = value
 		options.BaseURLSource = "environment"
 	}
+	if value, ok := nonEmptyEnv(lookupEnv, EnvSpecSearchBackend); ok {
+		options.SpecSearchBackend = value
+	}
 	if value, ok := nonEmptyEnv(lookupEnv, EnvAdminToken); ok {
 		options.AdminToken = value
 	}
@@ -354,6 +366,12 @@ func (resolver Resolver) Resolve() (Options, error) {
 		options.BaseURL = strings.TrimSpace(*baseURLFlag)
 		options.BaseURLSource = "cli"
 	}
+	if explicit["spec-search-backend"] {
+		options.SpecSearchBackend = strings.TrimSpace(*specSearchBackendFlag)
+		if options.SpecSearchBackend == "" {
+			return Options{}, errors.New("--spec-search-backend must not be empty")
+		}
+	}
 	if explicit["admin-token"] {
 		options.AdminToken = strings.TrimSpace(*adminTokenFlag)
 	}
@@ -410,6 +428,10 @@ func (resolver Resolver) Resolve() (Options, error) {
 		return Options{}, errors.New("listen, data_dir, backup_dir, and base_url must not be empty")
 	}
 	options.POCFixtures = *pocFixtures
+	options.SpecSearchBackend, err = publishing.NormalizeSpecSearchBackend(options.SpecSearchBackend)
+	if err != nil {
+		return Options{}, err
+	}
 	options.RestoreBackup = strings.TrimSpace(*restoreBackup)
 	options.AllowRestoreWithoutPrebackup = *allowRestoreWithoutPrebackup
 	options.BackupNow = *backupNow
@@ -469,6 +491,11 @@ func pathWithin(root, target string) bool {
 // not persist secrets or one-shot operational flags and never overwrites an
 // existing file.
 func WriteNew(options Options) error {
+	backend, err := publishing.NormalizeSpecSearchBackend(options.SpecSearchBackend)
+	if err != nil {
+		return err
+	}
+	options.SpecSearchBackend = backend
 	if strings.TrimSpace(options.ConfigPath) == "" {
 		return errors.New("config path is empty")
 	}
@@ -503,12 +530,13 @@ func WriteNew(options Options) error {
 	}()
 	configDir := filepath.Dir(options.ConfigPath)
 	content := fmt.Sprintf(
-		"[prods]\nlisten=%s\ndata_dir=%s\nbackup_dir=%s\nbase_url=%s\nasset_gc_grace_days=%d\n",
+		"[prods]\nlisten=%s\ndata_dir=%s\nbackup_dir=%s\nbase_url=%s\nasset_gc_grace_days=%d\nspec_search_backend=%s\n",
 		options.Listen,
 		portableConfigPath(configDir, options.DataDir),
 		portableConfigPath(configDir, options.BackupDir),
 		options.BaseURL,
 		options.AssetGCGraceDays,
+		options.SpecSearchBackend,
 	)
 	if len(options.TrustedProxyCIDRs) != 0 {
 		trusted, err := parseTrustedProxies(strings.Join(options.TrustedProxyCIDRs, ","))
@@ -607,7 +635,7 @@ func readConfig(path string) (map[string]string, error) {
 		key = strings.ReplaceAll(strings.ToLower(strings.TrimSpace(key)), "-", "_")
 		value = strings.TrimSpace(value)
 		switch key {
-		case "listen", "data_dir", "backup_dir", "base_url", "smtp_host", "smtp_port", "smtp_username",
+		case "listen", "data_dir", "backup_dir", "base_url", "spec_search_backend", "smtp_host", "smtp_port", "smtp_username",
 			"smtp_password_file", "smtp_from", "smtp_tls_mode", "google_search_client_id",
 			"google_search_client_secret_file", "google_search_refresh_token_file", "asset_gc_grace_days", "trusted_proxies":
 		default:

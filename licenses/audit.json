@@ -1,21 +1,21 @@
 {
   "schema_version": 1,
-  "audited_on": "2026-09-18",
+  "audited_on": "2026-10-14",
   "inputs": {
-    "go.mod": "6da0f697298da66eb5925ec32aa0dc49e6b5999a93dd31b4ceb693882e9b620e",
-    "go.sum": "1bc375f9ab523c32daa36c4facb0f968b8eb15c2c0eee05bae6d551a49a4d7ae",
+    "go.mod": "d9c6c0e93d0dacaf645eb66fb0d5fe9f3a4345a8d54c8dc5bd85d0483ad94d2c",
+    "go.sum": "d94ca2241914b48a6e1155b6c2e49d21d0291bbea2b9a85aee8e7ea69cd58c08",
     "web/ui/package.json": "3efb972712963df5e035b5ae0dc5544827e271792fbed6631344c2fead0654bc",
     "web/ui/pnpm-lock.yaml": "c8a6e141f6a610d07a8a57473f6b0233801b9e1aaf5954e97c9b123f86f07c65"
   },
   "go": {
-    "all_external_modules": 60,
-    "release_external_modules": 37,
+    "all_external_modules": 100,
+    "release_external_modules": 62,
     "all_license_groups": {
-      "Apache-2.0": 3,
-      "BSD-2-Clause": 1,
-      "BSD-3-Clause": 31,
+      "Apache-2.0": 26,
+      "BSD-2-Clause": 3,
+      "BSD-3-Clause": 40,
       "ISC": 1,
-      "MIT": 23,
+      "MIT": 29,
       "MPL-2.0": 1
     },
     "reviewed_build_only": {

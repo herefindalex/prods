@@ -1020,3 +1020,595 @@ Copyright notices:
 - muesli/cancelreader: Copyright (c) 2022 Erik Geiser and Christian Muehlhaeuser.
 - uniseg: Copyright (c) 2019 Oliver Kuederle.
 - terminfo: Copyright (c) 2016 Anmol Sethi.
+
+## Search dependency notices
+
+The following pinned modules are linked by the CGO-disabled release builds for Linux/amd64, Windows/amd64, macOS/amd64, or macOS/arm64. Apache-2.0 modules use the complete Apache license text retained earlier in this file; their copyright and source attributions are retained below. The other modules retain their complete pinned license texts in this section.
+
+| Module | Version | License / retained notice |
+| --- | --- | --- |
+| github.com/RoaringBitmap/roaring/v2 | v2.14.5 | Apache-2.0 plus the Go BSD-3-Clause appendix below |
+| github.com/bits-and-blooms/bitset | v1.24.2 | BSD-3-Clause |
+| github.com/blevesearch/bleve/v2 | v2.6.1 | Apache-2.0 |
+| github.com/blevesearch/bleve_index_api | v1.4.1 | Apache-2.0 |
+| github.com/blevesearch/geo | v0.2.6 | Apache-2.0 |
+| github.com/blevesearch/go-porterstemmer | v1.0.3 | MIT |
+| github.com/blevesearch/gtreap | v0.1.1 | MIT |
+| github.com/blevesearch/mmap-go | v1.2.0 | BSD-3-Clause |
+| github.com/blevesearch/scorch_segment_api/v2 | v2.4.10 | Apache-2.0 |
+| github.com/blevesearch/segment | v0.9.1 | Apache-2.0 |
+| github.com/blevesearch/snowballstem | v0.9.0 | BSD-3-Clause |
+| github.com/blevesearch/upsidedown_store_api | v1.0.2 | Apache-2.0 |
+| github.com/blevesearch/vellum | v1.2.0 | Apache-2.0 |
+| github.com/blevesearch/zapx/v11 | v11.4.3 | Apache-2.0 |
+| github.com/blevesearch/zapx/v12 | v12.4.3 | Apache-2.0 |
+| github.com/blevesearch/zapx/v13 | v13.4.3 | Apache-2.0 |
+| github.com/blevesearch/zapx/v14 | v14.4.3 | Apache-2.0 |
+| github.com/blevesearch/zapx/v15 | v15.4.3 | Apache-2.0 |
+| github.com/blevesearch/zapx/v16 | v16.3.4 | Apache-2.0 |
+| github.com/blevesearch/zapx/v17 | v17.2.3 | Apache-2.0 |
+| github.com/golang/snappy | v1.0.0 | BSD-3-Clause |
+| github.com/json-iterator/go | v0.0.0-20171115153421-f7279a603ede | MIT |
+| github.com/mschoch/smat | v0.2.0 | Apache-2.0 |
+| go.etcd.io/bbolt | v1.4.0 | MIT |
+| google.golang.org/protobuf | v1.36.6 | BSD-3-Clause |
+
+### Apache-2.0 copyright and source attributions
+
+#### github.com/RoaringBitmap/roaring/v2@v2.14.5
+
+```text
+Copyright (c) 2009 The Go Authors. All rights reserved.
+Copyright (c) 2016 by the roaring authors.
+Copyright 2016 by the authors
+```
+
+#### github.com/blevesearch/bleve/v2@v2.6.1
+
+```text
+Copyright (c) 2014 Couchbase, Inc.
+Copyright (c) 2015 Couchbase, Inc.
+Copyright (c) 2016 Couchbase, Inc.
+Copyright (c) 2017 Couchbase, Inc.
+Copyright (c) 2018 Couchbase, Inc.
+Copyright (c) 2019 Couchbase, Inc.
+Copyright (c) 2020 Couchbase, Inc.
+Copyright (c) 2021 Couchbase, Inc.
+Copyright (c) 2022 Couchbase, Inc.
+Copyright (c) 2023 Couchbase, Inc.
+Copyright (c) 2024 Couchbase, Inc.
+Copyright (c) 2025 Couchbase, Inc.
+Copyright (c) 2026 Couchbase, Inc.
+Copyright 2014 The Cockroach Authors.
+```
+
+#### github.com/blevesearch/bleve_index_api@v1.4.1
+
+```text
+Copyright (c) 2014 Couchbase, Inc.
+Copyright (c) 2015 Couchbase, Inc.
+Copyright (c) 2020 Couchbase, Inc.
+Copyright (c) 2021 Couchbase, Inc.
+Copyright (c) 2022 Couchbase, Inc.
+```
+
+#### github.com/blevesearch/geo@v0.2.6
+
+```text
+Copyright (c) 2022 Couchbase, Inc.
+Copyright (c) 2023 Couchbase, Inc.
+Copyright (c) 2026 Couchbase, Inc.
+Copyright 2014 Google Inc. All rights reserved.
+Copyright 2015 Google Inc. All rights reserved.
+Copyright 2016 Google Inc. All rights reserved.
+Copyright 2017 Google Inc. All rights reserved.
+Copyright 2018 Google Inc. All rights reserved.
+Copyright 2019 Google Inc. All rights reserved.
+Copyright 2020 Google Inc. All rights reserved.
+Copyright 2021 Google Inc. All rights reserved.
+Copyright 2023 Google Inc. All Rights Reserved.
+Copyright 2023 Google Inc. All rights reserved.
+```
+
+#### github.com/blevesearch/scorch_segment_api/v2@v2.4.10
+
+```text
+Copyright (c) 2017 Couchbase, Inc.
+Copyright (c) 2021 Couchbase, Inc.
+Copyright (c) 2026 Couchbase, Inc.
+```
+
+#### github.com/blevesearch/segment@v0.9.1
+
+```text
+Copyright (c) 2014 Couchbase, Inc.
+Copyright (c) 2015 Couchbase, Inc.
+```
+
+#### github.com/blevesearch/upsidedown_store_api@v1.0.2
+
+```text
+Copyright (c) 2014 Couchbase, Inc.
+Copyright (c) 2016 Couchbase, Inc.
+```
+
+#### github.com/blevesearch/vellum@v1.2.0
+
+```text
+Copyright (c) 2017 Couchbase, Inc.
+Copyright (c) 2018 Couchbase, Inc.
+```
+
+#### github.com/blevesearch/zapx/v11@v11.4.3
+
+```text
+Copyright (c) 2017 Couchbase, Inc.
+Copyright (c) 2018 Couchbase, Inc.
+Copyright (c) 2020 Couchbase, Inc.
+```
+
+#### github.com/blevesearch/zapx/v12@v12.4.3
+
+```text
+Copyright (c) 2017 Couchbase, Inc.
+Copyright (c) 2018 Couchbase, Inc.
+Copyright (c) 2019 Couchbase, Inc.
+Copyright (c) 2020 Couchbase, Inc.
+```
+
+#### github.com/blevesearch/zapx/v13@v13.4.3
+
+```text
+Copyright (c) 2017 Couchbase, Inc.
+Copyright (c) 2018 Couchbase, Inc.
+Copyright (c) 2019 Couchbase, Inc.
+Copyright (c) 2020 Couchbase, Inc.
+```
+
+#### github.com/blevesearch/zapx/v14@v14.4.3
+
+```text
+Copyright (c) 2017 Couchbase, Inc.
+Copyright (c) 2018 Couchbase, Inc.
+Copyright (c) 2019 Couchbase, Inc.
+Copyright (c) 2020 Couchbase, Inc.
+```
+
+#### github.com/blevesearch/zapx/v15@v15.4.3
+
+```text
+Copyright (c) 2017 Couchbase, Inc.
+Copyright (c) 2018 Couchbase, Inc.
+Copyright (c) 2019 Couchbase, Inc.
+Copyright (c) 2020 Couchbase, Inc.
+```
+
+#### github.com/blevesearch/zapx/v16@v16.3.4
+
+```text
+Copyright (c) 2017 Couchbase, Inc.
+Copyright (c) 2018 Couchbase, Inc.
+Copyright (c) 2019 Couchbase, Inc.
+Copyright (c) 2020 Couchbase, Inc.
+Copyright (c) 2023 Couchbase, Inc.
+Copyright (c) 2024 Couchbase, Inc.
+```
+
+#### github.com/blevesearch/zapx/v17@v17.2.3
+
+```text
+Copyright (c) 2017 Couchbase, Inc.
+Copyright (c) 2018 Couchbase, Inc.
+Copyright (c) 2019 Couchbase, Inc.
+Copyright (c) 2020 Couchbase, Inc.
+Copyright (c) 2023 Couchbase, Inc.
+Copyright (c) 2024 Couchbase, Inc.
+Copyright (c) 2025 Couchbase, Inc.
+Copyright (c) 2026 Couchbase, Inc.
+```
+
+#### github.com/mschoch/smat@v0.2.0
+
+```text
+Copyright (c) 2016 Marty Schoch
+```
+
+Bleve includes adaptations of Apache Lucene geo, numeric, and language-analysis code. The following source attributions are retained from the pinned Bleve source.
+
+#### Bleve analysis/lang/en/plural_stemmer.go
+
+```text
+/*
+	This code was ported from the Open Search Project
+	https://github.com/opensearch-project/OpenSearch/blob/main/modules/analysis-common/src/main/java/org/opensearch/analysis/common/EnglishPluralStemFilter.java
+	The algorithm itself was created by Mark Harwood
+	https://github.com/markharwood
+*/
+
+/*
+ * SPDX-License-Identifier: Apache-2.0
+ *
+ * The OpenSearch Contributors require contributions made to
+ * this file be licensed under the Apache-2.0 license or a
+ * compatible open source license.
+ */
+
+/*
+ * Licensed to Elasticsearch under one or more contributor
+ * license agreements. See the NOTICE file distributed with
+ * this work for additional information regarding copyright
+ * ownership. Elasticsearch licenses this file to you under
+ * the Apache License, Version 2.0 (the "License"); you may
+ * not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *    http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
+ */
+```
+
+#### Bleve index/scorch/int.go
+
+```text
+// Copyright 2014 The Cockroach Authors.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
+// implied. See the License for the specific language governing
+// permissions and limitations under the License.
+
+// This code originated from:
+// https://github.com/cockroachdb/cockroach/blob/2dd65dde5d90c157f4b93f92502ca1063b904e1d/pkg/util/encoding/encoding.go
+
+// Modified to not use pkg/errors
+```
+
+### Roaring Go standard-library appendix
+
+```text
+Portions of runcontainer.go are from the Go standard library, which is licensed
+under:
+
+Copyright (c) 2009 The Go Authors. All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are
+met:
+
+   * Redistributions of source code must retain the above copyright
+     notice, this list of conditions and the following disclaimer.
+   * Redistributions in binary form must reproduce the above
+     copyright notice, this list of conditions and the following disclaimer
+     in the documentation and/or other materials provided with the
+     distribution.
+   * Neither the name of Google Inc. nor the names of its
+     contributors may be used to endorse or promote products derived from
+     this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+"AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+```
+
+### github.com/bits-and-blooms/bitset@v1.24.2
+
+Pinned LICENSE:
+
+```text
+Copyright (c) 2014 Will Fitzgerald. All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are
+met:
+
+   * Redistributions of source code must retain the above copyright
+notice, this list of conditions and the following disclaimer.
+   * Redistributions in binary form must reproduce the above
+copyright notice, this list of conditions and the following disclaimer
+in the documentation and/or other materials provided with the
+distribution.
+   * Neither the name of Google Inc. nor the names of its
+contributors may be used to endorse or promote products derived from
+this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+"AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+```
+
+### github.com/blevesearch/go-porterstemmer@v1.0.3
+
+Pinned LICENSE:
+
+```text
+Copyright (c) 2013 Charles Iliya Krempeaux <charles@reptile.ca> :: http://changelog.ca/
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
+```
+
+### github.com/blevesearch/gtreap@v0.1.1
+
+Pinned LICENSE:
+
+```text
+Copyright (C) 2012 Steve Yen
+
+Permission is hereby granted, free of charge, to any person obtaining
+a copy of this software and associated documentation files (the
+"Software"), to deal in the Software without restriction, including
+without limitation the rights to use, copy, modify, merge, publish,
+distribute, sublicense, and/or sell copies of the Software, and to
+permit persons to whom the Software is furnished to do so, subject to
+the following conditions:
+
+The above copyright notice and this permission notice shall be
+included in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
+LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
+OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
+WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+```
+
+### github.com/blevesearch/mmap-go@v1.2.0
+
+Additional notices from linked source files:
+
+```text
+Copyright 2011 Evan Shaw. All rights reserved.
+```
+
+Pinned LICENSE:
+
+```text
+Copyright (c) 2011, Evan Shaw <edsrzf@gmail.com>
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+    * Redistributions of source code must retain the above copyright
+      notice, this list of conditions and the following disclaimer.
+    * Redistributions in binary form must reproduce the above copyright
+      notice, this list of conditions and the following disclaimer in the
+      documentation and/or other materials provided with the distribution.
+    * Neither the name of the copyright holder nor the
+      names of its contributors may be used to endorse or promote products
+      derived from this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL <COPYRIGHT HOLDER> BE LIABLE FOR ANY
+DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+```
+
+### github.com/blevesearch/snowballstem@v0.9.0
+
+Pinned COPYING:
+
+```text
+Copyright (c) 2001, Dr Martin Porter
+Copyright (c) 2004,2005, Richard Boulton
+Copyright (c) 2013, Yoshiki Shibukawa
+Copyright (c) 2006,2007,2009,2010,2011,2014-2019, Olly Betts
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions
+are met:
+
+  1. Redistributions of source code must retain the above copyright notice,
+     this list of conditions and the following disclaimer.
+  2. Redistributions in binary form must reproduce the above copyright notice,
+     this list of conditions and the following disclaimer in the documentation
+     and/or other materials provided with the distribution.
+  3. Neither the name of the Snowball project nor the names of its contributors
+     may be used to endorse or promote products derived from this software
+     without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR
+ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
+ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+```
+
+### github.com/golang/snappy@v1.0.0
+
+Additional notices from linked source files:
+
+```text
+Copyright 2011 The Snappy-Go Authors. All rights reserved.
+Copyright 2016 The Go Authors. All rights reserved.
+Copyright 2016 The Snappy-Go Authors. All rights reserved.
+Copyright 2020 The Go Authors. All rights reserved.
+```
+
+Pinned LICENSE:
+
+```text
+Copyright (c) 2011 The Snappy-Go Authors. All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are
+met:
+
+   * Redistributions of source code must retain the above copyright
+notice, this list of conditions and the following disclaimer.
+   * Redistributions in binary form must reproduce the above
+copyright notice, this list of conditions and the following disclaimer
+in the documentation and/or other materials provided with the
+distribution.
+   * Neither the name of Google Inc. nor the names of its
+contributors may be used to endorse or promote products derived from
+this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+"AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+```
+
+### github.com/json-iterator/go@v0.0.0-20171115153421-f7279a603ede
+
+Pinned LICENSE:
+
+```text
+MIT License
+
+Copyright (c) 2016 json-iterator
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+```
+
+### go.etcd.io/bbolt@v1.4.0
+
+Pinned LICENSE:
+
+```text
+The MIT License (MIT)
+
+Copyright (c) 2013 Ben Johnson
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of
+this software and associated documentation files (the "Software"), to deal in
+the Software without restriction, including without limitation the rights to
+use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of
+the Software, and to permit persons to whom the Software is furnished to do so,
+subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
+FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
+COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
+IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+```
+
+### google.golang.org/protobuf@v1.36.6
+
+Additional notices from linked source files:
+
+```text
+Copyright 2018 The Go Authors. All rights reserved.
+Copyright 2019 The Go Authors. All rights reserved.
+Copyright 2020 The Go Authors. All rights reserved.
+Copyright 2022 The Go Authors. All rights reserved.
+Copyright 2024 The Go Authors. All rights reserved.
+```
+
+Pinned LICENSE:
+
+```text
+Copyright (c) 2018 The Go Authors. All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are
+met:
+
+   * Redistributions of source code must retain the above copyright
+notice, this list of conditions and the following disclaimer.
+   * Redistributions in binary form must reproduce the above
+copyright notice, this list of conditions and the following disclaimer
+in the documentation and/or other materials provided with the
+distribution.
+   * Neither the name of Google Inc. nor the names of its
+contributors may be used to endorse or promote products derived from
+this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+"AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+```

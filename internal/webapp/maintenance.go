@@ -427,29 +427,6 @@ func (s *Server) adminSaveSpecValue(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, value)
 }
 
-func (s *Server) adminSaveNormalizedValue(w http.ResponseWriter, r *http.Request) {
-	current, ok := s.requireCapability(w, r, identity.CapabilityCatalogEdit, true)
-	if !ok {
-		return
-	}
-	var normalized catalog.NormalizedValue
-	if err := decodeJSON(r.Body, &normalized); err != nil {
-		s.writeAPIError(w, r, http.StatusBadRequest, apiCodeInvalidJSON)
-		return
-	}
-	if normalized.SpecValueID != "" && normalized.SpecValueID != r.PathValue("id") {
-		s.writeAPIError(w, r, http.StatusUnprocessableEntity, apiCodeValidationFailed)
-		return
-	}
-	normalized.SpecValueID = r.PathValue("id")
-	normalized, err := s.store.SaveNormalizedValue(r.Context(), current.UserID, normalized)
-	if err != nil {
-		s.writeCatalogError(w, r, err)
-		return
-	}
-	writeJSON(w, http.StatusCreated, normalized)
-}
-
 func (s *Server) adminProductDocuments(w http.ResponseWriter, r *http.Request) {
 	if _, ok := s.requireCapability(w, r, identity.CapabilityCatalogView, false); !ok {
 		return

@@ -77,7 +77,7 @@ var sbe = EU((Ci, $i) => {
   function NU() {
     return H_ || (H_ = 1, LS.exports = TU()), LS.exports;
   }
-  var N = NU(), kS = { exports: {} }, Ut = {};
+  var _ = NU(), kS = { exports: {} }, Ut = {};
   var U_;
   function _U() {
     if (U_) return Ut;
@@ -118,7 +118,7 @@ var sbe = EU((Ci, $i) => {
     var I = M.prototype = new $();
     I.constructor = M, C(I, R.prototype), I.isPureReactComponent = !0;
     var D = Array.isArray;
-    function _() {
+    function N() {
     }
     var P = { H: null, A: null, T: null, S: null }, T = Object.prototype.hasOwnProperty;
     function A(k, B, J) {
@@ -154,7 +154,7 @@ var sbe = EU((Ci, $i) => {
         case "rejected":
           throw k.reason;
         default:
-          switch (typeof k.status == "string" ? k.then(_, _) : (k.status = "pending", k.then(
+          switch (typeof k.status == "string" ? k.then(N, N) : (k.status = "pending", k.then(
             function(B) {
               k.status === "pending" && (k.status = "fulfilled", k.value = B);
             },
@@ -285,7 +285,7 @@ var sbe = EU((Ci, $i) => {
       J.types = B !== null ? B.types : null, P.T = J;
       try {
         var re = k(), le = P.S;
-        le !== null && le(J, re), typeof re == "object" && re !== null && typeof re.then == "function" && re.then(_, K);
+        le !== null && le(J, re), typeof re == "object" && re !== null && typeof re.then == "function" && re.then(N, K);
       } catch (ie) {
         K(ie);
       } finally {
@@ -522,7 +522,7 @@ var sbe = EU((Ci, $i) => {
             V !== null && U(I, V.startTime - H);
           }
       }
-      var D = !1, _ = -1, P = 5, T = -1;
+      var D = !1, N = -1, P = 5, T = -1;
       function A() {
         return C ? !0 : !(e.unstable_now() - T < P);
       }
@@ -533,7 +533,7 @@ var sbe = EU((Ci, $i) => {
           var V = !0;
           try {
             e: {
-              b = !1, S && (S = !1, R(_), _ = -1), y = !0;
+              b = !1, S && (S = !1, R(N), N = -1), y = !0;
               var ee = v;
               try {
                 t: {
@@ -587,7 +587,7 @@ var sbe = EU((Ci, $i) => {
           E(z, 0);
         };
       function U(H, V) {
-        _ = E(function() {
+        N = E(function() {
           H(e.unstable_now());
         }, V);
       }
@@ -661,7 +661,7 @@ var sbe = EU((Ci, $i) => {
           startTime: ee,
           expirationTime: K,
           sortIndex: -1
-        }, ee > X ? (H.sortIndex = ee, t(m, H), n(f) === null && H === n(m) && (S ? (R(_), _ = -1) : S = !0, U(I, ee - X))) : (H.sortIndex = K, t(f, H), b || y || (b = !0, D || (D = !0, O()))), H;
+        }, ee > X ? (H.sortIndex = ee, t(m, H), n(f) === null && H === n(m) && (S ? (R(N), N = -1) : S = !0, U(I, ee - X))) : (H.sortIndex = K, t(f, H), b || y || (b = !0, D || (D = !0, O()))), H;
       }, e.unstable_shouldYield = A, e.unstable_wrapCallback = function(H) {
         var V = v;
         return function() {
@@ -1034,7 +1034,7 @@ var sbe = EU((Ci, $i) => {
       }
       return null;
     }
-    var _ = Object.assign, P = /* @__PURE__ */ Symbol.for("react.element"), T = /* @__PURE__ */ Symbol.for("react.transitional.element"), A = /* @__PURE__ */ Symbol.for("react.portal"), z = /* @__PURE__ */ Symbol.for("react.fragment"), O = /* @__PURE__ */ Symbol.for("react.strict_mode"), L = /* @__PURE__ */ Symbol.for("react.profiler"), F = /* @__PURE__ */ Symbol.for("react.consumer"), U = /* @__PURE__ */ Symbol.for("react.context"), H = /* @__PURE__ */ Symbol.for("react.forward_ref"), V = /* @__PURE__ */ Symbol.for("react.suspense"), ee = /* @__PURE__ */ Symbol.for("react.suspense_list"), X = /* @__PURE__ */ Symbol.for("react.memo"), K = /* @__PURE__ */ Symbol.for("react.lazy"), G = /* @__PURE__ */ Symbol.for("react.activity"), W = /* @__PURE__ */ Symbol.for("react.legacy_hidden"), Q = /* @__PURE__ */ Symbol.for("react.memo_cache_sentinel"), k = /* @__PURE__ */ Symbol.for("react.view_transition"), B = /* @__PURE__ */ Symbol.for("react.recoverable"), J = Symbol.iterator;
+    var N = Object.assign, P = /* @__PURE__ */ Symbol.for("react.element"), T = /* @__PURE__ */ Symbol.for("react.transitional.element"), A = /* @__PURE__ */ Symbol.for("react.portal"), z = /* @__PURE__ */ Symbol.for("react.fragment"), O = /* @__PURE__ */ Symbol.for("react.strict_mode"), L = /* @__PURE__ */ Symbol.for("react.profiler"), F = /* @__PURE__ */ Symbol.for("react.consumer"), U = /* @__PURE__ */ Symbol.for("react.context"), H = /* @__PURE__ */ Symbol.for("react.forward_ref"), V = /* @__PURE__ */ Symbol.for("react.suspense"), ee = /* @__PURE__ */ Symbol.for("react.suspense_list"), X = /* @__PURE__ */ Symbol.for("react.memo"), K = /* @__PURE__ */ Symbol.for("react.lazy"), G = /* @__PURE__ */ Symbol.for("react.activity"), W = /* @__PURE__ */ Symbol.for("react.legacy_hidden"), Q = /* @__PURE__ */ Symbol.for("react.memo_cache_sentinel"), k = /* @__PURE__ */ Symbol.for("react.view_transition"), B = /* @__PURE__ */ Symbol.for("react.recoverable"), J = Symbol.iterator;
     function re(o) {
       return o === null || typeof o != "object" ? null : (o = J && o[J] || o["@@iterator"], typeof o == "function" ? o : null);
     }
@@ -2026,7 +2026,7 @@ Error generating stack: ` + h.message + `
           o.hasOwnProperty(ae) && (d = o[ae], this[ae] = d ? d(w) : w[ae]);
         return this.isDefaultPrevented = (w.defaultPrevented != null ? w.defaultPrevented : w.returnValue === !1) ? gp : V1, this.isPropagationStopped = V1, this;
       }
-      return _(i.prototype, {
+      return N(i.prototype, {
         preventDefault: function() {
           this.defaultPrevented = !0;
           var d = this.nativeEvent;
@@ -2050,7 +2050,7 @@ Error generating stack: ` + h.message + `
       },
       defaultPrevented: 0,
       isTrusted: 0
-    }, vp = io(Di), ju = _({}, Di, { view: 0, detail: 0 }), Q4 = io(ju), Cb, $b, Fu, bp = _({}, ju, {
+    }, vp = io(Di), ju = N({}, Di, { view: 0, detail: 0 }), Q4 = io(ju), Cb, $b, Fu, bp = N({}, ju, {
       screenX: 0,
       screenY: 0,
       clientX: 0,
@@ -2073,15 +2073,15 @@ Error generating stack: ` + h.message + `
       movementY: function(o) {
         return "movementY" in o ? o.movementY : $b;
       }
-    }), K1 = io(bp), Y4 = _({}, bp, { dataTransfer: 0 }), Z4 = io(Y4), J4 = _({}, ju, { relatedTarget: 0 }), wb = io(J4), e6 = _({}, Di, {
+    }), K1 = io(bp), Y4 = N({}, bp, { dataTransfer: 0 }), Z4 = io(Y4), J4 = N({}, ju, { relatedTarget: 0 }), wb = io(J4), e6 = N({}, Di, {
       animationName: 0,
       elapsedTime: 0,
       pseudoElement: 0
-    }), t6 = io(e6), n6 = _({}, Di, {
+    }), t6 = io(e6), n6 = N({}, Di, {
       clipboardData: function(o) {
         return "clipboardData" in o ? o.clipboardData : window.clipboardData;
       }
-    }), r6 = io(n6), o6 = _({}, Di, { data: 0 }), G1 = io(o6), a6 = {
+    }), r6 = io(n6), o6 = N({}, Di, { data: 0 }), G1 = io(o6), a6 = {
       Esc: "Escape",
       Spacebar: " ",
       Left: "ArrowLeft",
@@ -2144,7 +2144,7 @@ Error generating stack: ` + h.message + `
     function Eb() {
       return l6;
     }
-    var c6 = _({}, ju, {
+    var c6 = N({}, ju, {
       key: function(o) {
         if (o.key) {
           var i = a6[o.key] || o.key;
@@ -2170,7 +2170,7 @@ Error generating stack: ` + h.message + `
       which: function(o) {
         return o.type === "keypress" ? hp(o) : o.type === "keydown" || o.type === "keyup" ? o.keyCode : 0;
       }
-    }), u6 = io(c6), d6 = _({}, bp, {
+    }), u6 = io(c6), d6 = N({}, bp, {
       pointerId: 0,
       width: 0,
       height: 0,
@@ -2181,7 +2181,7 @@ Error generating stack: ` + h.message + `
       twist: 0,
       pointerType: 0,
       isPrimary: 0
-    }), X1 = io(d6), f6 = _({}, Di, { submitter: 0 }), m6 = io(f6), p6 = _({}, ju, {
+    }), X1 = io(d6), f6 = N({}, Di, { submitter: 0 }), m6 = io(f6), p6 = N({}, ju, {
       touches: 0,
       targetTouches: 0,
       changedTouches: 0,
@@ -2190,11 +2190,11 @@ Error generating stack: ` + h.message + `
       ctrlKey: 0,
       shiftKey: 0,
       getModifierState: Eb
-    }), h6 = io(p6), g6 = _({}, Di, {
+    }), h6 = io(p6), g6 = N({}, Di, {
       propertyName: 0,
       elapsedTime: 0,
       pseudoElement: 0
-    }), v6 = io(g6), b6 = _({}, bp, {
+    }), v6 = io(g6), b6 = N({}, bp, {
       deltaX: function(o) {
         return "deltaX" in o ? o.deltaX : "wheelDeltaX" in o ? -o.wheelDeltaX : 0;
       },
@@ -2203,7 +2203,7 @@ Error generating stack: ` + h.message + `
       },
       deltaZ: 0,
       deltaMode: 0
-    }), y6 = io(b6), S6 = _({}, Di, {
+    }), y6 = io(b6), S6 = N({}, Di, {
       newState: 0,
       oldState: 0,
       source: 0
@@ -3584,7 +3584,7 @@ Error generating stack: ` + h.message + `
                   ut.flags = ut.flags & -65537 | 128;
                 case 0:
                   if (ut = $t.payload, Pe = typeof ut == "function" ? ut.call(Yt, Ye, Pe) : ut, Pe == null) break e;
-                  Ye = _({}, Ye, Pe);
+                  Ye = N({}, Ye, Pe);
                   break e;
                 case 2:
                   Bi = !0;
@@ -4690,7 +4690,7 @@ Error generating stack: ` + h.message + `
       useEffectEvent: lT
     };
     function yy(o, i, d, h) {
-      i = o.memoizedState, d = d(h, i), d = d == null ? i : _({}, i, d), o.memoizedState = d, o.lanes === 0 && (o.updateQueue.baseState = d);
+      i = o.memoizedState, d = d(h, i), d = d == null ? i : N({}, i, d), o.memoizedState = d, o.lanes === 0 && (o.updateQueue.baseState = d);
     }
     var Sy = {
       enqueueSetState: function(o, i, d) {
@@ -4723,7 +4723,7 @@ Error generating stack: ` + h.message + `
           h !== "ref" && (d[h] = i[h]);
       }
       if (o = o.defaultProps) {
-        d === i && (d = _({}, d));
+        d === i && (d = N({}, d));
         for (var x in o)
           d[x] === void 0 && (d[x] = o[x]);
       }
@@ -10380,7 +10380,7 @@ Error generating stack: ` + h.message + `
       this._scope = document.documentElement, this._selector = "::view-transition-" + o + "(" + i + ")";
     }
     Ys.prototype.animate = function(o, i) {
-      return i = typeof i == "number" ? { duration: i } : _({}, i), i.pseudoElement = this._selector, this._scope.animate(o, i);
+      return i = typeof i == "number" ? { duration: i } : N({}, i), i.pseudoElement = this._selector, this._scope.animate(o, i);
     }, Ys.prototype.getAnimations = function() {
       for (var o = this._scope, i = this._selector, d = o.getAnimations({ subtree: !0 }), h = [], x = 0; x < d.length; x++) {
         var w = d[x].effect;
@@ -11060,7 +11060,7 @@ Error generating stack: ` + h.message + `
           case "script":
             w = Pc(o);
         }
-        if (!(Qo.has(w) || (o = _(
+        if (!(Qo.has(w) || (o = N(
           {
             rel: "preload",
             href: i === "image" && d && d.imageSrcSet ? void 0 : o,
@@ -11089,7 +11089,7 @@ Error generating stack: ` + h.message + `
           case "script":
             w = Pc(o);
         }
-        if (!Qo.has(w) && (o = _({ rel: "modulepreload", href: o }, i), Qo.set(w, o), d.querySelector(x) === null)) {
+        if (!Qo.has(w) && (o = N({ rel: "modulepreload", href: o }, i), Qo.set(w, o), d.querySelector(x) === null)) {
           switch (h) {
             case "audioworklet":
             case "paintworklet":
@@ -11118,7 +11118,7 @@ Error generating stack: ` + h.message + `
           ))
             ae.loading = 5;
           else {
-            o = _(
+            o = N(
               { rel: "stylesheet", href: o, "data-precedence": i },
               d
             ), (d = Qo.get(w)) && TS(o, d);
@@ -11145,7 +11145,7 @@ Error generating stack: ` + h.message + `
       var d = Ec;
       if (d && o) {
         var h = Er(d).hoistableScripts, x = Pc(o), w = h.get(x);
-        w || (w = d.querySelector(Sd(x)), w || (o = _({ src: o, async: !0 }, i), (i = Qo.get(x)) && NS(o, i), w = d.createElement("script"), Wn(w), qr(w, "link", o), d.head.appendChild(w)), w = {
+        w || (w = d.querySelector(Sd(x)), w || (o = N({ src: o, async: !0 }, i), (i = Qo.get(x)) && NS(o, i), w = d.createElement("script"), Wn(w), qr(w, "link", o), d.head.appendChild(w)), w = {
           type: "script",
           instance: w,
           count: 1,
@@ -11158,7 +11158,7 @@ Error generating stack: ` + h.message + `
       var d = Ec;
       if (d && o) {
         var h = Er(d).hoistableScripts, x = Pc(o), w = h.get(x);
-        w || (w = d.querySelector(Sd(x)), w || (o = _({ src: o, async: !0, type: "module" }, i), (i = Qo.get(x)) && NS(o, i), w = d.createElement("script"), Wn(w), qr(w, "link", o), d.head.appendChild(w)), w = {
+        w || (w = d.querySelector(Sd(x)), w || (o = N({ src: o, async: !0, type: "module" }, i), (i = Qo.get(x)) && NS(o, i), w = d.createElement("script"), Wn(w), qr(w, "link", o), d.head.appendChild(w)), w = {
           type: "script",
           instance: w,
           count: 1,
@@ -11236,7 +11236,7 @@ Error generating stack: ` + h.message + `
       return 'link[rel="stylesheet"][' + o + "]";
     }
     function y_(o) {
-      return _({}, o, {
+      return N({}, o, {
         "data-precedence": o.precedence,
         precedence: null
       });
@@ -11272,7 +11272,7 @@ Error generating stack: ` + h.message + `
             );
             if (h)
               return i.instance = h, Wn(h), h;
-            var x = _({}, d, {
+            var x = N({}, d, {
               "data-href": d.href,
               "data-precedence": d.precedence,
               href: null,
@@ -11296,7 +11296,7 @@ Error generating stack: ` + h.message + `
           case "script":
             return w = Pc(d.src), (x = o.querySelector(
               Sd(w)
-            )) ? (i.instance = x, Wn(x), x) : (h = d, (x = Qo.get(w)) && (h = _({}, d), NS(h, x)), o = o.ownerDocument || o, x = o.createElement("script"), Wn(x), qr(x, "link", h), o.head.appendChild(x), i.instance = x);
+            )) ? (i.instance = x, Wn(x), x) : (h = d, (x = Qo.get(w)) && (h = N({}, d), NS(h, x)), o = o.ownerDocument || o, x = o.createElement("script"), Wn(x), qr(x, "link", h), o.head.appendChild(x), i.instance = x);
           case "void":
             return null;
           default:
@@ -13443,7 +13443,7 @@ In order to be iterable, non-array objects must have a [Symbol.iterator]() metho
         ...E
       }, $ = `${c}_${p.prefix}`, M = gm($), I = `${q8}-${M}`;
       R._tokenKey = F8(R, $);
-      const [D, _] = C2(E, p.key, {
+      const [D, N] = C2(E, p.key, {
         prefix: p.prefix,
         ignore: p.ignore,
         unitless: p.unitless,
@@ -13451,7 +13451,7 @@ In order to be iterable, non-array objects must have a [Symbol.iterator]() metho
         hashPriority: s,
         hashCls: p.hashed ? I : void 0
       });
-      return D._hashId = M, W8(p.key), [D, I, R, _, p.key];
+      return D._hashId = M, W8(p.key), [D, I, R, N, p.key];
     }, ([, , , , E]) => {
       G8(E, r);
     }, ([, , , E, R]) => {
@@ -13678,7 +13678,7 @@ In order to be iterable, non-array objects must have a [Symbol.iterator]() metho
     return lq(ug("", null, null, null, [""], e = sq(e), 0, [0], e));
   }
   function ug(e, t, n, r, a, s, c, u, f) {
-    for (var m = 0, p = 0, g = c, v = 0, y = 0, b = 0, S = 1, C = 1, E = 1, R = 0, $ = 0, M = "", I = a, D = s, _ = r, P = M; C; )
+    for (var m = 0, p = 0, g = c, v = 0, y = 0, b = 0, S = 1, C = 1, E = 1, R = 0, $ = 0, M = "", I = a, D = s, N = r, P = M; C; )
       switch (b = $, $ = va()) {
         // (
         case 40:
@@ -13745,9 +13745,9 @@ In order to be iterable, non-array objects must have a [Symbol.iterator]() metho
               P += ";";
             // { rule/at-rule
             default:
-              if (Vf(_ = bI(P, t, n, m, p, a, u, M, I = [], D = [], g, s), s), $ === 123)
+              if (Vf(N = bI(P, t, n, m, p, a, u, M, I = [], D = [], g, s), s), $ === 123)
                 if (p === 0)
-                  ug(P, t, _, _, I, s, g, u, D);
+                  ug(P, t, N, N, I, s, g, u, D);
                 else {
                   switch (v) {
                     // c(ontainer)
@@ -13763,7 +13763,7 @@ In order to be iterable, non-array objects must have a [Symbol.iterator]() metho
                     case 109:
                     case 115:
                   }
-                  p ? ug(e, _, _, r && Vf(bI(e, _, _, 0, 0, a, u, M, a, I = [], g, D), D), a, D, g, u, r ? I : D) : ug(P, _, _, _, [""], D, 0, u, D);
+                  p ? ug(e, N, N, r && Vf(bI(e, N, N, 0, 0, a, u, M, a, I = [], g, D), D), a, D, g, u, r ? I : D) : ug(P, N, N, N, [""], D, 0, u, D);
                 }
           }
           m = p = y = 0, S = E = 1, M = P = "", g = c;
@@ -14146,10 +14146,10 @@ In order to be iterable, non-array objects must have a [Symbol.iterator]() metho
         Object.keys(R).forEach(($) => {
           const M = R[$];
           if (typeof M == "object" && M && ($ !== "animationName" || !M._keyframe) && !Sq(M)) {
-            let I = !1, D = $.trim(), _ = !1;
-            (n || r) && s ? D.startsWith("@") ? I = !0 : D === "&" ? D = CI("", s, f) : D = CI($, s, f) : n && !s && (D === "&" || D === "") && (D = "", _ = !0);
+            let I = !1, D = $.trim(), N = !1;
+            (n || r) && s ? D.startsWith("@") ? I = !0 : D === "&" ? D = CI("", s, f) : D = CI($, s, f) : n && !s && (D === "&" || D === "") && (D = "", N = !0);
             const [P, T] = I0(M, t, {
-              root: _,
+              root: N,
               injectHash: I,
               parentSelectors: [...a, D]
             });
@@ -14158,14 +14158,14 @@ In order to be iterable, non-array objects must have a [Symbol.iterator]() metho
               ...T
             }, g += `${D}${P}`;
           } else {
-            let I = function(_, P) {
-              const T = _.replace(/[A-Z]/g, (z) => `-${z.toLowerCase()}`);
+            let I = function(N, P) {
+              const T = N.replace(/[A-Z]/g, (z) => `-${z.toLowerCase()}`);
               let A = P;
-              !Z8[_] && typeof A == "number" && A !== 0 && (A = `${A}px`), _ === "animationName" && P?._keyframe && (y(P), A = P.getName(s)), g += `${T}:${A};`;
+              !Z8[N] && typeof A == "number" && A !== 0 && (A = `${A}px`), N === "animationName" && P?._keyframe && (y(P), A = P.getName(s)), g += `${T}:${A};`;
             };
             const D = M?.value ?? M;
-            typeof M == "object" && M?.[I2] && Array.isArray(D) ? D.forEach((_) => {
-              I($, _);
+            typeof M == "object" && M?.[I2] && Array.isArray(D) ? D.forEach((N) => {
+              I($, N);
             }) : B8(D) && I($, D);
           }
         });
@@ -14215,8 +14215,8 @@ In order to be iterable, non-array objects must have a [Symbol.iterator]() metho
           path: n.join("-"),
           transformers: g,
           linters: v
-        }), D = JS(M, S || !1), _ = M2(C, D);
-        return [D, _, I, c, u];
+        }), D = JS(M, S || !1), N = M2(C, D);
+        return [D, N, I, c, u];
       },
       // Remove cache if no need
       (R, $) => {
@@ -14230,25 +14230,25 @@ In order to be iterable, non-array objects must have a [Symbol.iterator]() metho
       (R) => {
         const [$, M, I, , D] = R;
         if (E && $ !== N2) {
-          let _ = {
+          let N = {
             mark: wi,
             prepend: b ? !1 : "queue",
             attachTo: p,
             priority: D
           };
-          _ = zE(_, s);
+          N = zE(N, s);
           const P = [], T = [];
           Object.keys(I).forEach((z) => {
             z.startsWith("@layer") ? P.push(z) : T.push(z);
           }), P.forEach((z) => {
             hl(JS(I[z], S || !1), `_layer-${z}`, {
-              ..._,
+              ...N,
               prepend: !0
             });
           });
-          const A = hl($, M, _);
+          const A = hl($, M, N);
           A[gl] = y.instanceId, T.forEach((z) => {
-            hl(JS(I[z], S || !1), `_effect-${z}`, _);
+            hl(JS(I[z], S || !1), `_effect-${z}`, N);
           });
         }
       }
@@ -14684,12 +14684,12 @@ In order to be iterable, non-array objects must have a [Symbol.iterator]() metho
       var I = xo(xo({}, S), {}, {
         unitless: M,
         prefixToken: E
-      }), D = p(v, y, b, I), _ = m(C, b, I);
+      }), D = p(v, y, b, I), N = m(C, b, I);
       return function(P) {
         var T = arguments.length > 1 && arguments[1] !== void 0 ? arguments[1] : P, A = D(P, T), z = S?.extraCssVarPrefixCls, O = typeof z == "function" ? z({
           prefixCls: P,
           rootCls: T
-        }) : z, L = _(O != null && O.length ? [T].concat(Nt(O)) : T);
+        }) : z, L = N(O != null && O.length ? [T].concat(Nt(O)) : T);
         return [A, L];
       };
     }
@@ -14709,10 +14709,10 @@ In order to be iterable, non-array objects must have a [Symbol.iterator]() metho
             return D.nonce;
           }
         }, function() {
-          var _ = PI(v, I, y), P = EI(v, I, _, {
+          var N = PI(v, I, y), P = EI(v, I, N, {
             deprecatedTokens: b?.deprecatedTokens
           });
-          return _ && Object.keys(_).forEach(function(T) {
+          return N && Object.keys(N).forEach(function(T) {
             P[C(T)] = P[T], delete P[T];
           }), P;
         }), M?.key;
@@ -14723,7 +14723,7 @@ In order to be iterable, non-array objects must have a [Symbol.iterator]() metho
         name: "antd"
       };
       return function(I) {
-        var D = arguments.length > 1 && arguments[1] !== void 0 ? arguments[1] : I, _ = r(), P = _.theme, T = _.realToken, A = _.hashId, z = _.token, O = _.cssVar, L = _.zeroRuntime, F = l.useMemo(function() {
+        var D = arguments.length > 1 && arguments[1] !== void 0 ? arguments[1] : I, N = r(), P = N.theme, T = N.realToken, A = N.hashId, z = N.token, O = N.cssVar, L = N.zeroRuntime, F = l.useMemo(function() {
           return L;
         }, []);
         if (F)
@@ -16768,7 +16768,7 @@ ${s}
     onLeaveEnd: $,
     onVisibleChanged: M
   }) {
-    const [I, D] = l.useState(), [_, P] = kU(Fa), [T, A] = l.useState([null, null]), z = _(), O = l.useRef(!1), L = l.useRef(null);
+    const [I, D] = l.useState(), [N, P] = kU(Fa), [T, A] = l.useState([null, null]), z = N(), O = l.useRef(!1), L = l.useRef(null);
     function F() {
       return n();
     }
@@ -16777,7 +16777,7 @@ ${s}
       P(Fa), A([null, null]);
     }
     const V = Tt((le) => {
-      const ie = _();
+      const ie = N();
       if (ie === Fa)
         return;
       const Y = F();
@@ -16851,7 +16851,7 @@ ${s}
     });
     const re = T[1];
     return [
-      _,
+      N,
       W,
       J,
       I ?? t,
@@ -16889,8 +16889,8 @@ ${s}
       function C() {
         return Sa(S.current);
       }
-      const [E, R, $, M, I] = qW(b, c, C, a), D = E(), _ = l.useRef(M);
-      M && (_.current = !0);
+      const [E, R, $, M, I] = qW(b, c, C, a), D = E(), N = l.useRef(M);
+      M && (N.current = !0);
       const P = l.useMemo(() => {
         const z = {};
         return Object.defineProperties(z, {
@@ -16924,7 +16924,7 @@ ${s}
         else if (D === Fa)
           M ? z = m({
             ...O
-          }, S) : !u && _.current && g ? z = m({
+          }, S) : !u && N.current && g ? z = m({
             ...O,
             className: g
           }, S) : f || !u && !g ? z = m({
@@ -17375,7 +17375,7 @@ ${s}
       styles: M,
       classNames: I,
       ...D
-    } = e, _ = s ?? a, [P, T] = l.useState(!1), A = l.useRef(null);
+    } = e, N = s ?? a, [P, T] = l.useState(!1), A = l.useRef(null);
     l.useImperativeHandle(t, () => ({
       nativeElement: A.current
     }));
@@ -17462,10 +17462,10 @@ ${s}
     }) : null, /* @__PURE__ */ l.createElement("div", {
       className: ne(`${k}-section`, ce.section),
       style: Z.section
-    }, tn(_) ? /* @__PURE__ */ l.createElement("div", {
+    }, tn(N) ? /* @__PURE__ */ l.createElement("div", {
       className: ne(`${k}-title`, ce.title),
       style: Z.title
-    }, _) : null, tn(n) ? /* @__PURE__ */ l.createElement("div", {
+    }, N) : null, tn(n) ? /* @__PURE__ */ l.createElement("div", {
       className: ne(`${k}-description`, ce.description),
       style: Z.description
     }, n) : null), tn(R) ? /* @__PURE__ */ l.createElement("div", {
@@ -17562,15 +17562,15 @@ ${s}
       }
       b != null && b === document.body && kh(b) && !kh(document.documentElement) || b != null && kh(b, p) && y.push(b);
     }
-    const S = (r = (n = window.visualViewport) == null ? void 0 : n.width) != null ? r : innerWidth, C = (s = (a = window.visualViewport) == null ? void 0 : a.height) != null ? s : innerHeight, { scrollX: E, scrollY: R } = window, { height: $, width: M, top: I, right: D, bottom: _, left: P } = e.getBoundingClientRect(), { top: T, right: A, bottom: z, left: O } = ((H) => {
+    const S = (r = (n = window.visualViewport) == null ? void 0 : n.width) != null ? r : innerWidth, C = (s = (a = window.visualViewport) == null ? void 0 : a.height) != null ? s : innerHeight, { scrollX: E, scrollY: R } = window, { height: $, width: M, top: I, right: D, bottom: N, left: P } = e.getBoundingClientRect(), { top: T, right: A, bottom: z, left: O } = ((H) => {
       const V = window.getComputedStyle(H);
       return { top: parseFloat(V.scrollMarginTop) || 0, right: parseFloat(V.scrollMarginRight) || 0, bottom: parseFloat(V.scrollMarginBottom) || 0, left: parseFloat(V.scrollMarginLeft) || 0 };
     })(e);
-    let L = u === "start" || u === "nearest" ? I - T : u === "end" ? _ + z : I + $ / 2 - T + z, F = f === "center" ? P + M / 2 - O + A : f === "end" ? D + A : P - O;
+    let L = u === "start" || u === "nearest" ? I - T : u === "end" ? N + z : I + $ / 2 - T + z, F = f === "center" ? P + M / 2 - O + A : f === "end" ? D + A : P - O;
     const U = [];
     for (let H = 0; H < y.length; H++) {
       const V = y[H], { height: ee, width: X, top: K, right: G, bottom: W, left: Q } = V.getBoundingClientRect();
-      if (c === "if-needed" && I >= 0 && P >= 0 && _ <= C && D <= S && (V === v && !kh(V) || I >= K && _ <= W && P >= Q && D <= G)) return U;
+      if (c === "if-needed" && I >= 0 && P >= 0 && N <= C && D <= S && (V === v && !kh(V) || I >= K && N <= W && P >= Q && D <= G)) return U;
       const k = getComputedStyle(V), B = parseInt(k.borderLeftWidth, 10), J = parseInt(k.borderTopWidth, 10), re = parseInt(k.borderRightWidth, 10), le = parseInt(k.borderBottomWidth, 10);
       let ie = 0, Y = 0;
       const q = "offsetWidth" in V ? V.offsetWidth - V.clientWidth - B - re : 0, te = "offsetHeight" in V ? V.offsetHeight - V.clientHeight - J - le : 0, de = "offsetWidth" in V ? V.offsetWidth === 0 ? 0 : X / V.offsetWidth : 0, fe = "offsetHeight" in V ? V.offsetHeight === 0 ? 0 : ee / V.offsetHeight : 0;
@@ -18134,7 +18134,7 @@ html body {
       forceRender: M,
       getPopupContainer: I,
       autoDestroy: D,
-      portal: _,
+      portal: N,
       children: P,
       zIndex: T,
       onMouseEnter: A,
@@ -18163,7 +18163,7 @@ html body {
     if (!te)
       return null;
     const oe = {};
-    return W && (W.includes("height") && k ? oe.height = k : W.includes("minHeight") && k && (oe.minHeight = k), W.includes("width") && Q ? oe.width = Q : W.includes("minWidth") && Q && (oe.minWidth = Q)), m || (oe.pointerEvents = "none"), /* @__PURE__ */ l.createElement(_, {
+    return W && (W.includes("height") && k ? oe.height = k : W.includes("minHeight") && k && (oe.minHeight = k), W.includes("width") && Q ? oe.width = Q : W.includes("minWidth") && Q && (oe.minWidth = Q)), m || (oe.pointerEvents = "none"), /* @__PURE__ */ l.createElement(N, {
       open: M || J,
       getContainer: I && (() => I(u)),
       autoDestroy: D,
@@ -18293,13 +18293,13 @@ html body {
         clientHeight: v,
         offsetWidth: y,
         clientWidth: b
-      } = r, S = Nd(c), C = Nd(u), E = Nd(f), R = Nd(m), $ = Sm(Math.round(p.width / y * 1e3) / 1e3), M = Sm(Math.round(p.height / g * 1e3) / 1e3), I = (y - b - E - R) * $, D = (g - v - S - C) * M, _ = S * M, P = C * M, T = E * $, A = R * $;
+      } = r, S = Nd(c), C = Nd(u), E = Nd(f), R = Nd(m), $ = Sm(Math.round(p.width / y * 1e3) / 1e3), M = Sm(Math.round(p.height / g * 1e3) / 1e3), I = (y - b - E - R) * $, D = (g - v - S - C) * M, N = S * M, P = C * M, T = E * $, A = R * $;
       let z = 0, O = 0;
       if (a === "clip") {
         const V = Nd(s);
         z = V * $, O = V * M;
       }
-      const L = p.x + T - z, F = p.y + _ - O, U = L + p.width + 2 * z - T - A - I, H = F + p.height + 2 * O - _ - P - D;
+      const L = p.x + T - z, F = p.y + N - O, U = L + p.width + 2 * z - T - A - I, H = F + p.height + 2 * O - N - P - D;
       n.left = Math.max(n.left, L), n.top = Math.max(n.top, F), n.right = Math.min(n.right, U), n.bottom = Math.min(n.bottom, H);
     }), n;
   }
@@ -18359,7 +18359,7 @@ html body {
         var E = Je, R = xt;
         const $ = t, M = $.ownerDocument, I = Hm($), {
           position: D
-        } = I.getComputedStyle($), _ = $.style.left, P = $.style.top, T = $.style.right, A = $.style.bottom, z = $.style.overflow, O = $.style.overflowX, L = $.style.overflowY, F = {
+        } = I.getComputedStyle($), N = $.style.left, P = $.style.top, T = $.style.right, A = $.style.bottom, z = $.style.overflow, O = $.style.overflowX, L = $.style.overflowY, F = {
           ...a[r],
           ...s
         }, U = M.createElement("div");
@@ -18412,7 +18412,7 @@ html body {
         const pe = te === fe, oe = ZI(q, g), ce = ZI(Y, g), Z = te === de ? ce : oe, me = pe ? ce : Z;
         $.style.left = "auto", $.style.top = "auto", $.style.right = "0", $.style.bottom = "0";
         const xe = $.getBoundingClientRect();
-        $.style.left = _, $.style.top = P, $.style.right = T, $.style.bottom = A, $.style.overflow = z, $.style.overflowX = O, $.style.overflowY = L, $.parentElement?.removeChild(U);
+        $.style.left = N, $.style.top = P, $.style.right = T, $.style.bottom = A, $.style.overflow = z, $.style.overflowX = O, $.style.overflowY = L, $.parentElement?.removeChild(U);
         const Me = Sm(Math.round(re / parseFloat(X) * 1e3) / 1e3), ve = Sm(Math.round(J / parseFloat(ee) * 1e3) / 1e3);
         if (Me === 0 || ve === 0 || ou(n) && !km(n))
           return;
@@ -18617,11 +18617,11 @@ html body {
       className: I,
       style: D
     }) => {
-      const _ = ne(S, I, y, {
+      const N = ne(S, I, y, {
         [`${S}-visible`]: C
       });
       return /* @__PURE__ */ se.createElement("div", {
-        className: _,
+        className: N,
         style: {
           "--arrow-x": `${p?.x || 0}px`,
           "--arrow-y": `${p?.y || 0}px`,
@@ -18654,7 +18654,7 @@ html body {
       M,
       I,
       D,
-      _,
+      N,
       P,
       // scaleX - not used in UniqueProvider
       ,
@@ -18726,7 +18726,7 @@ html body {
         height: ee.offsetHeight
       }),
       arrowPos: {
-        x: _,
+        x: N,
         y: P
       },
       align: T,
@@ -18747,7 +18747,7 @@ html body {
       offsetX: $,
       offsetY: M,
       arrowPos: {
-        x: _,
+        x: N,
         y: P
       },
       popupSize: m,
@@ -18783,7 +18783,7 @@ html body {
         maskClosable: I = !0,
         // Portal
         getPopupContainer: D,
-        forceRender: _,
+        forceRender: N,
         autoDestroy: P,
         // Popup
         popup: T,
@@ -18952,7 +18952,7 @@ html body {
         ye.current && un.has("contextMenu") ? ot(!1) : (He(gt), ot(!0)), gt.preventDefault(), Ue.onContextMenu?.(gt, ...rn);
       });
       const qn = l.useRef(!1);
-      qn.current ||= _ || Oe || St;
+      qn.current ||= N || Oe || St;
       const Kn = {
         ...Ue,
         ...Ee
@@ -18996,7 +18996,7 @@ html body {
         maskMotion: re,
         onVisibleChanged: Qn,
         onPrepare: Un,
-        forceRender: _,
+        forceRender: N,
         autoDestroy: Y,
         getPopupContainer: D,
         onEsc: nt,
@@ -19210,7 +19210,7 @@ html body {
       iconPrefixCls: M,
       theme: I,
       componentDisabled: D,
-      segmented: _,
+      segmented: N,
       statistic: P,
       spin: T,
       calendar: A,
@@ -19307,7 +19307,7 @@ html body {
       getPrefixCls: Gt,
       iconPrefixCls: Bt,
       theme: un,
-      segmented: _,
+      segmented: N,
       statistic: P,
       spin: T,
       calendar: A,
@@ -19600,7 +19600,7 @@ html body {
       pauseOnHover: I = !0,
       // Function
       onClick: D,
-      onMouseEnter: _,
+      onMouseEnter: N,
       onMouseLeave: P,
       onClose: T
     } = e, [A, z] = l.useState(0), O = `${n}-notice`, [L, F, U] = r9(y), H = Tt(() => {
@@ -19610,7 +19610,7 @@ html body {
       I && (M ? K() : V || X());
     }, [M, V, K, X, I]);
     function Q(Z) {
-      ee(!0), I && K(), _?.(Z);
+      ee(!0), I && K(), N?.(Z);
     }
     function k(Z) {
       ee(!1), I && !M && X(), P?.(Z);
@@ -19805,13 +19805,13 @@ html body {
     })), [t]), C = typeof f == "function" ? f(m) : f, [E, {
       offset: R,
       threshold: $
-    }] = t9(u), [M, I] = l.useState(!1), D = E && (M || S.length <= $), _ = l.useMemo(() => {
+    }] = t9(u), [M, I] = l.useState(!1), D = E && (M || S.length <= $), N = l.useMemo(() => {
       if (!(!E || D))
         return {
           offset: R,
           threshold: $
         };
-    }, [D, R, E, $]), [P, T] = l.useState(0), A = l.useRef(null), [z, O, L, F, U] = e9(t, _, P), H = !!t.length;
+    }, [D, R, E, $]), [P, T] = l.useState(0), A = l.useRef(null), [z, O, L, F, U] = e9(t, N, P), H = !!t.length;
     l.useEffect(() => {
       const ee = A.current;
       if (!ee)
@@ -19902,33 +19902,33 @@ html body {
     } = e, [S, C] = l.useState([]), [E, R] = l.useState({}), $ = l.useRef(!1);
     l.useImperativeHandle(t, () => ({
       open: (D) => {
-        C((_) => {
-          let P = [..._];
+        C((N) => {
+          let P = [...N];
           const T = P.findIndex((z) => z.key === D.key), A = {
             ...D
           };
-          return T >= 0 ? (A.times = (_[T]?.times ?? 0) + 1, P[T] = A) : (A.times = 0, P.push(A)), s && s > 0 && P.length > s && (P = P.slice(-s)), P;
+          return T >= 0 ? (A.times = (N[T]?.times ?? 0) + 1, P[T] = A) : (A.times = 0, P.push(A)), s && s > 0 && P.length > s && (P = P.slice(-s)), P;
         });
       },
       close: (D) => {
-        C((_) => _.filter((P) => P.key !== D));
+        C((N) => N.filter((P) => P.key !== D));
       },
       destroy: () => {
         C([]);
       }
     })), l.useEffect(() => {
       const D = {};
-      S.forEach((_) => {
-        const P = _.placement ?? "topRight";
-        D[P] = D[P] || [], D[P].push(_);
-      }), Object.keys(E).forEach((_) => {
-        D[_] = D[_] || [];
+      S.forEach((N) => {
+        const P = N.placement ?? "topRight";
+        D[P] = D[P] || [], D[P].push(N);
+      }), Object.keys(E).forEach((N) => {
+        D[N] = D[N] || [];
       }), R(D);
     }, [S]);
     const M = Tt((D) => {
-      R((_) => {
+      R((N) => {
         const P = {
-          ..._
+          ...N
         };
         return (P[D] || []).length || delete P[D], P;
       });
@@ -19939,7 +19939,7 @@ html body {
       return null;
     const I = Object.keys(E);
     return /* @__PURE__ */ Va.createPortal(/* @__PURE__ */ l.createElement(l.Fragment, null, I.map((D) => {
-      const _ = /* @__PURE__ */ l.createElement(Lk, {
+      const N = /* @__PURE__ */ l.createElement(Lk, {
         key: D,
         configList: E[D],
         placement: D,
@@ -19957,12 +19957,12 @@ html body {
         },
         onAllRemoved: M
       });
-      return b ? /* @__PURE__ */ l.cloneElement(b(_, {
+      return b ? /* @__PURE__ */ l.cloneElement(b(N, {
         prefixCls: n,
         key: D
       }), {
         key: D
-      }) : _;
+      }) : N;
     })), r);
   }), f9 = () => document.body;
   let iM = 0;
@@ -19999,7 +19999,7 @@ html body {
       closable: s,
       duration: c,
       showProgress: u
-    }, [$, M] = l.useState(), I = l.useRef(null), [D, _] = l.useState([]), P = /* @__PURE__ */ l.createElement(d9, {
+    }, [$, M] = l.useState(), I = l.useRef(null), [D, N] = l.useState([]), P = /* @__PURE__ */ l.createElement(d9, {
       container: $,
       ref: I,
       prefixCls: r,
@@ -20016,20 +20016,20 @@ html body {
       renderNotifications: E
     }), T = Tt((z) => {
       const O = m9(R, z);
-      (O.key === null || O.key === void 0) && (O.key = `rc-notification-${iM}`, iM += 1), _((L) => [...L, {
+      (O.key === null || O.key === void 0) && (O.key = `rc-notification-${iM}`, iM += 1), N((L) => [...L, {
         type: "open",
         config: O
       }]);
     }), A = l.useMemo(() => ({
       open: T,
       close: (z) => {
-        _((O) => [...O, {
+        N((O) => [...O, {
           type: "close",
           key: z
         }]);
       },
       destroy: () => {
-        _((z) => [...z, {
+        N((z) => [...z, {
           type: "destroy"
         }]);
       }
@@ -20049,7 +20049,7 @@ html body {
             I.current?.destroy();
             break;
         }
-      }), _((z) => {
+      }), N((z) => {
         const O = z.filter((L) => !D.includes(L));
         return O.length === z.length ? z : O;
       }));
@@ -20370,7 +20370,7 @@ html body {
       colorIconHover: M,
       colorBgTextHover: I,
       colorBgTextActive: D
-    } = e, _ = `${t}-notice`;
+    } = e, N = `${t}-notice`;
     return {
       ...Hk(e, {
         width: c,
@@ -20383,27 +20383,27 @@ html body {
         },
         typeStyle: !0
       }),
-      [`${_}-section`]: {
+      [`${N}-section`]: {
         display: "flex",
         flexDirection: "column",
         flex: "auto",
         gap: y,
         minWidth: 0
       },
-      [`${_}-description`]: {
+      [`${N}-description`]: {
         color: f,
         fontSize: a
       },
-      [`${_}-closable`]: {
-        [`${_}-title, ${_}-description`]: {
+      [`${N}-closable`]: {
+        [`${N}-title, ${N}-description`]: {
           paddingInlineEnd: b
         },
-        [`${_}-title + ${_}-description`]: {
+        [`${N}-title + ${N}-description`]: {
           paddingInlineEnd: 0
         }
       },
       // ============================ Close =============================
-      [`${_}-close`]: {
+      [`${N}-close`]: {
         position: "absolute",
         top: S,
         insetInlineEnd: C,
@@ -20428,7 +20428,7 @@ html body {
         ...Lo(e)
       },
       // =========================== Progress ===========================
-      [`${_}-progress`]: {
+      [`${N}-progress`]: {
         position: "absolute",
         bottom: 0,
         display: "block",
@@ -20457,7 +20457,7 @@ html body {
         }
       },
       // ============================ Action ============================
-      [`${_}-actions`]: {
+      [`${N}-actions`]: {
         float: "right",
         marginTop: v
       }
@@ -20874,9 +20874,9 @@ html body {
       styles: b
     } = qt("message"), S = t || p("message"), C = `${S}-notice`, E = rr(S), [R, $] = JE(S, E), [M, I] = Jt([y, u], [b, f], {
       props: e
-    }), D = eR(a, s), _ = a ? `${C}-icon-${a}` : void 0, P = {
+    }), D = eR(a, s), N = a ? `${C}-icon-${a}` : void 0, P = {
       wrapper: ne(a && `${S}-${a}`, M.wrapper),
-      icon: ne(_, M.icon),
+      icon: ne(N, M.icon),
       title: M.title
     }, T = {
       wrapper: I.wrapper,
@@ -20963,12 +20963,12 @@ html body {
       message: E
     } = l.useContext(Pt), R = r || b("message"), $ = yt(E?.style), [M, I] = Jt([E?.classNames, f], [E?.styles, $, m], {
       props: e
-    }), D = () => g9(n ?? r7), _ = () => ne({
+    }), D = () => g9(n ?? r7), N = () => ne({
       [`${R}-rtl`]: u ?? S === "rtl"
     }), P = () => n7(R, p), T = h9(v, a7), [A, z] = p9({
       prefixCls: R,
       style: D,
-      className: _,
+      className: N,
       motion: P,
       // closable=false requires-no closeIcon
       closable: !1,
@@ -21015,7 +21015,7 @@ html body {
           onClose: M,
           classNames: I = {},
           styles: D = {},
-          ..._
+          ...N
         } = f;
         let P = E;
         Hn(P) || (uM += 1, P = `antd-message-${uM}`);
@@ -21028,7 +21028,7 @@ html body {
           props: T
         }), O = eR(C, S), L = C ? `${y}-icon-${C}` : void 0;
         return tR((F) => (m({
-          ..._,
+          ...N,
           key: P,
           icon: O,
           title: b,
@@ -21155,14 +21155,14 @@ html body {
       colorSource: a
     } = e, s = l.useRef(null), {
       getPrefixCls: c
-    } = l.useContext(Pt), u = c(), [f] = Ln(u, "wave"), [m, p] = l.useState(null), [g, v] = l.useState([]), [y, b] = l.useState(0), [S, C] = l.useState(0), [E, R] = l.useState(0), [$, M] = l.useState(0), [I, D] = l.useState(!1), _ = {
+    } = l.useContext(Pt), u = c(), [f] = Ln(u, "wave"), [m, p] = l.useState(null), [g, v] = l.useState([]), [y, b] = l.useState(0), [S, C] = l.useState(0), [E, R] = l.useState(0), [$, M] = l.useState(0), [I, D] = l.useState(!1), N = {
       left: y,
       top: S,
       width: E,
       height: $,
       borderRadius: g.map((A) => `${A}px`).join(" ")
     };
-    m && (_[f("color")] = m);
+    m && (N[f("color")] = m);
     function P() {
       const A = getComputedStyle(n);
       p(m7(n, a));
@@ -21213,7 +21213,7 @@ html body {
       className: ne(t, A, {
         "wave-quick": T
       }),
-      style: _
+      style: N
     }));
   }, h7 = (e, t) => {
     const {
@@ -21368,7 +21368,7 @@ html body {
     l.useImperativeHandle(t, () => ({
       nativeElement: I.current
     }));
-    const D = xr(g), _ = l.useMemo(() => D.map((P, T) => {
+    const D = xr(g), N = l.useMemo(() => D.map((P, T) => {
       const A = P?.key || `${E}-item-${T}`;
       return /* @__PURE__ */ l.createElement(S7, {
         key: A,
@@ -21382,7 +21382,7 @@ html body {
       ref: I,
       className: $,
       ...y
-    }, _);
+    }, N);
   }), Qk = /* @__PURE__ */ l.createContext(void 0), x7 = (e) => {
     const {
       getPrefixCls: t,
@@ -23022,7 +23022,7 @@ html body {
       htmlType: M = "button",
       classNames: I,
       styles: D,
-      style: _,
+      style: N,
       autoInsertSpace: P,
       autoFocus: T,
       ...A
@@ -23081,7 +23081,7 @@ html body {
       disabled: oe,
       loading: me,
       iconPlacement: Oe
-    }, Ze = yt(V), he = yt(_), [ye, Qe] = Jt([n ? void 0 : ee, I], [n ? void 0 : X, Ze, D, he], {
+    }, Ze = yt(V), he = yt(N), [ye, Qe] = Jt([n ? void 0 : ee, I], [n ? void 0 : X, Ze, D, he], {
       props: Ue
     }), Je = ne(te, de, fe, {
       [`${te}-${k}`]: k !== "default" && k !== "square" && k,
@@ -23315,7 +23315,7 @@ html body {
       width: M,
       height: I,
       classNames: D,
-      styles: _,
+      styles: N,
       isFixedPos: P,
       focusTrap: T
     } = e, {
@@ -23333,18 +23333,18 @@ html body {
     const U = u ? /* @__PURE__ */ se.createElement("div", {
       className: ne(`${n}-footer`, D?.footer),
       style: {
-        ..._?.footer
+        ...N?.footer
       }
     }, u) : null, H = s ? /* @__PURE__ */ se.createElement("div", {
       className: ne(`${n}-header`, D?.header),
       style: {
-        ..._?.header
+        ...N?.header
       }
     }, /* @__PURE__ */ se.createElement("div", {
       className: ne(`${n}-title`, D?.title),
       id: c,
       style: {
-        ..._?.title
+        ...N?.title
       }
     }, s)) : null, V = l.useMemo(() => typeof f == "object" && f !== null ? f : f ? {
       closeIcon: m ?? /* @__PURE__ */ se.createElement("span", {
@@ -23357,15 +23357,15 @@ html body {
     }, ee, {
       className: ne(`${n}-close`, D?.close),
       disabled: X,
-      style: _?.close
+      style: N?.close
     }), V.closeIcon) : null, G = /* @__PURE__ */ se.createElement("div", {
       className: ne(`${n}-container`, D?.container),
-      style: _?.container
+      style: N?.container
     }, K, H, /* @__PURE__ */ se.createElement("div", Ug({
       className: ne(`${n}-body`, D?.body),
       style: {
         ...v,
-        ..._?.body
+        ...N?.body
       }
     }, y), g), U);
     return /* @__PURE__ */ se.createElement("div", {
@@ -23524,7 +23524,7 @@ html body {
       rootClassName: M,
       rootStyle: I,
       classNames: D,
-      styles: _
+      styles: N
     } = e, P = l.useRef(null), T = l.useRef(null), A = l.useRef(null), [z, O] = l.useState(r), [L, F] = l.useState(!1), U = Ya();
     function H() {
       v0(T.current, document.activeElement) || (P.current = document.activeElement);
@@ -23569,7 +23569,7 @@ html body {
     const k = {
       zIndex: n,
       ...s,
-      ..._?.wrapper,
+      ...N?.wrapper,
       display: z ? null : "none"
     };
     return /* @__PURE__ */ l.createElement("div", rm({
@@ -23584,7 +23584,7 @@ html body {
       style: {
         zIndex: n,
         ...R,
-        ..._?.mask
+        ...N?.mask
       },
       maskProps: $,
       className: D?.mask
@@ -24246,8 +24246,8 @@ html body {
               const T = I[P], A = Array.isArray(T) ? T : [T];
               D[P] = A.map(S.bind(null, P));
             });
-            const _ = new qg(D);
-            _.messages(s.messages), g.rule.options && (g.rule.options.messages = s.messages, g.rule.options.error = s.error), _.validate(g.value, g.rule.options || s, (P) => {
+            const N = new qg(D);
+            N.messages(s.messages), g.rule.options && (g.rule.options.messages = s.messages, g.rule.options.error = s.error), N.validate(g.value, g.rule.options || s, (P) => {
               const T = [];
               M && M.length && T.push(...M), P && P.length && T.push(...P), v(T.length ? T : null);
             });
@@ -24835,16 +24835,16 @@ html body {
       return $[r] = (...I) => {
         this.touched = !0, this.dirty = !0, this.triggerMetaEvent();
         const D = this.getValue();
-        let _;
-        s ? _ = s(...I) : _ = iG(u, ...I), c && (_ = c(_, D, y(!0))), _ !== D && b({
+        let N;
+        s ? N = s(...I) : N = iG(u, ...I), c && (N = c(N, D, y(!0))), N !== D && b({
           type: "updateValue",
           namePath: g,
-          value: _
+          value: N
         }), E && E(...I);
       }, C$(p || []).forEach((I) => {
         const D = $[I];
-        $[I] = (..._) => {
-          D && D(..._);
+        $[I] = (...N) => {
+          D && D(...N);
           const {
             rules: P
           } = this.props;
@@ -24930,26 +24930,26 @@ html body {
         getFieldValue: E
       } = c, R = () => E(p || []) || [], $ = {
         add: (I, D) => {
-          const _ = R();
-          D >= 0 && D <= _.length ? (m.keys = [...m.keys.slice(0, D), m.id, ...m.keys.slice(D)], S([..._.slice(0, D), I, ..._.slice(D)])) : (m.keys = [...m.keys, m.id], S([..._, I])), m.id += 1;
+          const N = R();
+          D >= 0 && D <= N.length ? (m.keys = [...m.keys.slice(0, D), m.id, ...m.keys.slice(D)], S([...N.slice(0, D), I, ...N.slice(D)])) : (m.keys = [...m.keys, m.id], S([...N, I])), m.id += 1;
         },
         remove: (I) => {
-          const D = R(), _ = new Set(Array.isArray(I) ? I : [I]);
-          _.size <= 0 || (m.keys = m.keys.filter((P, T) => !_.has(T)), S(D.filter((P, T) => !_.has(T))));
+          const D = R(), N = new Set(Array.isArray(I) ? I : [I]);
+          N.size <= 0 || (m.keys = m.keys.filter((P, T) => !N.has(T)), S(D.filter((P, T) => !N.has(T))));
         },
         move(I, D) {
           if (I === D)
             return;
-          const _ = R();
-          I < 0 || I >= _.length || D < 0 || D >= _.length || (m.keys = IM(m.keys, I, D), S(IM(_, I, D)));
+          const N = R();
+          I < 0 || I >= N.length || D < 0 || D >= N.length || (m.keys = IM(m.keys, I, D), S(IM(N, I, D)));
         }
       };
       let M = b || [];
       return Array.isArray(M) || (M = []), n(M.map((I, D) => {
-        let _ = m.keys[D];
-        return _ === void 0 && (m.keys[D] = m.id, _ = m.keys[D], m.id += 1), {
+        let N = m.keys[D];
+        return N === void 0 && (m.keys[D] = m.id, N = m.keys[D], m.id += 1), {
           name: D,
-          key: _,
+          key: N,
           isListField: !0
         };
       }), $, C);
@@ -25534,9 +25534,9 @@ html body {
               rule: {
                 warningOnly: D
               },
-              errors: _
+              errors: N
             }) => {
-              D ? I.push(..._) : M.push(..._);
+              D ? I.push(...N) : M.push(...N);
             }), M.length ? Promise.reject({
               name: E,
               errors: M,
@@ -25688,7 +25688,7 @@ html body {
       useSubscribe: M,
       setInitialValues: I,
       setCallbacks: D,
-      setValidateMessages: _,
+      setValidateMessages: N,
       setPreserve: P,
       destroyForm: T
     } = $.getInternalHooks(ul);
@@ -25697,7 +25697,7 @@ html body {
       nativeElement: E.current
     })), l.useEffect(() => (R.registerForm(n, $), () => {
       R.unregisterForm(n);
-    }), [R, $, n]), _({
+    }), [R, $, n]), N({
       ...R.validateMessages,
       ...m
     }), D({
@@ -26407,7 +26407,7 @@ html body {
       style: R,
       classNames: $,
       styles: M
-    } = qt("skeleton"), I = S("skeleton", n), [D, _] = Gm(I), P = {
+    } = qt("skeleton"), I = S("skeleton", n), [D, N] = Gm(I), P = {
       ...e,
       avatar: p,
       title: g,
@@ -26473,7 +26473,7 @@ html body {
         [`${I}-active`]: y,
         [`${I}-rtl`]: C === "rtl",
         [`${I}-round`]: b
-      }, z.root, E, a, s, D, _);
+      }, z.root, E, a, s, D, N);
       return /* @__PURE__ */ se.createElement("div", {
         ref: L,
         className: X,
@@ -27035,7 +27035,7 @@ html body {
       okButtonProps: M,
       cancelButtonProps: I,
       destroyOnHidden: D,
-      destroyOnClose: _,
+      destroyOnClose: N,
       panelRef: P = null,
       closable: T,
       mask: A,
@@ -27155,7 +27155,7 @@ html body {
       },
       styles: St,
       panelRef: Ze,
-      destroyOnHidden: D ?? _,
+      destroyOnHidden: D ?? N,
       modalRender: Oe,
       // Focusable
       focusTriggerAfterClose: me.focusTriggerAfterClose,
@@ -27306,7 +27306,7 @@ html body {
     const M = u ?? c === "confirm", I = l.useMemo(() => {
       const V = g?.autoFocusButton || p;
       return V || V === null ? V : "ok";
-    }, [p, g?.autoFocusButton]), [D] = wo("Modal"), _ = m || D, P = Tr(r, M ? _?.okText : _?.justOkText), T = Tr(a, _?.cancelText), {
+    }, [p, g?.autoFocusButton]), [D] = wo("Modal"), N = m || D, P = Tr(r, M ? N?.okText : N?.justOkText), T = Tr(a, N?.cancelText), {
       closable: A
     } = b, {
       onClose: z
@@ -27371,14 +27371,14 @@ html body {
       body: f,
       mask: r,
       ...g
-    }, _ = sn(e, ["bodyStyle", "maskStyle"]), P = ne($, `${$}-${e.type}`, {
+    }, N = sn(e, ["bodyStyle", "maskStyle"]), P = ne($, `${$}-${e.type}`, {
       [`${$}-rtl`]: a === "rtl"
     }, e.className), T = l.useMemo(() => {
       const O = h$(y, b);
       return O.closable ?? (O.closable = !1), O;
     }, [y, b]), [, A] = ro(), z = l.useMemo(() => n !== void 0 ? n : A.zIndexPopupBase + QE, [n, A]);
     return /* @__PURE__ */ l.createElement(Rj, {
-      ..._,
+      ...N,
       className: P,
       wrapClassName: ne({
         [`${$}-centered`]: !!e.centered
@@ -27664,11 +27664,11 @@ html body {
     l.useEffect(() => {
       if (S(!0), typeof ResizeObserver < "u") {
         const M = new ResizeObserver((D) => {
-          const _ = D[0].target;
-          g(_.offsetHeight + 8), y(_.offsetWidth);
+          const N = D[0].target;
+          g(N.offsetHeight + 8), y(N.offsetWidth);
         }), I = setInterval(() => {
-          const D = a ? `.${a(E)}` : `.${E}-dropdown`, _ = m.current?.querySelector(D);
-          _ && (clearInterval(I), M.observe(_));
+          const D = a ? `.${a(E)}` : `.${E}-dropdown`, N = m.current?.querySelector(D);
+          N && (clearInterval(I), M.observe(N));
         }, 10);
         return () => {
           clearInterval(I), M.disconnect();
@@ -27820,7 +27820,7 @@ html body {
       onPopupMouseEnter: M,
       onPopupMouseDown: I,
       onPopupBlur: D,
-      ..._
+      ...N
     } = e, P = `${n}-dropdown`;
     let T = c;
     S && (T = S(c));
@@ -27833,7 +27833,7 @@ html body {
     const U = l.useRef(null);
     return l.useImperativeHandle(t, () => ({
       getPopupElement: () => U.current?.popupElement
-    })), /* @__PURE__ */ l.createElement($v, M$({}, _, {
+    })), /* @__PURE__ */ l.createElement($v, M$({}, N, {
       showAction: $ ? ["click"] : [],
       hideAction: $ ? ["click"] : [],
       popupPlacement: v || (g === "rtl" ? "bottomRight" : "bottomLeft"),
@@ -28038,7 +28038,7 @@ html body {
       id: M,
       classNames: I,
       styles: D,
-      open: _,
+      open: N,
       activeDescendantId: P,
       role: T,
       disabled: A
@@ -28059,7 +28059,7 @@ html body {
       } = B, {
         value: re
       } = B.currentTarget;
-      J === "Enter" && v === "tags" && !_ && !O.current && b && b(re), r?.(B);
+      J === "Enter" && v === "tags" && !N && !O.current && b && b(re), r?.(B);
     }, V = (B) => {
       S?.(), a?.(B);
     }, ee = () => {
@@ -28108,12 +28108,12 @@ html body {
       onCompositionEnd: X,
       // Accessibility attributes
       role: T || "combobox",
-      "aria-expanded": _ || !1,
+      "aria-expanded": N || !1,
       "aria-haspopup": "listbox",
-      "aria-owns": _ ? `${M}_list` : void 0,
+      "aria-owns": N ? `${M}_list` : void 0,
       "aria-autocomplete": "list",
-      "aria-controls": _ ? `${M}_list` : void 0,
-      "aria-activedescendant": _ ? P : void 0
+      "aria-controls": N ? `${M}_list` : void 0,
+      "aria-activedescendant": N ? P : void 0
     };
     if (/* @__PURE__ */ l.isValidElement($)) {
       const B = $.props || {}, J = {
@@ -28196,7 +28196,7 @@ html body {
       showSearch: g,
       classNames: v,
       styles: y
-    } = Ol(), b = l.useContext(mR), [S, C] = l.useState(!1), E = u === "combobox", R = s[0], $ = l.useMemo(() => E && a && !S && m ? a : g ? r : "", [E, a, S, m, r, g]), [M, I, D, _] = l.useMemo(() => {
+    } = Ol(), b = l.useContext(mR), [S, C] = l.useState(!1), E = u === "combobox", R = s[0], $ = l.useMemo(() => E && a && !S && m ? a : g ? r : "", [E, a, S, m, r, g]), [M, I, D, N] = l.useMemo(() => {
       let z, O, L;
       if (R && b?.flattenOptions) {
         const U = b.flattenOptions.find((H) => H.value === R.value);
@@ -28207,7 +28207,7 @@ html body {
     l.useEffect(() => {
       E && C(!1);
     }, [E, a]);
-    const P = R && R.label !== null && R.label !== void 0 && String(R.label).trim() !== "", A = !(E && f?.input) ? R ? _ ? /* @__PURE__ */ l.createElement("div", {
+    const P = R && R.label !== null && R.label !== void 0 && String(R.label).trim() !== "", A = !(E && f?.input) ? R ? N ? /* @__PURE__ */ l.createElement("div", {
       className: ne(`${n}-content-value`, M),
       style: {
         ...$ ? {
@@ -28220,9 +28220,9 @@ html body {
       show: !$
     }) : null;
     return /* @__PURE__ */ l.createElement("div", {
-      className: ne(`${n}-content`, P && `${n}-content-has-value`, $ && `${n}-content-has-search-value`, _ && `${n}-content-has-option-style`, v?.content),
+      className: ne(`${n}-content`, P && `${n}-content-has-value`, $ && `${n}-content-has-search-value`, N && `${n}-content-has-option-style`, v?.content),
       style: y?.content,
-      title: _ ? void 0 : D
+      title: N ? void 0 : D
     }, A, /* @__PURE__ */ l.createElement(Hj, O$({
       ref: t
     }, e, {
@@ -28251,8 +28251,8 @@ html body {
       component: S = "div",
       ...C
     } = e, E = c && !y;
-    function R(_) {
-      f(m, _);
+    function R(N) {
+      f(m, N);
     }
     l.useEffect(() => () => {
       R(null);
@@ -28282,9 +28282,9 @@ html body {
     }), $);
     return c && (D = /* @__PURE__ */ l.createElement(Co, {
       onResize: ({
-        offsetWidth: _
+        offsetWidth: N
       }) => {
-        R(_);
+        R(N);
       },
       disabled: u
     }, D)), D;
@@ -28366,7 +28366,7 @@ html body {
       itemComponent: E,
       onVisibleChange: R,
       ...$
-    } = e, M = f === "full", I = CX(), [D, _] = kc(I, null), P = D || 0, [T, A] = kc(I, /* @__PURE__ */ new Map()), [z, O] = kc(I, 0), [L, F] = kc(I, 0), [U, H] = kc(I, 0), [V, ee] = kc(I, 0), [X, K] = l.useState(null), [G, W] = l.useState(null), Q = l.useMemo(() => G === null && M ? Number.MAX_SAFE_INTEGER : G || 0, [G, D]), [k, B] = l.useState(!1), J = `${n}-item`, re = Math.max(z, L), le = g === Wj, ie = r.length && le, Y = g === Vj, q = ie || typeof g == "number" && r.length > g, te = l.useMemo(() => {
+    } = e, M = f === "full", I = CX(), [D, N] = kc(I, null), P = D || 0, [T, A] = kc(I, /* @__PURE__ */ new Map()), [z, O] = kc(I, 0), [L, F] = kc(I, 0), [U, H] = kc(I, 0), [V, ee] = kc(I, 0), [X, K] = l.useState(null), [G, W] = l.useState(null), Q = l.useMemo(() => G === null && M ? Number.MAX_SAFE_INTEGER : G || 0, [G, D]), [k, B] = l.useState(!1), J = `${n}-item`, re = Math.max(z, L), le = g === Wj, ie = r.length && le, Y = g === Vj, q = ie || typeof g == "number" && r.length > g, te = l.useMemo(() => {
       let ze = r;
       return ie ? D === null && M ? ze = r : ze = r.slice(0, Math.min(r.length, P / u)) : typeof g == "number" && (ze = r.slice(0, g)), ze;
     }, [r, u, D, g, ie]), de = l.useMemo(() => ie ? r.slice(Q + 1) : r.slice(te.length), [r, te, ie, Q]), fe = l.useCallback((ze, Oe) => typeof c == "function" ? c(ze) : (c && ze?.[c]) ?? Oe, [c]), pe = l.useCallback(a || ((ze) => ze), [a]);
@@ -28374,7 +28374,7 @@ html body {
       G === ze && (Oe === void 0 || Oe === X) || (W(ze), Ge || (B(ze < r.length - 1), R?.(ze)), Oe !== void 0 && K(Oe));
     }
     function ce(ze, Oe) {
-      _(Oe.clientWidth);
+      N(Oe.clientWidth);
     }
     function Z(ze, Oe) {
       A((Ge) => {
@@ -28564,7 +28564,7 @@ html body {
     } = Ol(), I = `${r}-selection-item`;
     let D = s;
     !v && c === "multiple" && b !== !1 && (D = "");
-    const _ = p && D || "", P = p && !m, T = f ?? "×", A = C ?? ((ee) => `+ ${ee.length} ...`), z = S, O = (ee) => {
+    const N = p && D || "", P = p && !m, T = f ?? "×", A = C ?? ((ee) => `+ ${ee.length} ...`), z = S, O = (ee) => {
       y(ee);
     }, L = (ee) => {
       u?.(ee);
@@ -28625,7 +28625,7 @@ html body {
       prefixCls: `${r}-content`,
       className: $?.content,
       style: M?.content,
-      prefix: !a.length && !_ && /* @__PURE__ */ l.createElement(Uj, null),
+      prefix: !a.length && !N && /* @__PURE__ */ l.createElement(Uj, null),
       data: a,
       renderItem: H,
       renderRest: V,
@@ -28634,7 +28634,7 @@ html body {
         disabled: m,
         readOnly: !P
       }, t, {
-        value: _ || "",
+        value: N || "",
         syncWidth: !0
       })),
       itemKey: PX,
@@ -28742,7 +28742,7 @@ html body {
       // Events
       onMouseDown: I,
       onClearMouseDown: D,
-      onInputKeyDown: _,
+      onInputKeyDown: N,
       onSelectorRemove: P,
       // Token handling
       tokenWithEnter: T,
@@ -28761,7 +28761,7 @@ html body {
       const {
         which: Y
       } = ie, q = K.current instanceof HTMLTextAreaElement;
-      if (!q && O && (Y === vt.UP || Y === vt.DOWN) && ie.preventDefault(), _ && _(ie), q && !O && ~[vt.UP, vt.DOWN, vt.LEFT, vt.RIGHT].indexOf(Y))
+      if (!q && O && (Y === vt.UP || Y === vt.DOWN) && ie.preventDefault(), N && N(ie), q && !O && ~[vt.UP, vt.DOWN, vt.LEFT, vt.RIGHT].indexOf(Y))
         return;
       !(ie.ctrlKey || ie.altKey || ie.metaKey) && _X(Y) && L(!0);
     });
@@ -28891,7 +28891,7 @@ html body {
       loading: I,
       // Customize Input
       getInputElement: D,
-      getRawInputElement: _,
+      getRawInputElement: N,
       // Open
       open: P,
       defaultOpen: T,
@@ -28943,7 +28943,7 @@ html body {
       scrollTo: (pt) => Ee.current?.scrollTo(pt),
       nativeElement: Sa(ke.current)
     }));
-    const We = zX(Me, D, _), it = l.useMemo(() => {
+    const We = zX(Me, D, N), it = l.useMemo(() => {
       if ($ !== "combobox")
         return F;
       const pt = v[0]?.value;
@@ -29306,10 +29306,10 @@ html body {
         deltaY: M,
         shiftKey: I
       } = R;
-      let D = $, _ = M;
-      (b.current === "sx" || !b.current && I && M && !$) && (D = M, _ = 0, b.current = "sx");
-      const P = Math.abs(D), T = Math.abs(_);
-      b.current === null && (b.current = s && P > T ? "x" : "y"), b.current === "y" ? v(R, _) : y(R, D);
+      let D = $, N = M;
+      (b.current === "sx" || !b.current && I && M && !$) && (D = M, N = 0, b.current = "sx");
+      const P = Math.abs(D), T = Math.abs(N);
+      b.current === null && (b.current = s && P > T ? "x" : "y"), b.current === "y" ? v(R, N) : y(R, D);
     }
     function E(R) {
       e && (p.current = R.detail === m.current);
@@ -29509,13 +29509,13 @@ html body {
         }), R = e.current.clientHeight;
         let $ = S < 0, M = v, I = null;
         if (R && S >= 0) {
-          let D = 0, _ = 0, P = 0;
+          let D = 0, N = 0, P = 0;
           const T = Math.min(t.length - 1, S);
           for (let z = 0; z <= T; z += 1) {
             const O = a(t[z]);
-            _ = D;
+            N = D;
             const L = n.get(O);
-            P = _ + (L === void 0 ? r : L), D = P;
+            P = N + (L === void 0 ? r : L), D = P;
           }
           let A = C === "top" ? E : R - E;
           for (let z = T; z >= 0; z -= 1) {
@@ -29529,7 +29529,7 @@ html body {
           }
           switch (C) {
             case "top":
-              I = _ - E;
+              I = N - E;
               break;
             case "bottom":
               I = P - R + E;
@@ -29538,7 +29538,7 @@ html body {
               const {
                 scrollTop: z
               } = e.current, O = z + R;
-              _ < z ? M = "top" : P > O && (M = "bottom");
+              N < z ? M = "top" : P > O && (M = "bottom");
             }
           }
           I !== null && u(I), I !== p.lastTop && ($ = !0);
@@ -29601,11 +29601,11 @@ html body {
       style: v,
       thumbStyle: y,
       showScrollBar: b
-    } = e, [S, C] = l.useState(!1), [E, R] = l.useState(null), [$, M] = l.useState(null), I = !r, D = l.useRef(null), _ = l.useRef(null), [P, T] = l.useState(b), A = l.useRef(void 0), z = () => {
+    } = e, [S, C] = l.useState(!1), [E, R] = l.useState(null), [$, M] = l.useState(null), I = !r, D = l.useRef(null), N = l.useRef(null), [P, T] = l.useState(b), A = l.useRef(void 0), z = () => {
       b === !0 || b === !1 || (clearTimeout(A.current), T(!0), A.current = setTimeout(() => {
         T(!1);
       }, 3e3));
-    }, O = s - g || 0, L = g - p || 0, F = l.useMemo(() => a === 0 || O === 0 ? 0 : a / O * L, [a, O, L]), U = (B) => !!B && _.current?.contains(B), H = (B) => {
+    }, O = s - g || 0, L = g - p || 0, F = l.useMemo(() => a === 0 || O === 0 ? 0 : a / O * L, [a, O, L]), U = (B) => !!B && N.current?.contains(B), H = (B) => {
       const J = D.current;
       if (!J)
         return;
@@ -29644,7 +29644,7 @@ html body {
     l.useEffect(() => {
       const B = (le) => {
         le.preventDefault();
-      }, J = D.current, re = _.current;
+      }, J = D.current, re = N.current;
       return J.addEventListener("touchstart", B, {
         passive: !1
       }), re.addEventListener("touchstart", X, {
@@ -29738,7 +29738,7 @@ html body {
       onMouseDown: V,
       onMouseMove: z
     }, /* @__PURE__ */ l.createElement("div", {
-      ref: _,
+      ref: N,
       className: ne(`${W}-thumb`, {
         [`${W}-thumb-moving`]: S
       }),
@@ -29790,14 +29790,14 @@ html body {
       styles: M,
       showScrollBar: I = "optional",
       ...D
-    } = e, _ = l.useCallback(($e) => typeof p == "function" ? p($e) : $e?.[p], [p]), [P, T, A, z] = HX(_), O = !!(g !== !1 && a && s), L = l.useMemo(() => Object.values(A.maps).reduce(($e, Re) => $e + Re, 0), [A.id, A.maps]), F = O && f && (Math.max(s * f.length, L) > a || !!y), U = v === "rtl", H = ne(n, {
+    } = e, N = l.useCallback(($e) => typeof p == "function" ? p($e) : $e?.[p], [p]), [P, T, A, z] = HX(N), O = !!(g !== !1 && a && s), L = l.useMemo(() => Object.values(A.maps).reduce(($e, Re) => $e + Re, 0), [A.id, A.maps]), F = O && f && (Math.max(s * f.length, L) > a || !!y), U = v === "rtl", H = ne(n, {
       [`${n}-rtl`]: U
     }, r), V = f || XX, ee = l.useRef(null), X = l.useRef(null), K = l.useRef(null), [G, W] = l.useState(0), [Q, k] = l.useState(0), [B, J] = l.useState(!1), re = () => {
       J(!0);
     }, le = () => {
       J(!1);
     }, ie = {
-      getKey: _
+      getKey: N
     };
     function Y($e) {
       W((Re) => {
@@ -29810,7 +29810,7 @@ html body {
     const q = l.useRef({
       start: 0,
       end: V.length
-    }), te = l.useRef(void 0), [de] = kX(V, _);
+    }), te = l.useRef(void 0), [de] = kX(V, N);
     te.current = de;
     const {
       scrollHeight: fe,
@@ -29835,7 +29835,7 @@ html body {
       let $e = 0, Re, Fe, Ne;
       const Ke = V.length;
       for (let tt = 0; tt < Ke; tt += 1) {
-        const st = V[tt], xt = _(st), zt = A.get(xt), Gt = $e + (zt === void 0 ? s : zt);
+        const st = V[tt], xt = N(st), zt = A.get(xt), Gt = $e + (zt === void 0 ? s : zt);
         Gt >= G && Re === void 0 && (Re = tt, Fe = $e), Gt > G + a && Ne === void 0 && (Ne = tt), $e = Gt;
       }
       return Re === void 0 && (Re = 0, Fe = 0, Ne = Math.ceil(a / s)), Ne === void 0 && (Ne = V.length - 1), Ne = Math.min(Ne + 1, V.length - 1), {
@@ -29849,7 +29849,7 @@ html body {
       const $e = A.getRecord();
       if ($e.size === 1) {
         const Re = Array.from($e.keys())[0], Fe = $e.get(Re), Ne = V[pe];
-        if (Ne && Fe === void 0 && _(Ne) === Re) {
+        if (Ne && Fe === void 0 && N(Ne) === Re) {
           const st = A.get(Re) - s;
           Y((xt) => xt + st);
         }
@@ -29941,7 +29941,7 @@ html body {
     }, [Z.width, y]);
     const St = () => {
       Me.current?.delayHidden(), ve.current?.delayHidden();
-    }, ft = FX(V, _, A, s), mt = KX(ee, V, A, s, _, ft, () => T(!0), Y, St);
+    }, ft = FX(V, N, A, s), mt = KX(ee, V, A, s, N, ft, () => T(!0), Y, St);
     l.useImperativeHandle(t, () => ({
       nativeElement: K.current,
       getScrollInfo: Ge,
@@ -30077,7 +30077,7 @@ html body {
       fieldNames: M,
       virtual: I,
       direction: D,
-      listHeight: _,
+      listHeight: N,
       listItemHeight: P,
       optionRender: T,
       classNames: A,
@@ -30219,7 +30219,7 @@ html body {
       itemKey: "key",
       ref: F,
       data: L,
-      height: _,
+      height: N,
       itemHeight: P,
       fullHeight: !1,
       onMouseDown: H,
@@ -30457,7 +30457,7 @@ html body {
       optionRender: M,
       children: I,
       defaultActiveFirstOption: D,
-      menuItemSelectedIcon: _,
+      menuItemSelectedIcon: N,
       virtual: P,
       direction: T,
       listHeight: A = 200,
@@ -30636,7 +30636,7 @@ html body {
       onActiveValue: Be,
       defaultActiveFirstOption: ft,
       onSelect: Te,
-      menuItemSelectedIcon: _,
+      menuItemSelectedIcon: N,
       rawValues: it,
       fieldNames: pe,
       virtual: P !== !1 && E !== !1,
@@ -30648,7 +30648,7 @@ html body {
       optionRender: M,
       classNames: ee,
       styles: X
-    }), [V, me, ye, Be, ft, Te, _, it, pe, P, E, T, A, z, de, M, ee, X]);
+    }), [V, me, ye, Be, ft, Te, N, it, pe, P, E, T, A, z, de, M, ee, X]);
     return /* @__PURE__ */ l.createElement(mR.Provider, {
       value: Fe
     }, /* @__PURE__ */ l.createElement(AX, H$({}, K, {
@@ -30870,7 +30870,7 @@ html body {
       classNames: E,
       styles: R,
       image: $
-    } = qt("empty"), M = y("empty", a), [I, D] = fQ(M), _ = yt(C), P = yt(m), [T, A] = Jt([E, p], [R, _, g, P], {
+    } = qt("empty"), M = y("empty", a), [I, D] = fQ(M), N = yt(C), P = yt(m), [T, A] = Jt([E, p], [R, N, g, P], {
       props: e
     }), [z] = wo("Empty"), O = typeof c < "u" ? c : z?.description, L = typeof O == "string" ? O : "empty", F = s ?? $ ?? Zj;
     let U = null;
@@ -31694,7 +31694,7 @@ html body {
       colorPrimaryHover: $,
       colorPrimary: M,
       controlOutline: I
-    } = e, D = f * 2, _ = r * 2, P = Math.min(s - D, s - _), T = Math.min(c - D, c - _), A = Math.min(u - D, u - _), z = Math.floor(f / 2);
+    } = e, D = f * 2, N = r * 2, P = Math.min(s - D, s - N), T = Math.min(c - D, c - N), A = Math.min(u - D, u - N), z = Math.floor(f / 2);
     return {
       lineWidthFocus: a === 0 ? 0 : r,
       INTERNAL_FIXED_ITEM_MARGIN: z,
@@ -31938,12 +31938,12 @@ html body {
         open: P,
         showSearch: T
       }) => M(P && T ? Tr(g, v, /* @__PURE__ */ l.createElement(SR, null)) : Tr(t, /* @__PURE__ */ l.createElement(yR, null)));
-      const D = Tr(a, s, y ? /* @__PURE__ */ l.createElement(bR, null) : null), _ = Tr(c, u, /* @__PURE__ */ l.createElement(Ps, null));
+      const D = Tr(a, s, y ? /* @__PURE__ */ l.createElement(bR, null) : null), N = Tr(c, u, /* @__PURE__ */ l.createElement(Ps, null));
       return {
         clearIcon: $,
         suffixIcon: I,
         itemIcon: D,
-        removeIcon: _
+        removeIcon: N
       };
     }, [e, t, n, r, a, s, c, u, f, m, p, g, v, y, b, S, C, E]);
   }
@@ -31981,7 +31981,7 @@ html body {
       style: M,
       allowClear: I,
       variant: D,
-      popupStyle: _,
+      popupStyle: N,
       dropdownStyle: P,
       transitionName: T,
       tagRender: A,
@@ -32076,7 +32076,7 @@ html body {
       [`${ve}-dropdown-${ke}`]: ke === "rtl"
     }, s, ze, We, it), un = {
       ...Bt.popup?.root,
-      ..._ ?? P
+      ...N ?? P
     }, Nn = ne({
       [`${ve}-lg`]: Ne === "large",
       [`${ve}-sm`]: Ne === "small",
@@ -32339,8 +32339,8 @@ html body {
       classNames: $,
       styles: M,
       ...I
-    } = e, D = Ya(E), _ = l.useRef(null);
-    l.useImperativeHandle(t, () => _.current);
+    } = e, D = Ya(E), N = l.useRef(null);
+    l.useImperativeHandle(t, () => N.current);
     const P = {
       ...I
     };
@@ -32379,7 +32379,7 @@ html body {
       action: n,
       builtinPlacements: LQ,
       popupPlacement: p,
-      ref: _,
+      ref: N,
       popupAlign: g,
       getPopupContainer: b,
       onOpenChange: u,
@@ -32973,7 +32973,7 @@ html body {
       mouseLeaveDelay: M,
       rootClassName: I,
       styles: D,
-      classNames: _,
+      classNames: N,
       onOpenChange: P,
       // Legacy
       overlayInnerStyle: T,
@@ -33024,7 +33024,7 @@ html body {
       destroyOnHidden: de,
       mouseEnterDelay: re,
       mouseLeaveDelay: le
-    }, be = yt(K), Ee = yt(A), [Se, et] = Jt([G, _], [W, be, D, Ee], {
+    }, be = yt(K), Ee = yt(A), [Se, et] = Jt([G, N], [W, be, D, Ee], {
       props: ke
     }), We = H("tooltip", n), it = H();
     let ze = ce;
@@ -33321,11 +33321,11 @@ html body {
       style: M,
       classNames: I,
       styles: D,
-      arrow: _,
+      arrow: N,
       trigger: P,
       mouseEnterDelay: T,
       mouseLeaveDelay: A
-    } = qt("popover"), z = m ?? T ?? 0.1, O = p ?? A ?? 0.1, L = R("popover", n), [F, U] = sF(L), H = R(), V = ER(C, _), ee = u || P || "hover", X = {
+    } = qt("popover"), z = m ?? T ?? 0.1, O = p ?? A ?? 0.1, L = R("popover", n), [F, U] = sF(L), H = R(), V = ER(C, N), ee = u || P || "hover", X = {
       ...e,
       placement: c,
       trigger: ee,
@@ -33507,10 +33507,10 @@ html body {
       onVisibleChange: $,
       disabled: M,
       ...I
-    } = e, [D, _] = se.useState(), P = "visible" in e ? b : D, T = s ? `${r}-${s}` : a, A = se.useRef(null), z = se.useRef(null), O = se.useRef(null);
+    } = e, [D, N] = se.useState(), P = "visible" in e ? b : D, T = s ? `${r}-${s}` : a, A = se.useRef(null), z = se.useRef(null), O = se.useRef(null);
     se.useImperativeHandle(t, () => A.current);
     const L = (k) => {
-      _(k), $?.(k);
+      N(k), $?.(k);
     };
     aY({
       visible: P,
@@ -33523,7 +33523,7 @@ html body {
       const {
         onOverlayClick: B
       } = e;
-      _(!1), B && B(k);
+      N(!1), B && B(k);
     }, U = () => /* @__PURE__ */ se.createElement(iY, {
       ref: z,
       overlay: E,
@@ -33733,8 +33733,8 @@ html body {
           elements: E,
           key2element: R,
           element2key: $
-        } = C, M = R.get(t), I = fY(M, E), D = $.get(I), _ = uY(e, c(D, !0).length === 1, n, b);
-        if (!_ && b !== Md && b !== zd)
+        } = C, M = R.get(t), I = fY(M, E), D = $.get(I), N = uY(e, c(D, !0).length === 1, n, b);
+        if (!N && b !== Md && b !== zd)
           return;
         (nz.includes(b) || [Md, zd].includes(b)) && y.preventDefault();
         const P = (T) => {
@@ -33748,21 +33748,21 @@ html body {
             });
           }
         };
-        if ([Md, zd].includes(b) || _.sibling || !I) {
+        if ([Md, zd].includes(b) || N.sibling || !I) {
           let T;
           !I || e === "inline" ? T = a.current : T = dY(I);
           let A;
           const z = PR(T, E);
-          b === Md ? A = z[0] : b === zd ? A = z[z.length - 1] : A = rz(T, E, I, _.offset), P(A);
-        } else if (_.inlineTrigger)
+          b === Md ? A = z[0] : b === zd ? A = z[z.length - 1] : A = rz(T, E, I, N.offset), P(A);
+        } else if (N.inlineTrigger)
           f(D);
-        else if (_.offset > 0)
+        else if (N.offset > 0)
           f(D, !0), v(), p.current = Ft(() => {
             C = Gg(S, r);
             const T = I.getAttribute("aria-controls"), A = document.getElementById(T), z = rz(A, C.elements);
             P(z);
           }, 5);
-        else if (_.offset < 0) {
+        else if (N.offset < 0) {
           const T = c(D, !0), A = T[T.length - 2], z = R.get(A);
           f(A, !1), P(z);
         }
@@ -33927,7 +33927,7 @@ html body {
       // Icon
       itemIcon: D,
       // Select
-      selectedKeys: _,
+      selectedKeys: N,
       // Active
       onActive: P
     } = l.useContext($a), {
@@ -33951,7 +33951,7 @@ html body {
     }, V = u || D, {
       active: ee,
       ...X
-    } = yF(a, L, g, v), K = _.includes(a), G = SF(U.length), W = (re) => {
+    } = yF(a, L, g, v), K = N.includes(a), G = SF(U.length), W = (re) => {
       if (L)
         return;
       const le = H(re);
@@ -34168,7 +34168,7 @@ html body {
     } : {
       ...xY,
       ...b
-    }, _ = $Y[f], P = $F(f, R, $), T = l.useRef(P);
+    }, N = $Y[f], P = $F(f, R, $), T = l.useRef(P);
     f !== "inline" && (T.current = P);
     const A = {
       ...T.current,
@@ -34188,7 +34188,7 @@ html body {
       stretch: f === "horizontal" ? "minWidth" : null,
       getPopupContainer: p,
       builtinPlacements: D,
-      popupPlacement: _,
+      popupPlacement: N,
       popupVisible: M,
       popup: r,
       popupStyle: a,
@@ -34291,7 +34291,7 @@ html body {
       onMouseLeave: M,
       onTitleClick: I,
       onTitleMouseEnter: D,
-      onTitleMouseLeave: _,
+      onTitleMouseLeave: N,
       popupRender: P,
       ...T
     } = e, A = pF(f), {
@@ -34320,7 +34320,7 @@ html body {
     } = l.useContext(vF), J = Cu(), re = `${z}-submenu`, le = F || p, ie = l.useRef(null), Y = l.useRef(null), q = y ?? ee, te = b ?? X, de = L.includes(f), fe = !U && de, pe = B(V, f), {
       active: oe,
       ...ce
-    } = yF(f, le, D, _), [Z, me] = l.useState(!1), xe = (he) => {
+    } = yF(f, le, D, N), [Z, me] = l.useState(!1), xe = (he) => {
       le || me(he);
     }, Me = (he) => {
       xe(!0), $?.({
@@ -34624,7 +34624,7 @@ html body {
       openKeys: I,
       // Active
       activeKey: D,
-      defaultActiveFirst: _,
+      defaultActiveFirst: N,
       // Selection
       selectable: P = !0,
       multiple: T = !1,
@@ -34692,7 +34692,7 @@ html body {
     l.useEffect(() => {
       nt(Qe ? Js : fe.slice(he + 1).map((ht) => ht.key));
     }, [he, Qe]);
-    const [He, $e] = Rn(D || _ && fe[0]?.key, D), Re = Qf((ht) => {
+    const [He, $e] = Rn(D || N && fe[0]?.key, D), Re = Qf((ht) => {
       $e(ht);
     }), Fe = Qf(() => {
       $e(void 0);
@@ -35110,7 +35110,7 @@ html body {
       ...$
     } = e, {
       siderHook: M
-    } = l.useContext(wF), [I, D] = Rn(c, e.collapsed), [_, P] = l.useState(!1), T = (te, de) => {
+    } = l.useContext(wF), [I, D] = Rn(c, e.collapsed), [N, P] = l.useState(!1), T = (te, de) => {
       D(te), S?.(te, de);
     }, A = {
       ...e,
@@ -35172,7 +35172,7 @@ html body {
     }, Y = ne(U, `${U}-${u}`, {
       [`${U}-collapsed`]: !!I,
       [`${U}-has-trigger`]: m && a !== null && !Q,
-      [`${U}-below`]: !!_,
+      [`${U}-below`]: !!N,
       [`${U}-zero-width`]: Number.parseFloat(W) === 0
     }, r, z.root, H, V), q = l.useMemo(() => ({
       siderCollapsed: I
@@ -35190,7 +35190,7 @@ html body {
     }, /* @__PURE__ */ l.createElement("div", {
       className: ne(`${U}-children`, z.body),
       style: O.body
-    }, s), m || _ && Q ? le : null));
+    }, s), m || N && Q ? le : null));
   });
   var LY = { icon: { tag: "svg", attrs: { viewBox: "64 64 896 896", focusable: "false" }, children: [{ tag: "path", attrs: { d: "M176 511a56 56 0 10112 0 56 56 0 10-112 0zm280 0a56 56 0 10112 0 56 56 0 10-112 0zm280 0a56 56 0 10112 0 56 56 0 10-112 0z" } }] }, name: "ellipsis", theme: "outlined" };
   function aw() {
@@ -35263,13 +35263,13 @@ html body {
     };
     let M = a;
     typeof a > "u" ? M = f ? n : "" : a === !1 && (M = "");
-    const I = g === !1 ? void 0 : g, D = I && I.title !== void 0 ? I.title : M, _ = {
+    const I = g === !1 ? void 0 : g, D = I && I.title !== void 0 ? I.title : M, N = {
       ...I ?? null,
       title: D
     };
-    C ? (_.open = I?.open ?? E, _.onOpenChange = (A) => {
+    C ? (N.open = I?.open ?? E, N.onOpenChange = (A) => {
       R(A), I?.onOpenChange?.(A);
-    }) : (_.title = null, _.open = !1);
+    }) : (N.title = null, N.open = !1);
     const P = xr(n).length;
     let T = /* @__PURE__ */ l.createElement(Jm, {
       ...sn(e, ["title", "icon", "danger"]),
@@ -35302,7 +35302,7 @@ html body {
         return O(U);
       } : O(I?.classNames);
       T = /* @__PURE__ */ l.createElement(na, {
-        ..._,
+        ...N,
         placement: A,
         classNames: L
       }, T);
@@ -35422,7 +35422,7 @@ html body {
       itemDisabledColor: I,
       // Danger
       dangerItemColor: D,
-      dangerItemHoverColor: _,
+      dangerItemHoverColor: N,
       dangerItemSelectedColor: P,
       dangerItemActiveBg: T,
       dangerItemSelectedBg: A,
@@ -35498,7 +35498,7 @@ html body {
           color: D,
           [`&${n}-item:hover`]: {
             [`&:not(${n}-item-selected):not(${n}-submenu-selected)`]: {
-              color: _
+              color: N
             }
           },
           [`&${n}-item:active`]: {
@@ -36176,7 +36176,7 @@ html body {
       controlHeightSM: M,
       fontSizeLG: I,
       colorTextLightSolid: D,
-      colorErrorHover: _
+      colorErrorHover: N
     } = e, P = e.activeBarWidth ?? 0, T = e.activeBarBorderWidth ?? p, A = e.itemMarginInline ?? e.marginXXS, z = new En(D).setA(0.65).toRgbString();
     return {
       dropdownWidth: 160,
@@ -36258,7 +36258,7 @@ html body {
       darkItemHoverBg: "transparent",
       darkGroupTitleColor: z,
       darkItemHoverColor: D,
-      darkDangerItemHoverColor: _,
+      darkDangerItemHoverColor: N,
       darkDangerItemSelectedColor: D,
       darkDangerItemActiveBg: n,
       // internal
@@ -36284,7 +36284,7 @@ html body {
       darkDangerItemSelectedColor: M,
       darkDangerItemActiveBg: I,
       popupBg: D,
-      darkPopupBg: _
+      darkPopupBg: N
     } = a, P = a.calc(u).div(7).mul(5).equal(), T = Kt(a, {
       menuArrowSize: P,
       menuHorizontalHeight: a.calc(c).mul(1.15).equal(),
@@ -36299,7 +36299,7 @@ html body {
       itemSelectedColor: v,
       subMenuItemSelectedColor: v,
       itemBg: p,
-      popupBg: _,
+      popupBg: N,
       subMenuItemBg: g,
       itemActiveBg: "transparent",
       itemSelectedBg: y,
@@ -36434,7 +36434,7 @@ html body {
       menu: I
     } = l.useContext(Pt), {
       getPrefixCls: D,
-      getPopupContainer: _,
+      getPopupContainer: N,
       direction: P,
       className: T,
       style: A,
@@ -36497,7 +36497,7 @@ html body {
     }, /* @__PURE__ */ l.createElement(Yg.Provider, {
       value: q
     }, /* @__PURE__ */ l.createElement($u, {
-      getPopupContainer: _,
+      getPopupContainer: N,
       overflowedIndicator: /* @__PURE__ */ l.createElement(jv, null),
       overflowedIndicatorPopupClassName: ne(B, `${B}-${u}`, E),
       classNames: {
@@ -36894,7 +36894,7 @@ html body {
       transitionName: M,
       classNames: I,
       styles: D,
-      destroyPopupOnHide: _,
+      destroyPopupOnHide: N,
       destroyOnHidden: P
     } = e, {
       getPrefixCls: T,
@@ -36996,7 +36996,7 @@ html body {
         ...G,
         zIndex: ve
       },
-      autoDestroy: P ?? _
+      autoDestroy: P ?? N
     }, te);
     return ve && (ke = /* @__PURE__ */ l.createElement(wv.Provider, {
       value: qe
@@ -37381,7 +37381,7 @@ html body {
       colorTextDisabled: M,
       colorBgContainerDisabled: I,
       buttonCheckedBgDisabled: D,
-      buttonCheckedColorDisabled: _,
+      buttonCheckedColorDisabled: N,
       colorPrimary: P,
       colorPrimaryHover: T,
       colorPrimaryActive: A,
@@ -37574,7 +37574,7 @@ html body {
           }
         },
         [`&-disabled${r}-button-wrapper-checked`]: {
-          color: _,
+          color: N,
           backgroundColor: D,
           borderColor: c,
           boxShadow: "none"
@@ -37659,9 +37659,9 @@ html body {
       classNames: M,
       styles: I,
       checked: D,
-      ..._
+      ...N
     } = e, P = a("radio", b), T = (n?.optionType || r) === "button", A = T ? `${P}-button` : P, z = rr(P), [O, L] = FF(P, z), F = {
-      ..._
+      ...N
     }, U = l.useContext(kr), H = "checked" in e;
     let V = D;
     n && (F.name = n.name, F.onChange = y, V = e.value === n.value, F.disabled = F.disabled ?? n.disabled), (H || n) && (F.checked = V), F.disabled = F.disabled ?? U;
@@ -37726,7 +37726,7 @@ html body {
       block: M = !1,
       onChange: I,
       onMouseEnter: D,
-      onMouseLeave: _,
+      onMouseLeave: N,
       onFocus: P,
       onBlur: T,
       orientation: A,
@@ -37780,7 +37780,7 @@ html body {
       }),
       style: b,
       onMouseEnter: D,
-      onMouseLeave: _,
+      onMouseLeave: N,
       onFocus: P,
       onBlur: T,
       id: S,
@@ -37836,8 +37836,8 @@ html body {
       colorBgContainer: M,
       inputFontSize: I,
       inputFontSizeLG: D,
-      inputFontSizeSM: _
-    } = e, P = I || n, T = _ || P, A = D || f, z = Math.round((t - P * r) / 2 * 10) / 10 - a, O = Math.round((c - T * r) / 2 * 10) / 10 - a, L = Math.ceil((u - A * m) / 2 * 10) / 10 - a;
+      inputFontSizeSM: N
+    } = e, P = I || n, T = N || P, A = D || f, z = Math.round((t - P * r) / 2 * 10) / 10 - a, O = Math.round((c - T * r) / 2 * 10) / 10 - a, L = Math.ceil((u - A * m) / 2 * 10) / 10 - a;
     return {
       lineWidthFocus: s === 0 ? 0 : a,
       paddingBlock: Math.max(z, 0),
@@ -39018,7 +39018,7 @@ html body {
       popupStyle: E,
       classNames: R,
       styles: $
-    } = e, [M, I] = l.useState(!1), [D, _] = l.useState(null), {
+    } = e, [M, I] = l.useState(!1), [D, N] = l.useState(null), {
       icon: P = "More",
       popupRender: T
     } = u, A = `${r}-more-popup`, z = `${n}-dropdown`, O = D !== null ? `${A}-${D}` : null, L = s?.dropdownAriaLabel;
@@ -39078,7 +39078,7 @@ html body {
         k = (k + W + B) % B;
         const re = Q[k];
         if (!re.disabled) {
-          _(re.key);
+          N(re.key);
           return;
         }
       }
@@ -39111,7 +39111,7 @@ html body {
       const W = document.getElementById(O);
       W?.scrollIntoView && W.scrollIntoView(!1);
     }, [O, D]), l.useEffect(() => {
-      M || _(null);
+      M || N(null);
     }, [M]);
     const X = {
       marginInlineStart: g
@@ -39178,7 +39178,7 @@ html body {
       styles: M,
       classNames: I,
       tabCount: D,
-      currentPosition: _
+      currentPosition: N
     } = e, P = `${t}-tab`, T = OR(p, f, y, u);
     function A(U) {
       u || b(U);
@@ -39230,7 +39230,7 @@ html body {
         overflow: "hidden",
         opacity: 0
       }
-    }, `Tab ${_} of ${D}`), m && /* @__PURE__ */ l.createElement("span", {
+    }, `Tab ${N} of ${D}`), m && /* @__PURE__ */ l.createElement("span", {
       className: `${P}-icon`
     }, m), c && O), T && /* @__PURE__ */ l.createElement("button", {
       type: "button",
@@ -39303,7 +39303,7 @@ html body {
     } = e, {
       prefixCls: $,
       tabs: M
-    } = l.useContext(DR), I = l.useRef(null), D = l.useRef(null), _ = l.useRef(null), P = l.useRef(null), T = l.useRef(null), A = l.useRef(null), z = l.useRef(null), O = g === "top" || g === "bottom", [L, F] = Sz(0, (Re, Fe) => {
+    } = l.useContext(DR), I = l.useRef(null), D = l.useRef(null), N = l.useRef(null), P = l.useRef(null), T = l.useRef(null), A = l.useRef(null), z = l.useRef(null), O = g === "top" || g === "bottom", [L, F] = Sz(0, (Re, Fe) => {
       O && S && S({
         direction: Re > Fe ? "left" : "right"
       });
@@ -39489,7 +39489,7 @@ html body {
       ye();
     }, [M.map((Re) => Re.key).join("_")]);
     const Qe = JF(() => {
-      const Re = Uc(I), Fe = Uc(D), Ne = Uc(_);
+      const Re = Uc(I), Fe = Uc(D), Ne = Uc(N);
       ee([Re[0] - Fe[0] - Ne[0], Re[1] - Fe[1] - Ne[1]]);
       const Ke = Uc(z);
       W(Ke);
@@ -39576,7 +39576,7 @@ html body {
       popupStyle: R?.popup,
       tabMoving: !!me
     })), /* @__PURE__ */ l.createElement(Ez, {
-      ref: _,
+      ref: N,
       position: "right",
       extra: f,
       prefixCls: $
@@ -39653,7 +39653,7 @@ html body {
         removeOnLeave: !!(s ?? M),
         leavedClassName: `${b}-hidden`
       }, r.tabPaneMotion), ({
-        style: _,
+        style: N,
         className: P
       }, T) => /* @__PURE__ */ l.createElement(DZ, ev({}, I, {
         prefixCls: b,
@@ -39664,7 +39664,7 @@ html body {
         style: {
           ...f,
           ...R,
-          ..._
+          ...N
         },
         className: ne(m, $, P),
         ref: T
@@ -39721,7 +39721,7 @@ html body {
       onTabClick: M,
       onTabScroll: I,
       getPopupContainer: D,
-      popupClassName: _,
+      popupClassName: N,
       indicator: P,
       classNames: T,
       styles: A,
@@ -39762,7 +39762,7 @@ html body {
       extra: b,
       style: y,
       getPopupContainer: D,
-      popupClassName: ne(_, T?.popup),
+      popupClassName: ne(N, T?.popup),
       indicator: P,
       styles: A,
       classNames: T
@@ -40796,7 +40796,7 @@ html body {
       classNames: M,
       styles: I,
       destroyInactiveTabPane: D,
-      destroyOnHidden: _,
+      destroyOnHidden: N,
       tabPlacement: P,
       tabPosition: T,
       ...A
@@ -40885,7 +40885,7 @@ html body {
       prefixCls: K,
       animated: ie,
       indicator: Y,
-      destroyOnHidden: _ ?? D,
+      destroyOnHidden: N ?? D,
       tabPosition: q
     });
   }), tp = eJ;
@@ -41291,7 +41291,7 @@ html body {
       defaultActiveTabKey: M,
       tabBarExtraContent: I,
       hoverable: D,
-      tabProps: _ = {},
+      tabProps: N = {},
       classNames: P,
       styles: T,
       ...A
@@ -41318,7 +41318,7 @@ html body {
       },
       title: !1
     }, R), q = $ !== void 0, te = {
-      ..._,
+      ...N,
       [q ? "activeKey" : "defaultActiveKey"]: q ? $ : M,
       tabBarExtraContent: I
     };
@@ -41404,7 +41404,7 @@ html body {
       styles: S
     } = qt("cardMeta"), E = `${g("card", n)}-meta`, R = yt(y), $ = yt(u), [M, I] = Jt([b, f], [S, R, m, $], {
       props: e
-    }), D = ne(E, r, v, M.root), _ = {
+    }), D = ne(E, r, v, M.root), N = {
       ...I.root
     }, P = ne(`${E}-avatar`, M.avatar), T = ne(`${E}-title`, M.title), A = ne(`${E}-description`, M.description), z = ne(`${E}-section`, M.section), O = tn(a) ? /* @__PURE__ */ l.createElement("div", {
       className: P,
@@ -41425,7 +41425,7 @@ html body {
       ref: H,
       ...p,
       className: D,
-      style: _
+      style: N
     }, O, U);
   }), Ot = fJ;
   Ot.Grid = nB;
@@ -41759,54 +41759,54 @@ html body {
       selectable: $,
       treeId: M,
       ...I
-    } = e, D = o2(M, t), _ = se.useContext(LR), {
+    } = e, D = o2(M, t), N = se.useContext(LR), {
       classNames: P,
       styles: T
-    } = _ || {}, A = se.useContext(gJ), z = se.useRef(null), [O, L] = se.useState(!1), F = !!(_.disabled || e.disabled || A.nodeDisabled?.(E)), U = se.useMemo(() => !_.checkable || e.checkable === !1 ? !1 : _.checkable, [_.checkable, e.checkable]), H = (Se) => {
-      F || _.onNodeSelect(Se, vr(e));
+    } = N || {}, A = se.useContext(gJ), z = se.useRef(null), [O, L] = se.useState(!1), F = !!(N.disabled || e.disabled || A.nodeDisabled?.(E)), U = se.useMemo(() => !N.checkable || e.checkable === !1 ? !1 : N.checkable, [N.checkable, e.checkable]), H = (Se) => {
+      F || N.onNodeSelect(Se, vr(e));
     }, V = (Se) => {
-      F || !U || e.disableCheckbox || _.onNodeCheck(Se, vr(e), !v);
-    }, ee = se.useMemo(() => typeof $ == "boolean" ? $ : _.selectable, [$, _.selectable]), X = (Se) => {
-      _.onNodeClick(Se, vr(e)), ee ? H(Se) : V(Se);
+      F || !U || e.disableCheckbox || N.onNodeCheck(Se, vr(e), !v);
+    }, ee = se.useMemo(() => typeof $ == "boolean" ? $ : N.selectable, [$, N.selectable]), X = (Se) => {
+      N.onNodeClick(Se, vr(e)), ee ? H(Se) : V(Se);
     }, K = (Se) => {
-      _.onNodeDoubleClick(Se, vr(e));
+      N.onNodeDoubleClick(Se, vr(e));
     }, G = (Se) => {
-      _.onNodeMouseEnter(Se, vr(e));
+      N.onNodeMouseEnter(Se, vr(e));
     }, W = (Se) => {
-      _.onNodeMouseLeave(Se, vr(e));
+      N.onNodeMouseLeave(Se, vr(e));
     }, Q = (Se) => {
-      _.onNodeContextMenu(Se, vr(e));
-    }, k = se.useMemo(() => !!(_.draggable && (!_.draggable.nodeDraggable || _.draggable.nodeDraggable(E))), [_.draggable, E]), B = (Se) => {
-      Se.stopPropagation(), L(!0), _.onNodeDragStart(Se, e);
+      N.onNodeContextMenu(Se, vr(e));
+    }, k = se.useMemo(() => !!(N.draggable && (!N.draggable.nodeDraggable || N.draggable.nodeDraggable(E))), [N.draggable, E]), B = (Se) => {
+      Se.stopPropagation(), L(!0), N.onNodeDragStart(Se, e);
       try {
         Se.dataTransfer.setData("text/plain", "");
       } catch {
       }
     }, J = (Se) => {
-      Se.preventDefault(), Se.stopPropagation(), _.onNodeDragEnter(Se, e);
+      Se.preventDefault(), Se.stopPropagation(), N.onNodeDragEnter(Se, e);
     }, re = (Se) => {
-      Se.preventDefault(), Se.stopPropagation(), _.onNodeDragOver(Se, e);
+      Se.preventDefault(), Se.stopPropagation(), N.onNodeDragOver(Se, e);
     }, le = (Se) => {
-      Se.stopPropagation(), _.onNodeDragLeave(Se, e);
+      Se.stopPropagation(), N.onNodeDragLeave(Se, e);
     }, ie = (Se) => {
-      Se.stopPropagation(), L(!1), _.onNodeDragEnd(Se, e);
+      Se.stopPropagation(), L(!1), N.onNodeDragEnd(Se, e);
     }, Y = (Se) => {
-      Se.preventDefault(), Se.stopPropagation(), L(!1), _.onNodeDrop(Se, e);
+      Se.preventDefault(), Se.stopPropagation(), L(!1), N.onNodeDrop(Se, e);
     }, q = (Se) => {
-      b || _.onNodeExpand(Se, vr(e));
+      b || N.onNodeExpand(Se, vr(e));
     }, te = se.useMemo(() => {
       const {
         children: Se
-      } = to(_.keyEntities, t) || {};
+      } = to(N.keyEntities, t) || {};
       return !!(Se || []).length;
-    }, [_.keyEntities, t]), de = se.useMemo(() => aB(u, _.loadData, te, e.loaded), [u, _.loadData, te, e.loaded]);
+    }, [N.keyEntities, t]), de = se.useMemo(() => aB(u, N.loadData, te, e.loaded), [u, N.loadData, te, e.loaded]);
     se.useEffect(() => {
-      b || typeof _.loadData == "function" && p && !de && !e.loaded && _.onNodeLoad(vr(e));
-    }, [b, _.loadData, _.onNodeLoad, p, de, e]);
-    const fe = se.useMemo(() => _.draggable?.icon ? /* @__PURE__ */ se.createElement("span", {
-      className: `${_.prefixCls}-draggable-icon`
-    }, _.draggable.icon) : null, [_.draggable]), pe = (Se) => {
-      const et = e.switcherIcon || _.switcherIcon;
+      b || typeof N.loadData == "function" && p && !de && !e.loaded && N.onNodeLoad(vr(e));
+    }, [b, N.loadData, N.onNodeLoad, p, de, e]);
+    const fe = se.useMemo(() => N.draggable?.icon ? /* @__PURE__ */ se.createElement("span", {
+      className: `${N.prefixCls}-draggable-icon`
+    }, N.draggable.icon) : null, [N.draggable]), pe = (Se) => {
+      const et = e.switcherIcon || N.switcherIcon;
       return typeof et == "function" ? et({
         ...e,
         isLeaf: Se
@@ -41815,14 +41815,14 @@ html body {
       if (de) {
         const et = pe(!0);
         return et !== !1 ? /* @__PURE__ */ se.createElement("span", {
-          className: ne(`${_.prefixCls}-switcher`, `${_.prefixCls}-switcher-noop`, P?.itemSwitcher),
+          className: ne(`${N.prefixCls}-switcher`, `${N.prefixCls}-switcher-noop`, P?.itemSwitcher),
           style: T?.itemSwitcher
         }, et) : null;
       }
       const Se = pe(!1);
       return Se !== !1 ? /* @__PURE__ */ se.createElement("span", {
         onClick: q,
-        className: ne(`${_.prefixCls}-switcher`, `${_.prefixCls}-switcher_${p ? Tz : Nz}`, P?.itemSwitcher),
+        className: ne(`${N.prefixCls}-switcher`, `${N.prefixCls}-switcher_${p ? Tz : Nz}`, P?.itemSwitcher),
         style: T?.itemSwitcher
       }, Se) : null;
     }, ce = se.useMemo(() => {
@@ -41830,10 +41830,10 @@ html body {
         return null;
       const Se = typeof U != "boolean" ? U : null;
       return /* @__PURE__ */ se.createElement("span", {
-        className: ne(`${_.prefixCls}-checkbox`, {
-          [`${_.prefixCls}-checkbox-checked`]: v,
-          [`${_.prefixCls}-checkbox-indeterminate`]: !v && y,
-          [`${_.prefixCls}-checkbox-disabled`]: F || e.disableCheckbox
+        className: ne(`${N.prefixCls}-checkbox`, {
+          [`${N.prefixCls}-checkbox-checked`]: v,
+          [`${N.prefixCls}-checkbox-indeterminate`]: !v && y,
+          [`${N.prefixCls}-checkbox-disabled`]: F || e.disableCheckbox
         }),
         onClick: V,
         role: "checkbox",
@@ -41842,37 +41842,37 @@ html body {
         "aria-labelledby": D
       }, Se);
     }, [U, v, y, F, e.disableCheckbox, D]), Z = se.useMemo(() => de ? null : p ? Tz : Nz, [de, p]), me = se.useMemo(() => /* @__PURE__ */ se.createElement("span", {
-      className: ne(P?.itemIcon, `${_.prefixCls}-iconEle`, `${_.prefixCls}-icon__${Z || "docu"}`, {
-        [`${_.prefixCls}-icon_loading`]: b
+      className: ne(P?.itemIcon, `${N.prefixCls}-iconEle`, `${N.prefixCls}-icon__${Z || "docu"}`, {
+        [`${N.prefixCls}-icon_loading`]: b
       }),
       style: T?.itemIcon
-    }), [_.prefixCls, Z, b]), xe = se.useMemo(() => {
-      const Se = !!_.draggable;
-      return !e.disabled && Se && _.dragOverNodeKey === t ? _.dropIndicatorRender({
-        dropPosition: _.dropPosition,
-        dropLevelOffset: _.dropLevelOffset,
-        indent: _.indent,
-        prefixCls: _.prefixCls,
-        direction: _.direction
+    }), [N.prefixCls, Z, b]), xe = se.useMemo(() => {
+      const Se = !!N.draggable;
+      return !e.disabled && Se && N.dragOverNodeKey === t ? N.dropIndicatorRender({
+        dropPosition: N.dropPosition,
+        dropLevelOffset: N.dropLevelOffset,
+        indent: N.indent,
+        prefixCls: N.prefixCls,
+        direction: N.direction
       }) : null;
-    }, [_.dropPosition, _.dropLevelOffset, _.indent, _.prefixCls, _.direction, _.draggable, _.dragOverNodeKey, _.dropIndicatorRender]), Me = se.useMemo(() => {
+    }, [N.dropPosition, N.dropLevelOffset, N.indent, N.prefixCls, N.direction, N.draggable, N.dragOverNodeKey, N.dropIndicatorRender]), Me = se.useMemo(() => {
       const {
         title: Se = CJ
-      } = e, et = `${_.prefixCls}-node-content-wrapper`;
+      } = e, et = `${N.prefixCls}-node-content-wrapper`;
       let We;
-      if (_.showIcon) {
-        const ze = e.icon || _.icon;
+      if (N.showIcon) {
+        const ze = e.icon || N.icon;
         We = ze ? /* @__PURE__ */ se.createElement("span", {
-          className: ne(P?.itemIcon, `${_.prefixCls}-iconEle`, `${_.prefixCls}-icon__customize`),
+          className: ne(P?.itemIcon, `${N.prefixCls}-iconEle`, `${N.prefixCls}-icon__customize`),
           style: T?.itemIcon
         }, typeof ze == "function" ? ze(e) : ze) : me;
-      } else _.loadData && b && (We = me);
+      } else N.loadData && b && (We = me);
       let it;
-      return typeof Se == "function" ? it = Se(E) : _.titleRender ? it = _.titleRender(E) : it = Se, /* @__PURE__ */ se.createElement("span", {
+      return typeof Se == "function" ? it = Se(E) : N.titleRender ? it = N.titleRender(E) : it = Se, /* @__PURE__ */ se.createElement("span", {
         ref: z,
         title: typeof Se == "string" ? Se : "",
         className: ne(et, `${et}-${Z || "normal"}`, {
-          [`${_.prefixCls}-node-selected`]: !F && (g || O)
+          [`${N.prefixCls}-node-selected`]: !F && (g || O)
         }),
         onMouseEnter: G,
         onMouseLeave: W,
@@ -41880,15 +41880,15 @@ html body {
         onClick: X,
         onDoubleClick: K
       }, We, /* @__PURE__ */ se.createElement("span", {
-        className: ne(`${_.prefixCls}-title`, P?.itemTitle),
+        className: ne(`${N.prefixCls}-title`, P?.itemTitle),
         style: T?.itemTitle
       }, it), xe);
-    }, [_.prefixCls, _.showIcon, e, _.icon, me, _.titleRender, E, Z, G, W, Q, X, K]), ve = ur(I, {
+    }, [N.prefixCls, N.showIcon, e, N.icon, me, N.titleRender, E, Z, G, W, Q, X, K]), ve = ur(I, {
       aria: !0,
       data: !0
     }), {
       level: qe
-    } = to(_.keyEntities, t) || {}, ke = m[m.length - 1], be = !F && k, Ee = _.draggingNodeKey === t;
+    } = to(N.keyEntities, t) || {}, ke = m[m.length - 1], be = !F && k, Ee = N.draggingNodeKey === t;
     return /* @__PURE__ */ se.createElement("div", dw({
       ref: S,
       role: "treeitem",
@@ -41897,24 +41897,24 @@ html body {
       "aria-selected": ee && !F ? g : void 0,
       "aria-checked": U && !F ? y ? "mixed" : v : void 0,
       "aria-disabled": F,
-      className: ne(n, `${_.prefixCls}-treenode`, P?.item, {
-        [`${_.prefixCls}-treenode-disabled`]: F,
-        [`${_.prefixCls}-treenode-switcher-${p ? "open" : "close"}`]: !u,
-        [`${_.prefixCls}-treenode-checkbox-checked`]: v,
-        [`${_.prefixCls}-treenode-checkbox-indeterminate`]: y,
-        [`${_.prefixCls}-treenode-selected`]: g,
-        [`${_.prefixCls}-treenode-loading`]: b,
-        [`${_.prefixCls}-treenode-active`]: C,
-        [`${_.prefixCls}-treenode-leaf-last`]: ke,
-        [`${_.prefixCls}-treenode-draggable`]: k,
+      className: ne(n, `${N.prefixCls}-treenode`, P?.item, {
+        [`${N.prefixCls}-treenode-disabled`]: F,
+        [`${N.prefixCls}-treenode-switcher-${p ? "open" : "close"}`]: !u,
+        [`${N.prefixCls}-treenode-checkbox-checked`]: v,
+        [`${N.prefixCls}-treenode-checkbox-indeterminate`]: y,
+        [`${N.prefixCls}-treenode-selected`]: g,
+        [`${N.prefixCls}-treenode-loading`]: b,
+        [`${N.prefixCls}-treenode-active`]: C,
+        [`${N.prefixCls}-treenode-leaf-last`]: ke,
+        [`${N.prefixCls}-treenode-draggable`]: k,
         dragging: Ee,
-        "drop-target": _.dropTargetKey === t,
-        "drop-container": _.dropContainerKey === t,
+        "drop-target": N.dropTargetKey === t,
+        "drop-container": N.dropContainerKey === t,
         "drag-over": !F && a,
         "drag-over-gap-top": !F && s,
         "drag-over-gap-bottom": !F && c,
-        "filter-node": _.filterTreeNode?.(vr(e)),
-        [`${_.prefixCls}-treenode-leaf`]: de
+        "filter-node": N.filterTreeNode?.(vr(e)),
+        [`${N.prefixCls}-treenode-leaf`]: de
       }),
       style: {
         ...r,
@@ -41929,7 +41929,7 @@ html body {
       onDragEnd: k ? ie : void 0,
       onMouseMove: R
     }, ve), /* @__PURE__ */ se.createElement(yJ, {
-      prefixCls: _.prefixCls,
+      prefixCls: N.prefixCls,
       level: qe,
       isStart: f,
       isEnd: m
@@ -41997,7 +41997,7 @@ html body {
       ref: D,
       className: ne(`${b}-treenode-motion`, M),
       style: I
-    }, s.map((_) => {
+    }, s.map((N) => {
       const {
         data: {
           ...P
@@ -42006,13 +42006,13 @@ html body {
         key: A,
         isStart: z,
         isEnd: O
-      } = _;
+      } = N;
       delete P.children;
       const L = sm(A, p);
       return /* @__PURE__ */ l.createElement(Nm, lm({}, P, L, {
         title: T,
         active: m,
-        data: _.data,
+        data: N.data,
         key: A,
         isStart: z,
         isEnd: O
@@ -42119,7 +42119,7 @@ html body {
       virtual: M,
       scrollWidth: I,
       focusable: D,
-      activeItem: _,
+      activeItem: N,
       tabIndex: P,
       onKeyDown: T,
       onFocus: A,
@@ -42201,7 +42201,7 @@ html body {
       ref: ee,
       role: "tree",
       tabIndex: D !== !1 && !y ? P : void 0,
-      "aria-activedescendant": _ ? o2(V, _.key) : void 0,
+      "aria-activedescendant": N ? o2(V, N.key) : void 0,
       onKeyDown: T,
       onFocus: A,
       onBlur: z,
@@ -42224,7 +42224,7 @@ html body {
       const ve = sm(Me, de);
       return /* @__PURE__ */ l.createElement(wJ, tv({}, oe, ve, {
         title: ce,
-        active: !!_ && Z === _.key,
+        active: !!N && Z === N.key,
         pos: pe,
         data: fe.data,
         isStart: me,
@@ -42295,30 +42295,30 @@ html body {
     if (!C.includes(R))
       for (let A = 0; A < S && TJ(E); A += 1)
         E = E.parent, D += 1;
-    const _ = t.data, P = E.node;
+    const N = t.data, P = E.node;
     let T = !0;
     return NJ(E) && E.level === 0 && g < v + y / 2 && s({
-      dragNode: _,
+      dragNode: N,
       dropNode: P,
       dropPosition: -1
     }) && E.key === n.eventKey ? I = -1 : ($.children || []).length && C.includes(M) ? s({
-      dragNode: _,
+      dragNode: N,
       dropNode: P,
       dropPosition: 0
     }) ? I = 0 : T = !1 : D === 0 ? S > -1.5 ? s({
-      dragNode: _,
+      dragNode: N,
       dropNode: P,
       dropPosition: 1
     }) ? I = 1 : T = !1 : s({
-      dragNode: _,
+      dragNode: N,
       dropNode: P,
       dropPosition: 0
     }) ? I = 0 : s({
-      dragNode: _,
+      dragNode: N,
       dropNode: P,
       dropPosition: 1
     }) ? I = 1 : T = !1 : s({
-      dragNode: _,
+      dragNode: N,
       dropNode: P,
       dropPosition: 1
     }) ? I = 1 : T = !1, {
@@ -43323,7 +43323,7 @@ html body {
         icon: M,
         switcherIcon: I,
         draggable: D,
-        checkable: _,
+        checkable: N,
         checkStrictly: P,
         disabled: T,
         motion: A,
@@ -43358,7 +43358,7 @@ html body {
         switcherIcon: I,
         draggable: B,
         draggingNodeKey: r,
-        checkable: _,
+        checkable: N,
         checkStrictly: P,
         disabled: T,
         keyEntities: n,
@@ -43403,7 +43403,7 @@ html body {
         data: t,
         disabled: T,
         selectable: R,
-        checkable: !!_,
+        checkable: !!N,
         motion: A,
         dragging: r !== null,
         height: L,
@@ -43682,7 +43682,7 @@ html body {
       getPrefixCls: M,
       direction: I,
       className: D,
-      style: _,
+      style: N,
       classNames: P,
       styles: T
     } = qt("checkbox"), A = l.useContext(uB), {
@@ -43712,7 +43712,7 @@ html body {
       indeterminate: a,
       disabled: L,
       checked: H
-    }, J = yt(_), re = yt(g), [le, ie] = Jt([P, v], [T, J, y, re], {
+    }, J = yt(N), re = yt(g), [le, ie] = Jt([P, v], [T, J, y, re], {
       props: B
     }), Y = ne(`${K}-wrapper`, {
       [`${K}-rtl`]: I === "rtl",
@@ -43775,8 +43775,8 @@ html body {
         const G = $.findIndex((Q) => Q.value === X), W = $.findIndex((Q) => Q.value === K);
         return G - W;
       }));
-    }, _ = v("checkbox", s), P = `${_}-group`, T = rr(_), [A, z] = cB(_, T), O = sn(g, ["value", "disabled"]), L = Array.isArray($) && $.length > 0 ? $.map((H) => /* @__PURE__ */ l.createElement(dB, {
-      prefixCls: _,
+    }, N = v("checkbox", s), P = `${N}-group`, T = rr(N), [A, z] = cB(N, T), O = sn(g, ["value", "disabled"]), L = Array.isArray($) && $.length > 0 ? $.map((H) => /* @__PURE__ */ l.createElement(dB, {
+      prefixCls: N,
       key: H.value.toString(),
       disabled: "disabled" in H ? H.disabled : g.disabled,
       value: H.value,
@@ -43834,19 +43834,19 @@ html body {
       style: S,
       ...C
     } = e, E = n("col", c), R = n(), [$, M] = qG(E), [I] = Ln(R, "col"), D = {};
-    let _ = {};
+    let N = {};
     tF.forEach((A) => {
       let z = {};
       const O = e[A];
-      lr(O) ? z.span = O : It(O) && (z = O || {}), delete C[A], _ = {
-        ..._,
+      lr(O) ? z.span = O : It(O) && (z = O || {}), delete C[A], N = {
+        ...N,
         [`${E}-${A}-${z.span}`]: Hn(z.span),
         [`${E}-${A}-order-${z.order}`]: z.order || z.order === 0,
         [`${E}-${A}-offset-${z.offset}`]: z.offset || z.offset === 0,
         [`${E}-${A}-push-${z.push}`]: z.push || z.push === 0,
         [`${E}-${A}-pull-${z.pull}`]: z.pull || z.pull === 0,
         [`${E}-rtl`]: r === "rtl"
-      }, (z.flex || z.flex === 0) && (_[`${E}-${A}-flex`] = !0, D[I(`${A}-flex`)] = Oz(z.flex));
+      }, (z.flex || z.flex === 0) && (N[`${E}-${A}-flex`] = !0, D[I(`${A}-flex`)] = Oz(z.flex));
     });
     const P = ne(E, {
       [`${E}-${u}`]: u !== void 0,
@@ -43854,7 +43854,7 @@ html body {
       [`${E}-offset-${m}`]: m,
       [`${E}-push-${p}`]: p,
       [`${E}-pull-${g}`]: g
-    }, v, _, $, M), T = {};
+    }, v, N, $, M), T = {};
     if (a?.[0]) {
       const A = lr(a[0]) ? `${a[0] / 2}px` : `calc(${a[0]} / 2)`;
       T.paddingInline = A;
@@ -43930,12 +43930,12 @@ html body {
       const T = lr($[0]) ? `${$[0] / -2}px` : `calc(${$[0]} / -2)`;
       I.marginInline = T;
     }
-    const [D, _] = $;
-    I.rowGap = _;
+    const [D, N] = $;
+    I.rowGap = N;
     const P = l.useMemo(() => ({
-      gutter: [D, _],
+      gutter: [D, N],
       wrap: m
-    }), [D, _, m]);
+    }), [D, N, m]);
     return /* @__PURE__ */ l.createElement(fB.Provider, {
       value: P
     }, /* @__PURE__ */ l.createElement("div", {
@@ -44405,7 +44405,7 @@ html body {
       prefix: M,
       suffix: I,
       stringMode: D,
-      parser: _,
+      parser: N,
       formatter: P,
       precision: T,
       decimalSeparator: A,
@@ -44442,11 +44442,11 @@ html body {
         return T >= 0 ? T : Math.max(sl(Be), sl(p));
     }, [T, p]), pe = l.useCallback((Be) => {
       const at = String(Be);
-      if (_)
-        return _(at);
+      if (N)
+        return N(at);
       let Te = at;
       return A && (Te = Te.replace(A, ".")), Te.replace(/[^\w.-]+/g, "");
-    }, [_, A]), oe = l.useRef(""), ce = l.useCallback((Be, at) => {
+    }, [N, A]), oe = l.useRef(""), ce = l.useCallback((Be, at) => {
       if (P)
         return P(Be, {
           userTyping: at,
@@ -44486,7 +44486,7 @@ html body {
       }
       O?.(Be), it(() => {
         let at = Be;
-        _ || (at = Be.replace(/。/g, ".")), at !== Be && ze(at);
+        N || (at = Be.replace(/。/g, ".")), at !== Be && ze(at);
       });
     }, Oe = () => {
       re.current = !0;
@@ -44798,7 +44798,7 @@ html body {
       handleActiveBg: M,
       inputAffixPadding: I,
       borderRadiusSM: D,
-      controlWidth: _,
+      controlWidth: N,
       handleBorderColor: P,
       filledHandleBg: T,
       lineHeightLG: A,
@@ -44815,7 +44815,7 @@ html body {
           [L("input-padding-block")]: ue(R),
           [L("input-padding-inline")]: ue(E),
           display: "inline-flex",
-          width: _,
+          width: N,
           margin: 0,
           paddingBlock: 0,
           borderRadius: a,
@@ -45106,7 +45106,7 @@ html body {
       ...I
     } = e, {
       direction: D,
-      className: _,
+      className: N,
       style: P,
       styles: T,
       classNames: A
@@ -45133,7 +45133,7 @@ html body {
       ref: n,
       mode: M,
       disabled: O,
-      className: ne(C, r, ie.root, _, U, cu(c, y, X), {
+      className: ne(C, r, ie.root, N, U, cu(c, y, X), {
         [`${c}-${Q}`]: k,
         [`${c}-lg`]: W === "large",
         [`${c}-sm`]: W === "small",
@@ -45266,9 +45266,9 @@ html body {
       classNames: M,
       dataAttrs: I,
       styles: D,
-      components: _,
+      components: N,
       onClear: P
-    } = e, T = r ?? n, A = _?.affixWrapper || "span", z = _?.groupWrapper || "span", O = _?.wrapper || "span", L = _?.groupAddon || "span", F = l.useRef(null), U = (X) => {
+    } = e, T = r ?? n, A = N?.affixWrapper || "span", z = N?.groupWrapper || "span", O = N?.wrapper || "span", L = N?.groupAddon || "span", F = l.useRef(null), U = (X) => {
       F.current?.contains(X.target) && b?.();
     }, H = cee(e);
     let V = /* @__PURE__ */ l.cloneElement(T, {
@@ -45436,7 +45436,7 @@ html body {
       styles: M,
       onCompositionStart: I,
       onCompositionEnd: D,
-      ..._
+      ...N
     } = e, [P, T] = l.useState(!1), A = l.useRef(!1), z = l.useRef(!1), O = l.useRef(null), L = l.useRef(null), F = (te) => {
       O.current && TE(O.current, te);
     }, {
@@ -45538,7 +45538,7 @@ html body {
         ...M?.count
       }
     }, X), b) : null;
-    return /* @__PURE__ */ se.createElement(yB, rv({}, _, {
+    return /* @__PURE__ */ se.createElement(yB, rv({}, N, {
       prefixCls: m,
       className: ne(v, ie),
       handleReset: le,
@@ -45629,7 +45629,7 @@ html body {
     l.useImperativeHandle(t, () => ({
       textArea: E.current
     }));
-    const [R, $] = l.useMemo(() => s && typeof s == "object" ? [s.minRows, s.maxRows] : [], [s]), M = !!s, [I, D] = l.useState(Ix), [_, P] = l.useState(), T = () => {
+    const [R, $] = l.useMemo(() => s && typeof s == "object" ? [s.minRows, s.maxRows] : [], [s]), M = !!s, [I, D] = l.useState(Ix), [N, P] = l.useState(), T = () => {
       D(Nx);
     };
     Vt(() => {
@@ -45652,7 +45652,7 @@ html body {
     l.useEffect(() => z, []);
     const F = {
       ...f,
-      ...M ? _ : null
+      ...M ? N : null
     };
     return (I === Nx || I === _x) && (F.overflowY = "hidden", F.overflowX = "hidden"), /* @__PURE__ */ l.createElement(Co, {
       onResize: O,
@@ -45702,7 +45702,7 @@ html body {
     onClear: M,
     onPressEnter: I,
     readOnly: D,
-    autoSize: _,
+    autoSize: N,
     onKeyDown: P,
     ...T
   }, A) => {
@@ -45759,7 +45759,7 @@ html body {
     }, Q)));
     const pe = (ce) => {
       $?.(ce), ee()?.style.height && U(!0);
-    }, oe = !_ && !g && !s;
+    }, oe = !N && !g && !s;
     return /* @__PURE__ */ se.createElement(yB, {
       ref: H,
       value: K,
@@ -45793,7 +45793,7 @@ html body {
       readOnly: D,
       onClear: M
     }, /* @__PURE__ */ se.createElement(hee, Sw({}, T, {
-      autoSize: _,
+      autoSize: N,
       maxLength: c,
       onKeyDown: Y,
       onChange: ie,
@@ -45850,7 +45850,7 @@ html body {
     } = e, {
       getPrefixCls: I,
       direction: D,
-      allowClear: _,
+      allowClear: N,
       autoComplete: P,
       className: T,
       style: A,
@@ -45881,7 +45881,7 @@ html body {
       de(), E?.(Me);
     }, ce = (ie || m) && /* @__PURE__ */ se.createElement(se.Fragment, null, m, ie && Y), Z = kk({
       allowClear: p,
-      contextAllowClear: _,
+      contextAllowClear: N,
       componentName: "Input"
     }), [me, xe] = Xa("input", $, r);
     return /* @__PURE__ */ se.createElement(uee, {
@@ -46019,13 +46019,13 @@ html body {
     if (f) {
       let D;
       v === "label" && (D = M), v === "content" && (D = I);
-      const _ = D ? {
+      const N = D ? {
         ...s,
         ...D
       } : s;
       return /* @__PURE__ */ se.createElement(S, {
         colSpan: r,
-        style: _,
+        style: N,
         className: ne(a, {
           [`${t}-item-${v}`]: v === "label" || v === "content",
           [R.label]: R.label && v === "label",
@@ -46075,10 +46075,10 @@ html body {
       styles: M,
       classNames: I
     }, D) => {
-      const _ = $ ?? D;
+      const N = $ ?? D;
       if (typeof a == "string")
         return /* @__PURE__ */ l.createElement(Mx, {
-          key: `${s}-${_}`,
+          key: `${s}-${N}`,
           className: b,
           style: S,
           classNames: I,
@@ -46120,7 +46120,7 @@ html body {
         }
       };
       return [/* @__PURE__ */ l.createElement(Mx, {
-        key: `label-${_}`,
+        key: `label-${N}`,
         className: b,
         style: S,
         classNames: I,
@@ -46133,7 +46133,7 @@ html body {
         label: g,
         type: "label"
       }), /* @__PURE__ */ l.createElement(Mx, {
-        key: `content-${_}`,
+        key: `content-${N}`,
         className: b,
         style: S,
         classNames: I,
@@ -46403,7 +46403,7 @@ html body {
       getPrefixCls: M,
       direction: I,
       className: D,
-      style: _,
+      style: N,
       classNames: P,
       styles: T
     } = qt("descriptions"), A = M("descriptions", n), z = Zm(), O = l.useMemo(() => lr(s) ? s : V$(z, s) ?? V$(z, bee) ?? 3, [z, s]), L = See(z, E, m), F = dr(y), U = Cee(O, L), [H, V] = Tee(A), ee = {
@@ -46411,7 +46411,7 @@ html body {
       column: O,
       items: L,
       size: F
-    }, X = yt(_), K = yt(v), [G, W] = Jt([P, R], [T, X, C, K], {
+    }, X = yt(N), K = yt(v), [G, W] = Jt([P, R], [T, X, C, K], {
       props: ee
     }), Q = l.useMemo(() => ({
       labelStyle: b,
@@ -46588,7 +46588,7 @@ html body {
       vertical: M,
       wrap: I = !1,
       classNames: D,
-      styles: _,
+      styles: N,
       ...P
     } = e, [T, A] = Array.isArray(m) ? m : [m, m], z = Uz(A), O = Uz(T), L = qz(A), F = qz(T), U = xr(y, {
       keepEmpty: !0
@@ -46597,7 +46597,7 @@ html body {
       size: m,
       orientation: H,
       align: ee
-    }, k = yt(c), B = yt($), [J, re] = Jt([u, D], [f, k, _, B], {
+    }, k = yt(c), B = yt($), [J, re] = Jt([u, D], [f, k, N, B], {
       props: Q
     }), le = ne(K, s, G, `${K}-${H}`, {
       [`${K}-rtl`]: r === "rtl",
@@ -46661,7 +46661,7 @@ html body {
       placement: M,
       getPopupContainer: I,
       href: D,
-      icon: _ = /* @__PURE__ */ l.createElement(jv, null),
+      icon: N = /* @__PURE__ */ l.createElement(jv, null),
       title: P,
       buttonsRender: T = (Y) => Y,
       mouseEnterDelay: A,
@@ -46709,7 +46709,7 @@ html body {
     }, g), re = /* @__PURE__ */ l.createElement(Ve, {
       type: s,
       danger: c,
-      icon: _
+      icon: N
     }), [le, ie] = T([J, re]);
     return /* @__PURE__ */ l.createElement(lt.Compact, {
       className: B,
@@ -47268,9 +47268,9 @@ html body {
         key: D
       }) => {
         I[D] = (I[D] || 0) + 1;
-      }), R.map((D, _) => ({
+      }), R.map((D, N) => ({
         ...D,
-        key: I[D.key] > 1 ? `${D.key}-fallback-${_}` : D.key
+        key: I[D.key] > 1 ? `${D.key}-fallback-${N}` : D.key
       }));
     }, [R]), M = {};
     return s && (M.id = `${s}_help`), /* @__PURE__ */ l.createElement(oo, {
@@ -47281,14 +47281,14 @@ html body {
     }, (I) => {
       const {
         className: D,
-        style: _
+        style: N
       } = I;
       return /* @__PURE__ */ l.createElement("div", {
         ...M,
         className: ne(p, D, f?.help, y, g, a, v),
         style: {
           ...m?.help,
-          ..._
+          ...N
         }
       }, /* @__PURE__ */ l.createElement(qE, {
         keys: $,
@@ -47338,7 +47338,7 @@ html body {
       form: M,
       colon: I,
       labelAlign: D,
-      labelWrap: _,
+      labelWrap: N,
       labelCol: P,
       wrapperCol: T,
       layout: A = "horizontal",
@@ -47353,7 +47353,7 @@ html body {
       styles: X,
       tooltip: K,
       ...G
-    } = e, W = dr(R), Q = l.useContext(mk), k = l.useMemo(() => O !== void 0 ? O : s !== void 0 ? s : !0, [O, s]), B = I ?? c, J = D ?? y, re = _ ?? b, le = {
+    } = e, W = dr(R), Q = l.useContext(mk), k = l.useMemo(() => O !== void 0 ? O : s !== void 0 ? s : !0, [O, s]), B = I ?? c, J = D ?? y, re = N ?? b, le = {
       ...v,
       ...K
     }, ie = r("form", S), Y = rr(ie), [q, te] = UR(ie, Y), de = {
@@ -47534,7 +47534,7 @@ html body {
         ...ee
       } = C;
       return ee;
-    }, [C]), D = l.useRef(null), [_, P] = l.useState(0);
+    }, [C]), D = l.useRef(null), [N, P] = l.useState(0);
     Vt(() => {
       m && D.current ? P(D.current.clientHeight) : P(0);
     }, [m]);
@@ -47566,7 +47566,7 @@ html body {
     }, m) : null, F = z || L ? /* @__PURE__ */ l.createElement("div", {
       className: `${S}-additional`,
       style: v ? {
-        minHeight: v + _
+        minHeight: v + N
       } : {}
     }, z, L) : null, U = f && f.mark === "pro_table_render" && f.render ? f.render(e, {
       input: T,
@@ -47623,8 +47623,8 @@ html body {
       [`${M}-wrap`]: !!y
     });
     let D = t;
-    const _ = s === !0 || b !== !1 && s !== !1;
-    _ && !m && typeof t == "string" && t.trim() && (D = t.replace(/[:|：]\s*$/, ""));
+    const N = s === !0 || b !== !1 && s !== !1;
+    N && !m && typeof t == "string" && t.trim() && (D = t.replace(/[:|：]\s*$/, ""));
     const T = Dee(f, E);
     if (T) {
       const U = /* @__PURE__ */ l.createElement(na, {
@@ -47649,7 +47649,7 @@ html body {
     const F = ne(S?.label, {
       [`${e}-item-required`]: c,
       [`${e}-item-required-mark-${L}`]: L,
-      [`${e}-item-no-colon`]: !_
+      [`${e}-item-no-colon`]: !N
     });
     return /* @__PURE__ */ l.createElement(jR, {
       ...R,
@@ -47736,7 +47736,7 @@ html body {
     } = e, M = `${t}-item`, {
       requiredMark: I,
       layout: D
-    } = l.useContext(Ga), _ = E || D, P = _ === "vertical", T = l.useRef(null), A = ov(c), z = ov(u), O = Hn(s), L = !!(O || A.length || z.length), F = !!T.current && km(T.current), [U, H] = l.useState(null);
+    } = l.useContext(Ga), N = E || D, P = N === "vertical", T = l.useRef(null), A = ov(c), z = ov(u), O = Hn(s), L = !!(O || A.length || z.length), F = !!T.current && km(T.current), [U, H] = l.useState(null);
     Vt(() => {
       if (L && T.current) {
         const G = getComputedStyle(T.current);
@@ -47758,7 +47758,7 @@ html body {
       [`${M}-is-validating`]: X === "validating",
       [`${M}-hidden`]: g,
       // Layout
-      [`${M}-${_}`]: _
+      [`${M}-${N}`]: N
     });
     return /* @__PURE__ */ l.createElement("div", {
       className: K,
@@ -47877,7 +47877,7 @@ html body {
       name: R
     } = l.useContext(Ga), $ = Gee(f), M = Ct($), I = l.useContext(pj), {
       validateTrigger: D
-    } = l.useContext($l), _ = Hn(y) ? y : D, P = Hn(t), T = E("form", s), A = rr(T), [z, O] = UR(T, A);
+    } = l.useContext($l), N = Hn(y) ? y : D, P = Hn(t), T = E("form", s), A = rr(T), [z, O] = UR(T, A);
     h2();
     const L = l.useContext(wm), F = l.useRef(null), [U, H] = Xee({}), [V, ee] = $E(() => Kz()), X = (J) => {
       const re = L?.getKey(J.name);
@@ -47939,7 +47939,7 @@ html body {
       ...e,
       messageVariables: B,
       trigger: v,
-      validateTrigger: _,
+      validateTrigger: N,
       onMetaChange: X
     }, (J, re, le) => {
       const ie = am(t).length && re ? re.name : [], Y = zF(ie, R), q = m !== void 0 ? m : u?.some((fe) => {
@@ -47966,7 +47966,7 @@ html body {
             const ce = [];
             (S || G.length > 0) && ce.push(`${Y}_help`), e.extra && ce.push(`${Y}_extra`), fe["aria-describedby"] = ce.join(" ");
           }
-          G.length > 0 && (fe["aria-invalid"] = "true"), q && (fe["aria-required"] = "true"), Ri($) && (fe.ref = Q(ie, $)), new Set([].concat(Nt(am(v)), Nt(am(_)))).forEach((ce) => {
+          G.length > 0 && (fe["aria-invalid"] = "true"), q && (fe["aria-required"] = "true"), Ri($) && (fe.ref = Q(ie, $)), new Set([].concat(Nt(am(v)), Nt(am(N)))).forEach((ce) => {
             fe[ce] = (...Z) => {
               te[ce]?.(...Z), $.props[ce]?.(...Z);
             };
@@ -48194,7 +48194,7 @@ html body {
       classNames: M,
       styles: I,
       className: D,
-      style: _,
+      style: N,
       ...P
     } = e, {
       classNames: T,
@@ -48207,7 +48207,7 @@ html body {
       ...e,
       length: r,
       variant: H
-    }, ee = yt(L), X = yt(_), [K, G] = Jt([T, M], [A, ee, I, X], {
+    }, ee = yt(L), X = yt(N), [K, G] = Jt([T, M], [A, ee, I, X], {
       props: V
     }), W = ur(P, {
       aria: !0,
@@ -48361,7 +48361,7 @@ html body {
       classNames: R,
       styles: $,
       iconRender: M
-    } = qt("inputPassword"), [I] = Xa("inputPassword", y, e.bordered, "input"), [D] = wo("global"), _ = l.useContext(kr), P = n ?? _, T = {
+    } = qt("inputPassword"), [I] = Xa("inputPassword", y, e.bordered, "input"), [D] = wo("global"), N = l.useContext(kr), P = n ?? N, T = {
       ...e,
       disabled: P,
       variant: I
@@ -48488,7 +48488,7 @@ html body {
       ...I
     } = e, {
       direction: D,
-      getPrefixCls: _,
+      getPrefixCls: N,
       className: P,
       style: T,
       classNames: A,
@@ -48504,7 +48504,7 @@ html body {
       button: {
         _default: "root"
       }
-    }), k = l.useRef(!1), B = _("input-search", n), J = _("input", r), [re, le] = Nte(B), {
+    }), k = l.useRef(!1), B = N("input-search", n), J = N("input", r), [re, le] = Nte(B), {
       compactSize: ie
     } = Ts(B, D), Y = dr((Se) => s ?? ie ?? Se), q = l.useRef(null), te = (Se) => {
       Se?.target && Se.type === "click" && v && v(Se.target.value, Se, {
@@ -48719,14 +48719,14 @@ html body {
       allowClear: M,
       autoComplete: I,
       className: D,
-      style: _,
+      style: N,
       classNames: P,
       styles: T
     } = qt("textArea"), A = l.useContext(kr), z = s ?? A, {
       status: O,
       hasFeedback: L,
       feedbackIcon: F
-    } = l.useContext(jr), U = Ym(O, c), H = yt(_), V = yt(g), [ee, X] = Jt([P, f], [T, H, v, V], {
+    } = l.useContext(jr), U = Ym(O, c), H = yt(N), V = yt(g), [ee, X] = Jt([P, f], [T, H, v, V], {
       props: e
     }), K = l.useRef(null);
     l.useImperativeHandle(t, () => ({
@@ -48857,11 +48857,11 @@ html body {
       [`${E}-rtl`]: n === "rtl"
     }, S, c, u, $, M), D = l.useMemo(() => ({
       siderHook: {
-        addSider: (_) => {
-          a((P) => [].concat(Nt(P), [_]));
+        addSider: (N) => {
+          a((P) => [].concat(Nt(P), [N]));
         },
-        removeSider: (_) => {
-          a((P) => P.filter((T) => T !== _));
+        removeSider: (N) => {
+          a((P) => P.filter((T) => T !== N));
         }
       }
     }), []);
@@ -48966,7 +48966,7 @@ html body {
     }), M = `${u}-options`;
     if (!p && !c)
       return null;
-    let I = null, D = null, _ = null;
+    let I = null, D = null, N = null;
     return p && g && (I = g({
       disabled: f,
       size: a,
@@ -48979,7 +48979,7 @@ html body {
         label: S(P),
         value: P
       }))
-    })), c && (s && (_ = typeof s == "boolean" ? /* @__PURE__ */ se.createElement("button", {
+    })), c && (s && (N = typeof s == "boolean" ? /* @__PURE__ */ se.createElement("button", {
       type: "button",
       onClick: R,
       onKeyUp: R,
@@ -48998,7 +48998,7 @@ html body {
       onKeyUp: R,
       onBlur: E,
       "aria-label": n.page
-    }), n.page, _)), /* @__PURE__ */ se.createElement("li", {
+    }), n.page, N)), /* @__PURE__ */ se.createElement("li", {
       className: M
     }, I, D);
   }, Ad = (e) => {
@@ -49079,7 +49079,7 @@ html body {
       style: M,
       totalBoundaryShowSizeChanger: I = 50,
       disabled: D,
-      simple: _,
+      simple: N,
       showTotal: P,
       showSizeChanger: T = f > I,
       sizeChangerRender: A,
@@ -49207,9 +49207,9 @@ html body {
       page: -1,
       className: a?.item,
       style: s?.item
-    }, ye = W - 1 > 0 ? W - 1 : 0, Qe = W + 1 < Ue ? W + 1 : Ue, Je = S && S.goButton, ot = typeof _ == "object" ? _.readOnly : !_;
+    }, ye = W - 1 > 0 ? W - 1 : 0, Qe = W + 1 < Ue ? W + 1 : Ue, Je = S && S.goButton, ot = typeof N == "object" ? N.readOnly : !N;
     let nt = Je, St = null;
-    _ && (Je && (typeof Je == "boolean" ? nt = /* @__PURE__ */ se.createElement("button", {
+    N && (Je && (typeof Je == "boolean" ? nt = /* @__PURE__ */ se.createElement("button", {
       type: "button",
       onClick: We,
       onKeyUp: We
@@ -49314,7 +49314,7 @@ html body {
     let Be = et(Qe);
     if (Be) {
       let Te, He;
-      _ ? (Te = !ce, He = oe ? 0 : null) : (Te = !ce || !Ue, He = Te ? null : 0), Be = /* @__PURE__ */ se.createElement("li", {
+      N ? (Te = !ce, He = oe ? 0 : null) : (Te = !ce || !Ue, He = Te ? null : 0), Be = /* @__PURE__ */ se.createElement("li", {
         title: E ? $.next_page : null,
         onClick: me,
         tabIndex: He,
@@ -49330,14 +49330,14 @@ html body {
       [`${t}-start`]: y === "start",
       [`${t}-center`]: y === "center",
       [`${t}-end`]: y === "end",
-      [`${t}-simple`]: _,
+      [`${t}-simple`]: N,
       [`${t}-disabled`]: D
     });
     return /* @__PURE__ */ se.createElement("ul", fs({
       className: at,
       style: M,
       ref: V
-    }, ze), Oe, mt, _ ? St : Ze, Be, /* @__PURE__ */ se.createElement(Wte, {
+    }, ze), Oe, mt, N ? St : Ze, Be, /* @__PURE__ */ se.createElement(Wte, {
       locale: $,
       rootPrefixCls: t,
       disabled: D,
@@ -50035,14 +50035,14 @@ html body {
       direction: M,
       showSizeChanger: I,
       className: D,
-      style: _,
+      style: N,
       classNames: P,
       styles: T,
       totalBoundaryShowSizeChanger: A
     } = qt("pagination"), z = $("pagination", n), [O, L] = rne(z), F = dr(u), U = F === "small" || !!(E && !F && m), [H, V] = Xa("input"), ee = {
       ...e,
       size: F
-    }, X = yt(_), K = yt(c), [G, W] = Jt([P, S], [T, X, b, K], {
+    }, X = yt(N), K = yt(c), [G, W] = Jt([P, S], [T, X, b, K], {
       props: ee
     }), [Q] = wo("Pagination", pk), k = {
       ...Q,
@@ -50506,7 +50506,7 @@ html body {
       direction: M,
       indicator: I,
       className: D,
-      style: _,
+      style: N,
       classNames: P,
       styles: T
     } = qt("spin"), A = $("spin", n), [z, O] = hne(A), [L, F] = l.useState(() => r && !bne(r, a)), U = vne(L, S);
@@ -50530,7 +50530,7 @@ html body {
       fullscreen: y,
       children: v,
       percent: U
-    }, X = yt(_), [K, G] = Jt([P, C], [T, X, E], {
+    }, X = yt(N), [K, G] = Jt([P, C], [T, X, E], {
       props: ee
     }), W = b ?? I ?? FB, Q = typeof v < "u", k = Q || y, B = /* @__PURE__ */ l.createElement(l.Fragment, null, /* @__PURE__ */ l.createElement(lne, {
       className: ne(K.indicator),
@@ -50623,19 +50623,19 @@ html body {
     } = l.useContext(WR), {
       getPrefixCls: y,
       list: b
-    } = l.useContext(Pt), S = (_) => ne(b?.item?.classNames?.[_], f?.[_]), C = (_) => ({
-      ...b?.item?.styles?.[_],
-      ...c?.[_]
+    } = l.useContext(Pt), S = (N) => ne(b?.item?.classNames?.[N], f?.[N]), C = (N) => ({
+      ...b?.item?.styles?.[N],
+      ...c?.[N]
     }), E = () => {
-      const _ = xr(r);
-      return _.some(ba) && _.length > 1;
+      const N = xr(r);
+      return N.some(ba) && N.length > 1;
     }, R = () => v === "vertical" ? !!s : !E(), $ = y("list", n), M = a && a.length > 0 && /* @__PURE__ */ se.createElement("ul", {
       className: ne(`${$}-item-action`, S("actions")),
       key: "actions",
       style: C("actions")
-    }, a.map((_, P) => /* @__PURE__ */ se.createElement("li", {
+    }, a.map((N, P) => /* @__PURE__ */ se.createElement("li", {
       key: `${$}-item-action-${P}`
-    }, _, P !== a.length - 1 && /* @__PURE__ */ se.createElement("em", {
+    }, N, P !== a.length - 1 && /* @__PURE__ */ se.createElement("em", {
       className: `${$}-item-action-split`
     })))), I = g ? "div" : "li", D = /* @__PURE__ */ se.createElement(I, {
       ...p,
@@ -50773,7 +50773,7 @@ html body {
       emptyTextPadding: M,
       metaMarginBottom: I,
       avatarMarginRight: D,
-      titleMarginBottom: _,
+      titleMarginBottom: N,
       descriptionFontSize: P
     } = e;
     return {
@@ -50914,7 +50914,7 @@ html body {
           marginBlockEnd: I,
           [`${t}-item-meta-title`]: {
             marginBlockStart: 0,
-            marginBlockEnd: _,
+            marginBlockEnd: N,
             color: b,
             fontSize: e.fontSizeLG,
             lineHeight: e.lineHeightLG
@@ -51008,7 +51008,7 @@ html body {
       renderItem: $,
       locale: M,
       ...I
-    } = e, D = It(n) ? n : {}, [_, P] = l.useState(D.defaultCurrent || 1), [T, A] = l.useState(D.defaultPageSize || 10), {
+    } = e, D = It(n) ? n : {}, [N, P] = l.useState(D.defaultCurrent || 1), [T, A] = l.useState(D.defaultPageSize || 10), {
       getPrefixCls: z,
       direction: O,
       className: L,
@@ -51054,7 +51054,7 @@ html body {
       [`${W}-rtl`]: O === "rtl"
     }, L, c, u, Q, k), Y = `${W}-container`, q = Sl(H, {
       total: y.length,
-      current: _,
+      current: N,
       pageSize: T
     }, n || {}), te = Math.ceil(q.total / q.pageSize);
     q.current = Math.min(q.current, te);
@@ -51359,7 +51359,7 @@ html body {
       style: S,
       classNames: C,
       styles: E
-    } = qt("modal"), R = y(), $ = t || y("modal"), M = rr(R), [I, D] = Ej($, M), _ = yt(S), P = yt(m), [T, A] = Jt([C, p], [E, _, g, P], {
+    } = qt("modal"), R = y(), $ = t || y("modal"), M = rr(R), [I, D] = Ej($, M), N = yt(S), P = yt(m), [T, A] = Jt([C, p], [E, N, g, P], {
       props: e
     }), z = `${$}-confirm`;
     let O = {};
@@ -51581,11 +51581,11 @@ html body {
       style: M,
       classNames: I,
       styles: D,
-      arrow: _,
+      arrow: N,
       trigger: P,
       mouseEnterDelay: T,
       mouseLeaveDelay: A
-    } = qt("popconfirm"), [z, O] = Rn(e.defaultOpen ?? !1, e.open), L = ER(v, _), F = a || P || "click", U = S ?? T ?? 0.1, H = C ?? A ?? 0.1, V = (ie) => {
+    } = qt("popconfirm"), [z, O] = Rn(e.defaultOpen ?? !1, e.open), L = ER(v, N), F = a || P || "click", U = S ?? T ?? 0.1, H = C ?? A ?? 0.1, V = (ie) => {
       O(ie), m?.(ie);
     }, ee = () => {
       V(!1);
@@ -51797,7 +51797,7 @@ html body {
     } = {
       ...Une,
       ...e
-    }, R = Yf / 2, $ = Ya(t), M = `${$}-gradient`, I = R - c / 2, D = Math.PI * 2 * I, _ = f > 0 ? 90 + f / 2 : -90, P = D * ((360 - f) / 360), {
+    }, R = Yf / 2, $ = Ya(t), M = `${$}-gradient`, I = R - c / 2, D = Math.PI * 2 * I, N = f > 0 ? 90 + f / 2 : -90, P = D * ((360 - f) / 360), {
       count: T,
       gap: A
     } = typeof s == "object" ? s : {
@@ -51809,10 +51809,10 @@ html body {
     } = Vne({
       id: $,
       loading: C
-    }), ee = Ox(D, P, 0, 100, _, f, m, p, U, c), X = qne(), K = () => {
+    }), ee = Ox(D, P, 0, 100, N, f, m, p, U, c), X = qne(), K = () => {
       let W = 0;
       return z.map((Q, k) => {
-        const B = O[k] || O[O.length - 1], J = Ox(D, P, W, Q, _, f, m, B, U, c);
+        const B = O[k] || O[O.length - 1], J = Ox(D, P, W, Q, N, f, m, B, U, c);
         return W += Q, /* @__PURE__ */ l.createElement(Wne, {
           key: k,
           color: B,
@@ -51839,7 +51839,7 @@ html body {
       const W = Math.round(T * (z[0] / 100)), Q = 100 / T;
       let k = 0;
       return new Array(T).fill(null).map((B, J) => {
-        const re = J <= W - 1 ? O[0] : p, le = re && typeof re == "object" ? `url(#${M})` : void 0, ie = Ox(D, P, k, Q, _, f, m, re, "butt", c, A);
+        const re = J <= W - 1 ? O[0] : p, le = re && typeof re == "object" ? `url(#${M})` : void 0, ie = Ox(D, P, k, Q, N, f, m, re, "butt", c, A);
         return k += (P - ie.strokeDashoffset + A) * 100 / P, /* @__PURE__ */ l.createElement("circle", {
           key: J,
           className: ne(`${n}-circle-path`, r.track),
@@ -51950,7 +51950,7 @@ html body {
         return m;
       if (g === "dashboard")
         return 75;
-    }, [m, g]), _ = Gne(e), P = l.useMemo(() => {
+    }, [m, g]), N = Gne(e), P = l.useMemo(() => {
       const U = (f ?? u) || g === "dashboard" && "bottom" || void 0, H = C === "rtl";
       switch (U) {
         case "start":
@@ -51967,7 +51967,7 @@ html body {
       [`${t}-circle-gradient`]: T
     }, n.body), O = /* @__PURE__ */ l.createElement(Kne, {
       steps: S,
-      percent: S ? _[1] : _,
+      percent: S ? N[1] : N,
       strokeWidth: M,
       railWidth: M,
       strokeColor: S ? A[1] : A,
@@ -52301,7 +52301,7 @@ html body {
       backgroundColor: E || void 0,
       borderRadius: R,
       height: I
-    }, _ = `${t}-track`, P = f && typeof f != "string" ? lre(f, a) : {
+    }, N = `${t}-track`, P = f && typeof f != "string" ? lre(f, a) : {
       [Pw]: f,
       background: f
     }, T = {
@@ -52330,13 +52330,13 @@ html body {
         ...r.rail
       }
     }, /* @__PURE__ */ l.createElement("div", {
-      className: ne(_, n.track),
+      className: ne(N, n.track),
       style: {
         ...T,
         ...r.track
       }
     }, C === "inner" && p), A !== void 0 && /* @__PURE__ */ l.createElement("div", {
-      className: ne(_, `${_}-success`, n.track),
+      className: ne(N, `${N}-success`, n.track),
       style: {
         ...z,
         ...r.track
@@ -52408,10 +52408,10 @@ html body {
         return new En(ie).isLight();
       }
       return !1;
-    }, [f]), _ = l.useMemo(() => {
+    }, [f]), N = l.useMemo(() => {
       const ie = iv(e);
       return Number.parseInt(ie !== void 0 ? (ie ?? 0)?.toString() : (m ?? 0)?.toString(), 10);
-    }, [m, e.success]), P = l.useMemo(() => !dre.includes(y) && _ >= 100 ? "success" : y || "normal", [y, _]), {
+    }, [m, e.success]), P = l.useMemo(() => !dre.includes(y) && N >= 100 ? "success" : y || "normal", [y, N]), {
       getPrefixCls: T,
       direction: A,
       className: z,
@@ -52442,7 +52442,7 @@ html body {
         style: W.indicator,
         title: typeof Y == "string" ? Y : void 0
       }, Y);
-    }, [g, m, _, P, v, U, b, Q, D, $, R, k, G.indicator, W.indicator]), J = {
+    }, [g, m, N, P, v, U, b, Q, D, $, R, k, G.indicator, W.indicator]), J = {
       ...e,
       classNames: G,
       styles: W
@@ -52484,7 +52484,7 @@ html body {
       style: W.root,
       className: le,
       role: "progressbar",
-      "aria-valuenow": _,
+      "aria-valuenow": N,
       "aria-valuemin": 0,
       "aria-valuemax": 100,
       ...sn(E, ["railColor", "trailColor", "strokeWidth", "width", "gapDegree", "gapPosition", "gapPlacement", "strokeLinecap", "success"])
@@ -52518,8 +52518,8 @@ html body {
   }, b) => {
     const [S, C] = Rn(r ?? !1, n);
     function E(I, D) {
-      let _ = S;
-      return a || (_ = I, C(_), m?.(_, D)), _;
+      let N = S;
+      return a || (N = I, C(N), m?.(N, D)), N;
     }
     function R(I) {
       I.which === vt.LEFT ? E(!1, I) : I.which === vt.RIGHT && E(!0, I), p?.(I);
@@ -52877,13 +52877,13 @@ html body {
       direction: M,
       className: I,
       style: D,
-      classNames: _,
+      classNames: N,
       styles: P
     } = qt("switch"), T = l.useContext(kr), A = (a ?? T) || s, z = $("switch", n), [O, L] = bre(z), F = dr(r), U = {
       ...e,
       size: F,
       disabled: A
-    }, H = yt(D), V = yt(f), [ee, X] = Jt([_, S], [P, H, b, V], {
+    }, H = yt(D), V = yt(f), [ee, X] = Jt([N, S], [P, H, b, V], {
       props: U
     }), K = /* @__PURE__ */ l.createElement("div", {
       className: ne(`${z}-handle`, ee.indicator),
@@ -53132,7 +53132,7 @@ html body {
       fixedStartShadow: M,
       fixedEndShadow: I,
       offsetFixedStartShadow: D,
-      offsetFixedEndShadow: _,
+      offsetFixedEndShadow: N,
       zIndex: P,
       zIndexReverse: T,
       // Private
@@ -53150,7 +53150,7 @@ html body {
         return [!1, !1];
       const [ce, Z] = oe, me = (K && M && ce) - // For precision, we not show shadow by default which has better user experience.
       D >= 1, xe = (G && I && Z - ce) - // Same as above
-      _ > 1;
+      N > 1;
       return [me, xe];
     });
     K && (X.insetInlineStart = R, X["--z-offset"] = P, X["--z-offset-reverse"] = T), G && (X.insetInlineEnd = $, X["--z-offset"] = P, X["--z-offset-reverse"] = T);
@@ -53352,8 +53352,8 @@ html body {
     } = a, b = c === "nest", S = c === "row" && (!p || p(e)), C = S || b, E = u && u.has(t), R = f && e && e[f], $ = Tt(m), M = g?.(e, n), I = M?.onClick, D = (T, ...A) => {
       v && C && m(e, T), I?.(T, ...A);
     };
-    let _;
-    typeof y == "string" ? _ = y : typeof y == "function" && (_ = y(e, n, r));
+    let N;
+    typeof y == "string" ? N = y : typeof y == "function" && (N = y(e, n, r));
     const P = Gv(s);
     return {
       ...a,
@@ -53367,7 +53367,7 @@ html body {
       expandable: C,
       rowProps: {
         ...M,
-        className: ne(_, M?.className),
+        className: ne(N, M?.className),
         onClick: D
       }
     };
@@ -53484,14 +53484,14 @@ html body {
       record: u,
       onExpand: E
     })));
-    const _ = {
+    const N = {
       ...t.onCell?.(u, a)
     };
     let P;
     if (c) {
       const {
         rowSpan: T = 1
-      } = _;
+      } = N;
       if (R && T && n < c) {
         P = T;
         let A = T;
@@ -53499,14 +53499,14 @@ html body {
           const O = s[z];
           $.has(O) && (A += 1);
         }
-        _.rowSpan = A;
+        N.rowSpan = A;
       }
     }
     return {
       key: M,
       fixedInfo: I,
       appendCellNode: D,
-      additionalCellProps: _,
+      additionalCellProps: N,
       originRowSpan: P
     };
   }
@@ -53535,7 +53535,7 @@ html body {
       rowProps: I,
       // Misc
       expanded: D,
-      rowSupportExpand: _
+      rowSupportExpand: N
     } = S, P = l.useRef(!1);
     P.current ||= D;
     const T = nH(R, s, c, p), A = /* @__PURE__ */ l.createElement(g, sv({}, I, {
@@ -53582,7 +53582,7 @@ html body {
       }));
     }));
     let z;
-    if (_ && (M || P.current || D)) {
+    if (N && (M || P.current || D)) {
       const O = $(s, c, p + 1, D);
       z = /* @__PURE__ */ l.createElement(tH, {
         expanded: D,
@@ -53691,7 +53691,7 @@ html body {
         colSpan: z,
         sticky: O
       };
-    }, [c.length, y, b]), I = a(["body", "wrapper"], "tbody"), D = a(["body", "row"], "tr"), _ = a(["body", "cell"], "td"), P = a(["body", "cell"], "th");
+    }, [c.length, y, b]), I = a(["body", "wrapper"], "tbody"), D = a(["body", "row"], "tr"), N = a(["body", "cell"], "td"), P = a(["body", "cell"], "th");
     let T;
     t.length ? T = E.map((z, O) => {
       const {
@@ -53710,7 +53710,7 @@ html body {
         index: O,
         renderIndex: U,
         rowComponent: D,
-        cellComponent: _,
+        cellComponent: N,
         scopeCellComponent: P,
         indent: F,
         expandedRowInfo: M
@@ -53720,7 +53720,7 @@ html body {
       className: `${r}-placeholder`,
       prefixCls: r,
       component: D,
-      cellComponent: _,
+      cellComponent: N,
       colSpan: c.length,
       isEmpty: !0
     }, p);
@@ -53823,10 +53823,10 @@ html body {
       ...I
     } = e, {
       prefixCls: D,
-      scrollbarSize: _,
+      scrollbarSize: N,
       isSticky: P,
       getComponent: T
-    } = Mr(Xr, ["prefixCls", "scrollbarSize", "isSticky", "getComponent"]), A = T(["header", "table"], "table"), z = P && !v ? 0 : _, O = l.useRef(null), L = l.useCallback((G) => {
+    } = Mr(Xr, ["prefixCls", "scrollbarSize", "isSticky", "getComponent"]), A = T(["header", "table"], "table"), z = P && !v ? 0 : N, O = l.useRef(null), L = l.useCallback((G) => {
       g0(t, G), g0(O, G);
     }, []);
     l.useEffect(() => {
@@ -54175,8 +54175,8 @@ html body {
       () => iH(I),
       // eslint-disable-next-line react-hooks/exhaustive-deps
       [I, v, C]
-    ), [_, P] = Qre(D, C, E);
-    return [I, _, P];
+    ), [N, P] = Qre(D, C, E);
+    return [I, N, P];
   }
   function Zre(e, t, n) {
     const r = qre(e), {
@@ -54309,27 +54309,27 @@ html body {
     }, []);
     const R = () => {
       C(!1);
-    }, $ = (_) => {
-      _.persist(), b.current.delta = _.pageX - v.scrollLeft, b.current.x = 0, C(!0), _.preventDefault();
-    }, M = (_) => {
+    }, $ = (N) => {
+      N.persist(), b.current.delta = N.pageX - v.scrollLeft, b.current.x = 0, C(!0), N.preventDefault();
+    }, M = (N) => {
       const {
         buttons: P
-      } = _ || window?.event;
+      } = N || window?.event;
       if (!S || P === 0) {
         S && C(!1);
         return;
       }
-      let T = b.current.x + _.pageX - b.current.x - b.current.delta;
+      let T = b.current.x + N.pageX - b.current.x - b.current.delta;
       const A = c === "rtl";
       T = Math.max(A ? p - m : 0, Math.min(A ? 0 : m - p, T)), (!A || Math.abs(T) + Math.abs(p) < m) && (r({
         scrollLeft: T / m * (f + 2)
-      }), b.current.x = _.pageX);
+      }), b.current.x = N.pageX);
     }, I = () => {
       Ft.cancel(E.current), E.current = Ft(() => {
         if (!n.current)
           return;
-        const _ = fA(n.current).top, P = _ + n.current.offsetHeight, T = s === window ? document.documentElement.scrollTop + window.innerHeight : fA(s).top + s.clientHeight;
-        P - lI() <= T || _ >= T - a ? y((A) => ({
+        const N = fA(n.current).top, P = N + n.current.offsetHeight, T = s === window ? document.documentElement.scrollTop + window.innerHeight : fA(s).top + s.clientHeight;
+        P - lI() <= T || N >= T - a ? y((A) => ({
           ...A,
           isHiddenScrollBar: !0
         })) : y((A) => ({
@@ -54337,10 +54337,10 @@ html body {
           isHiddenScrollBar: !1
         }));
       });
-    }, D = (_) => {
+    }, D = (N) => {
       y((P) => ({
         ...P,
-        scrollLeft: _ / f * m || 0
+        scrollLeft: N / f * m || 0
       }));
     };
     return l.useImperativeHandle(t, () => ({
@@ -54350,25 +54350,25 @@ html body {
       document.body.removeEventListener(mA, R), document.body.removeEventListener(pA, M);
     }), [p, S]), l.useEffect(() => {
       if (n.current) {
-        const _ = [];
+        const N = [];
         let P = Sa(n.current);
         for (; P; )
-          _.push(P), P = P.parentElement;
-        return _.forEach((T) => {
+          N.push(P), P = P.parentElement;
+        return N.forEach((T) => {
           T.addEventListener(qc, I, !1);
         }), window.addEventListener(hA, I, !1), window.addEventListener(qc, I, !1), s.addEventListener(qc, I, !1), () => {
-          _.forEach((T) => {
+          N.forEach((T) => {
             T.removeEventListener(qc, I);
           }), window.removeEventListener(hA, I), window.removeEventListener(qc, I), s.removeEventListener(qc, I);
         };
       }
     }, [s]), l.useEffect(() => {
-      v.isHiddenScrollBar || y((_) => {
+      v.isHiddenScrollBar || y((N) => {
         const P = n.current;
         return P ? {
-          ..._,
+          ...N,
           scrollLeft: P.scrollLeft / P.scrollWidth * P.clientWidth
-        } : _;
+        } : N;
       });
     }, [v.isHiddenScrollBar]), f <= m || !p || v.isHiddenScrollBar ? null : /* @__PURE__ */ l.createElement("div", {
       style: {
@@ -54432,7 +54432,7 @@ html body {
       components: M,
       emptyText: I,
       onRow: D,
-      onHeaderRow: _,
+      onHeaderRow: N,
       // Measure Row
       measureRowRender: P,
       // Events
@@ -54595,7 +54595,7 @@ html body {
       colWidths: Ge,
       columCount: oe.length,
       stickyOffsets: Ue,
-      onHeaderRow: _,
+      onHeaderRow: N,
       fixHeader: Ze,
       scroll: g
     }, en = l.useMemo(() => ee ? null : typeof I == "function" ? I() : I, [ee, I]), pn = /* @__PURE__ */ l.createElement(Ure, {
@@ -54875,11 +54875,11 @@ html body {
       additionalCellProps: I,
       originRowSpan: D
     } = rH(t, n, r, a, s), {
-      style: _,
+      style: N,
       colSpan: P = 1,
       rowSpan: T = 1
     } = I, A = r - 1, z = foe(A, P, E), O = P > 1 ? C - z : 0, L = {
-      ..._,
+      ...N,
       ...m,
       flex: `0 0 ${z}px`,
       width: `${z}px`,
@@ -54946,7 +54946,7 @@ html body {
       styles: $
     } = Mr(Xr, ["prefixCls", "flattenColumns", "fixColumn", "componentWidth", "scrollX", "classNames", "styles"]), {
       getComponent: M
-    } = Mr(QR, ["getComponent"]), I = eH(p, s, r, g), D = M(["body", "row"], "div"), _ = M(["body", "cell"], "div"), {
+    } = Mr(QR, ["getComponent"]), I = eH(p, s, r, g), D = M(["body", "row"], "div"), N = M(["body", "cell"], "div"), {
       rowSupportExpand: P,
       expanded: T,
       rowProps: A,
@@ -54970,7 +54970,7 @@ html body {
           display: T ? void 0 : "none"
         }
       }, /* @__PURE__ */ l.createElement(Ru, {
-        component: _,
+        component: N,
         prefixCls: S,
         className: ne(K, {
           [`${K}-fixed`]: C
@@ -54999,7 +54999,7 @@ html body {
       key: X,
       className: R?.body?.cell,
       style: $?.body?.cell,
-      component: _,
+      component: N,
       rowInfo: I,
       column: ee,
       colIndex: X,
@@ -55140,11 +55140,11 @@ html body {
           getHeight: B
         });
       });
-    }, _ = l.useMemo(() => ({
+    }, N = l.useMemo(() => ({
       columnsOffset: M
     }), [M]), P = `${f}-tbody`, T = S(["body", "wrapper"]), A = {};
     return v && (A.position = "sticky", A.bottom = 0, typeof v == "object" && v.offsetScroll && (A.bottom = v.offsetScroll)), /* @__PURE__ */ l.createElement(cH.Provider, {
-      value: _
+      value: N
     }, /* @__PURE__ */ l.createElement(Av, {
       fullHeight: !1,
       ref: E,
@@ -55270,7 +55270,7 @@ html body {
       prefixCls: M,
       data: I,
       pageData: D,
-      getRecordByKey: _,
+      getRecordByKey: N,
       getRowKey: P,
       expandType: T,
       childrenColumnName: A,
@@ -55280,11 +55280,11 @@ html body {
       if (n) {
         const fe = /* @__PURE__ */ new Map();
         de.forEach((pe) => {
-          let oe = _(pe);
+          let oe = N(pe);
           !oe && X.current.has(pe) && (oe = X.current.get(pe)), fe.set(pe, oe);
         }), X.current = fe;
       }
-    }, [_, n]);
+    }, [N, n]);
     l.useEffect(() => {
       K(ee);
     }, [ee, K]);
@@ -55332,18 +55332,18 @@ html body {
     const ie = l.useCallback((de, fe) => {
       let pe, oe;
       K(de), n ? (pe = de, oe = de.map((ce) => X.current.get(ce))) : (pe = [], oe = [], de.forEach((ce) => {
-        const Z = _(ce);
+        const Z = N(ce);
         Z !== void 0 && (pe.push(ce), oe.push(Z));
       })), V(pe), u?.(pe, oe, {
         type: fe
       });
-    }, [V, _, u, n]), Y = l.useCallback((de, fe, pe, oe) => {
+    }, [V, N, u, n]), Y = l.useCallback((de, fe, pe, oe) => {
       if (f) {
-        const ce = pe.map(_);
-        f(_(de), fe, ce, oe);
+        const ce = pe.map(N);
+        f(N(de), fe, ce, oe);
       }
       ie(pe, "single");
-    }, [f, _, ie]), q = l.useMemo(() => !S || R ? null : (S === !0 ? [Ow, Lw, kw] : S).map((fe) => {
+    }, [f, N, ie]), q = l.useMemo(() => !S || R ? null : (S === !0 ? [Ow, Lw, kw] : S).map((fe) => {
       let pe;
       return fe === Ow ? pe = {
         key: "all",
@@ -55394,7 +55394,7 @@ html body {
           pe.has(Ge) || (pe.add(Ge), ze.push(Ge));
         });
         const Oe = Array.from(pe);
-        m?.(!ce, Oe.map(_), ze.map(_)), ie(Oe, "all"), U(null);
+        m?.(!ce, Oe.map(N), ze.map(N)), ie(Oe, "all"), U(null);
       };
       let xe, Me;
       if (b !== "radio") {
@@ -55492,7 +55492,7 @@ html body {
               } = nt, ft = oe.indexOf(Ue), mt = re.size > 0 && oe.some((Be) => re.has(Be));
               if (St && $ && mt) {
                 const Be = F(ft, oe, pe), at = Array.from(pe);
-                v?.(!Ze, at.map(_), Be.map(_)), ie(at, "multiple");
+                v?.(!Ze, at.map(N), Be.map(N)), ie(at, "multiple");
               } else {
                 const Be = B;
                 if ($) {
@@ -56272,7 +56272,7 @@ html body {
       disabled: M,
       motion: I,
       style: D,
-      rootClassName: _,
+      rootClassName: N,
       rootStyle: P,
       classNames: T,
       styles: A,
@@ -56335,7 +56335,7 @@ html body {
         ...s,
         ...D
       },
-      rootClassName: ne(X.root, _),
+      rootClassName: ne(X.root, N),
       rootStyle: K.root,
       classNames: X,
       styles: K,
@@ -56453,7 +56453,7 @@ html body {
       showIcon: $ = !0,
       expandAction: M = "click",
       ...I
-    } = s, D = S("tree", E), _ = ne(`${D}-directory`, {
+    } = s, D = S("tree", E), N = ne(`${D}-directory`, {
       [`${D}-directory-rtl`]: C === "rtl"
     }, R);
     return /* @__PURE__ */ l.createElement(fH, {
@@ -56464,7 +56464,7 @@ html body {
       showIcon: $,
       expandAction: M,
       prefixCls: D,
-      className: _,
+      className: N,
       defaultExpandParent: r,
       expandedKeys: g,
       selectedKeys: m,
@@ -56583,7 +56583,7 @@ html body {
       // Deprecated
       filterDropdownOpen: $,
       onFilterDropdownOpenChange: M
-    } = r, [I, D] = l.useState(!1), _ = l.useContext(wR), P = !!(p && (p.filteredKeys?.length || p.forceFiltered)), T = (Z) => {
+    } = r, [I, D] = l.useState(!1), N = l.useContext(wR), P = !!(p && (p.filteredKeys?.length || p.forceFiltered)), T = (Z) => {
       D(Z), R.onOpenChange?.(Z), M?.(Z);
     }, A = R.open ?? $ ?? // deprecated
     I, z = p?.filteredKeys, [O, L] = P9(Fx(z)), F = ({
@@ -56798,7 +56798,7 @@ html body {
         }
       }, Z);
     })();
-    if (_)
+    if (N)
       return /* @__PURE__ */ l.createElement("div", {
         className: `${n}-column`
       }, /* @__PURE__ */ l.createElement("span", {
@@ -57117,10 +57117,10 @@ html body {
       const {
         cancelSort: I,
         triggerAsc: D,
-        triggerDesc: _
+        triggerDesc: N
       } = s || {};
       let P = I;
-      $ === Bx ? P = _ : $ === Sg && (P = D);
+      $ === Bx ? P = N : $ === Sg && (P = D);
       const T = It(S) ? {
         title: P,
         ...S
@@ -57238,9 +57238,9 @@ html body {
     } = e, m = r ?? n, [p, g] = l.useState(() => Yw(m, !0)), v = (R, $) => {
       const M = [];
       return R.forEach((I, D) => {
-        const _ = Tu(D, $);
-        if (M.push($s(I, _)), Array.isArray(I.children)) {
-          const P = v(I.children, _);
+        const N = Tu(D, $);
+        if (M.push($s(I, N)), Array.isArray(I.children)) {
+          const P = v(I.children, N);
           M.push.apply(M, Nt(P));
         }
       }), M;
@@ -57248,21 +57248,21 @@ html body {
       let R = !0;
       const $ = Yw(m, !1);
       if (!$.length) {
-        const _ = v(m);
+        const N = v(m);
         return p.filter(({
           key: P
-        }) => _.includes(P));
+        }) => N.includes(P));
       }
       const M = [];
-      function I(_) {
-        R ? M.push(_) : M.push({
-          ..._,
+      function I(N) {
+        R ? M.push(N) : M.push({
+          ...N,
           sortOrder: null
         });
       }
       let D = null;
-      return $.forEach((_) => {
-        D === null ? (I(_), _.sortOrder && (_.multiplePriority === !1 ? R = !1 : D = !0)) : (D && _.multiplePriority !== !1 || (R = !1), I(_));
+      return $.forEach((N) => {
+        D === null ? (I(N), N.sortOrder && (N.multiplePriority === !1 ? R = !1 : D = !0)) : (D && N.multiplePriority !== !1 || (R = !1), I(N));
       }), M;
     }, [m, p]), b = l.useMemo(() => {
       const R = y.map(({
@@ -57621,7 +57621,7 @@ html body {
       colorTextDisabled: M,
       tableFilterDropdownBg: I,
       tableFilterDropdownHeight: D,
-      controlItemBgHover: _,
+      controlItemBgHover: N,
       controlItemBgActive: P,
       boxShadowSecondary: T,
       filterDropdownMenuBg: A,
@@ -57692,7 +57692,7 @@ html body {
                 padding: 0
               },
               [`${F}-treenode ${F}-node-content-wrapper:hover`]: {
-                backgroundColor: _
+                backgroundColor: N
               },
               [`${F}-treenode-checkbox-checked ${F}-node-content-wrapper`]: {
                 "&, &:hover": {
@@ -58500,11 +58500,11 @@ html body {
       colorIconHover: M,
       opacityLoading: I,
       controlInteractiveSize: D
-    } = e, _ = new En(a).onBackground(n).toHexString(), P = new En(s).onBackground(n).toHexString(), T = new En(t).onBackground(n).toHexString(), A = new En($), z = new En(M), O = D / 2 - R, L = O * 2 + R * 3;
+    } = e, N = new En(a).onBackground(n).toHexString(), P = new En(s).onBackground(n).toHexString(), T = new En(t).onBackground(n).toHexString(), A = new En($), z = new En(M), O = D / 2 - R, L = O * 2 + R * 3;
     return {
       headerBg: T,
       headerColor: r,
-      headerSortActiveBg: _,
+      headerSortActiveBg: N,
       headerSortHoverBg: P,
       bodySortBg: T,
       rowHoverBg: T,
@@ -58525,7 +58525,7 @@ html body {
       cellFontSizeMD: S,
       cellFontSizeSM: S,
       headerSplitColor: g,
-      fixedHeaderSortActiveBg: _,
+      fixedHeaderSortActiveBg: N,
       headerFilterHoverBg: s,
       filterDropdownMenuBg: n,
       filterDropdownBg: n,
@@ -58564,7 +58564,7 @@ html body {
       borderColor: M,
       footerBg: I,
       footerColor: D,
-      headerBorderRadius: _,
+      headerBorderRadius: N,
       cellFontSize: P,
       cellFontSizeMD: T,
       cellFontSizeSM: A,
@@ -58579,7 +58579,7 @@ html body {
     } = e, X = Kt(e, {
       tableFontSize: P,
       tableBg: r,
-      tableRadius: _,
+      tableRadius: N,
       tablePaddingVertical: b,
       tablePaddingHorizontal: S,
       tablePaddingVerticalMiddle: C,
@@ -58657,7 +58657,7 @@ html body {
       onChange: M,
       getPopupContainer: I,
       loading: D,
-      expandIcon: _,
+      expandIcon: N,
       expandable: P,
       expandedRowRender: T,
       expandIconColumnIndex: A,
@@ -58814,7 +58814,7 @@ html body {
     }, Oe), en = (rt, wt, ct) => ne({
       [`${We}-row-selected`]: $n.has(Be(rt, wt))
     }, Ct(S) ? S(rt, wt, ct) : S);
-    he.__PARENT_RENDER_ICON__ = he.expandIcon, he.expandIcon = he.expandIcon || _ || woe(Ee), Qe === "nest" && he.expandIconColumnIndex === void 0 ? he.expandIconColumnIndex = Oe ? 1 : 0 : he.expandIconColumnIndex > 0 && Oe && (he.expandIconColumnIndex -= 1), lr(he.indentSize) || (he.indentSize = lr(z) ? z : 15);
+    he.__PARENT_RENDER_ICON__ = he.expandIcon, he.expandIcon = he.expandIcon || N || woe(Ee), Qe === "nest" && he.expandIconColumnIndex === void 0 ? he.expandIconColumnIndex = Oe ? 1 : 0 : he.expandIconColumnIndex > 0 && Oe && (he.expandIconColumnIndex -= 1), lr(he.indentSize) || (he.indentSize = lr(z) ? z : 15);
     const pn = l.useCallback((rt) => un(Xt(xt(Re(rt)))), [Re, xt, Xt]);
     let zn, Qn;
     if (v !== !1 && ht?.total) {
@@ -59115,10 +59115,10 @@ html body {
     } = e, {
       getPrefixCls: y,
       tag: b
-    } = l.useContext(Pt), S = l.useContext(kr), C = g ?? S, E = (_) => {
-      C || (f?.(!s), m?.(_));
-    }, R = (_) => {
-      p?.(_), !(_.defaultPrevented || C) && _.key === " " && (_.preventDefault(), _.repeat || f?.(!s));
+    } = l.useContext(Pt), S = l.useContext(kr), C = g ?? S, E = (N) => {
+      C || (f?.(!s), m?.(N));
+    }, R = (N) => {
+      p?.(N), !(N.defaultPrevented || C) && N.key === " " && (N.preventDefault(), N.repeat || f?.(!s));
     }, $ = y("tag", n), [M, I] = t1($), D = ne($, `${$}-checkable`, {
       [`${$}-checkable-checked`]: s,
       [`${$}-checkable-disabled`]: C
@@ -59161,7 +59161,7 @@ html body {
       style: $,
       classNames: M,
       styles: I
-    } = qt("tag"), D = C("tag", r), _ = `${D}-checkable-group`, P = rr(D), [T, A] = t1(D, P), z = yt($), O = yt(c), [L, F] = Jt([M, u], [I, z, f, O], {
+    } = qt("tag"), D = C("tag", r), N = `${D}-checkable-group`, P = rr(D), [T, A] = t1(D, P), z = yt($), O = yt(c), [L, F] = Jt([M, u], [I, z, f, O], {
       props: e
     }), U = l.useMemo(() => Array.isArray(p) ? p.map((G) => It(G) ? G : {
       value: G,
@@ -59184,16 +59184,16 @@ html body {
     });
     return /* @__PURE__ */ se.createElement("div", {
       ...K,
-      className: ne(_, R, a, {
-        [`${_}-disabled`]: m,
-        [`${_}-rtl`]: E === "rtl"
+      className: ne(N, R, a, {
+        [`${N}-disabled`]: m,
+        [`${N}-rtl`]: E === "rtl"
       }, T, A, s, L.root),
       style: F.root,
       id: n,
       ref: X
     }, U.map((G) => /* @__PURE__ */ se.createElement(CH, {
       key: G.value,
-      className: ne(`${_}-item`, L.item, G.className),
+      className: ne(`${N}-item`, L.item, G.className),
       style: {
         ...F.item,
         ...G.style
@@ -59301,7 +59301,7 @@ html body {
       className: M,
       variant: I,
       style: D,
-      classNames: _,
+      classNames: N,
       styles: P
     } = qt("tag"), [T, A, z, O, L] = oie(e, I), F = z || O, U = l.useContext(kr), H = v ?? U, {
       tag: V
@@ -59310,7 +59310,7 @@ html body {
       color: A,
       variant: T,
       disabled: H
-    }, W = yt(D), Q = yt(s), [k, B] = Jt([_, C], [P, W, S, Q], {
+    }, W = yt(D), Q = yt(s), [k, B] = Jt([N, C], [P, W, S, Q], {
       props: G
     }), J = l.useMemo(() => {
       let me = B.root;
@@ -59814,7 +59814,7 @@ html body {
       M(U.value.replace(/[\n\r]/g, ""));
     }, D = () => {
       E.current = !0;
-    }, _ = () => {
+    }, N = () => {
       E.current = !1;
     }, P = ({
       keyCode: U
@@ -59850,7 +59850,7 @@ html body {
       onKeyDown: P,
       onKeyUp: A,
       onCompositionStart: D,
-      onCompositionEnd: _,
+      onCompositionEnd: N,
       onBlur: z,
       "aria-label": n,
       rows: 1,
@@ -60117,17 +60117,17 @@ html body {
       measureDeps: u,
       miscDeps: f,
       onEllipsis: m
-    } = e, p = l.useMemo(() => xr(r), [r]), g = l.useMemo(() => Bie(p), [r]), v = l.useMemo(() => a(p, !1), [r].concat(Nt(u))), [y, b] = l.useState(null), S = l.useRef(null), C = l.useRef(null), E = l.useRef(null), R = l.useRef(null), $ = l.useRef(null), [M, I] = l.useState(!1), [D, _] = l.useState(qx), [P, T] = l.useState(0), [A, z] = l.useState(null);
+    } = e, p = l.useMemo(() => xr(r), [r]), g = l.useMemo(() => Bie(p), [r]), v = l.useMemo(() => a(p, !1), [r].concat(Nt(u))), [y, b] = l.useState(null), S = l.useRef(null), C = l.useRef(null), E = l.useRef(null), R = l.useRef(null), $ = l.useRef(null), [M, I] = l.useState(!1), [D, N] = l.useState(qx), [P, T] = l.useState(0), [A, z] = l.useState(null);
     Vt(() => {
-      _(t && n && g ? Wx : qx);
+      N(t && n && g ? Wx : qx);
     }, [n, r, s, t, p].concat(Nt(u))), Vt(() => {
       if (D === Wx) {
-        _(Vx);
+        N(Vx);
         const U = C.current && getComputedStyle(C.current).whiteSpace;
         z(U);
       } else if (D === Vx) {
         const U = !!E.current?.isExceed();
-        _(U ? Kx : IA), b(U ? [0, g] : null), I(U);
+        N(U ? Kx : IA), b(U ? [0, g] : null), I(U);
         const H = E.current?.getHeight() || 0, V = s === 1 ? 0 : R.current?.getHeight() || 0, ee = $.current?.getHeight() || 0, X = Math.max(
           H,
           // height of rows with ellipsis
@@ -60243,7 +60243,7 @@ html body {
       onMouseEnter: E,
       onMouseLeave: R,
       ...$
-    } = e, [M] = wo("Text"), I = l.useRef(null), D = l.useRef(null), [_, P, T, A] = wH(n, s, c, u, e), z = sn($, MA), [O, L] = Hx(v), [F, U] = Rn(!1, L.editing), {
+    } = e, [M] = wo("Text"), I = l.useRef(null), D = l.useRef(null), [N, P, T, A] = wH(n, s, c, u, e), z = sn($, MA), [O, L] = Hx(v), [F, U] = Rn(!1, L.editing), {
       triggerType: H = ["icon"]
     } = L, V = (He) => {
       He && L.onStart?.(), U(He);
@@ -60330,7 +60330,7 @@ html body {
         maxLength: L.maxLength,
         autoSize: L.autoSize,
         enterIcon: L.enterIcon,
-        classNames: _,
+        classNames: N,
         styles: P
       });
     const ft = () => {
@@ -60341,7 +60341,7 @@ html body {
       return He ? /* @__PURE__ */ l.createElement("button", {
         type: "button",
         key: "expand",
-        className: ne(`${T}-${xe ? "collapse" : "expand"}`, _.action),
+        className: ne(`${T}-${xe ? "collapse" : "expand"}`, N.action),
         style: P.action,
         onClick: (Re) => Ge(Re, {
           expanded: !xe
@@ -60362,7 +60362,7 @@ html body {
       }, /* @__PURE__ */ l.createElement("button", {
         type: "button",
         ref: D,
-        className: ne(`${T}-edit`, _.action),
+        className: ne(`${T}-edit`, N.action),
         style: P.action,
         onClick: X,
         "aria-label": Ne,
@@ -60379,13 +60379,13 @@ html body {
       onCopy: re,
       loading: J,
       iconOnly: !tn(p),
-      className: _.action,
+      className: N.action,
       style: P.action
     }) : null, at = (He) => {
       const $e = He && ft(), Re = mt(), Fe = Be();
       return !$e && !Re && !Fe ? null : /* @__PURE__ */ l.createElement("span", {
         key: "operations",
-        className: ne(`${T}-actions`, _.actions, {
+        className: ne(`${T}-actions`, N.actions, {
           [`${T}-actions-start`]: k === "start"
         }),
         style: P.actions,
@@ -60422,7 +60422,7 @@ html body {
         [`${T}-ellipsis-multiple-line`]: Oe,
         [`${T}-link`]: S === "a"
       }, r),
-      classNames: _,
+      classNames: N,
       styles: P,
       prefixCls: T,
       style: {
@@ -60878,7 +60878,7 @@ html body {
       }), D = b ? {
         directory: "directory",
         webkitdirectory: "webkitdirectory"
-      } : {}, _ = s ? {} : {
+      } : {}, N = s ? {} : {
         onClick: S ? this.onClick : () => {
         },
         onKeyDown: S ? this.onKeyDown : () => {
@@ -60889,7 +60889,7 @@ html body {
         onDragOver: this.onFileDragOver,
         tabIndex: R ? void 0 : "0"
       };
-      return /* @__PURE__ */ se.createElement(t, uv({}, _, {
+      return /* @__PURE__ */ se.createElement(t, uv({}, N, {
         className: I,
         role: R ? void 0 : "button",
         style: f
@@ -61577,7 +61577,7 @@ html body {
     extra: M,
     onPreview: I,
     onDownload: D,
-    onClose: _
+    onClose: N
   }, P) => {
     const {
       status: T
@@ -61622,7 +61622,7 @@ html body {
       }
     const H = ne(`${e}-list-item`, `${e}-list-item-${A}`, r?.item), V = typeof u.linkProps == "string" ? JSON.parse(u.linkProps) : u.linkProps, ee = (Ct(S) ? S(u) : S) ? g(
       (Ct(R) ? R(u) : R) || /* @__PURE__ */ l.createElement(fie, null),
-      () => _(u),
+      () => N(u),
       e,
       s.removeFile,
       // acceptUploadDisabled is true, only remove icon will follow Upload disabled prop
@@ -61696,7 +61696,7 @@ html body {
     }, v ? v(te, u, f, {
       download: D.bind(null, u),
       preview: I.bind(null, u),
-      remove: _.bind(null, u)
+      remove: N.bind(null, u)
     }) : te);
   }), Pse = (e, t) => {
     const {
@@ -61724,7 +61724,7 @@ html body {
       appendAction: M,
       appendActionVisible: I = !0,
       itemRender: D,
-      disabled: _,
+      disabled: N,
       classNames: P,
       styles: T
     } = e, [, A] = GE(), [z, O] = l.useState(!1), L = ["picture-card", "picture-circle"].includes(n);
@@ -61763,7 +61763,7 @@ html body {
           J(), /* @__PURE__ */ l.isValidElement(B) && B.props.onClick?.(q);
         },
         className: `${re}-list-item-action`,
-        disabled: ie ? _ : !1
+        disabled: ie ? N : !1
       };
       return /* @__PURE__ */ l.isValidElement(B) ? /* @__PURE__ */ l.createElement(Ve, {
         ...Y,
@@ -61867,7 +61867,7 @@ html body {
       type: M = "select",
       children: I,
       style: D,
-      itemRender: _,
+      itemRender: N,
       maxCount: P,
       data: T = {},
       multiple: A = !1,
@@ -62070,7 +62070,7 @@ html body {
       progress: G,
       appendAction: $e,
       appendActionVisible: Re,
-      itemRender: _,
+      itemRender: N,
       disabled: X
     }) : $e, Be = ne(Oe, $, U, Ge, Ue, Me, We.root, {
       [`${be}-rtl`]: xe === "rtl",
@@ -62194,11 +62194,11 @@ html body {
         }, g.fromString = function(C) {
           var E = C.indexOf("("), R = C.lastIndexOf(")"), $ = C.substring(0, E), M = C.substring(E + 1, R).split(","), I = C.substring(R + 1);
           if (I.indexOf("@") === 0)
-            var D = /@(.+?)(?::(\d+))?(?::(\d+))?$/.exec(I, ""), _ = D[1], P = D[2], T = D[3];
+            var D = /@(.+?)(?::(\d+))?(?::(\d+))?$/.exec(I, ""), N = D[1], P = D[2], T = D[3];
           return new g({
             functionName: $,
             args: M || void 0,
-            fileName: _,
+            fileName: N,
             lineNumber: P || void 0,
             columnNumber: T || void 0
           });
@@ -62367,7 +62367,7 @@ html body {
     return t;
   }, Dse = ({ client: e, children: t }) => (l.useEffect(() => (e.mount(), () => {
     e.unmount();
-  }), [e]), /* @__PURE__ */ N.jsx(TH.Provider, {
+  }), [e]), /* @__PURE__ */ _.jsx(TH.Provider, {
     value: e,
     children: t
   })), Ose = {
@@ -62728,12 +62728,12 @@ html body {
       }
       Promise.resolve(R).then(b).catch((M) => {
         if (f()) return;
-        const I = e.retry ?? (i1() ? 0 : 3), D = e.retryDelay ?? Zse, _ = typeof D == "function" ? D(n, M) : D, P = I === !0 || typeof I == "number" && n < I || typeof I == "function" && I(n, M);
+        const I = e.retry ?? (i1() ? 0 : 3), D = e.retryDelay ?? Zse, N = typeof D == "function" ? D(n, M) : D, P = I === !0 || typeof I == "number" && n < I || typeof I == "function" && I(n, M);
         if (t || !P) {
           S(M);
           return;
         }
-        n++, e.onFail?.(n, M), Hse(_).then(() => v() ? void 0 : C()).then(() => {
+        n++, e.onFail?.(n, M), Hse(N).then(() => v() ? void 0 : C()).then(() => {
           t ? S(M) : E();
         });
       });
@@ -63258,8 +63258,8 @@ html body {
       const n = this.#t, r = this.options, a = this.#r, s = this.#a, c = this.#o, u = e !== n ? e.state : this.#n, { state: f } = e;
       let m = { ...f }, p = !1, g;
       if (t._optimisticResults) {
-        const I = this.hasListeners(), D = !I && WA(e, t), _ = I && VA(e, n, t, r);
-        (D || _) && (m = {
+        const I = this.hasListeners(), D = !I && WA(e, t), N = I && VA(e, n, t, r);
+        (D || N) && (m = {
           ...m,
           ...OH(f.data, e.options)
         }), t._optimisticResults === "isRestoring" && (m.fetchStatus = "idle");
@@ -64504,7 +64504,7 @@ html body {
   function tb() {
     if (eD) return Jx;
     eD = 1;
-    var e = typeof Map == "function" && Map.prototype, t = Object.getOwnPropertyDescriptor && e ? Object.getOwnPropertyDescriptor(Map.prototype, "size") : null, n = e && t && typeof t.get == "function" ? t.get : null, r = e && Map.prototype.forEach, a = typeof Set == "function" && Set.prototype, s = Object.getOwnPropertyDescriptor && a ? Object.getOwnPropertyDescriptor(Set.prototype, "size") : null, c = a && s && typeof s.get == "function" ? s.get : null, u = a && Set.prototype.forEach, f = typeof WeakMap == "function" && WeakMap.prototype, m = f ? WeakMap.prototype.has : null, p = typeof WeakSet == "function" && WeakSet.prototype, g = p ? WeakSet.prototype.has : null, v = typeof WeakRef == "function" && WeakRef.prototype, y = v ? WeakRef.prototype.deref : null, b = Boolean.prototype.valueOf, S = Object.prototype.toString, C = Function.prototype.toString, E = String.prototype.match, R = String.prototype.slice, $ = String.prototype.replace, M = String.prototype.toUpperCase, I = String.prototype.toLowerCase, D = RegExp.prototype.test, _ = Array.prototype.concat, P = Array.prototype.join, T = Array.prototype.slice, A = Math.floor, z = typeof BigInt == "function" ? BigInt.prototype.valueOf : null, O = Object.getOwnPropertySymbols, L = typeof Symbol == "function" && typeof Symbol.iterator == "symbol" ? Symbol.prototype.toString : null, F = typeof Symbol == "function" && typeof Symbol.iterator == "object", U = typeof Symbol == "function" && Symbol.toStringTag && (typeof Symbol.toStringTag === F || !0) ? Symbol.toStringTag : null, H = Object.prototype.propertyIsEnumerable, V = (typeof Reflect == "function" ? Reflect.getPrototypeOf : Object.getPrototypeOf) || ([].__proto__ === Array.prototype ? function(he) {
+    var e = typeof Map == "function" && Map.prototype, t = Object.getOwnPropertyDescriptor && e ? Object.getOwnPropertyDescriptor(Map.prototype, "size") : null, n = e && t && typeof t.get == "function" ? t.get : null, r = e && Map.prototype.forEach, a = typeof Set == "function" && Set.prototype, s = Object.getOwnPropertyDescriptor && a ? Object.getOwnPropertyDescriptor(Set.prototype, "size") : null, c = a && s && typeof s.get == "function" ? s.get : null, u = a && Set.prototype.forEach, f = typeof WeakMap == "function" && WeakMap.prototype, m = f ? WeakMap.prototype.has : null, p = typeof WeakSet == "function" && WeakSet.prototype, g = p ? WeakSet.prototype.has : null, v = typeof WeakRef == "function" && WeakRef.prototype, y = v ? WeakRef.prototype.deref : null, b = Boolean.prototype.valueOf, S = Object.prototype.toString, C = Function.prototype.toString, E = String.prototype.match, R = String.prototype.slice, $ = String.prototype.replace, M = String.prototype.toUpperCase, I = String.prototype.toLowerCase, D = RegExp.prototype.test, N = Array.prototype.concat, P = Array.prototype.join, T = Array.prototype.slice, A = Math.floor, z = typeof BigInt == "function" ? BigInt.prototype.valueOf : null, O = Object.getOwnPropertySymbols, L = typeof Symbol == "function" && typeof Symbol.iterator == "symbol" ? Symbol.prototype.toString : null, F = typeof Symbol == "function" && typeof Symbol.iterator == "object", U = typeof Symbol == "function" && Symbol.toStringTag && (typeof Symbol.toStringTag === F || !0) ? Symbol.toStringTag : null, H = Object.prototype.propertyIsEnumerable, V = (typeof Reflect == "function" ? Reflect.getPrototypeOf : Object.getPrototypeOf) || ([].__proto__ === Array.prototype ? function(he) {
       return he.__proto__;
     } : null);
     function ee(he, ye) {
@@ -64599,7 +64599,7 @@ html body {
       }
       if (Y(ye)) {
         var xt = Ze(ye, He);
-        return !("cause" in Error.prototype) && "cause" in ye && !H.call(ye, "cause") ? "{ [" + String(ye) + "] " + P.call(_.call("[cause]: " + He(ye.cause), xt), ", ") + " }" : xt.length === 0 ? "[" + String(ye) + "]" : "{ [" + String(ye) + "] " + P.call(xt, ", ") + " }";
+        return !("cause" in Error.prototype) && "cause" in ye && !H.call(ye, "cause") ? "{ [" + String(ye) + "] " + P.call(N.call("[cause]: " + He(ye.cause), xt), ", ") + " }" : xt.length === 0 ? "[" + String(ye) + "]" : "{ [" + String(ye) + "] " + P.call(xt, ", ") + " }";
       }
       if (typeof ye == "object" && St) {
         if (G && typeof ye[G] == "function" && X)
@@ -64638,7 +64638,7 @@ html body {
       if (typeof globalThis < "u" && ye === globalThis || typeof F_ < "u" && ye === F_)
         return "{ [object globalThis] }";
       if (!le(ye) && !ie(ye)) {
-        var Bt = Ze(ye, He), Sn = V ? V(ye) === Object.prototype : ye instanceof Object || ye.constructor === Object, un = ye instanceof Object ? "" : "null prototype", Nn = !Sn && U && Object(ye) === ye && U in ye ? R.call(Z(ye), 8, -1) : un ? "Object" : "", ht = Sn || typeof ye.constructor != "function" ? "" : ye.constructor.name ? ye.constructor.name + " " : "", Dt = ht + (Nn || un ? "[" + P.call(_.call([], Nn || [], un || []), ": ") + "] " : "");
+        var Bt = Ze(ye, He), Sn = V ? V(ye) === Object.prototype : ye instanceof Object || ye.constructor === Object, un = ye instanceof Object ? "" : "null prototype", Nn = !Sn && U && Object(ye) === ye && U in ye ? R.call(Z(ye), 8, -1) : un ? "Object" : "", ht = Sn || typeof ye.constructor != "function" ? "" : ye.constructor.name ? ye.constructor.name + " " : "", Dt = ht + (Nn || un ? "[" + P.call(N.call([], Nn || [], un || []), ": ") + "] " : "");
         return Bt.length === 0 ? Dt + "{}" : Te ? Dt + "{" + Ue(Bt, Te) + "}" : Dt + "{ " + P.call(Bt, ", ") + " }";
       }
       return String(ye);
@@ -65226,12 +65226,12 @@ html body {
           return M;
         }
       }
-    })() : M, D = cue()(), _ = pue(), P = i3(), T = a3(), A = s3(), z = d1(), O = {}, L = typeof Uint8Array > "u" || !_ ? e : _(Uint8Array), F = {
+    })() : M, D = cue()(), N = pue(), P = i3(), T = a3(), A = s3(), z = d1(), O = {}, L = typeof Uint8Array > "u" || !N ? e : N(Uint8Array), F = {
       __proto__: null,
       "%AggregateError%": typeof AggregateError > "u" ? e : AggregateError,
       "%Array%": Array,
       "%ArrayBuffer%": typeof ArrayBuffer > "u" ? e : ArrayBuffer,
-      "%ArrayIteratorPrototype%": D && _ ? _([][Symbol.iterator]()) : e,
+      "%ArrayIteratorPrototype%": D && N ? N([][Symbol.iterator]()) : e,
       "%AsyncFromSyncIteratorPrototype%": e,
       "%AsyncFunction%": O,
       "%AsyncGenerator%": O,
@@ -65263,10 +65263,10 @@ html body {
       "%Int32Array%": typeof Int32Array > "u" ? e : Int32Array,
       "%isFinite%": isFinite,
       "%isNaN%": isNaN,
-      "%IteratorPrototype%": D && _ ? _(_([][Symbol.iterator]())) : e,
+      "%IteratorPrototype%": D && N ? N(N([][Symbol.iterator]())) : e,
       "%JSON%": typeof JSON == "object" ? JSON : e,
       "%Map%": typeof Map > "u" ? e : Map,
-      "%MapIteratorPrototype%": typeof Map > "u" || !D || !_ ? e : _((/* @__PURE__ */ new Map())[Symbol.iterator]()),
+      "%MapIteratorPrototype%": typeof Map > "u" || !D || !N ? e : N((/* @__PURE__ */ new Map())[Symbol.iterator]()),
       "%Math%": Math,
       "%Number%": Number,
       "%Object%": t,
@@ -65280,10 +65280,10 @@ html body {
       "%Reflect%": typeof Reflect > "u" ? e : Reflect,
       "%RegExp%": RegExp,
       "%Set%": typeof Set > "u" ? e : Set,
-      "%SetIteratorPrototype%": typeof Set > "u" || !D || !_ ? e : _((/* @__PURE__ */ new Set())[Symbol.iterator]()),
+      "%SetIteratorPrototype%": typeof Set > "u" || !D || !N ? e : N((/* @__PURE__ */ new Set())[Symbol.iterator]()),
       "%SharedArrayBuffer%": typeof SharedArrayBuffer > "u" ? e : SharedArrayBuffer,
       "%String%": String,
-      "%StringIteratorPrototype%": D && _ ? _(""[Symbol.iterator]()) : e,
+      "%StringIteratorPrototype%": D && N ? N(""[Symbol.iterator]()) : e,
       "%Symbol%": D ? Symbol : e,
       "%SyntaxError%": c,
       "%ThrowTypeError%": I,
@@ -65310,11 +65310,11 @@ html body {
       "%Math.sign%": S,
       "%Reflect.getPrototypeOf%": T
     };
-    if (_)
+    if (N)
       try {
         null.error;
       } catch (ie) {
-        var U = _(_(ie));
+        var U = N(N(ie));
         F["%Error.prototype%"] = U;
       }
     var H = function ie(Y) {
@@ -65330,7 +65330,7 @@ html body {
         te && (q = te.prototype);
       } else if (Y === "%AsyncIteratorPrototype%") {
         var de = ie("%AsyncGenerator%");
-        de && _ && (q = _(de.prototype));
+        de && N && (q = N(de.prototype));
       }
       return F[Y] = q, q;
     }, V = {
@@ -65753,7 +65753,7 @@ html body {
         return c(v(V, { plainObjects: O }), V.length - 1);
       }
       return V;
-    }, _ = function(T, A) {
+    }, N = function(T, A) {
       if (a(T)) {
         for (var z = [], O = 0; O < T.length; O += 1)
           z[z.length] = A(T[O]);
@@ -65772,7 +65772,7 @@ html body {
       isOverflow: u,
       isRegExp: M,
       markOverflow: c,
-      maybeMap: _,
+      maybeMap: N,
       merge: b
     }, jC;
   }
@@ -65819,7 +65819,7 @@ html body {
       strictNullHandling: !1
     }, g = function(C) {
       return typeof C == "string" || typeof C == "number" || typeof C == "boolean" || typeof C == "symbol" || typeof C == "bigint";
-    }, v = {}, y = function S(C, E, R, $, M, I, D, _, P, T, A, z, O, L, F, U, H, V, ee, X) {
+    }, v = {}, y = function S(C, E, R, $, M, I, D, N, P, T, A, z, O, L, F, U, H, V, ee, X) {
       var K = C;
       if (X > ee)
         throw new RangeError("Input depth exceeded depth option of " + ee);
@@ -65860,13 +65860,13 @@ html body {
         var le = Object.keys(K);
         re = A ? le.sort(A) : le;
       }
-      var ie = _ ? String(E).replace(/\./g, "%2E") : String(E), Y = $ && s(K) && K.length === 1 ? ie + "[]" : ie;
+      var ie = N ? String(E).replace(/\./g, "%2E") : String(E), Y = $ && s(K) && K.length === 1 ? ie + "[]" : ie;
       if (M && s(K) && K.length === 0 && Object.keys(K).length === 0)
         return Y + "[]";
       for (var q = 0; q < re.length; ++q) {
         var te = re[q], de = typeof te == "object" && te && typeof te.value < "u" ? te.value : K[te];
         if (!(D && de === null)) {
-          var fe = z && _ ? String(te).replace(/\./g, "%2E") : String(te), pe = s(K) ? typeof R == "function" ? R(Y, fe) : Y : Y + (z ? "." + fe : "[" + fe + "]");
+          var fe = z && N ? String(te).replace(/\./g, "%2E") : String(te), pe = s(K) ? typeof R == "function" ? R(Y, fe) : Y : Y + (z ? "." + fe : "[" + fe + "]");
           V.set(C, W);
           var oe = e();
           oe.set(v, V), u(J, S(
@@ -65877,7 +65877,7 @@ html body {
             M,
             I,
             D,
-            _,
+            N,
             R === "comma" && U && s(K) ? null : P,
             T,
             A,
@@ -65947,7 +65947,7 @@ html body {
       var I = [];
       if (typeof E != "object" || E === null)
         return "";
-      var D = a[R.arrayFormat], _ = D === "comma" && R.commaRoundTrip;
+      var D = a[R.arrayFormat], N = D === "comma" && R.commaRoundTrip;
       $ || ($ = Object.keys(E)), R.sort && $.sort(R.sort);
       for (var P = e(), T = 0; T < $.length; ++T) {
         var A = $[T];
@@ -65959,7 +65959,7 @@ html body {
               z,
               O,
               D,
-              _,
+              N,
               R.allowEmptyArrays,
               R.strictNullHandling,
               R.skipNulls,
@@ -66043,19 +66043,19 @@ html body {
           $[I].indexOf("utf8=") === 0 && ($[I] === u ? D = "utf-8" : $[I] === c && (D = "iso-8859-1"), M = I, I = $.length);
       for (I = 0; I < $.length; ++I)
         if (I !== M) {
-          var _ = $[I], P = _.indexOf("]="), T = P === -1 ? _.indexOf("=") : P + 1, A, z;
-          if (T === -1 ? (A = S.decoder(_, r.decoder, D, "key"), z = S.strictNullHandling ? null : "") : (A = S.decoder(_.slice(0, T), r.decoder, D, "key"), A !== null && (z = e.maybeMap(
+          var N = $[I], P = N.indexOf("]="), T = P === -1 ? N.indexOf("=") : P + 1, A, z;
+          if (T === -1 ? (A = S.decoder(N, r.decoder, D, "key"), z = S.strictNullHandling ? null : "") : (A = S.decoder(N.slice(0, T), r.decoder, D, "key"), A !== null && (z = e.maybeMap(
             s(
-              _.slice(T + 1),
+              N.slice(T + 1),
               S,
               n(C[A]) ? C[A].length : 0
             ),
             function(L) {
               return S.decoder(L, r.decoder, D, "value");
             }
-          ))), z && S.interpretNumericEntities && D === "iso-8859-1" && (z = a(String(z))), _.indexOf("[]=") > -1 && (z = n(z) ? [z] : z), S.comma && n(z) && z.length > S.arrayLimit && (z = e.combine([], z, S.arrayLimit, S.plainObjects, S.throwOnLimitExceeded)), A !== null) {
+          ))), z && S.interpretNumericEntities && D === "iso-8859-1" && (z = a(String(z))), N.indexOf("[]=") > -1 && (z = n(z) ? [z] : z), S.comma && n(z) && z.length > S.arrayLimit && (z = e.combine([], z, S.arrayLimit, S.plainObjects, S.throwOnLimitExceeded)), A !== null) {
             var O = t.call(C, A);
-            O && (S.duplicates === "combine" || _.indexOf("[]=") > -1) ? C[A] = e.combine(
+            O && (S.duplicates === "combine" || N.indexOf("[]=") > -1) ? C[A] = e.combine(
               C[A],
               z,
               S.arrayLimit,
@@ -66083,7 +66083,7 @@ html body {
           );
         else {
           I = S.plainObjects ? { __proto__: null } : {};
-          var _ = D.charAt(0) === "[" && D.charAt(D.length - 1) === "]" ? D.slice(1, -1) : D, P = S.decodeDotInKeys ? _.replace(/%2E/g, ".") : _, T = parseInt(P, 10), A = !isNaN(T) && D !== P && String(T) === P && T >= 0 && S.parseArrays;
+          var N = D.charAt(0) === "[" && D.charAt(D.length - 1) === "]" ? D.slice(1, -1) : D, P = S.decodeDotInKeys ? N.replace(/%2E/g, ".") : N, T = parseInt(P, 10), A = !isNaN(T) && D !== P && String(T) === P && T >= 0 && S.parseArrays;
           if (!S.parseArrays && P === "")
             I = { 0: $ };
           else if (A && T < S.arrayLimit)
@@ -66108,9 +66108,9 @@ html body {
         E[E.length] = $;
       }
       for (var M = C.length, I = R, D = 0; I >= 0 && D < S.depth; ) {
-        for (var _ = 1, P = I + 1, T = -1; P < M && T < 0; ) {
+        for (var N = 1, P = I + 1, T = -1; P < M && T < 0; ) {
           var A = C.charCodeAt(P);
-          A === 91 ? _ += 1 : A === 93 && (_ -= 1, _ === 0 && (T = P)), P += 1;
+          A === 91 ? N += 1 : A === 93 && (N -= 1, N === 0 && (T = P)), P += 1;
         }
         if (T < 0)
           return E[E.length] = "[" + C.slice(I) + "]", E;
@@ -66807,19 +66807,19 @@ html body {
               let L = this._config.newline;
               L || (O = this._config.quoteChar || '"', L = this._handle.guessLineEndings(T, O)), T = [...T.split(L).slice(z)].join(L);
             }
-            this.isFirstChunk && _(this._config.beforeFirstChunk) && (O = this._config.beforeFirstChunk(T)) !== void 0 && (T = O), this.isFirstChunk = !1, this._halted = !1;
+            this.isFirstChunk && N(this._config.beforeFirstChunk) && (O = this._config.beforeFirstChunk(T)) !== void 0 && (T = O), this.isFirstChunk = !1, this._halted = !1;
             var z = this._partialLine + T, O = (this._partialLine = "", this._handle.parse(z, this._baseIndex, !this._finished));
             if (!this._handle.paused() && !this._handle.aborted()) {
               if (T = O.meta.cursor, z = (this._finished || (this._partialLine = z.substring(T - this._baseIndex), this._baseIndex = T), O && O.data && (this._rowCount += O.data.length), this._finished || this._config.preview && this._rowCount >= this._config.preview), s) r.postMessage({ results: O, workerId: f.WORKER_ID, finished: z });
-              else if (_(this._config.chunk) && !A) {
+              else if (N(this._config.chunk) && !A) {
                 if (this._config.chunk(O, this._handle), this._handle.paused() || this._handle.aborted()) return void (this._halted = !0);
                 this._completeResults = O = void 0;
               }
-              return this._config.step || this._config.chunk || (this._completeResults.data = this._completeResults.data.concat(O.data), this._completeResults.errors = this._completeResults.errors.concat(O.errors), this._completeResults.meta = O.meta), this._completed || !z || !_(this._config.complete) || O && O.meta.aborted || (this._config.complete(this._completeResults, this._input), this._completed = !0), z || O && O.meta.paused || this._nextChunk(), O;
+              return this._config.step || this._config.chunk || (this._completeResults.data = this._completeResults.data.concat(O.data), this._completeResults.errors = this._completeResults.errors.concat(O.errors), this._completeResults.meta = O.meta), this._completed || !z || !N(this._config.complete) || O && O.meta.aborted || (this._config.complete(this._completeResults, this._input), this._completed = !0), z || O && O.meta.paused || this._nextChunk(), O;
             }
             this._halted = !0;
           }, this._sendError = function(T) {
-            _(this._config.error) ? this._config.error(T) : s && this._config.error && r.postMessage({ workerId: f.WORKER_ID, error: T, finished: !1 });
+            N(this._config.error) ? this._config.error(T) : s && this._config.error && r.postMessage({ workerId: f.WORKER_ID, error: T, finished: !1 });
           };
         }
         function g(P) {
@@ -66943,10 +66943,10 @@ html body {
           function re(le, ie, Y, q) {
             le = { type: le, code: ie, message: Y }, q !== void 0 && (le.row = q), Q.errors.push(le);
           }
-          _(P.step) && (O = P.step, P.step = function(le) {
+          N(P.step) && (O = P.step, P.step = function(le) {
             Q = le, J() ? B() : (B(), Q.data.length !== 0 && (ee += le.data.length, P.preview && ee > P.preview ? A.abort() : (Q.data = Q.data[0], O(Q, V))));
           }), this.parse = function(le, ie, Y) {
-            var q = P.quoteChar || '"', q = (P.newline || (P.newline = this.guessLineEndings(le, q)), z = !1, P.delimiter ? _(P.delimiter) && (P.delimiter = P.delimiter(le), Q.meta.delimiter = P.delimiter) : ((q = ((te, de, fe, pe, oe) => {
+            var q = P.quoteChar || '"', q = (P.newline || (P.newline = this.guessLineEndings(le, q)), z = !1, P.delimiter ? N(P.delimiter) && (P.delimiter = P.delimiter(le), Q.meta.delimiter = P.delimiter) : ((q = ((te, de, fe, pe, oe) => {
               var ce, Z, me, xe;
               oe = oe || [",", "	", "|", ";", f.RECORD_SEP, f.UNIT_SEP];
               for (var Me = 0; Me < oe.length; Me++) {
@@ -66959,13 +66959,13 @@ html body {
           }, this.paused = function() {
             return K;
           }, this.pause = function() {
-            K = !0, A.abort(), T = _(P.chunk) ? "" : T.substring(A.getCharIndex());
+            K = !0, A.abort(), T = N(P.chunk) ? "" : T.substring(A.getCharIndex());
           }, this.resume = function() {
             V.streamer._halted ? (K = !1, V.streamer.parseChunk(T, !0)) : setTimeout(V.resume, 3);
           }, this.aborted = function() {
             return G;
           }, this.abort = function() {
-            G = !0, A.abort(), Q.meta.aborted = !0, _(P.complete) && P.complete(Q), T = "";
+            G = !0, A.abort(), Q.meta.aborted = !0, N(P.complete) && P.complete(Q), T = "";
           }, this.guessLineEndings = function(te, q) {
             te = te.substring(0, 1048576);
             var q = new RegExp(C(q) + "([^]*?)" + C(q), "gm"), Y = (te = te.replace(q, "")).split("\r"), q = te.split(`
@@ -66991,7 +66991,7 @@ html body {
           var X = 0, K = !1;
           this.parse = function(G, W, Q) {
             if (typeof G != "string") throw new Error("Input must be a string");
-            var k = G.length, B = T.length, J = A.length, re = z.length, le = _(O), ie = [], Y = [], q = [], te = X = 0;
+            var k = G.length, B = T.length, J = A.length, re = z.length, le = N(O), ie = [], Y = [], q = [], te = X = 0;
             if (!G) return ke();
             if (F || F !== !1 && G.indexOf(V) === -1) {
               for (var de = G.split(A), fe = 0; fe < de.length; fe++) {
@@ -67054,7 +67054,7 @@ html body {
                 let it = !1;
                 for (let ze = 0; ze < Se.length; ze++) {
                   let Oe = m(Se[ze]);
-                  if (et[Oe = _(P.transformHeader) ? P.transformHeader(Oe, ze) : Oe]) {
+                  if (et[Oe = N(P.transformHeader) ? P.transformHeader(Oe, ze) : Oe]) {
                     let Ge, Ue = et[Oe];
                     for (; Ge = Oe + "_" + Ue, Ue++, We.has(Ge); ) ;
                     We.add(Ge), Se[ze] = Ge, et[Oe]++, it = !0, (U = U === null ? {} : U)[Ge] = Oe;
@@ -67081,16 +67081,16 @@ html body {
             var O = { abort: function() {
               z = !0, $(T.workerId, { data: [], errors: [], meta: { aborted: !0 } });
             }, pause: M, resume: M };
-            if (_(A.userStep)) {
+            if (N(A.userStep)) {
               for (var L = 0; L < T.results.data.length && (A.userStep({ data: T.results.data[L], errors: T.results.errors, meta: T.results.meta }, O), !z); L++) ;
               delete T.results;
-            } else _(A.userChunk) && (A.userChunk(T.results, O, T.file), delete T.results);
+            } else N(A.userChunk) && (A.userChunk(T.results, O, T.file), delete T.results);
           }
           T.finished && !z && $(T.workerId, T.results);
         }
         function $(P, T) {
           var A = c[P];
-          _(A.userComplete) && A.userComplete(T), A.terminate(), delete c[P];
+          N(A.userComplete) && A.userComplete(T), A.terminate(), delete c[P];
         }
         function M() {
           throw new Error("Not implemented.");
@@ -67106,24 +67106,24 @@ html body {
             P.apply(T, arguments);
           };
         }
-        function _(P) {
+        function N(P) {
           return typeof P == "function";
         }
         return f.parse = function(P, T) {
           var A = (T = T || {}).dynamicTyping || !1;
-          if (_(A) && (T.dynamicTypingFunction = A, A = {}), T.dynamicTyping = A, T.transform = !!_(T.transform) && T.transform, T.downloadTimeout !== void 0) {
+          if (N(A) && (T.dynamicTypingFunction = A, A = {}), T.dynamicTyping = A, T.transform = !!N(T.transform) && T.transform, T.downloadTimeout !== void 0) {
             var A = parseInt(T.downloadTimeout);
             if (isNaN(A)) throw new Error("Config downloadTimeout value (" + T.downloadTimeout + ") not parsable by parseInt(val).");
             T.downloadTimeout = A;
           }
-          if (!T.worker || !f.WORKERS_SUPPORTED) return A = null, f.NODE_STREAM_INPUT, typeof P == "string" ? (P = m(P), A = new (T.download ? g : y)(T)) : P.readable === !0 && _(P.read) && _(P.on) ? A = new b(T) : (r.File && P instanceof File || P instanceof Object) && (A = new v(T)), A.stream(P);
+          if (!T.worker || !f.WORKERS_SUPPORTED) return A = null, f.NODE_STREAM_INPUT, typeof P == "string" ? (P = m(P), A = new (T.download ? g : y)(T)) : P.readable === !0 && N(P.read) && N(P.on) ? A = new b(T) : (r.File && P instanceof File || P instanceof Object) && (A = new v(T)), A.stream(P);
           (A = (() => {
             var z;
             return !!f.WORKERS_SUPPORTED && (z = (() => {
               var O = r.URL || r.webkitURL || null, L = n.toString();
               return f.BLOB_URL || (f.BLOB_URL = O.createObjectURL(new Blob(["var global = (function() { if (typeof self !== 'undefined') { return self; } if (typeof window !== 'undefined') { return window; } if (typeof global !== 'undefined') { return global; } return {}; })(); global.IS_PAPA_WORKER=true; ", "(", L, ")();"], { type: "text/javascript" })));
             })(), (z = new r.Worker(z)).onmessage = R, z.id = u++, c[z.id] = z);
-          })()).userStep = T.step, A.userChunk = T.chunk, A.userComplete = T.complete, A.userError = T.error, T.step = _(T.step), T.chunk = _(T.chunk), T.complete = _(T.complete), T.error = _(T.error), delete T.worker, A.postMessage({ input: P, config: T, workerId: A.id });
+          })()).userStep = T.step, A.userChunk = T.chunk, A.userComplete = T.complete, A.userError = T.error, T.step = N(T.step), T.chunk = N(T.chunk), T.complete = N(T.complete), T.error = N(T.error), delete T.worker, A.postMessage({ input: P, config: T, workerId: A.id });
         }, f.unparse = function(P, T) {
           var A = !1, z = !0, O = ",", L = `\r
 `, F = '"', U = F + F, H = !1, V = null, ee = !1, X = ((() => {
@@ -67423,14 +67423,14 @@ For more information, see https://refine.dev/docs/advanced-tutorials/data-provid
         text: typeof ((R = e?.title) == null ? void 0 : R.text) > "u" ? Vr.title.text : ($ = e?.title) == null ? void 0 : $.text
       },
       disableRouteChangeHandler: e?.disableRouteChangeHandler ?? m ?? Vr.disableRouteChangeHandler
-    }, D = e?.disableTelemetry ?? t ?? !1, _ = {
+    }, D = e?.disableTelemetry ?? t ?? !1, N = {
       clientConfig: ((M = e?.reactQuery) == null ? void 0 : M.clientConfig) ?? a ?? {},
       devtoolConfig: s ?? {}
     };
     return {
       optionsWithDefaults: I,
       disableTelemetryWithDefault: D,
-      reactQueryWithDefaults: _
+      reactQueryWithDefaults: N
     };
   }, "handleRefineOptions"), xi = /* @__PURE__ */ De((e, t = []) => {
     if (!e)
@@ -68032,13 +68032,13 @@ For more information, see https://refine.dev/docs/advanced-tutorials/data-provid
     var y, b, S;
     const { resources: C, resource: E, identifier: R } = Bo({
       resource: e
-    }), $ = F3(), M = Is(), { mutate: I } = g1(), D = U3(), _ = x1(), { keys: P } = ao(), T = Si(
+    }), $ = F3(), M = Is(), { mutate: I } = g1(), D = U3(), N = x1(), { keys: P } = ao(), T = Si(
       R,
       g,
       C
     ), A = u, z = t, O = r, L = Cfe({
       pagination: n
-    }), F = L.mode === "server", U = _({ resource: E, meta: A }), H = {
+    }), F = L.mode === "server", U = N({ resource: E, meta: A }), H = {
       meta: U,
       filters: z,
       hasPagination: F,
@@ -68170,13 +68170,13 @@ For more information, see https://refine.dev/docs/advanced-tutorials/data-provid
         id: M,
         mutationMode: I,
         undoableTimeout: D,
-        resource: _,
+        resource: N,
         onCancel: P,
         meta: T,
         dataProviderName: A,
         values: z
       }) => {
-        const { resource: O, identifier: L } = s(_), F = S({
+        const { resource: O, identifier: L } = s(N), F = S({
           resource: O,
           meta: T
         }), U = I ?? u, H = D ?? f;
@@ -68219,10 +68219,10 @@ For more information, see https://refine.dev/docs/advanced-tutorials/data-provid
         id: M,
         resource: I,
         mutationMode: D,
-        dataProviderName: _,
+        dataProviderName: N,
         meta: P
       }) => {
-        const { identifier: T } = s(I), { gqlMutation: A, gqlQuery: z, ...O } = P ?? {}, L = E().data(Si(T, _, a)).resource(T), F = D ?? u;
+        const { identifier: T } = s(I), { gqlMutation: A, gqlQuery: z, ...O } = P ?? {}, L = E().data(Si(T, N, a)).resource(T), F = D ?? u;
         await c.cancelQueries({
           queryKey: L.get()
         });
@@ -68265,11 +68265,11 @@ For more information, see https://refine.dev/docs/advanced-tutorials/data-provid
       },
       onSettled: (M, I, {
         id: D,
-        resource: _,
+        resource: N,
         dataProviderName: P,
         invalidates: T = ["list", "many"]
       }) => {
-        const { identifier: A } = s(_);
+        const { identifier: A } = s(N);
         b({
           resource: A,
           dataProviderName: Si(
@@ -68286,7 +68286,7 @@ For more information, see https://refine.dev/docs/advanced-tutorials/data-provid
       onSuccess: (M, {
         id: I,
         resource: D,
-        successNotification: _,
+        successNotification: N,
         dataProviderName: P,
         meta: T
       }, A) => {
@@ -68301,7 +68301,7 @@ For more information, see https://refine.dev/docs/advanced-tutorials/data-provid
         c.removeQueries({
           queryKey: H.action("one").get()
         });
-        const V = typeof _ == "function" ? _(M, I, O) : _;
+        const V = typeof N == "function" ? N(M, I, O) : N;
         y(V, {
           key: `${I}-${O}-notification`,
           description: p("notifications.success", "Success"),
@@ -68346,14 +68346,14 @@ For more information, see https://refine.dev/docs/advanced-tutorials/data-provid
           queryKey: H.action("one").get()
         });
       },
-      onError: (M, { id: I, resource: D, errorNotification: _ }, P) => {
+      onError: (M, { id: I, resource: D, errorNotification: N }, P) => {
         const { identifier: T } = s(D);
         if (P)
           for (const A of P.previousQueries)
             c.setQueryData(A[0], A[1]);
         if (M.message !== "mutationCancelled") {
           n(M);
-          const A = C.singular(T), z = typeof _ == "function" ? _(M, I, T) : _;
+          const A = C.singular(T), z = typeof N == "function" ? N(M, I, T) : N;
           y(z, {
             key: `${I}-${T}-notification`,
             message: p(
@@ -68954,7 +68954,7 @@ For more information, see https://refine.dev/docs/advanced-tutorials/data-provid
     overtimeOptions: y
   } = {}) {
     var b, S, C, E, R, $, M, I, D;
-    const { syncWithLocation: _ } = Efe(), P = r ?? _, T = Wfe(f), A = x1(), z = Ja(), O = (t?.mode || "server") === "server", L = (n?.mode || "server") === "server", F = e?.mode !== "off", U = e?.currentPage, H = e?.pageSize, V = g, { parsedCurrentPage: ee, parsedPageSize: X, parsedSorter: K, parsedFilters: G } = ufe(((b = z.params) == null ? void 0 : b.search) ?? "?"), W = t?.initial, Q = t?.permanent ?? fme, k = n?.initial, B = n?.permanent ?? mme, J = t?.defaultBehavior ?? "merge";
+    const { syncWithLocation: N } = Efe(), P = r ?? N, T = Wfe(f), A = x1(), z = Ja(), O = (t?.mode || "server") === "server", L = (n?.mode || "server") === "server", F = e?.mode !== "off", U = e?.currentPage, H = e?.pageSize, V = g, { parsedCurrentPage: ee, parsedPageSize: X, parsedSorter: K, parsedFilters: G } = ufe(((b = z.params) == null ? void 0 : b.search) ?? "?"), W = t?.initial, Q = t?.permanent ?? fme, k = n?.initial, B = n?.permanent ?? mme, J = t?.defaultBehavior ?? "merge";
     let re, le, ie, Y;
     P ? (re = ((S = z?.params) == null ? void 0 : S.currentPage) || ee || U || 1, le = ((C = z?.params) == null ? void 0 : C.pageSize) || X || H || 10, ie = ((E = z?.params) == null ? void 0 : E.sorters) || (K.length ? K : k), Y = ((R = z?.params) == null ? void 0 : R.filters) || (G.length ? G : W)) : (re = U || 1, le = H || 10, ie = k, Y = W);
     const q = Ra(), { resource: te, identifier: de } = Bo({
@@ -73055,7 +73055,7 @@ For more information, see https://refine.dev/docs/advanced-tutorials/data-provid
     }
   };
   function uhe({ locale: e, onError: t, onMessage: n }) {
-    const r = che[e], a = Iu(), s = bs({ resource: "roles", pagination: { mode: "off" }, queryOptions: { retry: !1 } }), c = bs({ resource: "users", pagination: { mode: "off" }, queryOptions: { retry: !1 } }), u = s.result.data, f = c.result.data, [m, p] = l.useState(), [g, v] = l.useState(), [y, b] = l.useState(!1), [S, C] = l.useState(), [E, R] = l.useState([]), [$, M] = l.useState(!1), [I, D] = l.useState(), [_] = we.useForm(), [P] = we.useForm(), [T] = we.useForm(), A = s.query.error ?? c.query.error;
+    const r = che[e], a = Iu(), s = bs({ resource: "roles", pagination: { mode: "off" }, queryOptions: { retry: !1 } }), c = bs({ resource: "users", pagination: { mode: "off" }, queryOptions: { retry: !1 } }), u = s.result.data, f = c.result.data, [m, p] = l.useState(), [g, v] = l.useState(), [y, b] = l.useState(!1), [S, C] = l.useState(), [E, R] = l.useState([]), [$, M] = l.useState(!1), [I, D] = l.useState(), [N] = we.useForm(), [P] = we.useForm(), [T] = we.useForm(), A = s.query.error ?? c.query.error;
     l.useEffect(() => {
       A && t(A);
     }, [A]);
@@ -73067,7 +73067,7 @@ For more information, see https://refine.dev/docs/advanced-tutorials/data-provid
       m?.user.id === k && (p(void 0), v(void 0));
     }, U = async (k) => {
       try {
-        await ls.createRole(k), _.resetFields(), n(r.createdRole(k.name)), await z(tl.roles);
+        await ls.createRole(k), N.resetFields(), n(r.createdRole(k.name)), await z(tl.roles);
       } catch (B) {
         t(B);
       }
@@ -73131,26 +73131,26 @@ For more information, see https://refine.dev/docs/advanced-tutorials/data-provid
         M(!1);
       }
     };
-    return /* @__PURE__ */ N.jsxs(lt, { direction: "vertical", size: "large", className: "panel-stack", children: [
-      m && /* @__PURE__ */ N.jsx(
+    return /* @__PURE__ */ _.jsxs(lt, { direction: "vertical", size: "large", className: "panel-stack", children: [
+      m && /* @__PURE__ */ _.jsx(
         Lt,
         {
           type: "warning",
           showIcon: !0,
           message: r.oneTimeLink,
-          description: /* @__PURE__ */ N.jsxs(lt, { direction: "vertical", className: "panel-stack", children: [
-            /* @__PURE__ */ N.jsx(_t.Text, { children: r.bearerDescription(m.user.email) }),
-            /* @__PURE__ */ N.jsx(
+          description: /* @__PURE__ */ _.jsxs(lt, { direction: "vertical", className: "panel-stack", children: [
+            /* @__PURE__ */ _.jsx(_t.Text, { children: r.bearerDescription(m.user.email) }),
+            /* @__PURE__ */ _.jsx(
               dt,
               {
                 value: m.set_password_url,
                 readOnly: !0,
-                addonAfter: /* @__PURE__ */ N.jsx(Ve, { type: "link", onClick: () => {
+                addonAfter: /* @__PURE__ */ _.jsx(Ve, { type: "link", onClick: () => {
                   navigator.clipboard.writeText(m.set_password_url);
                 }, children: r.copy })
               }
             ),
-            g && /* @__PURE__ */ N.jsx(
+            g && /* @__PURE__ */ _.jsx(
               Lt,
               {
                 showIcon: !0,
@@ -73159,8 +73159,8 @@ For more information, see https://refine.dev/docs/advanced-tutorials/data-provid
                 description: g.status === "unknown" ? r.unknownDescription : g.error_message || r.durableAt(g.completed_at ?? g.created_at)
               }
             ),
-            /* @__PURE__ */ N.jsxs(lt, { wrap: !0, children: [
-              /* @__PURE__ */ N.jsx(
+            /* @__PURE__ */ _.jsxs(lt, { wrap: !0, children: [
+              /* @__PURE__ */ _.jsx(
                 Lr,
                 {
                   title: r.sendConfirm,
@@ -73168,7 +73168,7 @@ For more information, see https://refine.dev/docs/advanced-tutorials/data-provid
                   onConfirm: () => {
                     W();
                   },
-                  children: /* @__PURE__ */ N.jsx(
+                  children: /* @__PURE__ */ _.jsx(
                     Ve,
                     {
                       type: "primary",
@@ -73179,35 +73179,35 @@ For more information, see https://refine.dev/docs/advanced-tutorials/data-provid
                   )
                 }
               ),
-              /* @__PURE__ */ N.jsx(Ve, { size: "small", onClick: () => {
+              /* @__PURE__ */ _.jsx(Ve, { size: "small", onClick: () => {
                 p(void 0), v(void 0);
               }, children: r.dismiss })
             ] })
           ] })
         }
       ),
-      /* @__PURE__ */ N.jsx(Ot, { title: r.newRole, children: /* @__PURE__ */ N.jsxs(we, { form: _, layout: "vertical", onFinish: (k) => {
+      /* @__PURE__ */ _.jsx(Ot, { title: r.newRole, children: /* @__PURE__ */ _.jsxs(we, { form: N, layout: "vertical", onFinish: (k) => {
         U(k);
       }, children: [
-        /* @__PURE__ */ N.jsxs("div", { className: "form-grid", children: [
-          /* @__PURE__ */ N.jsx(we.Item, { name: "name", label: r.roleName, rules: [{ required: !0 }], children: /* @__PURE__ */ N.jsx(dt, {}) }),
-          /* @__PURE__ */ N.jsx(we.Item, { name: "capabilities", label: r.capabilities, rules: [{ required: !0 }], children: /* @__PURE__ */ N.jsx(kt, { mode: "multiple", options: lhe.map((k) => ({ value: k, label: k })) }) })
+        /* @__PURE__ */ _.jsxs("div", { className: "form-grid", children: [
+          /* @__PURE__ */ _.jsx(we.Item, { name: "name", label: r.roleName, rules: [{ required: !0 }], children: /* @__PURE__ */ _.jsx(dt, {}) }),
+          /* @__PURE__ */ _.jsx(we.Item, { name: "capabilities", label: r.capabilities, rules: [{ required: !0 }], children: /* @__PURE__ */ _.jsx(kt, { mode: "multiple", options: lhe.map((k) => ({ value: k, label: k })) }) })
         ] }),
-        /* @__PURE__ */ N.jsx(Ve, { type: "primary", htmlType: "submit", children: r.createRole })
+        /* @__PURE__ */ _.jsx(Ve, { type: "primary", htmlType: "submit", children: r.createRole })
       ] }) }),
-      /* @__PURE__ */ N.jsx(Ot, { title: r.newUser, children: /* @__PURE__ */ N.jsxs(we, { form: P, layout: "vertical", onFinish: (k) => {
+      /* @__PURE__ */ _.jsx(Ot, { title: r.newUser, children: /* @__PURE__ */ _.jsxs(we, { form: P, layout: "vertical", onFinish: (k) => {
         H(k);
       }, children: [
-        /* @__PURE__ */ N.jsxs("div", { className: "form-grid three-columns", children: [
-          /* @__PURE__ */ N.jsx(we.Item, { name: "email", label: r.email, rules: [{ required: !0, type: "email" }], children: /* @__PURE__ */ N.jsx(dt, {}) }),
-          /* @__PURE__ */ N.jsx(we.Item, { name: "display_name", label: r.displayName, rules: [{ required: !0 }], children: /* @__PURE__ */ N.jsx(dt, {}) }),
-          /* @__PURE__ */ N.jsx(we.Item, { name: "role_id", label: r.role, rules: [{ required: !0 }], children: /* @__PURE__ */ N.jsx(kt, { options: u.filter((k) => k.status === "active").map((k) => ({ value: k.id, label: k.name })) }) })
+        /* @__PURE__ */ _.jsxs("div", { className: "form-grid three-columns", children: [
+          /* @__PURE__ */ _.jsx(we.Item, { name: "email", label: r.email, rules: [{ required: !0, type: "email" }], children: /* @__PURE__ */ _.jsx(dt, {}) }),
+          /* @__PURE__ */ _.jsx(we.Item, { name: "display_name", label: r.displayName, rules: [{ required: !0 }], children: /* @__PURE__ */ _.jsx(dt, {}) }),
+          /* @__PURE__ */ _.jsx(we.Item, { name: "role_id", label: r.role, rules: [{ required: !0 }], children: /* @__PURE__ */ _.jsx(kt, { options: u.filter((k) => k.status === "active").map((k) => ({ value: k.id, label: k.name })) }) })
         ] }),
-        /* @__PURE__ */ N.jsx(Ve, { type: "primary", htmlType: "submit", children: r.createUser })
+        /* @__PURE__ */ _.jsx(Ve, { type: "primary", htmlType: "submit", children: r.createUser })
       ] }) }),
-      /* @__PURE__ */ N.jsx(Ot, { title: r.usersRoles, extra: /* @__PURE__ */ N.jsx(Ve, { onClick: () => {
+      /* @__PURE__ */ _.jsx(Ot, { title: r.usersRoles, extra: /* @__PURE__ */ _.jsx(Ve, { onClick: () => {
         O();
-      }, children: r.refresh }), children: /* @__PURE__ */ N.jsx(
+      }, children: r.refresh }), children: /* @__PURE__ */ _.jsx(
         In,
         {
           rowKey: "id",
@@ -73217,24 +73217,24 @@ For more information, see https://refine.dev/docs/advanced-tutorials/data-provid
           expandable: {
             expandedRowRender: (k) => {
               const B = u.find((J) => J.id === k.role_id);
-              return /* @__PURE__ */ N.jsx(lt, { wrap: !0, children: B?.capabilities.map((J) => /* @__PURE__ */ N.jsx(Cn, { children: J }, J)) });
+              return /* @__PURE__ */ _.jsx(lt, { wrap: !0, children: B?.capabilities.map((J) => /* @__PURE__ */ _.jsx(Cn, { children: J }, J)) });
             }
           },
           columns: [
             { title: r.email, dataIndex: "email" },
             { title: r.displayName, dataIndex: "display_name" },
             { title: r.role, render: (k, B) => u.find((J) => J.id === B.role_id)?.name ?? B.role_id },
-            { title: r.status, render: (k, B) => /* @__PURE__ */ N.jsx(Cn, { color: B.status === "active" ? "green" : "default", children: B.status === "active" ? r.active : r.disabledStatus }) },
+            { title: r.status, render: (k, B) => /* @__PURE__ */ _.jsx(Cn, { color: B.status === "active" ? "green" : "default", children: B.status === "active" ? r.active : r.disabledStatus }) },
             { title: r.authRevision, dataIndex: "auth_revision" },
             {
               title: r.actions,
-              render: (k, B) => /* @__PURE__ */ N.jsxs(lt, { wrap: !0, children: [
-                /* @__PURE__ */ N.jsx(Ve, { size: "small", onClick: () => V(B), children: r.changeRole }),
-                /* @__PURE__ */ N.jsx(Ve, { size: "small", onClick: () => {
+              render: (k, B) => /* @__PURE__ */ _.jsxs(lt, { wrap: !0, children: [
+                /* @__PURE__ */ _.jsx(Ve, { size: "small", onClick: () => V(B), children: r.changeRole }),
+                /* @__PURE__ */ _.jsx(Ve, { size: "small", onClick: () => {
                   Q(B);
                 }, children: r.history }),
-                B.status === "active" ? /* @__PURE__ */ N.jsxs(N.Fragment, { children: [
-                  /* @__PURE__ */ N.jsx(
+                B.status === "active" ? /* @__PURE__ */ _.jsxs(_.Fragment, { children: [
+                  /* @__PURE__ */ _.jsx(
                     Lr,
                     {
                       title: r.newPasswordConfirm,
@@ -73242,13 +73242,13 @@ For more information, see https://refine.dev/docs/advanced-tutorials/data-provid
                       onConfirm: () => {
                         X(B);
                       },
-                      children: /* @__PURE__ */ N.jsx(Ve, { size: "small", children: r.newPasswordLink })
+                      children: /* @__PURE__ */ _.jsx(Ve, { size: "small", children: r.newPasswordLink })
                     }
                   ),
-                  /* @__PURE__ */ N.jsx(Lr, { title: r.disableConfirm, onConfirm: () => {
+                  /* @__PURE__ */ _.jsx(Lr, { title: r.disableConfirm, onConfirm: () => {
                     G(B);
-                  }, children: /* @__PURE__ */ N.jsx(Ve, { size: "small", danger: !0, children: r.disable }) })
-                ] }) : /* @__PURE__ */ N.jsx(
+                  }, children: /* @__PURE__ */ _.jsx(Ve, { size: "small", danger: !0, children: r.disable }) })
+                ] }) : /* @__PURE__ */ _.jsx(
                   Lr,
                   {
                     title: r.reactivateConfirm,
@@ -73256,7 +73256,7 @@ For more information, see https://refine.dev/docs/advanced-tutorials/data-provid
                     onConfirm: () => {
                       K(B);
                     },
-                    children: /* @__PURE__ */ N.jsx(Ve, { size: "small", type: "primary", children: r.reactivate })
+                    children: /* @__PURE__ */ _.jsx(Ve, { size: "small", type: "primary", children: r.reactivate })
                   }
                 )
               ] })
@@ -73264,7 +73264,7 @@ For more information, see https://refine.dev/docs/advanced-tutorials/data-provid
           ]
         }
       ) }),
-      /* @__PURE__ */ N.jsxs(
+      /* @__PURE__ */ _.jsxs(
         $r,
         {
           open: S !== void 0,
@@ -73276,7 +73276,7 @@ For more information, see https://refine.dev/docs/advanced-tutorials/data-provid
           },
           destroyOnHidden: !0,
           children: [
-            /* @__PURE__ */ N.jsx(
+            /* @__PURE__ */ _.jsx(
               Lt,
               {
                 className: "bottom-gap",
@@ -73286,7 +73286,7 @@ For more information, see https://refine.dev/docs/advanced-tutorials/data-provid
                 description: r.evidenceDescription
               }
             ),
-            /* @__PURE__ */ N.jsx(
+            /* @__PURE__ */ _.jsx(
               In,
               {
                 rowKey: "id",
@@ -73299,7 +73299,7 @@ For more information, see https://refine.dev/docs/advanced-tutorials/data-provid
                   { title: r.recipient, dataIndex: "recipient_email" },
                   {
                     title: r.status,
-                    render: (k, B) => /* @__PURE__ */ N.jsx(Cn, { color: B.status === "accepted" ? "green" : B.status === "failed" ? "red" : B.status === "unknown" ? "orange" : "blue", children: B.status === "accepted" ? r.acceptedTitle : B.status === "failed" ? r.failedTitle : B.status === "unknown" ? r.unknownTitle : r.inProgress })
+                    render: (k, B) => /* @__PURE__ */ _.jsx(Cn, { color: B.status === "accepted" ? "green" : B.status === "failed" ? "red" : B.status === "unknown" ? "orange" : "blue", children: B.status === "accepted" ? r.acceptedTitle : B.status === "failed" ? r.failedTitle : B.status === "unknown" ? r.unknownTitle : r.inProgress })
                   },
                   { title: r.result, render: (k, B) => B.error_message || (B.completed_at ? r.completed : r.inProgress) }
                 ]
@@ -73308,7 +73308,7 @@ For more information, see https://refine.dev/docs/advanced-tutorials/data-provid
           ]
         }
       ),
-      /* @__PURE__ */ N.jsxs(
+      /* @__PURE__ */ _.jsxs(
         $r,
         {
           open: I !== void 0,
@@ -73320,7 +73320,7 @@ For more information, see https://refine.dev/docs/advanced-tutorials/data-provid
           },
           destroyOnHidden: !0,
           children: [
-            /* @__PURE__ */ N.jsx(
+            /* @__PURE__ */ _.jsx(
               Lt,
               {
                 className: "bottom-gap",
@@ -73330,9 +73330,9 @@ For more information, see https://refine.dev/docs/advanced-tutorials/data-provid
                 description: r.accessDescription
               }
             ),
-            /* @__PURE__ */ N.jsx(we, { form: T, layout: "vertical", onFinish: (k) => {
+            /* @__PURE__ */ _.jsx(we, { form: T, layout: "vertical", onFinish: (k) => {
               ee(k);
-            }, children: /* @__PURE__ */ N.jsx(we.Item, { name: "role_id", label: r.role, rules: [{ required: !0 }], children: /* @__PURE__ */ N.jsx(kt, { options: u.filter((k) => k.status === "active").map((k) => ({ value: k.id, label: k.name })) }) }) })
+            }, children: /* @__PURE__ */ _.jsx(we.Item, { name: "role_id", label: r.role, rules: [{ required: !0 }], children: /* @__PURE__ */ _.jsx(kt, { options: u.filter((k) => k.status === "active").map((k) => ({ value: k.id, label: k.name })) }) }) })
           ]
         }
       )
@@ -73906,7 +73906,7 @@ For more information, see https://refine.dev/docs/advanced-tutorials/data-provid
     }
   };
   function mhe({ locale: e, onError: t }) {
-    const n = fhe[e], [r, a] = l.useState([]), [s, c] = l.useState([]), [u, f] = l.useState([]), [m, p] = l.useState(), [g, v] = l.useState(!1), [y, b] = l.useState(), [S, C] = l.useState(!1), [E, R] = l.useState([]), [$, M] = l.useState(""), [I, D] = l.useState(!1), [_, P] = l.useState(), [T, A] = l.useState(""), [z, O] = l.useState([]), [L, F] = l.useState(), [U, H] = l.useState(!1), [V, ee] = l.useState(!1), X = async () => {
+    const n = fhe[e], [r, a] = l.useState([]), [s, c] = l.useState([]), [u, f] = l.useState([]), [m, p] = l.useState(), [g, v] = l.useState(!1), [y, b] = l.useState(), [S, C] = l.useState(!1), [E, R] = l.useState([]), [$, M] = l.useState(""), [I, D] = l.useState(!1), [N, P] = l.useState(), [T, A] = l.useState(""), [z, O] = l.useState([]), [L, F] = l.useState(), [U, H] = l.useState(!1), [V, ee] = l.useState(!1), X = async () => {
       ee(!0);
       try {
         await w1("/admin/api/exports/rfqs.csv", "prods-rfqs.csv"), ga.success(n.exportDownloaded);
@@ -74008,13 +74008,13 @@ For more information, see https://refine.dev/docs/advanced-tutorials/data-provid
         t(te);
       }
     }, Y = async () => {
-      if (!(!_ || !T)) {
+      if (!(!N || !T)) {
         H(!0);
         try {
-          await Wt(`/admin/api/rfqs/${encodeURIComponent(_.ID)}/deliveries`, {
-            expected_revision: _.Revision,
+          await Wt(`/admin/api/rfqs/${encodeURIComponent(N.ID)}/deliveries`, {
+            expected_revision: N.Revision,
             delivery_key: T
-          }), await le(_), G(), ga.success(n.deliveryQueued), A(ys("mail"));
+          }), await le(N), G(), ga.success(n.deliveryQueued), A(ys("mail"));
         } catch (q) {
           t(q);
         } finally {
@@ -74022,38 +74022,38 @@ For more information, see https://refine.dev/docs/advanced-tutorials/data-provid
         }
       }
     };
-    return /* @__PURE__ */ N.jsxs(lt, { direction: "vertical", size: "large", className: "panel-stack", children: [
-      /* @__PURE__ */ N.jsx(
+    return /* @__PURE__ */ _.jsxs(lt, { direction: "vertical", size: "large", className: "panel-stack", children: [
+      /* @__PURE__ */ _.jsx(
         Lt,
         {
           message: n.assignmentNotice,
           type: "info",
           showIcon: !0,
-          action: g ? /* @__PURE__ */ N.jsx(Ve, { size: "small", onClick: J, children: n.defaultRecipients }) : void 0
+          action: g ? /* @__PURE__ */ _.jsx(Ve, { size: "small", onClick: J, children: n.defaultRecipients }) : void 0
         }
       ),
-      /* @__PURE__ */ N.jsx(
+      /* @__PURE__ */ _.jsx(
         Ot,
         {
           title: n.savedRFQs,
-          extra: /* @__PURE__ */ N.jsxs(lt, { children: [
-            /* @__PURE__ */ N.jsx(Ve, { loading: V, onClick: () => {
+          extra: /* @__PURE__ */ _.jsxs(lt, { children: [
+            /* @__PURE__ */ _.jsx(Ve, { loading: V, onClick: () => {
               X();
             }, children: n.exportCSV }),
-            /* @__PURE__ */ N.jsx(Ve, { onClick: () => {
+            /* @__PURE__ */ _.jsx(Ve, { onClick: () => {
               K();
             }, children: n.refresh })
           ] }),
-          children: /* @__PURE__ */ N.jsx(
+          children: /* @__PURE__ */ _.jsx(
             Jr,
             {
               dataSource: r,
               locale: { emptyText: n.noRFQs },
-              renderItem: (q) => /* @__PURE__ */ N.jsx(
+              renderItem: (q) => /* @__PURE__ */ _.jsx(
                 Jr.Item,
                 {
                   actions: g ? [
-                    /* @__PURE__ */ N.jsx(
+                    /* @__PURE__ */ _.jsx(
                       kt,
                       {
                         "aria-label": n.updateStatus(q.ID),
@@ -74069,11 +74069,11 @@ For more information, see https://refine.dev/docs/advanced-tutorials/data-provid
                       },
                       "status"
                     ),
-                    /* @__PURE__ */ N.jsx(Ve, { disabled: q.PrivacyState === "anonymized", onClick: () => B(q), children: n.recipients }, "recipients"),
-                    /* @__PURE__ */ N.jsx(Ve, { disabled: !q.Recipients?.length && q.PrivacyState !== "anonymized", onClick: () => {
+                    /* @__PURE__ */ _.jsx(Ve, { disabled: q.PrivacyState === "anonymized", onClick: () => B(q), children: n.recipients }, "recipients"),
+                    /* @__PURE__ */ _.jsx(Ve, { disabled: !q.Recipients?.length && q.PrivacyState !== "anonymized", onClick: () => {
                       ie(q);
                     }, children: q.PrivacyState === "anonymized" ? n.deliveryHistory : n.sendHistory }, "send"),
-                    q.PrivacyState === "anonymized" ? null : /* @__PURE__ */ N.jsx(
+                    q.PrivacyState === "anonymized" ? null : /* @__PURE__ */ _.jsx(
                       Lr,
                       {
                         title: n.anonymizeConfirm,
@@ -74081,31 +74081,31 @@ For more information, see https://refine.dev/docs/advanced-tutorials/data-provid
                         okText: n.anonymize,
                         okButtonProps: { danger: !0 },
                         onConfirm: () => k(q),
-                        children: /* @__PURE__ */ N.jsx(Ve, { danger: !0, loading: L === q.ID, children: n.anonymize })
+                        children: /* @__PURE__ */ _.jsx(Ve, { danger: !0, loading: L === q.ID, children: n.anonymize })
                       },
                       "anonymize"
                     )
                   ] : void 0,
-                  children: /* @__PURE__ */ N.jsx(
+                  children: /* @__PURE__ */ _.jsx(
                     Jr.Item.Meta,
                     {
-                      title: /* @__PURE__ */ N.jsxs(lt, { children: [
-                        /* @__PURE__ */ N.jsx("span", { children: `${q.ID} — ${q.Name || n.anonymizedRFQ}` }),
-                        /* @__PURE__ */ N.jsx(Cn, { children: n.status[q.Status] }),
-                        q.PrivacyState === "anonymized" ? /* @__PURE__ */ N.jsx(Cn, { color: "default", children: n.personalDataRemoved }) : null,
-                        /* @__PURE__ */ N.jsxs(_t.Text, { type: "secondary", children: [
+                      title: /* @__PURE__ */ _.jsxs(lt, { children: [
+                        /* @__PURE__ */ _.jsx("span", { children: `${q.ID} — ${q.Name || n.anonymizedRFQ}` }),
+                        /* @__PURE__ */ _.jsx(Cn, { children: n.status[q.Status] }),
+                        q.PrivacyState === "anonymized" ? /* @__PURE__ */ _.jsx(Cn, { color: "default", children: n.personalDataRemoved }) : null,
+                        /* @__PURE__ */ _.jsxs(_t.Text, { type: "secondary", children: [
                           n.revision,
                           " ",
                           q.Revision
                         ] })
                       ] }),
-                      description: /* @__PURE__ */ N.jsxs(xn, { size: "small", column: { xs: 1, sm: 2 }, children: [
-                        /* @__PURE__ */ N.jsx(xn.Item, { label: n.email, children: q.Email || n.removed }),
-                        /* @__PURE__ */ N.jsx(xn.Item, { label: n.created, children: new Date(q.CreatedAt).toLocaleString(e) }),
-                        /* @__PURE__ */ N.jsx(xn.Item, { label: n.items, span: 2, children: q.Items?.map((te) => te.product_id || te.requested || te.raw_query).join(", ") }),
-                        /* @__PURE__ */ N.jsx(xn.Item, { label: n.recipients, span: 2, children: q.Recipients?.length ? q.Recipients.map((te) => te.kind === "user" ? `${te.display_name || te.email} (${n.user})` : `${te.email} (${n.external})`).join(", ") : n.unassigned }),
-                        q.GeneralMessage ? /* @__PURE__ */ N.jsx(xn.Item, { label: n.message, span: 2, children: q.GeneralMessage }) : null,
-                        q.PrivacyAt ? /* @__PURE__ */ N.jsx(xn.Item, { label: n.privacyProcessed, span: 2, children: new Date(q.PrivacyAt).toLocaleString(e) }) : null
+                      description: /* @__PURE__ */ _.jsxs(xn, { size: "small", column: { xs: 1, sm: 2 }, children: [
+                        /* @__PURE__ */ _.jsx(xn.Item, { label: n.email, children: q.Email || n.removed }),
+                        /* @__PURE__ */ _.jsx(xn.Item, { label: n.created, children: new Date(q.CreatedAt).toLocaleString(e) }),
+                        /* @__PURE__ */ _.jsx(xn.Item, { label: n.items, span: 2, children: q.Items?.map((te) => te.product_id || te.requested || te.raw_query).join(", ") }),
+                        /* @__PURE__ */ _.jsx(xn.Item, { label: n.recipients, span: 2, children: q.Recipients?.length ? q.Recipients.map((te) => te.kind === "user" ? `${te.display_name || te.email} (${n.user})` : `${te.email} (${n.external})`).join(", ") : n.unassigned }),
+                        q.GeneralMessage ? /* @__PURE__ */ _.jsx(xn.Item, { label: n.message, span: 2, children: q.GeneralMessage }) : null,
+                        q.PrivacyAt ? /* @__PURE__ */ _.jsx(xn.Item, { label: n.privacyProcessed, span: 2, children: new Date(q.PrivacyAt).toLocaleString(e) }) : null
                       ] })
                     }
                   )
@@ -74115,9 +74115,9 @@ For more information, see https://refine.dev/docs/advanced-tutorials/data-provid
           )
         }
       ),
-      /* @__PURE__ */ N.jsx(Ot, { title: n.adminLog, extra: /* @__PURE__ */ N.jsx(Ve, { onClick: () => {
+      /* @__PURE__ */ _.jsx(Ot, { title: n.adminLog, extra: /* @__PURE__ */ _.jsx(Ve, { onClick: () => {
         G();
-      }, children: n.refresh }), children: /* @__PURE__ */ N.jsx(
+      }, children: n.refresh }), children: /* @__PURE__ */ _.jsx(
         In,
         {
           rowKey: "id",
@@ -74126,15 +74126,15 @@ For more information, see https://refine.dev/docs/advanced-tutorials/data-provid
           scroll: { x: 900 },
           columns: [
             { title: n.time, dataIndex: "created_at", render: (q) => q ? new Date(q).toLocaleString(e) : "—" },
-            { title: n.action, dataIndex: "action", render: (q) => /* @__PURE__ */ N.jsx(Cn, { children: q }) },
+            { title: n.action, dataIndex: "action", render: (q) => /* @__PURE__ */ _.jsx(Cn, { children: q }) },
             { title: n.target, render: (q, te) => `${te.target_type}:${te.target_id}` },
             { title: n.actor, dataIndex: "actor_id", render: (q) => q || n.system },
             { title: n.result, dataIndex: "result" },
-            { title: n.details, dataIndex: "details", render: (q) => /* @__PURE__ */ N.jsx(_t.Text, { code: !0, children: typeof q == "string" ? q : JSON.stringify(q) }) }
+            { title: n.details, dataIndex: "details", render: (q) => /* @__PURE__ */ _.jsx(_t.Text, { code: !0, children: typeof q == "string" ? q : JSON.stringify(q) }) }
           ]
         }
       ) }),
-      /* @__PURE__ */ N.jsx(
+      /* @__PURE__ */ _.jsx(
         $r,
         {
           title: S ? n.defaultRecipientsTitle : n.recipientsTitle(y?.ID),
@@ -74147,11 +74147,11 @@ For more information, see https://refine.dev/docs/advanced-tutorials/data-provid
           },
           confirmLoading: I,
           destroyOnHidden: !0,
-          children: /* @__PURE__ */ N.jsxs(lt, { direction: "vertical", className: "panel-stack", children: [
-            /* @__PURE__ */ N.jsx(Lt, { message: n.assignmentOnly, type: "warning", showIcon: !0 }),
-            /* @__PURE__ */ N.jsxs("div", { children: [
-              /* @__PURE__ */ N.jsx(_t.Text, { strong: !0, children: n.systemUsers }),
-              /* @__PURE__ */ N.jsx(
+          children: /* @__PURE__ */ _.jsxs(lt, { direction: "vertical", className: "panel-stack", children: [
+            /* @__PURE__ */ _.jsx(Lt, { message: n.assignmentOnly, type: "warning", showIcon: !0 }),
+            /* @__PURE__ */ _.jsxs("div", { children: [
+              /* @__PURE__ */ _.jsx(_t.Text, { strong: !0, children: n.systemUsers }),
+              /* @__PURE__ */ _.jsx(
                 kt,
                 {
                   mode: "multiple",
@@ -74162,9 +74162,9 @@ For more information, see https://refine.dev/docs/advanced-tutorials/data-provid
                 }
               )
             ] }),
-            /* @__PURE__ */ N.jsxs("div", { children: [
-              /* @__PURE__ */ N.jsx(_t.Text, { strong: !0, children: n.externalEmails }),
-              /* @__PURE__ */ N.jsx(
+            /* @__PURE__ */ _.jsxs("div", { children: [
+              /* @__PURE__ */ _.jsx(_t.Text, { strong: !0, children: n.externalEmails }),
+              /* @__PURE__ */ _.jsx(
                 dt.TextArea,
                 {
                   rows: 4,
@@ -74177,21 +74177,21 @@ For more information, see https://refine.dev/docs/advanced-tutorials/data-provid
           ] })
         }
       ),
-      /* @__PURE__ */ N.jsx(
+      /* @__PURE__ */ _.jsx(
         $r,
         {
-          title: n.deliveryTitle(_?.ID),
-          open: !!_,
+          title: n.deliveryTitle(N?.ID),
+          open: !!N,
           onCancel: () => P(void 0),
           onOk: () => {
             Y();
           },
           okText: n.sendNow,
           confirmLoading: U,
-          okButtonProps: { disabled: !_?.Recipients?.length },
+          okButtonProps: { disabled: !N?.Recipients?.length },
           width: 760,
-          children: /* @__PURE__ */ N.jsxs(lt, { direction: "vertical", className: "panel-stack", children: [
-            /* @__PURE__ */ N.jsx(
+          children: /* @__PURE__ */ _.jsxs(lt, { direction: "vertical", className: "panel-stack", children: [
+            /* @__PURE__ */ _.jsx(
               Lt,
               {
                 type: "warning",
@@ -74199,23 +74199,23 @@ For more information, see https://refine.dev/docs/advanced-tutorials/data-provid
                 message: n.sendWarning
               }
             ),
-            /* @__PURE__ */ N.jsxs(xn, { size: "small", column: 1, children: [
-              /* @__PURE__ */ N.jsx(xn.Item, { label: n.recipients, children: _?.Recipients?.map((q) => q.email).join(", ") || n.none }),
-              /* @__PURE__ */ N.jsx(xn.Item, { label: n.rfqRevision, children: _?.Revision }),
-              /* @__PURE__ */ N.jsx(xn.Item, { label: n.message, children: _?.GeneralMessage || "—" })
+            /* @__PURE__ */ _.jsxs(xn, { size: "small", column: 1, children: [
+              /* @__PURE__ */ _.jsx(xn.Item, { label: n.recipients, children: N?.Recipients?.map((q) => q.email).join(", ") || n.none }),
+              /* @__PURE__ */ _.jsx(xn.Item, { label: n.rfqRevision, children: N?.Revision }),
+              /* @__PURE__ */ _.jsx(xn.Item, { label: n.message, children: N?.GeneralMessage || "—" })
             ] }),
-            /* @__PURE__ */ N.jsx(Ot, { size: "small", title: n.deliveryHistory, extra: /* @__PURE__ */ N.jsx(Ve, { size: "small", onClick: () => _ && void le(_), children: n.refresh }), children: /* @__PURE__ */ N.jsx(
+            /* @__PURE__ */ _.jsx(Ot, { size: "small", title: n.deliveryHistory, extra: /* @__PURE__ */ _.jsx(Ve, { size: "small", onClick: () => N && void le(N), children: n.refresh }), children: /* @__PURE__ */ _.jsx(
               Jr,
               {
                 dataSource: z,
                 locale: { emptyText: n.noAttempts },
-                renderItem: (q) => /* @__PURE__ */ N.jsx(Jr.Item, { children: /* @__PURE__ */ N.jsx(
+                renderItem: (q) => /* @__PURE__ */ _.jsx(Jr.Item, { children: /* @__PURE__ */ _.jsx(
                   Jr.Item.Meta,
                   {
-                    title: /* @__PURE__ */ N.jsxs(lt, { children: [
-                      /* @__PURE__ */ N.jsx(Cn, { children: n.attemptStatus[q.status] ?? q.status }),
-                      /* @__PURE__ */ N.jsx("span", { children: new Date(q.created_at).toLocaleString(e) }),
-                      /* @__PURE__ */ N.jsx(_t.Text, { type: "secondary", children: q.id })
+                    title: /* @__PURE__ */ _.jsxs(lt, { children: [
+                      /* @__PURE__ */ _.jsx(Cn, { children: n.attemptStatus[q.status] ?? q.status }),
+                      /* @__PURE__ */ _.jsx("span", { children: new Date(q.created_at).toLocaleString(e) }),
+                      /* @__PURE__ */ _.jsx(_t.Text, { type: "secondary", children: q.id })
                     ] }),
                     description: q.recipients.map((te) => `${te.email}: ${te.status}${te.error_class ? ` (${te.error_class})` : ""}`).join(", ")
                   }
@@ -75743,7 +75743,7 @@ Please change the parent <Route path="${C}"> to <Route path="${C === "/" ? "*" :
     }, S) {
       let { basename: C, navigator: E, useTransitions: R } = l.useContext(oa), $ = typeof p == "string" && E1.test(p), M = T4(p, C);
       p = M.to;
-      let I = Yhe(p, { relative: a }), D = ra(), _ = null;
+      let I = Yhe(p, { relative: a }), D = ra(), N = null;
       if (u) {
         let U = R1(
           u,
@@ -75751,7 +75751,7 @@ Please change the parent <Route path="${C}"> to <Route path="${C === "/" ? "*" :
           D.mask ? D.mask.pathname : "/",
           !0
         );
-        C !== "/" && (U.pathname = U.pathname === "/" ? C : ya([C, U.pathname])), _ = E.createHref(U);
+        C !== "/" && (U.pathname = U.pathname === "/" ? C : ya([C, U.pathname])), N = E.createHref(U);
       }
       let [P, T, A] = _ge(
         r,
@@ -75777,7 +75777,7 @@ Please change the parent <Route path="${C}"> to <Route path="${C === "/" ? "*" :
           {
             ...b,
             ...A,
-            href: (L ? _ : void 0) || M.absoluteURL || I,
+            href: (L ? N : void 0) || M.absoluteURL || I,
             onClick: L ? O : t,
             ref: Dge(S, T),
             target: m,
@@ -75806,18 +75806,18 @@ Please change the parent <Route path="${C}"> to <Route path="${C === "/" ? "*" :
       Vge(g) && u === !0, E = b.encodeLocation ? b.encodeLocation(g).pathname : g.pathname, R = v.pathname, $ = y && y.navigation && y.navigation.location ? y.navigation.location.pathname : null;
       n || (R = R.toLowerCase(), $ = $ ? $.toLowerCase() : null, E = E.toLowerCase()), $ && S && ($ = _i($, S) || $);
       const M = E !== "/" && E.endsWith("/") ? E.length - 1 : E.length;
-      let I = R === E || !a && R.startsWith(E) && R.charAt(M) === "/", D = $ != null && ($ === E || !a && $.startsWith(E) && $.charAt(E.length) === "/"), _ = {
+      let I = R === E || !a && R.startsWith(E) && R.charAt(M) === "/", D = $ != null && ($ === E || !a && $.startsWith(E) && $.charAt(E.length) === "/"), N = {
         isActive: I,
         isPending: D,
         isTransitioning: C
       }, P = I ? t : void 0, T;
-      typeof r == "function" ? T = r(_) : T = [
+      typeof r == "function" ? T = r(N) : T = [
         r,
         I ? "active" : null,
         D ? "pending" : null,
         C ? "transitioning" : null
       ].filter(Boolean).join(" ");
-      let A = typeof s == "function" ? s(_) : s;
+      let A = typeof s == "function" ? s(N) : s;
       return /* @__PURE__ */ l.createElement(
         z1,
         {
@@ -75829,7 +75829,7 @@ Please change the parent <Route path="${C}"> to <Route path="${C === "/" ? "*" :
           to: c,
           viewTransition: u
         },
-        typeof f == "function" ? f(_) : f
+        typeof f == "function" ? f(N) : f
       );
     }
   );
@@ -75854,9 +75854,9 @@ Please change the parent <Route path="${C}"> to <Route path="${C === "/" ? "*" :
       let { useTransitions: S } = l.useContext(oa), C = qge(), E = Wge(u, { relative: m }), R = c.toLowerCase() === "get" ? "get" : "post", $ = typeof u == "string" && E1.test(u), M = (I) => {
         if (f && f(I), I.defaultPrevented) return;
         I.preventDefault();
-        let D = I.nativeEvent.submitter, _ = D?.getAttribute("formmethod") || c, P = () => C(D || I.currentTarget, {
+        let D = I.nativeEvent.submitter, N = D?.getAttribute("formmethod") || c, P = () => C(D || I.currentTarget, {
           fetcherKey: t,
-          method: _,
+          method: N,
           navigate: n,
           replace: a,
           state: s,
@@ -76224,10 +76224,10 @@ Please change the parent <Route path="${C}"> to <Route path="${C === "/" ? "*" :
         });
       };
       return window.addEventListener("focus", p), () => window.removeEventListener("focus", p);
-    }, [n, c]), c ? /* @__PURE__ */ N.jsx(Lt, { type: "warning", title: "Session ended", description: /* @__PURE__ */ N.jsx("a", { href: "/admin/login", children: "Sign in again" }) }) : a ? /* @__PURE__ */ N.jsxs(lt, { direction: "vertical", children: [
-      /* @__PURE__ */ N.jsx(Lt, { type: "error", title: a.message }),
-      /* @__PURE__ */ N.jsx(Ve, { onClick: () => m((p) => p + 1), children: "Retry" })
-    ] }) : n ? /* @__PURE__ */ N.jsx(B4.Provider, { value: n, children: /* @__PURE__ */ N.jsx(Lge, { basename: "/admin", children: /* @__PURE__ */ N.jsx(
+    }, [n, c]), c ? /* @__PURE__ */ _.jsx(Lt, { type: "warning", title: "Session ended", description: /* @__PURE__ */ _.jsx("a", { href: "/admin/login", children: "Sign in again" }) }) : a ? /* @__PURE__ */ _.jsxs(lt, { direction: "vertical", children: [
+      /* @__PURE__ */ _.jsx(Lt, { type: "error", title: a.message }),
+      /* @__PURE__ */ _.jsx(Ve, { onClick: () => m((p) => p + 1), children: "Retry" })
+    ] }) : n ? /* @__PURE__ */ _.jsx(B4.Provider, { value: n, children: /* @__PURE__ */ _.jsx(Lge, { basename: "/admin", children: /* @__PURE__ */ _.jsx(
       Mme,
       {
         dataProvider: SE,
@@ -76238,7 +76238,7 @@ Please change the parent <Route path="${C}"> to <Route path="${C === "/" ? "*" :
         options: { disableTelemetry: !0, mutationMode: "pessimistic", reactQuery: { clientConfig: t } },
         children: e
       }
-    ) }) }) : /* @__PURE__ */ N.jsx("p", { role: "status", children: "Loading Prods…" });
+    ) }) }) : /* @__PURE__ */ _.jsx("p", { role: "status", children: "Loading Prods…" });
   }
   const nve = {
     "en-US": {
@@ -76606,7 +76606,7 @@ Please change the parent <Route path="${C}"> to <Route path="${C === "/" ? "*" :
         title: r.status,
         dataIndex: "status",
         key: "status",
-        render: (E) => /* @__PURE__ */ N.jsx(Cn, { color: E === "succeeded" ? "green" : E === "failed" ? "red" : "blue", children: E })
+        render: (E) => /* @__PURE__ */ _.jsx(Cn, { color: E === "succeeded" ? "green" : E === "failed" ? "red" : "blue", children: E })
       },
       {
         title: r.started,
@@ -76624,11 +76624,11 @@ Please change the parent <Route path="${C}"> to <Route path="${C === "/" ? "*" :
       {
         title: r.evidence,
         key: "evidence",
-        render: (E, R) => /* @__PURE__ */ N.jsxs(lt, { direction: "vertical", size: 0, children: [
-          /* @__PURE__ */ N.jsx(_t.Text, { type: R.content_verified ? "success" : void 0, children: R.content_verified ? r.verified : "—" }),
-          /* @__PURE__ */ N.jsx(_t.Text, { type: R.read_only_applied ? "success" : "secondary", children: R.read_only_applied ? r.protected : "—" }),
-          R.error_message && /* @__PURE__ */ N.jsx(_t.Text, { type: "danger", children: R.error_message }),
-          R.warning_message && /* @__PURE__ */ N.jsx(_t.Text, { type: "warning", children: R.warning_message })
+        render: (E, R) => /* @__PURE__ */ _.jsxs(lt, { direction: "vertical", size: 0, children: [
+          /* @__PURE__ */ _.jsx(_t.Text, { type: R.content_verified ? "success" : void 0, children: R.content_verified ? r.verified : "—" }),
+          /* @__PURE__ */ _.jsx(_t.Text, { type: R.read_only_applied ? "success" : "secondary", children: R.read_only_applied ? r.protected : "—" }),
+          R.error_message && /* @__PURE__ */ _.jsx(_t.Text, { type: "danger", children: R.error_message }),
+          R.warning_message && /* @__PURE__ */ _.jsx(_t.Text, { type: "warning", children: R.warning_message })
         ] })
       },
       {
@@ -76637,49 +76637,49 @@ Please change the parent <Route path="${C}"> to <Route path="${C === "/" ? "*" :
         render: (E, R) => R.backup_id && (s?.retention.reasons[R.backup_id] ?? []).join(", ") || "—"
       }
     ];
-    return /* @__PURE__ */ N.jsxs(lt, { direction: "vertical", size: "middle", className: "panel-stack", children: [
-      s?.due && /* @__PURE__ */ N.jsx(Lt, { type: "warning", showIcon: !0, message: r.overdue }),
-      s?.contains_sensitive_data && /* @__PURE__ */ N.jsx(Lt, { type: "warning", showIcon: !0, message: r.sensitive }),
-      !!s?.external_requirements?.length && /* @__PURE__ */ N.jsx(Lt, { type: "info", showIcon: !0, message: r.external, description: s?.external_requirements?.join(", ") }),
-      /* @__PURE__ */ N.jsxs(
+    return /* @__PURE__ */ _.jsxs(lt, { direction: "vertical", size: "middle", className: "panel-stack", children: [
+      s?.due && /* @__PURE__ */ _.jsx(Lt, { type: "warning", showIcon: !0, message: r.overdue }),
+      s?.contains_sensitive_data && /* @__PURE__ */ _.jsx(Lt, { type: "warning", showIcon: !0, message: r.sensitive }),
+      !!s?.external_requirements?.length && /* @__PURE__ */ _.jsx(Lt, { type: "info", showIcon: !0, message: r.external, description: s?.external_requirements?.join(", ") }),
+      /* @__PURE__ */ _.jsxs(
         Ot,
         {
           title: r.title,
-          extra: /* @__PURE__ */ N.jsxs(lt, { children: [
-            /* @__PURE__ */ N.jsx(Ve, { onClick: () => {
+          extra: /* @__PURE__ */ _.jsxs(lt, { children: [
+            /* @__PURE__ */ _.jsx(Ve, { onClick: () => {
               y();
             }, loading: u, children: r.refresh }),
-            /* @__PURE__ */ N.jsx(Ve, { type: "primary", onClick: () => {
+            /* @__PURE__ */ _.jsx(Ve, { type: "primary", onClick: () => {
               S();
             }, loading: m, children: r.run })
           ] }),
           children: [
-            s?.next_run_utc && /* @__PURE__ */ N.jsxs(_t.Paragraph, { children: [
+            s?.next_run_utc && /* @__PURE__ */ _.jsxs(_t.Paragraph, { children: [
               r.next,
               ": ",
               new Date(s.next_run_utc).toLocaleString(e)
             ] }),
-            /* @__PURE__ */ N.jsx(we, { form: a, layout: "vertical", onFinish: (E) => {
+            /* @__PURE__ */ _.jsx(we, { form: a, layout: "vertical", onFinish: (E) => {
               b(E);
-            }, children: /* @__PURE__ */ N.jsxs(Ot, { type: "inner", title: r.schedule, children: [
-              /* @__PURE__ */ N.jsxs(lt, { wrap: !0, align: "start", children: [
-                /* @__PURE__ */ N.jsx(we.Item, { name: "enabled", label: r.enabled, valuePropName: "checked", children: /* @__PURE__ */ N.jsx(KB, {}) }),
-                /* @__PURE__ */ N.jsx(we.Item, { name: "local_time", label: r.localTime, rules: [{ required: !0 }], children: /* @__PURE__ */ N.jsx(dt, { type: "time" }) }),
-                /* @__PURE__ */ N.jsx(we.Item, { label: r.timeZone, children: /* @__PURE__ */ N.jsx(dt, { value: s?.settings.time_zone, readOnly: !0 }) }),
+            }, children: /* @__PURE__ */ _.jsxs(Ot, { type: "inner", title: r.schedule, children: [
+              /* @__PURE__ */ _.jsxs(lt, { wrap: !0, align: "start", children: [
+                /* @__PURE__ */ _.jsx(we.Item, { name: "enabled", label: r.enabled, valuePropName: "checked", children: /* @__PURE__ */ _.jsx(KB, {}) }),
+                /* @__PURE__ */ _.jsx(we.Item, { name: "local_time", label: r.localTime, rules: [{ required: !0 }], children: /* @__PURE__ */ _.jsx(dt, { type: "time" }) }),
+                /* @__PURE__ */ _.jsx(we.Item, { label: r.timeZone, children: /* @__PURE__ */ _.jsx(dt, { value: s?.settings.time_zone, readOnly: !0 }) }),
                 [
                   ["retention_daily", r.daily],
                   ["retention_weekly", r.weekly],
                   ["retention_monthly", r.monthly],
                   ["retention_pre_upgrade", r.preUpgrade],
                   ["retention_pre_restore", r.preRestore]
-                ].map(([E, R]) => /* @__PURE__ */ N.jsx(we.Item, { name: E, label: R, rules: [{ required: !0 }], children: /* @__PURE__ */ N.jsx(Jo, { min: 1, max: 3660, precision: 0 }) }, E))
+                ].map(([E, R]) => /* @__PURE__ */ _.jsx(we.Item, { name: E, label: R, rules: [{ required: !0 }], children: /* @__PURE__ */ _.jsx(Jo, { min: 1, max: 3660, precision: 0 }) }, E))
               ] }),
-              /* @__PURE__ */ N.jsx("div", { children: /* @__PURE__ */ N.jsx(Ve, { htmlType: "submit", loading: u, children: r.save }) })
+              /* @__PURE__ */ _.jsx("div", { children: /* @__PURE__ */ _.jsx(Ve, { htmlType: "submit", loading: u, children: r.save }) })
             ] }) })
           ]
         }
       ),
-      /* @__PURE__ */ N.jsx(Ot, { title: r.history, children: /* @__PURE__ */ N.jsx(
+      /* @__PURE__ */ _.jsx(Ot, { title: r.history, children: /* @__PURE__ */ _.jsx(
         In,
         {
           rowKey: "id",
@@ -77221,7 +77221,7 @@ Please change the parent <Route path="${C}"> to <Route path="${C === "/" ? "*" :
     }
   };
   function ive({ locale: e, product: t, open: n, onClose: r, onChanged: a, onError: s, onMessage: c }) {
-    const u = ave[e], [f, m] = l.useState(), [p, g] = l.useState([]), [v, y] = l.useState(), [b, S] = l.useState([]), [C, E] = l.useState([]), [R, $] = l.useState([]), [M, I] = l.useState([]), [D, _] = l.useState("external"), [P, T] = l.useState(), [A, z] = l.useState(!1), [O, L] = l.useState("external"), [F, U] = l.useState(), [H, V] = l.useState(!1), [ee] = we.useForm(), [X] = we.useForm(), [K] = we.useForm(), G = async () => {
+    const u = ave[e], [f, m] = l.useState(), [p, g] = l.useState([]), [v, y] = l.useState(), [b, S] = l.useState([]), [C, E] = l.useState([]), [R, $] = l.useState([]), [M, I] = l.useState([]), [D, N] = l.useState("external"), [P, T] = l.useState(), [A, z] = l.useState(!1), [O, L] = l.useState("external"), [F, U] = l.useState(), [H, V] = l.useState(!1), [ee] = we.useForm(), [X] = we.useForm(), [K] = we.useForm(), G = async () => {
       if (t)
         try {
           const [Y, q, te, de, fe, pe] = await Promise.all([
@@ -77352,26 +77352,26 @@ Please change the parent <Route path="${C}"> to <Route path="${C === "/" ? "*" :
         }
       }
     };
-    return /* @__PURE__ */ N.jsx($r, { open: n, onCancel: r, footer: null, width: 900, title: u.title(f?.part_number, f?.revision), children: /* @__PURE__ */ N.jsxs(lt, { direction: "vertical", size: "large", className: "panel-stack", children: [
-      !v && /* @__PURE__ */ N.jsx(Lt, { type: "warning", showIcon: !0, message: u.noSpecSet }),
-      /* @__PURE__ */ N.jsxs(Ot, { title: u.specs, size: "small", children: [
-        /* @__PURE__ */ N.jsx(
+    return /* @__PURE__ */ _.jsx($r, { open: n, onCancel: r, footer: null, width: 900, title: u.title(f?.part_number, f?.revision), children: /* @__PURE__ */ _.jsxs(lt, { direction: "vertical", size: "large", className: "panel-stack", children: [
+      !v && /* @__PURE__ */ _.jsx(Lt, { type: "warning", showIcon: !0, message: u.noSpecSet }),
+      /* @__PURE__ */ _.jsxs(Ot, { title: u.specs, size: "small", children: [
+        /* @__PURE__ */ _.jsx(
           Jr,
           {
             dataSource: b,
             locale: { emptyText: u.noValues },
-            renderItem: (Y) => /* @__PURE__ */ N.jsx(Jr.Item, { children: /* @__PURE__ */ N.jsx(
+            renderItem: (Y) => /* @__PURE__ */ _.jsx(Jr.Item, { children: /* @__PURE__ */ _.jsx(
               Jr.Item.Meta,
               {
                 title: p.find((q) => q.id === Y.value.spec_id)?.name ?? Y.value.spec_id,
-                description: /* @__PURE__ */ N.jsxs(lt, { wrap: !0, children: [
-                  /* @__PURE__ */ N.jsx(_t.Text, { children: Y.value.raw_value }),
-                  /* @__PURE__ */ N.jsx(Cn, { color: Y.value.active ? "green" : "default", children: Y.value.active ? u.active : u.inactive }),
-                  /* @__PURE__ */ N.jsxs(Cn, { children: [
+                description: /* @__PURE__ */ _.jsxs(lt, { wrap: !0, children: [
+                  /* @__PURE__ */ _.jsx(_t.Text, { children: Y.value.raw_value }),
+                  /* @__PURE__ */ _.jsx(Cn, { color: Y.value.active ? "green" : "default", children: Y.value.active ? u.active : u.inactive }),
+                  /* @__PURE__ */ _.jsxs(Cn, { children: [
                     u.sourceRevision,
                     Y.value.source_revision
                   ] }),
-                  Y.normalized?.map((q) => /* @__PURE__ */ N.jsxs(Cn, { color: q.status === "current" ? "blue" : "default", children: [
+                  Y.normalized?.map((q) => /* @__PURE__ */ _.jsxs(Cn, { color: q.status === "current" ? "blue" : "default", children: [
                     q.source,
                     ":",
                     q.status
@@ -77381,42 +77381,42 @@ Please change the parent <Route path="${C}"> to <Route path="${C === "/" ? "*" :
             ) })
           }
         ),
-        /* @__PURE__ */ N.jsxs(we, { form: ee, layout: "inline", onFinish: (Y) => {
+        /* @__PURE__ */ _.jsxs(we, { form: ee, layout: "inline", onFinish: (Y) => {
           Q(Y);
         }, children: [
-          /* @__PURE__ */ N.jsx(we.Item, { name: "spec_id", rules: [{ required: !0 }], children: /* @__PURE__ */ N.jsx(kt, { placeholder: u.specification, style: { width: 220 }, options: W.map((Y) => ({ value: Y.id, label: `${Y.name}${Y.preferred_unit ? ` (${Y.preferred_unit})` : ""}` })) }) }),
-          /* @__PURE__ */ N.jsx(we.Item, { name: "raw_value", rules: [{ required: !0 }], children: /* @__PURE__ */ N.jsx(dt, { placeholder: u.rawValue }) }),
-          /* @__PURE__ */ N.jsx(we.Item, { name: "source_locale", children: /* @__PURE__ */ N.jsx(dt, { placeholder: u.localeOptional }) }),
-          /* @__PURE__ */ N.jsx(Ve, { type: "primary", htmlType: "submit", disabled: !W.length, children: u.saveValue })
+          /* @__PURE__ */ _.jsx(we.Item, { name: "spec_id", rules: [{ required: !0 }], children: /* @__PURE__ */ _.jsx(kt, { placeholder: u.specification, style: { width: 220 }, options: W.map((Y) => ({ value: Y.id, label: `${Y.name}${Y.preferred_unit ? ` (${Y.preferred_unit})` : ""}` })) }) }),
+          /* @__PURE__ */ _.jsx(we.Item, { name: "raw_value", rules: [{ required: !0 }], children: /* @__PURE__ */ _.jsx(dt, { placeholder: u.rawValue }) }),
+          /* @__PURE__ */ _.jsx(we.Item, { name: "source_locale", children: /* @__PURE__ */ _.jsx(dt, { placeholder: u.localeOptional }) }),
+          /* @__PURE__ */ _.jsx(Ve, { type: "primary", htmlType: "submit", disabled: !W.length, children: u.saveValue })
         ] })
       ] }),
-      /* @__PURE__ */ N.jsxs(Ot, { title: u.images, size: "small", children: [
-        /* @__PURE__ */ N.jsx(
+      /* @__PURE__ */ _.jsxs(Ot, { title: u.images, size: "small", children: [
+        /* @__PURE__ */ _.jsx(
           Jr,
           {
             dataSource: R,
             locale: { emptyText: u.noImages },
-            renderItem: (Y) => /* @__PURE__ */ N.jsx(Jr.Item, { actions: [
-              /* @__PURE__ */ N.jsx(Ve, { size: "small", disabled: Y.primary, onClick: () => {
+            renderItem: (Y) => /* @__PURE__ */ _.jsx(Jr.Item, { actions: [
+              /* @__PURE__ */ _.jsx(Ve, { size: "small", disabled: Y.primary, onClick: () => {
                 re(Y, !0);
               }, children: u.setPrimary }, "primary"),
-              /* @__PURE__ */ N.jsx(Lr, { title: u.removeImageConfirm, onConfirm: () => {
+              /* @__PURE__ */ _.jsx(Lr, { title: u.removeImageConfirm, onConfirm: () => {
                 le(Y);
-              }, children: /* @__PURE__ */ N.jsx(Ve, { size: "small", danger: !0, children: u.remove }) }, "delete")
-            ], children: /* @__PURE__ */ N.jsx(
+              }, children: /* @__PURE__ */ _.jsx(Ve, { size: "small", danger: !0, children: u.remove }) }, "delete")
+            ], children: /* @__PURE__ */ _.jsx(
               Jr.Item.Meta,
               {
-                title: /* @__PURE__ */ N.jsxs(lt, { children: [
-                  Y.primary && /* @__PURE__ */ N.jsx(Cn, { color: "blue", children: u.primary }),
-                  /* @__PURE__ */ N.jsx("span", { children: Y.alt_text || u.altFallback })
+                title: /* @__PURE__ */ _.jsxs(lt, { children: [
+                  Y.primary && /* @__PURE__ */ _.jsx(Cn, { color: "blue", children: u.primary }),
+                  /* @__PURE__ */ _.jsx("span", { children: Y.alt_text || u.altFallback })
                 ] }),
-                description: /* @__PURE__ */ N.jsxs(lt, { wrap: !0, children: [
-                  /* @__PURE__ */ N.jsxs(Cn, { children: [
+                description: /* @__PURE__ */ _.jsxs(lt, { wrap: !0, children: [
+                  /* @__PURE__ */ _.jsxs(Cn, { children: [
                     u.order,
                     " ",
                     Y.sort_order
                   ] }),
-                  Y.external_url ? /* @__PURE__ */ N.jsx("a", { href: Y.external_url, target: "_blank", rel: "noreferrer", children: u.externalImage }) : /* @__PURE__ */ N.jsxs("span", { children: [
+                  Y.external_url ? /* @__PURE__ */ _.jsx("a", { href: Y.external_url, target: "_blank", rel: "noreferrer", children: u.externalImage }) : /* @__PURE__ */ _.jsxs("span", { children: [
                     u.managedAsset,
                     " ",
                     Y.asset_id
@@ -77426,77 +77426,77 @@ Please change the parent <Route path="${C}"> to <Route path="${C === "/" ? "*" :
             ) })
           }
         ),
-        /* @__PURE__ */ N.jsxs(we, { form: K, layout: "vertical", initialValues: { sort_order: R.length + 1, primary: R.length === 0 }, onFinish: (Y) => {
+        /* @__PURE__ */ _.jsxs(we, { form: K, layout: "vertical", initialValues: { sort_order: R.length + 1, primary: R.length === 0 }, onFinish: (Y) => {
           J(Y);
         }, children: [
-          /* @__PURE__ */ N.jsx(we.Item, { label: u.source, children: /* @__PURE__ */ N.jsx(El.Group, { optionType: "button", value: O, onChange: (Y) => {
+          /* @__PURE__ */ _.jsx(we.Item, { label: u.source, children: /* @__PURE__ */ _.jsx(El.Group, { optionType: "button", value: O, onChange: (Y) => {
             L(Y.target.value), U(void 0);
           }, options: [{ label: u.externalURL, value: "external" }, { label: u.uploadImage, value: "upload" }] }) }),
-          /* @__PURE__ */ N.jsxs("div", { className: "form-grid three-columns", children: [
-            O === "external" ? /* @__PURE__ */ N.jsx(we.Item, { name: "external_url", label: u.externalHTTP, rules: [{ required: !0 }, { type: "url" }], children: /* @__PURE__ */ N.jsx(dt, {}) }) : /* @__PURE__ */ N.jsx(we.Item, { label: u.imageTypes, required: !0, children: /* @__PURE__ */ N.jsxs(lt, { children: [
-              /* @__PURE__ */ N.jsx(Pl, { accept: ".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp", maxCount: 1, showUploadList: !1, beforeUpload: (Y) => (B(Y), !1), children: /* @__PURE__ */ N.jsx(Ve, { loading: H, children: u.chooseUpload }) }),
-              F && /* @__PURE__ */ N.jsx(_t.Text, { children: F.original_filename })
+          /* @__PURE__ */ _.jsxs("div", { className: "form-grid three-columns", children: [
+            O === "external" ? /* @__PURE__ */ _.jsx(we.Item, { name: "external_url", label: u.externalHTTP, rules: [{ required: !0 }, { type: "url" }], children: /* @__PURE__ */ _.jsx(dt, {}) }) : /* @__PURE__ */ _.jsx(we.Item, { label: u.imageTypes, required: !0, children: /* @__PURE__ */ _.jsxs(lt, { children: [
+              /* @__PURE__ */ _.jsx(Pl, { accept: ".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp", maxCount: 1, showUploadList: !1, beforeUpload: (Y) => (B(Y), !1), children: /* @__PURE__ */ _.jsx(Ve, { loading: H, children: u.chooseUpload }) }),
+              F && /* @__PURE__ */ _.jsx(_t.Text, { children: F.original_filename })
             ] }) }),
-            /* @__PURE__ */ N.jsx(we.Item, { name: "alt_text", label: u.altText, extra: u.altHelp, children: /* @__PURE__ */ N.jsx(dt, {}) }),
-            /* @__PURE__ */ N.jsx(we.Item, { name: "sort_order", label: u.sortOrder, rules: [{ required: !0 }], children: /* @__PURE__ */ N.jsx(Jo, { min: 0, precision: 0 }) }),
-            /* @__PURE__ */ N.jsx(we.Item, { name: "primary", valuePropName: "checked", children: /* @__PURE__ */ N.jsx(no, { children: u.primaryImage }) })
+            /* @__PURE__ */ _.jsx(we.Item, { name: "alt_text", label: u.altText, extra: u.altHelp, children: /* @__PURE__ */ _.jsx(dt, {}) }),
+            /* @__PURE__ */ _.jsx(we.Item, { name: "sort_order", label: u.sortOrder, rules: [{ required: !0 }], children: /* @__PURE__ */ _.jsx(Jo, { min: 0, precision: 0 }) }),
+            /* @__PURE__ */ _.jsx(we.Item, { name: "primary", valuePropName: "checked", children: /* @__PURE__ */ _.jsx(no, { children: u.primaryImage }) })
           ] }),
-          /* @__PURE__ */ N.jsx(Ve, { type: "primary", htmlType: "submit", children: u.addImage })
+          /* @__PURE__ */ _.jsx(Ve, { type: "primary", htmlType: "submit", children: u.addImage })
         ] })
       ] }),
-      /* @__PURE__ */ N.jsxs(Ot, { title: u.documents, size: "small", children: [
-        /* @__PURE__ */ N.jsx(
+      /* @__PURE__ */ _.jsxs(Ot, { title: u.documents, size: "small", children: [
+        /* @__PURE__ */ _.jsx(
           Jr,
           {
             dataSource: C,
             locale: { emptyText: u.noDocuments },
-            renderItem: (Y) => /* @__PURE__ */ N.jsx(Jr.Item, { children: /* @__PURE__ */ N.jsx(
+            renderItem: (Y) => /* @__PURE__ */ _.jsx(Jr.Item, { children: /* @__PURE__ */ _.jsx(
               Jr.Item.Meta,
               {
                 title: Y.label,
-                description: /* @__PURE__ */ N.jsxs(lt, { wrap: !0, children: [
-                  /* @__PURE__ */ N.jsx(Cn, { children: M.find((q) => q.id === Y.document_type_id)?.name ?? Y.document_type_id }),
-                  Y.external_url && /* @__PURE__ */ N.jsx("a", { href: Y.external_url, target: "_blank", rel: "noreferrer", children: Y.external_url }),
-                  Y.asset_id && /* @__PURE__ */ N.jsx("a", { href: `/assets/${Y.asset_id}`, target: "_blank", rel: "noreferrer", children: u.localPDF })
+                description: /* @__PURE__ */ _.jsxs(lt, { wrap: !0, children: [
+                  /* @__PURE__ */ _.jsx(Cn, { children: M.find((q) => q.id === Y.document_type_id)?.name ?? Y.document_type_id }),
+                  Y.external_url && /* @__PURE__ */ _.jsx("a", { href: Y.external_url, target: "_blank", rel: "noreferrer", children: Y.external_url }),
+                  Y.asset_id && /* @__PURE__ */ _.jsx("a", { href: `/assets/${Y.asset_id}`, target: "_blank", rel: "noreferrer", children: u.localPDF })
                 ] })
               }
             ) })
           }
         ),
-        /* @__PURE__ */ N.jsxs(we, { form: X, layout: "vertical", initialValues: { sort_order: C.length + 1 }, onFinish: (Y) => {
+        /* @__PURE__ */ _.jsxs(we, { form: X, layout: "vertical", initialValues: { sort_order: C.length + 1 }, onFinish: (Y) => {
           ie(Y);
         }, children: [
-          /* @__PURE__ */ N.jsx(we.Item, { label: u.source, children: /* @__PURE__ */ N.jsx(
+          /* @__PURE__ */ _.jsx(we.Item, { label: u.source, children: /* @__PURE__ */ _.jsx(
             El.Group,
             {
               optionType: "button",
               value: D,
               onChange: (Y) => {
-                _(Y.target.value), T(void 0);
+                N(Y.target.value), T(void 0);
               },
               options: [{ label: u.externalURL, value: "external" }, { label: u.uploadPDF, value: "upload" }]
             }
           ) }),
-          /* @__PURE__ */ N.jsxs("div", { className: "form-grid three-columns", children: [
-            /* @__PURE__ */ N.jsx(we.Item, { name: "label", label: u.label, rules: [{ required: !0 }], children: /* @__PURE__ */ N.jsx(dt, {}) }),
-            /* @__PURE__ */ N.jsx(we.Item, { name: "document_type_id", label: u.documentType, rules: [{ required: !0 }], children: /* @__PURE__ */ N.jsx(kt, { options: M.filter((Y) => Y.status === "active").map((Y) => ({ value: Y.id, label: Y.name })) }) }),
-            D === "external" ? /* @__PURE__ */ N.jsx(we.Item, { name: "external_url", label: u.externalHTTP, rules: [{ required: !0 }, { type: "url" }], children: /* @__PURE__ */ N.jsx(dt, {}) }) : /* @__PURE__ */ N.jsx(we.Item, { label: "PDF", required: !0, children: /* @__PURE__ */ N.jsxs(lt, { children: [
-              /* @__PURE__ */ N.jsx(
+          /* @__PURE__ */ _.jsxs("div", { className: "form-grid three-columns", children: [
+            /* @__PURE__ */ _.jsx(we.Item, { name: "label", label: u.label, rules: [{ required: !0 }], children: /* @__PURE__ */ _.jsx(dt, {}) }),
+            /* @__PURE__ */ _.jsx(we.Item, { name: "document_type_id", label: u.documentType, rules: [{ required: !0 }], children: /* @__PURE__ */ _.jsx(kt, { options: M.filter((Y) => Y.status === "active").map((Y) => ({ value: Y.id, label: Y.name })) }) }),
+            D === "external" ? /* @__PURE__ */ _.jsx(we.Item, { name: "external_url", label: u.externalHTTP, rules: [{ required: !0 }, { type: "url" }], children: /* @__PURE__ */ _.jsx(dt, {}) }) : /* @__PURE__ */ _.jsx(we.Item, { label: "PDF", required: !0, children: /* @__PURE__ */ _.jsxs(lt, { children: [
+              /* @__PURE__ */ _.jsx(
                 Pl,
                 {
                   accept: ".pdf,application/pdf",
                   maxCount: 1,
                   showUploadList: !1,
                   beforeUpload: (Y) => (k(Y), !1),
-                  children: /* @__PURE__ */ N.jsx(Ve, { loading: A, children: u.chooseUpload })
+                  children: /* @__PURE__ */ _.jsx(Ve, { loading: A, children: u.chooseUpload })
                 }
               ),
-              P && /* @__PURE__ */ N.jsx(_t.Text, { children: P.original_filename })
+              P && /* @__PURE__ */ _.jsx(_t.Text, { children: P.original_filename })
             ] }) }),
-            /* @__PURE__ */ N.jsx(we.Item, { name: "language", label: u.language, children: /* @__PURE__ */ N.jsx(dt, { placeholder: "en-US" }) }),
-            /* @__PURE__ */ N.jsx(we.Item, { name: "sort_order", label: u.sortOrder, rules: [{ required: !0 }], children: /* @__PURE__ */ N.jsx(Jo, { min: 0, precision: 0 }) })
+            /* @__PURE__ */ _.jsx(we.Item, { name: "language", label: u.language, children: /* @__PURE__ */ _.jsx(dt, { placeholder: "en-US" }) }),
+            /* @__PURE__ */ _.jsx(we.Item, { name: "sort_order", label: u.sortOrder, rules: [{ required: !0 }], children: /* @__PURE__ */ _.jsx(Jo, { min: 0, precision: 0 }) })
           ] }),
-          /* @__PURE__ */ N.jsx(Ve, { type: "primary", htmlType: "submit", children: u.addDocument })
+          /* @__PURE__ */ _.jsx(Ve, { type: "primary", htmlType: "submit", children: u.addDocument })
         ] })
       ] })
     ] }) });
@@ -77636,14 +77636,14 @@ Please change the parent <Route path="${C}"> to <Route path="${C === "/" ? "*" :
   function lve({ productID: e, locale: t, item: n, revision: r, text: a, onSaved: s, onError: c }) {
     const [u, f] = l.useState(!1), [m] = we.useForm();
     l.useEffect(() => {
-      m.setFieldsValue(n ?? {});
+      m.setFieldsValue({ name: n?.name, description: n?.description, features: n?.features });
     }, [m, n]);
     const p = async (g) => {
       f(!0);
       try {
         const v = await Sr(`/admin/api/products/${e}/translations/${encodeURIComponent(t)}`, {
           expected_revision: r,
-          translation: g
+          translation: { name: g.name, description: g.description, features: g.features }
         });
         s(v);
       } catch (v) {
@@ -77652,20 +77652,19 @@ Please change the parent <Route path="${C}"> to <Route path="${C === "/" ? "*" :
         f(!1);
       }
     };
-    return /* @__PURE__ */ N.jsxs(we, { form: m, layout: "vertical", onFinish: (g) => {
+    return /* @__PURE__ */ _.jsxs(we, { form: m, layout: "vertical", onFinish: (g) => {
       p(g);
     }, children: [
-      /* @__PURE__ */ N.jsx(we.Item, { name: "name", label: a.name, children: /* @__PURE__ */ N.jsx(dt, {}) }),
-      /* @__PURE__ */ N.jsx(we.Item, { name: "description", label: a.description, children: /* @__PURE__ */ N.jsx(dt.TextArea, { rows: 3 }) }),
-      /* @__PURE__ */ N.jsx(we.Item, { name: "features", label: a.features, children: /* @__PURE__ */ N.jsx(dt.TextArea, { rows: 3 }) }),
-      /* @__PURE__ */ N.jsx(we.Item, { name: "specification", label: a.specification, children: /* @__PURE__ */ N.jsx(dt.TextArea, { rows: 3 }) }),
-      /* @__PURE__ */ N.jsx(Ve, { type: "primary", htmlType: "submit", loading: u, children: a.save })
+      /* @__PURE__ */ _.jsx(we.Item, { name: "name", label: a.name, children: /* @__PURE__ */ _.jsx(dt, {}) }),
+      /* @__PURE__ */ _.jsx(we.Item, { name: "description", label: a.description, children: /* @__PURE__ */ _.jsx(dt.TextArea, { rows: 3 }) }),
+      /* @__PURE__ */ _.jsx(we.Item, { name: "features", label: a.features, children: /* @__PURE__ */ _.jsx(dt.TextArea, { rows: 3 }) }),
+      /* @__PURE__ */ _.jsx(Ve, { type: "primary", htmlType: "submit", loading: u, children: a.save })
     ] });
   }
   function cve({ productID: e, content: t, locales: n, text: r, onSaved: a, onError: s }) {
     const [c, u] = l.useState(!1), [f] = we.useForm(), m = zu(n);
     l.useEffect(() => {
-      f.setFieldsValue({ source_locale: t.source_locale, source_locales: t.source_locales });
+      f.setFieldsValue({ source_locale: t.source_locale, source_locales: { name: t.source_locales.name, description: t.source_locales.description, features: t.source_locales.features } });
     }, [t, f]);
     const p = async (g) => {
       u(!0);
@@ -77673,7 +77672,7 @@ Please change the parent <Route path="${C}"> to <Route path="${C === "/" ? "*" :
         const v = await Sr(`/admin/api/products/${e}/content/source-locales`, {
           expected_revision: t.product_revision,
           source_locale: g.source_locale,
-          source_locales: g.source_locales
+          source_locales: { name: g.source_locales.name, description: g.source_locales.description, features: g.source_locales.features }
         });
         a(v);
       } catch (v) {
@@ -77682,13 +77681,13 @@ Please change the parent <Route path="${C}"> to <Route path="${C === "/" ? "*" :
         u(!1);
       }
     };
-    return /* @__PURE__ */ N.jsxs(we, { form: f, layout: "vertical", onFinish: (g) => {
+    return /* @__PURE__ */ _.jsxs(we, { form: f, layout: "vertical", onFinish: (g) => {
       p(g);
     }, children: [
-      /* @__PURE__ */ N.jsx(Lt, { className: "bottom-gap", type: "info", showIcon: !0, message: r.sourceHelp }),
-      /* @__PURE__ */ N.jsx(we.Item, { name: "source_locale", label: r.source, rules: [{ required: !0 }], children: /* @__PURE__ */ N.jsx(kt, { options: m }) }),
-      /* @__PURE__ */ N.jsx(Ot, { size: "small", title: r.perField, children: ["name", "description", "features", "specification"].map((g) => /* @__PURE__ */ N.jsx(we.Item, { name: ["source_locales", g], label: r[g], rules: [{ required: !0 }], children: /* @__PURE__ */ N.jsx(kt, { options: m }) }, g)) }),
-      /* @__PURE__ */ N.jsx(Ve, { className: "top-gap", type: "primary", htmlType: "submit", loading: c, children: r.saveSource })
+      /* @__PURE__ */ _.jsx(Lt, { className: "bottom-gap", type: "info", showIcon: !0, message: r.sourceHelp }),
+      /* @__PURE__ */ _.jsx(we.Item, { name: "source_locale", label: r.source, rules: [{ required: !0 }], children: /* @__PURE__ */ _.jsx(kt, { options: m }) }),
+      /* @__PURE__ */ _.jsx(Ot, { size: "small", title: r.perField, children: ["name", "description", "features"].map((g) => /* @__PURE__ */ _.jsx(we.Item, { name: ["source_locales", g], label: r[g], rules: [{ required: !0 }], children: /* @__PURE__ */ _.jsx(kt, { options: m }) }, g)) }),
+      /* @__PURE__ */ _.jsx(Ve, { className: "top-gap", type: "primary", htmlType: "submit", loading: c, children: r.saveSource })
     ] });
   }
   function uve({ product: e, settings: t, locale: n, onClose: r, onError: a, onSaved: s }) {
@@ -77712,20 +77711,20 @@ Please change the parent <Route path="${C}"> to <Route path="${C === "/" ? "*" :
     const v = t?.supported_locales ?? [], y = (b) => {
       p(b), s();
     };
-    return /* @__PURE__ */ N.jsx($r, { open: !!e, title: `${c.title} · ${e?.part_number ?? ""}`, footer: null, onCancel: r, width: 800, destroyOnHidden: !0, children: u || !m || !e ? /* @__PURE__ */ N.jsx(wu, {}) : /* @__PURE__ */ N.jsx(tp, { items: [
+    return /* @__PURE__ */ _.jsx($r, { open: !!e, title: `${c.title} · ${e?.part_number ?? ""}`, footer: null, onCancel: r, width: 800, destroyOnHidden: !0, children: u || !m || !e ? /* @__PURE__ */ _.jsx(wu, {}) : /* @__PURE__ */ _.jsx(tp, { items: [
       {
         key: "source-locales",
         label: c.perField,
-        children: /* @__PURE__ */ N.jsx(cve, { productID: e.id, content: m, locales: v, text: c, onError: a, onSaved: y })
+        children: /* @__PURE__ */ _.jsx(cve, { productID: e.id, content: m, locales: v, text: c, onError: a, onSaved: y })
       },
       ...v.filter((b) => b !== m.source_locale).map((b) => {
         const S = m.translations?.find((C) => C.locale === b);
         return {
           key: b,
           label: Es(b),
-          children: /* @__PURE__ */ N.jsxs(N.Fragment, { children: [
-            /* @__PURE__ */ N.jsx(Lt, { className: "bottom-gap", type: "info", showIcon: !0, message: `${c.source}: ${Es(m.source_locale)}`, description: c.empty }),
-            /* @__PURE__ */ N.jsx(lve, { productID: e.id, locale: b, item: S, revision: m.product_revision, text: c, onError: a, onSaved: y })
+          children: /* @__PURE__ */ _.jsxs(_.Fragment, { children: [
+            /* @__PURE__ */ _.jsx(Lt, { className: "bottom-gap", type: "info", showIcon: !0, message: `${c.source}: ${Es(m.source_locale)}`, description: c.empty }),
+            /* @__PURE__ */ _.jsx(lve, { productID: e.id, locale: b, item: S, revision: m.product_revision, text: c, onError: a, onSaved: y })
           ] })
         };
       })
@@ -78389,7 +78388,7 @@ Please change the parent <Route path="${C}"> to <Route path="${C === "/" ? "*" :
     onError: t,
     onMessage: n
   }) {
-    const r = fve[e], { capabilities: a } = A1(), s = !!a["catalog.edit"], c = !!a["catalog.publish"], [u, f] = l.useState(1), [m, p] = l.useState({ field: "updated_at", order: "desc" }), g = Iu(), [v, y] = l.useState([]), [b, S] = l.useState([]), [C, E] = l.useState([]), [R, $] = l.useState([]), [M, I] = l.useState([]), [D, _] = l.useState(!1), [P, T] = l.useState(!1), [A, z] = l.useState(!1), [O, L] = l.useState(), { query: F, result: U } = bs({
+    const r = fve[e], { capabilities: a } = A1(), s = !!a["catalog.edit"], c = !!a["catalog.publish"], [u, f] = l.useState(1), [m, p] = l.useState({ field: "updated_at", order: "desc" }), g = Iu(), [v, y] = l.useState([]), [b, S] = l.useState([]), [C, E] = l.useState([]), [R, $] = l.useState([]), [M, I] = l.useState([]), [D, N] = l.useState(!1), [P, T] = l.useState(!1), [A, z] = l.useState(!1), [O, L] = l.useState(), { query: F, result: U } = bs({
       resource: "products",
       pagination: { currentPage: u, pageSize: 20 },
       filters: [{ field: "include_archived", operator: "eq", value: D }],
@@ -78525,31 +78524,31 @@ Please change the parent <Route path="${C}"> to <Route path="${C === "/" ? "*" :
         t(Ee), await pe();
       }
     };
-    return /* @__PURE__ */ N.jsxs(lt, { direction: "vertical", size: "large", className: "panel-stack", children: [
-      /* @__PURE__ */ N.jsx(
+    return /* @__PURE__ */ _.jsxs(lt, { direction: "vertical", size: "large", className: "panel-stack", children: [
+      /* @__PURE__ */ _.jsx(
         Ot,
         {
           title: r.products,
-          extra: /* @__PURE__ */ N.jsxs(lt, { wrap: !0, children: [
-            /* @__PURE__ */ N.jsx(
+          extra: /* @__PURE__ */ _.jsxs(lt, { wrap: !0, children: [
+            /* @__PURE__ */ _.jsx(
               no,
               {
                 checked: D,
                 onChange: (be) => {
-                  _(be.target.checked), f(1);
+                  N(be.target.checked), f(1);
                 },
                 children: r.includeArchived
               }
             ),
-            /* @__PURE__ */ N.jsx(Ve, { disabled: !a["catalog.export"], loading: ee, onClick: () => {
+            /* @__PURE__ */ _.jsx(Ve, { disabled: !a["catalog.export"], loading: ee, onClick: () => {
               de();
             }, children: r.export }),
-            /* @__PURE__ */ N.jsx(Ve, { onClick: () => {
+            /* @__PURE__ */ _.jsx(Ve, { onClick: () => {
               pe();
             }, children: r.refresh }),
-            /* @__PURE__ */ N.jsx(Ve, { type: "primary", disabled: !s || !le, onClick: Z, children: r.newProduct })
+            /* @__PURE__ */ _.jsx(Ve, { type: "primary", disabled: !s || !le, onClick: Z, children: r.newProduct })
           ] }),
-          children: /* @__PURE__ */ N.jsx(
+          children: /* @__PURE__ */ _.jsx(
             In,
             {
               rowKey: "id",
@@ -78572,7 +78571,7 @@ Please change the parent <Route path="${C}"> to <Route path="${C === "/" ? "*" :
                   dataIndex: "name",
                   sorter: !0,
                   sortOrder: m.field === "name" ? m.order === "asc" ? "ascend" : "descend" : null,
-                  render: (be) => be || /* @__PURE__ */ N.jsx(_t.Text, { type: "secondary", children: "—" })
+                  render: (be) => be || /* @__PURE__ */ _.jsx(_t.Text, { type: "secondary", children: "—" })
                 },
                 {
                   title: r.manufacturer,
@@ -78584,16 +78583,16 @@ Please change the parent <Route path="${C}"> to <Route path="${C === "/" ? "*" :
                 },
                 {
                   title: r.state,
-                  render: (be, Ee) => /* @__PURE__ */ N.jsxs(lt, { children: [
-                    /* @__PURE__ */ N.jsx(
+                  render: (be, Ee) => /* @__PURE__ */ _.jsxs(lt, { children: [
+                    /* @__PURE__ */ _.jsx(
                       Cn,
                       {
                         color: Ee.record_state === "archived" ? "default" : "blue",
                         children: Ee.record_state === "archived" ? r.archivedStatus : r.current
                       }
                     ),
-                    /* @__PURE__ */ N.jsx(Cn, { color: Ee.status === "published" ? "green" : "gold", children: Ee.status === "published" ? r.publishedStatus : r.hidden }),
-                    /* @__PURE__ */ N.jsxs(_t.Text, { type: "secondary", children: [
+                    /* @__PURE__ */ _.jsx(Cn, { color: Ee.status === "published" ? "green" : "gold", children: Ee.status === "published" ? r.publishedStatus : r.hidden }),
+                    /* @__PURE__ */ _.jsxs(_t.Text, { type: "secondary", children: [
                       "r",
                       Ee.revision
                     ] })
@@ -78602,8 +78601,8 @@ Please change the parent <Route path="${C}"> to <Route path="${C === "/" ? "*" :
                 {
                   title: r.actions,
                   fixed: "right",
-                  render: (be, Ee) => /* @__PURE__ */ N.jsxs(lt, { children: [
-                    /* @__PURE__ */ N.jsx(
+                  render: (be, Ee) => /* @__PURE__ */ _.jsxs(lt, { children: [
+                    /* @__PURE__ */ _.jsx(
                       Ve,
                       {
                         size: "small",
@@ -78612,7 +78611,7 @@ Please change the parent <Route path="${C}"> to <Route path="${C === "/" ? "*" :
                         children: r.edit
                       }
                     ),
-                    /* @__PURE__ */ N.jsx(
+                    /* @__PURE__ */ _.jsx(
                       Ve,
                       {
                         size: "small",
@@ -78621,7 +78620,7 @@ Please change the parent <Route path="${C}"> to <Route path="${C === "/" ? "*" :
                         children: r.data
                       }
                     ),
-                    le?.content_multilingual_enabled && /* @__PURE__ */ N.jsx(
+                    le?.content_multilingual_enabled && /* @__PURE__ */ _.jsx(
                       Ve,
                       {
                         size: "small",
@@ -78630,8 +78629,8 @@ Please change the parent <Route path="${C}"> to <Route path="${C === "/" ? "*" :
                         children: r.translations
                       }
                     ),
-                    /* @__PURE__ */ N.jsx(Ve, { size: "small", disabled: !s || !le, onClick: () => xe(Ee), children: r.clone }),
-                    c && s && Ee.record_state !== "archived" && Ee.status === "hidden" && /* @__PURE__ */ N.jsx(
+                    /* @__PURE__ */ _.jsx(Ve, { size: "small", disabled: !s || !le, onClick: () => xe(Ee), children: r.clone }),
+                    c && s && Ee.record_state !== "archived" && Ee.status === "hidden" && /* @__PURE__ */ _.jsx(
                       Lr,
                       {
                         title: r.publishConfirm,
@@ -78639,27 +78638,27 @@ Please change the parent <Route path="${C}"> to <Route path="${C === "/" ? "*" :
                         onConfirm: () => {
                           ke(Ee);
                         },
-                        children: /* @__PURE__ */ N.jsx(Ve, { size: "small", type: "primary", children: r.publish })
+                        children: /* @__PURE__ */ _.jsx(Ve, { size: "small", type: "primary", children: r.publish })
                       }
                     ),
-                    c && Ee.record_state !== "archived" && Ee.status === "published" && /* @__PURE__ */ N.jsx(
+                    c && Ee.record_state !== "archived" && Ee.status === "published" && /* @__PURE__ */ _.jsx(
                       Lr,
                       {
                         title: r.hideConfirm,
                         onConfirm: () => {
                           qe(Ee, "hide");
                         },
-                        children: /* @__PURE__ */ N.jsx(Ve, { size: "small", children: r.hide })
+                        children: /* @__PURE__ */ _.jsx(Ve, { size: "small", children: r.hide })
                       }
                     ),
-                    c && Ee.record_state !== "archived" && /* @__PURE__ */ N.jsx(
+                    c && Ee.record_state !== "archived" && /* @__PURE__ */ _.jsx(
                       Lr,
                       {
                         title: r.archiveConfirm,
                         onConfirm: () => {
                           qe(Ee, "archive");
                         },
-                        children: /* @__PURE__ */ N.jsx(Ve, { size: "small", danger: !0, children: r.archive })
+                        children: /* @__PURE__ */ _.jsx(Ve, { size: "small", danger: !0, children: r.archive })
                       }
                     )
                   ] })
@@ -78669,7 +78668,7 @@ Please change the parent <Route path="${C}"> to <Route path="${C === "/" ? "*" :
           )
         }
       ),
-      /* @__PURE__ */ N.jsx(
+      /* @__PURE__ */ _.jsx(
         $r,
         {
           open: Y,
@@ -78685,7 +78684,7 @@ Please change the parent <Route path="${C}"> to <Route path="${C === "/" ? "*" :
           },
           width: 760,
           destroyOnHidden: !0,
-          children: /* @__PURE__ */ N.jsxs(
+          children: /* @__PURE__ */ _.jsxs(
             we,
             {
               form: te,
@@ -78695,8 +78694,8 @@ Please change the parent <Route path="${C}"> to <Route path="${C === "/" ? "*" :
               },
               initialValues: VL,
               children: [
-                O && /* @__PURE__ */ N.jsx(Lt, { className: "bottom-gap", type: "error", showIcon: !0, title: O }),
-                K?.status === "published" ? /* @__PURE__ */ N.jsx(
+                O && /* @__PURE__ */ _.jsx(Lt, { className: "bottom-gap", type: "error", showIcon: !0, title: O }),
+                K?.status === "published" ? /* @__PURE__ */ _.jsx(
                   Lt,
                   {
                     className: "bottom-gap",
@@ -78706,7 +78705,7 @@ Please change the parent <Route path="${C}"> to <Route path="${C === "/" ? "*" :
                     description: r.publicDescription
                   }
                 ) : null,
-                W ? /* @__PURE__ */ N.jsx(
+                W ? /* @__PURE__ */ _.jsx(
                   Lt,
                   {
                     className: "bottom-gap",
@@ -78716,37 +78715,37 @@ Please change the parent <Route path="${C}"> to <Route path="${C === "/" ? "*" :
                     description: r.cloneDescription
                   }
                 ) : null,
-                /* @__PURE__ */ N.jsxs("div", { className: "form-grid", children: [
-                  /* @__PURE__ */ N.jsx(
+                /* @__PURE__ */ _.jsxs("div", { className: "form-grid", children: [
+                  /* @__PURE__ */ _.jsx(
                     we.Item,
                     {
                       name: "part_number",
                       label: r.partNumber,
                       rules: [{ required: !0 }],
-                      children: /* @__PURE__ */ N.jsx(dt, {})
+                      children: /* @__PURE__ */ _.jsx(dt, {})
                     }
                   ),
-                  /* @__PURE__ */ N.jsx(
+                  /* @__PURE__ */ _.jsx(
                     we.Item,
                     {
                       name: "slug",
                       label: r.slug,
                       extra: K ? r.slugEdit : r.slugCreate,
-                      children: /* @__PURE__ */ N.jsx(dt, { placeholder: r.autoGenerated })
+                      children: /* @__PURE__ */ _.jsx(dt, { placeholder: r.autoGenerated })
                     }
                   ),
-                  /* @__PURE__ */ N.jsx(
+                  /* @__PURE__ */ _.jsx(
                     we.Item,
                     {
                       name: "custom_path",
                       label: r.customPath,
                       extra: r.customPathHelp,
-                      children: /* @__PURE__ */ N.jsx(dt, { placeholder: r.customPathPlaceholder })
+                      children: /* @__PURE__ */ _.jsx(dt, { placeholder: r.customPathPlaceholder })
                     }
                   ),
-                  /* @__PURE__ */ N.jsx(we.Item, { name: "name", label: r.productName, children: /* @__PURE__ */ N.jsx(dt, {}) }),
-                  !K && !W ? /* @__PURE__ */ N.jsx(we.Item, { name: "source_locale", label: r.sourceLocale, extra: r.sourceLocaleHelp, rules: [{ required: !0 }], children: /* @__PURE__ */ N.jsx(kt, { options: zu(le?.supported_locales ?? []) }) }) : null,
-                  /* @__PURE__ */ N.jsx(we.Item, { name: "manufacturer_id", label: r.manufacturer, children: /* @__PURE__ */ N.jsx(
+                  /* @__PURE__ */ _.jsx(we.Item, { name: "name", label: r.productName, children: /* @__PURE__ */ _.jsx(dt, {}) }),
+                  !K && !W ? /* @__PURE__ */ _.jsx(we.Item, { name: "source_locale", label: r.sourceLocale, extra: r.sourceLocaleHelp, rules: [{ required: !0 }], children: /* @__PURE__ */ _.jsx(kt, { options: zu(le?.supported_locales ?? []) }) }) : null,
+                  /* @__PURE__ */ _.jsx(we.Item, { name: "manufacturer_id", label: r.manufacturer, children: /* @__PURE__ */ _.jsx(
                     kt,
                     {
                       allowClear: !0,
@@ -78755,7 +78754,7 @@ Please change the parent <Route path="${C}"> to <Route path="${C === "/" ? "*" :
                       options: ce(b)
                     }
                   ) }),
-                  /* @__PURE__ */ N.jsx(we.Item, { name: "brand_id", label: r.brand, children: /* @__PURE__ */ N.jsx(
+                  /* @__PURE__ */ _.jsx(we.Item, { name: "brand_id", label: r.brand, children: /* @__PURE__ */ _.jsx(
                     kt,
                     {
                       allowClear: !0,
@@ -78764,7 +78763,7 @@ Please change the parent <Route path="${C}"> to <Route path="${C === "/" ? "*" :
                       options: ce(C)
                     }
                   ) }),
-                  /* @__PURE__ */ N.jsx(we.Item, { name: "application_ids", label: r.applications, children: /* @__PURE__ */ N.jsx(
+                  /* @__PURE__ */ _.jsx(we.Item, { name: "application_ids", label: r.applications, children: /* @__PURE__ */ _.jsx(
                     kt,
                     {
                       mode: "multiple",
@@ -78774,7 +78773,7 @@ Please change the parent <Route path="${C}"> to <Route path="${C === "/" ? "*" :
                       options: ce(R)
                     }
                   ) }),
-                  /* @__PURE__ */ N.jsx(we.Item, { name: "lifecycle_id", label: r.lifecycle, children: /* @__PURE__ */ N.jsx(
+                  /* @__PURE__ */ _.jsx(we.Item, { name: "lifecycle_id", label: r.lifecycle, children: /* @__PURE__ */ _.jsx(
                     kt,
                     {
                       allowClear: !0,
@@ -78783,13 +78782,13 @@ Please change the parent <Route path="${C}"> to <Route path="${C === "/" ? "*" :
                       options: ce(M)
                     }
                   ) }),
-                  /* @__PURE__ */ N.jsx(
+                  /* @__PURE__ */ _.jsx(
                     we.Item,
                     {
                       name: "category_id",
                       label: r.category,
                       rules: [{ required: !0 }],
-                      children: /* @__PURE__ */ N.jsx(
+                      children: /* @__PURE__ */ _.jsx(
                         kt,
                         {
                           showSearch: !0,
@@ -78799,14 +78798,14 @@ Please change the parent <Route path="${C}"> to <Route path="${C === "/" ? "*" :
                       )
                     }
                   ),
-                  /* @__PURE__ */ N.jsx(we.Item, { name: "package_form_factor", label: r.package, children: /* @__PURE__ */ N.jsx(dt, {}) }),
-                  /* @__PURE__ */ N.jsx(
+                  /* @__PURE__ */ _.jsx(we.Item, { name: "package_form_factor", label: r.package, children: /* @__PURE__ */ _.jsx(dt, {}) }),
+                  /* @__PURE__ */ _.jsx(
                     we.Item,
                     {
                       name: "status",
                       label: r.visibility,
                       rules: [{ required: !0 }],
-                      children: /* @__PURE__ */ N.jsx(
+                      children: /* @__PURE__ */ _.jsx(
                         kt,
                         {
                           disabled: !0,
@@ -78818,12 +78817,12 @@ Please change the parent <Route path="${C}"> to <Route path="${C === "/" ? "*" :
                       )
                     }
                   ),
-                  /* @__PURE__ */ N.jsx(we.Item, { name: "document_url", label: r.legacyURL, children: /* @__PURE__ */ N.jsx(dt, { type: "url" }) })
+                  /* @__PURE__ */ _.jsx(we.Item, { name: "document_url", label: r.legacyURL, children: /* @__PURE__ */ _.jsx(dt, { type: "url" }) })
                 ] }),
-                /* @__PURE__ */ N.jsx(we.Item, { name: "description", label: r.description, children: /* @__PURE__ */ N.jsx(dt.TextArea, { rows: 3 }) }),
-                /* @__PURE__ */ N.jsx(we.Item, { name: "features", label: r.features, children: /* @__PURE__ */ N.jsx(dt.TextArea, { rows: 3 }) }),
-                /* @__PURE__ */ N.jsx(we.Item, { name: "specification", label: r.specification, children: /* @__PURE__ */ N.jsx(dt.TextArea, { rows: 3 }) }),
-                /* @__PURE__ */ N.jsx(Ve, { onClick: () => {
+                /* @__PURE__ */ _.jsx(we.Item, { name: "description", label: r.description, children: /* @__PURE__ */ _.jsx(dt.TextArea, { rows: 3 }) }),
+                /* @__PURE__ */ _.jsx(we.Item, { name: "features", label: r.features, children: /* @__PURE__ */ _.jsx(dt.TextArea, { rows: 3 }) }),
+                /* @__PURE__ */ _.jsx(we.Item, { name: "specification", label: r.specification, children: /* @__PURE__ */ _.jsx(dt.TextArea, { rows: 3 }) }),
+                /* @__PURE__ */ _.jsx(Ve, { onClick: () => {
                   ve();
                 }, children: r.preview })
               ]
@@ -78831,7 +78830,7 @@ Please change the parent <Route path="${C}"> to <Route path="${C === "/" ? "*" :
           )
         }
       ),
-      /* @__PURE__ */ N.jsx(
+      /* @__PURE__ */ _.jsx(
         ive,
         {
           locale: e,
@@ -78843,7 +78842,7 @@ Please change the parent <Route path="${C}"> to <Route path="${C === "/" ? "*" :
           onMessage: n
         }
       ),
-      /* @__PURE__ */ N.jsx(
+      /* @__PURE__ */ _.jsx(
         uve,
         {
           product: J,
@@ -79452,7 +79451,7 @@ Please change the parent <Route path="${C}"> to <Route path="${C === "/" ? "*" :
     return `${n.toFixed(r === 0 ? 0 : 1)} ${t[r]}`;
   }
   function KL(e) {
-    return /* @__PURE__ */ N.jsx(Cn, { color: e === "Critical" ? "red" : e === "Warning" ? "gold" : "green", children: e });
+    return /* @__PURE__ */ _.jsx(Cn, { color: e === "Critical" ? "red" : e === "Warning" ? "gold" : "green", children: e });
   }
   async function gve(e) {
     if (navigator.clipboard?.writeText) {
@@ -79483,7 +79482,7 @@ Please change the parent <Route path="${C}"> to <Route path="${C === "/" ? "*" :
       } finally {
         C(!1);
       }
-    }, [y]), _ = async (z) => {
+    }, [y]), N = async (z) => {
       if (s) {
         M(!0);
         try {
@@ -79536,7 +79535,7 @@ Please change the parent <Route path="${C}"> to <Route path="${C === "/" ? "*" :
           const L = [];
           O.configured !== void 0 && L.push(O.configured ? n.configured : n.notConfigured), O.last_success_utc && L.push(`${n.lastSuccess}: ${new Date(O.last_success_utc).toLocaleString(e)}`), O.last_run_status && L.push(`${n.lastRun}: ${O.last_run_status}`), O.next_run_utc && L.push(`${n.nextRun}: ${new Date(O.next_run_utc).toLocaleString(e)}`), O.due && L.push(n.due), O.runtime_running !== void 0 && L.push(O.runtime_running ? n.runtimeRunning : n.runtimeStopped), O.last_runtime_attempt_utc && L.push(`${n.lastRuntimeAttempt}: ${new Date(O.last_runtime_attempt_utc).toLocaleString(e)}`), O.last_runtime_success_utc && L.push(`${n.lastRuntimeSuccess}: ${new Date(O.last_runtime_success_utc).toLocaleString(e)}`), O.last_runtime_failure_utc && L.push(`${n.lastRuntimeFailure}: ${new Date(O.last_runtime_failure_utc).toLocaleString(e)}`), O.runtime_failure_stage && L.push(`${n.runtimeStage}: ${O.runtime_failure_stage}`), O.consecutive_runtime_failures && L.push(`${n.consecutiveFailures}: ${O.consecutive_runtime_failures}`);
           for (const [F, U] of Object.entries(O.counters ?? {})) L.push(`${F}: ${U}`);
-          return L.length > 0 ? /* @__PURE__ */ N.jsx(lt, { direction: "vertical", size: 0, children: L.map((F) => /* @__PURE__ */ N.jsx("span", { children: F }, F)) }) : "—";
+          return L.length > 0 ? /* @__PURE__ */ _.jsx(lt, { direction: "vertical", size: 0, children: L.map((F) => /* @__PURE__ */ _.jsx("span", { children: F }, F)) }) : "—";
         }
       }
     ], A = [
@@ -79550,11 +79549,11 @@ Please change the parent <Route path="${C}"> to <Route path="${C === "/" ? "*" :
       {
         title: n.capacity,
         key: "capacity",
-        render: (z, O) => /* @__PURE__ */ N.jsxs(lt, { direction: "vertical", size: 0, children: [
-          O.status === "Critical" && /* @__PURE__ */ N.jsx(_t.Text, { type: "danger", children: n.unavailable }),
-          /* @__PURE__ */ N.jsx("span", { children: `${Vc(O.free_bytes)} free / ${Vc(O.total_bytes)} total (${Vc(O.reserved_bytes)} reserved)` }),
-          O.reason && /* @__PURE__ */ N.jsx(_t.Text, { type: "secondary", children: O.reason }),
-          /* @__PURE__ */ N.jsxs(_t.Text, { type: "secondary", children: [
+        render: (z, O) => /* @__PURE__ */ _.jsxs(lt, { direction: "vertical", size: 0, children: [
+          O.status === "Critical" && /* @__PURE__ */ _.jsx(_t.Text, { type: "danger", children: n.unavailable }),
+          /* @__PURE__ */ _.jsx("span", { children: `${Vc(O.free_bytes)} free / ${Vc(O.total_bytes)} total (${Vc(O.reserved_bytes)} reserved)` }),
+          O.reason && /* @__PURE__ */ _.jsx(_t.Text, { type: "secondary", children: O.reason }),
+          /* @__PURE__ */ _.jsxs(_t.Text, { type: "secondary", children: [
             n.admissionFloor,
             ": ",
             Vc(O.admission_floor_bytes),
@@ -79563,7 +79562,7 @@ Please change the parent <Route path="${C}"> to <Route path="${C === "/" ? "*" :
             ": ",
             Vc(O.warning_floor_bytes)
           ] }),
-          O.recommended_action && /* @__PURE__ */ N.jsxs(_t.Text, { children: [
+          O.recommended_action && /* @__PURE__ */ _.jsxs(_t.Text, { children: [
             n.recommendedAction,
             ": ",
             O.recommended_action
@@ -79583,21 +79582,21 @@ Please change the parent <Route path="${C}"> to <Route path="${C === "/" ? "*" :
         render: (z) => new Date(z).toLocaleString(e)
       }
     ];
-    return /* @__PURE__ */ N.jsxs(Ot, { title: n.title, extra: /* @__PURE__ */ N.jsx(Ve, { onClick: () => {
+    return /* @__PURE__ */ _.jsxs(Ot, { title: n.title, extra: /* @__PURE__ */ _.jsx(Ve, { onClick: () => {
       D();
     }, loading: S, children: n.refresh }), children: [
-      g?.status === "update_available" && g.download_url && /* @__PURE__ */ N.jsx(
+      g?.status === "update_available" && g.download_url && /* @__PURE__ */ _.jsx(
         Lt,
         {
           showIcon: !0,
           type: "info",
           message: c0[e].title,
           description: c0[e].description(g.latest_version ?? ""),
-          action: /* @__PURE__ */ N.jsx(Ve, { type: "primary", href: g.download_url, target: "_blank", rel: "noopener noreferrer", children: c0[e].download }),
+          action: /* @__PURE__ */ _.jsx(Ve, { type: "primary", href: g.download_url, target: "_blank", rel: "noopener noreferrer", children: c0[e].download }),
           style: { marginBottom: 16 }
         }
       ),
-      r && /* @__PURE__ */ N.jsx(
+      r && /* @__PURE__ */ _.jsx(
         Lt,
         {
           showIcon: !0,
@@ -79606,8 +79605,8 @@ Please change the parent <Route path="${C}"> to <Route path="${C === "/" ? "*" :
           style: { marginBottom: 16 }
         }
       ),
-      /* @__PURE__ */ N.jsx(Ot, { size: "small", type: "inner", title: n.maintenanceTitle, style: { marginBottom: 24 }, children: /* @__PURE__ */ N.jsxs(lt, { direction: "vertical", style: { width: "100%" }, children: [
-        /* @__PURE__ */ N.jsx(
+      /* @__PURE__ */ _.jsx(Ot, { size: "small", type: "inner", title: n.maintenanceTitle, style: { marginBottom: 24 }, children: /* @__PURE__ */ _.jsxs(lt, { direction: "vertical", style: { width: "100%" }, children: [
+        /* @__PURE__ */ _.jsx(
           Lt,
           {
             showIcon: !0,
@@ -79615,8 +79614,8 @@ Please change the parent <Route path="${C}"> to <Route path="${C === "/" ? "*" :
             message: s?.active ? n.maintenanceActive : n.maintenanceInactive
           }
         ),
-        /* @__PURE__ */ N.jsx(_t.Text, { strong: !0, children: n.maintenanceMessage }),
-        /* @__PURE__ */ N.jsx(
+        /* @__PURE__ */ _.jsx(_t.Text, { strong: !0, children: n.maintenanceMessage }),
+        /* @__PURE__ */ _.jsx(
           dt.TextArea,
           {
             value: u,
@@ -79627,13 +79626,13 @@ Please change the parent <Route path="${C}"> to <Route path="${C === "/" ? "*" :
             disabled: $
           }
         ),
-        s?.active ? /* @__PURE__ */ N.jsx(Ve, { loading: $, onClick: () => {
-          _(!1);
-        }, children: n.disableMaintenance }) : /* @__PURE__ */ N.jsx(Lr, { title: n.confirmMaintenance, onConfirm: () => _(!0), okText: n.enableMaintenance, children: /* @__PURE__ */ N.jsx(Ve, { danger: !0, loading: $, children: n.enableMaintenance }) })
+        s?.active ? /* @__PURE__ */ _.jsx(Ve, { loading: $, onClick: () => {
+          N(!1);
+        }, children: n.disableMaintenance }) : /* @__PURE__ */ _.jsx(Lr, { title: n.confirmMaintenance, onConfirm: () => N(!0), okText: n.enableMaintenance, children: /* @__PURE__ */ _.jsx(Ve, { danger: !0, loading: $, children: n.enableMaintenance }) })
       ] }) }),
-      /* @__PURE__ */ N.jsx(Ot, { size: "small", type: "inner", title: n.runtimeLog, style: { marginBottom: 24 }, children: /* @__PURE__ */ N.jsxs(lt, { direction: "vertical", style: { width: "100%" }, children: [
-        /* @__PURE__ */ N.jsxs(lt, { wrap: !0, children: [
-          /* @__PURE__ */ N.jsx(
+      /* @__PURE__ */ _.jsx(Ot, { size: "small", type: "inner", title: n.runtimeLog, style: { marginBottom: 24 }, children: /* @__PURE__ */ _.jsxs(lt, { direction: "vertical", style: { width: "100%" }, children: [
+        /* @__PURE__ */ _.jsxs(lt, { wrap: !0, children: [
+          /* @__PURE__ */ _.jsx(
             kt,
             {
               "aria-label": n.logGeneration,
@@ -79645,7 +79644,7 @@ Please change the parent <Route path="${C}"> to <Route path="${C === "/" ? "*" :
               }))
             }
           ),
-          /* @__PURE__ */ N.jsx(
+          /* @__PURE__ */ _.jsx(
             Ve,
             {
               onClick: () => {
@@ -79657,19 +79656,19 @@ Please change the parent <Route path="${C}"> to <Route path="${C === "/" ? "*" :
             }
           )
         ] }),
-        m?.available ? /* @__PURE__ */ N.jsxs(N.Fragment, { children: [
-          /* @__PURE__ */ N.jsxs(_t.Text, { type: "secondary", children: [
+        m?.available ? /* @__PURE__ */ _.jsxs(_.Fragment, { children: [
+          /* @__PURE__ */ _.jsxs(_t.Text, { type: "secondary", children: [
             m.file_name,
             " · ",
             Vc(m.size_bytes),
             m.truncated ? ` · ${n.logTruncated}` : ""
           ] }),
-          /* @__PURE__ */ N.jsx("pre", { style: { maxHeight: 360, overflow: "auto", padding: 12, background: "#111827", color: "#e5e7eb", whiteSpace: "pre-wrap", overflowWrap: "anywhere" }, children: m.lines.join(`
+          /* @__PURE__ */ _.jsx("pre", { style: { maxHeight: 360, overflow: "auto", padding: 12, background: "#111827", color: "#e5e7eb", whiteSpace: "pre-wrap", overflowWrap: "anywhere" }, children: m.lines.join(`
 `) })
-        ] }) : /* @__PURE__ */ N.jsx(Lt, { type: "info", showIcon: !0, message: n.logUnavailable })
+        ] }) : /* @__PURE__ */ _.jsx(Lt, { type: "info", showIcon: !0, message: n.logUnavailable })
       ] }) }),
-      /* @__PURE__ */ N.jsx(_t.Title, { level: 5, children: n.components }),
-      /* @__PURE__ */ N.jsx(
+      /* @__PURE__ */ _.jsx(_t.Title, { level: 5, children: n.components }),
+      /* @__PURE__ */ _.jsx(
         In,
         {
           rowKey: "component",
@@ -79680,8 +79679,8 @@ Please change the parent <Route path="${C}"> to <Route path="${C === "/" ? "*" :
           scroll: { x: !0 }
         }
       ),
-      /* @__PURE__ */ N.jsx(_t.Title, { level: 5, style: { marginTop: 24 }, children: n.resources }),
-      /* @__PURE__ */ N.jsx(
+      /* @__PURE__ */ _.jsx(_t.Title, { level: 5, style: { marginTop: 24 }, children: n.resources }),
+      /* @__PURE__ */ _.jsx(
         In,
         {
           rowKey: "resource",
@@ -79709,8 +79708,7 @@ Please change the parent <Route path="${C}"> to <Route path="${C === "/" ? "*" :
     "source_locale",
     "name_source_locale",
     "description_source_locale",
-    "features_source_locale",
-    "specification_source_locale"
+    "features_source_locale"
   ], yve = zu([
     "en-US",
     "zh-TW",
@@ -80362,8 +80360,8 @@ Please change the parent <Route path="${C}"> to <Route path="${C === "/" ? "*" :
           t($);
         }
     }, R = u?.total_rows ? Math.min(100, Math.round(u.checked_rows / u.total_rows * 100)) : 0;
-    return /* @__PURE__ */ N.jsxs(lt, { direction: "vertical", size: "large", className: "panel-stack", children: [
-      /* @__PURE__ */ N.jsx(
+    return /* @__PURE__ */ _.jsxs(lt, { direction: "vertical", size: "large", className: "panel-stack", children: [
+      /* @__PURE__ */ _.jsx(
         Lt,
         {
           showIcon: !0,
@@ -80372,7 +80370,7 @@ Please change the parent <Route path="${C}"> to <Route path="${C === "/" ? "*" :
           description: r.description
         }
       ),
-      /* @__PURE__ */ N.jsx(Ot, { title: r.uploadMapping, children: /* @__PURE__ */ N.jsxs(
+      /* @__PURE__ */ _.jsx(Ot, { title: r.uploadMapping, children: /* @__PURE__ */ _.jsxs(
         we,
         {
           form: y,
@@ -80389,8 +80387,8 @@ Please change the parent <Route path="${C}"> to <Route path="${C === "/" ? "*" :
             S($);
           },
           children: [
-            /* @__PURE__ */ N.jsxs("div", { className: "form-grid three-columns", children: [
-              /* @__PURE__ */ N.jsx(we.Item, { label: r.workbook, children: /* @__PURE__ */ N.jsx(
+            /* @__PURE__ */ _.jsxs("div", { className: "form-grid three-columns", children: [
+              /* @__PURE__ */ _.jsx(we.Item, { label: r.workbook, children: /* @__PURE__ */ _.jsx(
                 Pl,
                 {
                   accept: ".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
@@ -80399,82 +80397,82 @@ Please change the parent <Route path="${C}"> to <Route path="${C === "/" ? "*" :
                   onRemove: () => {
                     c(void 0);
                   },
-                  children: /* @__PURE__ */ N.jsx(Ve, { children: r.choose })
+                  children: /* @__PURE__ */ _.jsx(Ve, { children: r.choose })
                 }
               ) }),
-              /* @__PURE__ */ N.jsx(we.Item, { name: "sheet", label: r.sheet, children: /* @__PURE__ */ N.jsx(dt, { placeholder: r.sheetPlaceholder }) }),
-              /* @__PURE__ */ N.jsx(we.Item, { name: "header_row", label: r.headerRow, rules: [{ required: !0 }], children: /* @__PURE__ */ N.jsx(Jo, { min: 1, precision: 0 }) }),
-              /* @__PURE__ */ N.jsx(we.Item, { name: "identity_mode", label: r.identityMode, rules: [{ required: !0 }], children: /* @__PURE__ */ N.jsx(kt, { options: [
+              /* @__PURE__ */ _.jsx(we.Item, { name: "sheet", label: r.sheet, children: /* @__PURE__ */ _.jsx(dt, { placeholder: r.sheetPlaceholder }) }),
+              /* @__PURE__ */ _.jsx(we.Item, { name: "header_row", label: r.headerRow, rules: [{ required: !0 }], children: /* @__PURE__ */ _.jsx(Jo, { min: 1, precision: 0 }) }),
+              /* @__PURE__ */ _.jsx(we.Item, { name: "identity_mode", label: r.identityMode, rules: [{ required: !0 }], children: /* @__PURE__ */ _.jsx(kt, { options: [
                 { value: "part_number", label: r.partNumber },
                 { value: "manufacturer_part_number", label: r.manufacturerPart }
               ] }) }),
-              /* @__PURE__ */ N.jsx(we.Item, { name: "source_locale_override", label: r.sourceLocaleOverride, extra: r.sourceLocaleHelp, children: /* @__PURE__ */ N.jsx(kt, { allowClear: !0, options: yve }) })
+              /* @__PURE__ */ _.jsx(we.Item, { name: "source_locale_override", label: r.sourceLocaleOverride, extra: r.sourceLocaleHelp, children: /* @__PURE__ */ _.jsx(kt, { allowClear: !0, options: yve }) })
             ] }),
-            /* @__PURE__ */ N.jsx(we.List, { name: "mappings", children: ($, { add: M, remove: I }) => /* @__PURE__ */ N.jsxs(lt, { direction: "vertical", className: "panel-stack", children: [
-              $.map((D) => /* @__PURE__ */ N.jsxs(lt, { wrap: !0, align: "baseline", children: [
-                /* @__PURE__ */ N.jsx(we.Item, { ...D, name: [D.name, "source_index"], label: r.columnIndex, rules: [{ required: !0 }], children: /* @__PURE__ */ N.jsx(Jo, { min: 0, precision: 0 }) }),
-                /* @__PURE__ */ N.jsx(we.Item, { ...D, name: [D.name, "source_name"], label: r.headerName, rules: [{ required: !0 }], children: /* @__PURE__ */ N.jsx(dt, {}) }),
-                /* @__PURE__ */ N.jsx(we.Item, { ...D, name: [D.name, "target"], label: r.productField, rules: [{ required: !0 }], children: /* @__PURE__ */ N.jsx(kt, { options: a, style: { width: 190 } }) }),
-                /* @__PURE__ */ N.jsx(Ve, { danger: !0, onClick: () => I(D.name), children: r.remove })
+            /* @__PURE__ */ _.jsx(we.List, { name: "mappings", children: ($, { add: M, remove: I }) => /* @__PURE__ */ _.jsxs(lt, { direction: "vertical", className: "panel-stack", children: [
+              $.map((D) => /* @__PURE__ */ _.jsxs(lt, { wrap: !0, align: "baseline", children: [
+                /* @__PURE__ */ _.jsx(we.Item, { ...D, name: [D.name, "source_index"], label: r.columnIndex, rules: [{ required: !0 }], children: /* @__PURE__ */ _.jsx(Jo, { min: 0, precision: 0 }) }),
+                /* @__PURE__ */ _.jsx(we.Item, { ...D, name: [D.name, "source_name"], label: r.headerName, rules: [{ required: !0 }], children: /* @__PURE__ */ _.jsx(dt, {}) }),
+                /* @__PURE__ */ _.jsx(we.Item, { ...D, name: [D.name, "target"], label: r.productField, rules: [{ required: !0 }], children: /* @__PURE__ */ _.jsx(kt, { options: a, style: { width: 190 } }) }),
+                /* @__PURE__ */ _.jsx(Ve, { danger: !0, onClick: () => I(D.name), children: r.remove })
               ] }, D.key)),
-              /* @__PURE__ */ N.jsx(Ve, { onClick: () => M({ source_index: $.length, source_name: "", target: "" }), children: r.addMapping })
+              /* @__PURE__ */ _.jsx(Ve, { onClick: () => M({ source_index: $.length, source_name: "", target: "" }), children: r.addMapping })
             ] }) }),
-            /* @__PURE__ */ N.jsx(Ve, { type: "primary", htmlType: "submit", loading: g, disabled: !s, className: "top-gap", children: r.validate })
+            /* @__PURE__ */ _.jsx(Ve, { type: "primary", htmlType: "submit", loading: g, disabled: !s, className: "top-gap", children: r.validate })
           ]
         }
       ) }),
-      u && /* @__PURE__ */ N.jsx(
+      u && /* @__PURE__ */ _.jsx(
         Ot,
         {
           title: r.importTitle(u.id),
-          extra: /* @__PURE__ */ N.jsxs(lt, { children: [
-            /* @__PURE__ */ N.jsx(Ve, { onClick: () => {
+          extra: /* @__PURE__ */ _.jsxs(lt, { children: [
+            /* @__PURE__ */ _.jsx(Ve, { onClick: () => {
               b();
             }, children: r.refresh }),
-            d0.has(u.status) && /* @__PURE__ */ N.jsx(Ve, { danger: !0, onClick: () => {
+            d0.has(u.status) && /* @__PURE__ */ _.jsx(Ve, { danger: !0, onClick: () => {
               E();
             }, children: r.cancel }),
-            u.status === "preview_ready" && m?.fully_scanned && m.fully_validated && /* @__PURE__ */ N.jsx(Ve, { type: "primary", onClick: () => {
+            u.status === "preview_ready" && m?.fully_scanned && m.fully_validated && /* @__PURE__ */ _.jsx(Ve, { type: "primary", onClick: () => {
               C();
             }, children: r.commit }),
-            m && /* @__PURE__ */ N.jsx(Ve, { href: `/admin/api/imports/${u.id}/report`, target: "_blank", children: r.download })
+            m && /* @__PURE__ */ _.jsx(Ve, { href: `/admin/api/imports/${u.id}/report`, target: "_blank", children: r.download })
           ] }),
-          children: /* @__PURE__ */ N.jsxs(lt, { direction: "vertical", className: "panel-stack", children: [
-            /* @__PURE__ */ N.jsxs(lt, { wrap: !0, children: [
-              /* @__PURE__ */ N.jsx(Cn, { color: u.status === "failed" ? "red" : u.status === "committed" ? "green" : "blue", children: u.status }),
-              /* @__PURE__ */ N.jsx("span", { children: u.phase }),
-              /* @__PURE__ */ N.jsx("span", { children: u.original_filename })
+          children: /* @__PURE__ */ _.jsxs(lt, { direction: "vertical", className: "panel-stack", children: [
+            /* @__PURE__ */ _.jsxs(lt, { wrap: !0, children: [
+              /* @__PURE__ */ _.jsx(Cn, { color: u.status === "failed" ? "red" : u.status === "committed" ? "green" : "blue", children: u.status }),
+              /* @__PURE__ */ _.jsx("span", { children: u.phase }),
+              /* @__PURE__ */ _.jsx("span", { children: u.original_filename })
             ] }),
-            d0.has(u.status) && /* @__PURE__ */ N.jsx(VR, { percent: R, status: "active" }),
-            u.error_message && /* @__PURE__ */ N.jsx(Lt, { type: "error", message: u.error_message, showIcon: !0 }),
-            /* @__PURE__ */ N.jsxs(lt, { wrap: !0, children: [
-              /* @__PURE__ */ N.jsxs(Cn, { children: [
+            d0.has(u.status) && /* @__PURE__ */ _.jsx(VR, { percent: R, status: "active" }),
+            u.error_message && /* @__PURE__ */ _.jsx(Lt, { type: "error", message: u.error_message, showIcon: !0 }),
+            /* @__PURE__ */ _.jsxs(lt, { wrap: !0, children: [
+              /* @__PURE__ */ _.jsxs(Cn, { children: [
                 r.rows,
                 " ",
                 m?.total_rows ?? u.total_rows
               ] }),
-              /* @__PURE__ */ N.jsxs(Cn, { color: "green", children: [
+              /* @__PURE__ */ _.jsxs(Cn, { color: "green", children: [
                 r.create,
                 " ",
                 m?.create_count ?? u.create_count
               ] }),
-              /* @__PURE__ */ N.jsxs(Cn, { color: "blue", children: [
+              /* @__PURE__ */ _.jsxs(Cn, { color: "blue", children: [
                 r.update,
                 " ",
                 m?.update_count ?? u.update_count
               ] }),
-              /* @__PURE__ */ N.jsxs(Cn, { children: [
+              /* @__PURE__ */ _.jsxs(Cn, { children: [
                 r.unchanged,
                 " ",
                 m?.no_change_count ?? u.no_change_count
               ] }),
-              /* @__PURE__ */ N.jsxs(Cn, { color: (m?.issues?.length ?? u.failed_count) > 0 ? "red" : "default", children: [
+              /* @__PURE__ */ _.jsxs(Cn, { color: (m?.issues?.length ?? u.failed_count) > 0 ? "red" : "default", children: [
                 r.issues,
                 " ",
                 m?.issues?.length ?? u.failed_count
               ] })
             ] }),
-            m && /* @__PURE__ */ N.jsx(
+            m && /* @__PURE__ */ _.jsx(
               In,
               {
                 rowKey: ($, M) => `${$.sheet}-${$.row}-${$.column}-${$.code}-${M}`,
@@ -80501,7 +80499,7 @@ Please change the parent <Route path="${C}"> to <Route path="${C === "/" ? "*" :
   function wve(e) {
     if (!e.progress_total || e.progress_total < 1) return "—";
     const t = Math.min(100, Math.round((e.progress_current ?? 0) / e.progress_total * 100));
-    return /* @__PURE__ */ N.jsx(VR, { percent: t, size: "small", status: e.status === "failed" ? "exception" : void 0 });
+    return /* @__PURE__ */ _.jsx(VR, { percent: t, size: "small", status: e.status === "failed" ? "exception" : void 0 });
   }
   const Eve = {
     "en-US": {
@@ -80693,16 +80691,16 @@ Please change the parent <Route path="${C}"> to <Route path="${C === "/" ? "*" :
         t(g), await f();
       }
     };
-    return /* @__PURE__ */ N.jsxs(lt, { direction: "vertical", size: "large", className: "panel-stack", children: [
-      /* @__PURE__ */ N.jsx(Lt, { showIcon: !0, type: "info", message: u.policy }),
-      /* @__PURE__ */ N.jsx(
+    return /* @__PURE__ */ _.jsxs(lt, { direction: "vertical", size: "large", className: "panel-stack", children: [
+      /* @__PURE__ */ _.jsx(Lt, { showIcon: !0, type: "info", message: u.policy }),
+      /* @__PURE__ */ _.jsx(
         Ot,
         {
           title: u.title,
-          extra: /* @__PURE__ */ N.jsx(Ve, { loading: s, onClick: () => {
+          extra: /* @__PURE__ */ _.jsx(Ve, { loading: s, onClick: () => {
             f();
           }, children: u.refresh }),
-          children: /* @__PURE__ */ N.jsx(
+          children: /* @__PURE__ */ _.jsx(
             In,
             {
               rowKey: "id",
@@ -80711,33 +80709,33 @@ Please change the parent <Route path="${C}"> to <Route path="${C === "/" ? "*" :
               pagination: { pageSize: 20, hideOnSinglePage: !0 },
               expandable: {
                 rowExpandable: (p) => !!(p.error_message || p.outputs?.length),
-                expandedRowRender: (p) => /* @__PURE__ */ N.jsxs(lt, { direction: "vertical", className: "panel-stack", children: [
-                  p.error_message && /* @__PURE__ */ N.jsx(Lt, { showIcon: !0, type: "error", message: p.error_message }),
-                  p.outputs?.length ? /* @__PURE__ */ N.jsxs(lt, { wrap: !0, children: [
-                    /* @__PURE__ */ N.jsx(_t.Text, { type: "secondary", children: u.outputs }),
-                    p.outputs.map((g) => /* @__PURE__ */ N.jsx(Cn, { children: g }, g))
+                expandedRowRender: (p) => /* @__PURE__ */ _.jsxs(lt, { direction: "vertical", className: "panel-stack", children: [
+                  p.error_message && /* @__PURE__ */ _.jsx(Lt, { showIcon: !0, type: "error", message: p.error_message }),
+                  p.outputs?.length ? /* @__PURE__ */ _.jsxs(lt, { wrap: !0, children: [
+                    /* @__PURE__ */ _.jsx(_t.Text, { type: "secondary", children: u.outputs }),
+                    p.outputs.map((g) => /* @__PURE__ */ _.jsx(Cn, { children: g }, g))
                   ] }) : null
                 ] })
               },
               columns: [
-                { title: u.type, dataIndex: "kind", render: (p) => /* @__PURE__ */ N.jsx(Cn, { children: p }) },
+                { title: u.type, dataIndex: "kind", render: (p) => /* @__PURE__ */ _.jsx(Cn, { children: p }) },
                 {
                   title: u.jobTarget,
-                  render: (p, g) => /* @__PURE__ */ N.jsxs(lt, { direction: "vertical", size: 0, children: [
-                    /* @__PURE__ */ N.jsx(_t.Text, { code: !0, children: g.id }),
-                    /* @__PURE__ */ N.jsxs(_t.Text, { type: "secondary", children: [
+                  render: (p, g) => /* @__PURE__ */ _.jsxs(lt, { direction: "vertical", size: 0, children: [
+                    /* @__PURE__ */ _.jsx(_t.Text, { code: !0, children: g.id }),
+                    /* @__PURE__ */ _.jsxs(_t.Text, { type: "secondary", children: [
                       g.target_type && g.target_id ? `${g.target_type}: ${g.target_id}` : g.label || "—",
                       g.desired_revision ? ` · ${u.revision} ${g.desired_revision}` : ""
                     ] })
                   ] })
                 },
-                { title: u.status, dataIndex: "status", render: (p) => /* @__PURE__ */ N.jsx(Cn, { color: $ve(p), children: p }) },
+                { title: u.status, dataIndex: "status", render: (p) => /* @__PURE__ */ _.jsx(Cn, { color: $ve(p), children: p }) },
                 { title: u.stage, dataIndex: "stage" },
                 { title: u.progress, width: 150, render: (p, g) => wve(g) },
                 { title: u.updated, dataIndex: "updated_at", render: (p) => new Date(p).toLocaleString(e) },
                 {
                   title: u.action,
-                  render: (p, g) => (g.kind === "publication" || g.kind === "search_submission") && g.retryable ? /* @__PURE__ */ N.jsx(Ve, { onClick: () => {
+                  render: (p, g) => (g.kind === "publication" || g.kind === "search_submission") && g.retryable ? /* @__PURE__ */ _.jsx(Ve, { onClick: () => {
                     m(g);
                   }, children: u.retry }) : "—"
                 }
@@ -80774,7 +80772,7 @@ Please change the parent <Route path="${C}"> to <Route path="${C === "/" ? "*" :
       const f = new URL(window.location.href);
       f.searchParams.set("lang", u), window.location.assign(f);
     };
-    return document.documentElement.lang = n, /* @__PURE__ */ N.jsx(
+    return document.documentElement.lang = n, /* @__PURE__ */ _.jsx(
       Fo,
       {
         locale: g4(n),
@@ -80786,18 +80784,18 @@ Please change the parent <Route path="${C}"> to <Route path="${C === "/" ? "*" :
             fontSize: 15
           }
         },
-        children: /* @__PURE__ */ N.jsx("main", { className: "admin-login-shell", children: /* @__PURE__ */ N.jsxs("section", { className: "admin-login-layout", "aria-labelledby": "admin-login-title", children: [
-          /* @__PURE__ */ N.jsxs("div", { className: "admin-login-intro", children: [
-            /* @__PURE__ */ N.jsx("div", { className: "admin-login-mark", "aria-hidden": "true", children: "P" }),
-            /* @__PURE__ */ N.jsx(_t.Title, { level: 1, children: "Prods" }),
-            /* @__PURE__ */ N.jsx(_t.Paragraph, { children: t.footer }),
-            /* @__PURE__ */ N.jsxs(lt, { size: "large", children: [
-              /* @__PURE__ */ N.jsx("a", { href: "/search", children: t.catalog }),
-              /* @__PURE__ */ N.jsx("a", { href: "/rfq", children: t.requestPart })
+        children: /* @__PURE__ */ _.jsx("main", { className: "admin-login-shell", children: /* @__PURE__ */ _.jsxs("section", { className: "admin-login-layout", "aria-labelledby": "admin-login-title", children: [
+          /* @__PURE__ */ _.jsxs("div", { className: "admin-login-intro", children: [
+            /* @__PURE__ */ _.jsx("div", { className: "admin-login-mark", "aria-hidden": "true", children: "P" }),
+            /* @__PURE__ */ _.jsx(_t.Title, { level: 1, children: "Prods" }),
+            /* @__PURE__ */ _.jsx(_t.Paragraph, { children: t.footer }),
+            /* @__PURE__ */ _.jsxs(lt, { size: "large", children: [
+              /* @__PURE__ */ _.jsx("a", { href: "/search", children: t.catalog }),
+              /* @__PURE__ */ _.jsx("a", { href: "/rfq", children: t.requestPart })
             ] })
           ] }),
-          /* @__PURE__ */ N.jsxs(Ot, { className: "admin-login-card", bordered: !1, children: [
-            /* @__PURE__ */ N.jsx(
+          /* @__PURE__ */ _.jsxs(Ot, { className: "admin-login-card", bordered: !1, children: [
+            /* @__PURE__ */ _.jsx(
               kt,
               {
                 className: "admin-login-locale",
@@ -80807,11 +80805,11 @@ Please change the parent <Route path="${C}"> to <Route path="${C === "/" ? "*" :
                 options: [...gu]
               }
             ),
-            /* @__PURE__ */ N.jsx(_t.Text, { className: "admin-login-eyebrow", children: "PRODS" }),
-            /* @__PURE__ */ N.jsx(_t.Title, { id: "admin-login-title", level: 2, children: t.title }),
-            /* @__PURE__ */ N.jsx(_t.Paragraph, { type: "secondary", className: "admin-login-subtitle", children: t.poc ? t.pocHelp : t.footer }),
-            t.error && /* @__PURE__ */ N.jsx(Lt, { showIcon: !0, type: "error", message: t.error, role: "alert" }),
-            /* @__PURE__ */ N.jsxs(
+            /* @__PURE__ */ _.jsx(_t.Text, { className: "admin-login-eyebrow", children: "PRODS" }),
+            /* @__PURE__ */ _.jsx(_t.Title, { id: "admin-login-title", level: 2, children: t.title }),
+            /* @__PURE__ */ _.jsx(_t.Paragraph, { type: "secondary", className: "admin-login-subtitle", children: t.poc ? t.pocHelp : t.footer }),
+            t.error && /* @__PURE__ */ _.jsx(Lt, { showIcon: !0, type: "error", message: t.error, role: "alert" }),
+            /* @__PURE__ */ _.jsxs(
               we,
               {
                 id: "admin-login-form",
@@ -80823,19 +80821,19 @@ Please change the parent <Route path="${C}"> to <Route path="${C === "/" ? "*" :
                 onFinish: s,
                 requiredMark: !1,
                 children: [
-                  t.poc ? /* @__PURE__ */ N.jsx(we.Item, { name: "token", label: t.tokenLabel, rules: [{ required: !0, message: t.tokenLabel }], children: /* @__PURE__ */ N.jsx(dt.Password, { name: "token", autoComplete: "one-time-code", autoFocus: !0 }) }) : /* @__PURE__ */ N.jsxs(N.Fragment, { children: [
-                    /* @__PURE__ */ N.jsx(
+                  t.poc ? /* @__PURE__ */ _.jsx(we.Item, { name: "token", label: t.tokenLabel, rules: [{ required: !0, message: t.tokenLabel }], children: /* @__PURE__ */ _.jsx(dt.Password, { name: "token", autoComplete: "one-time-code", autoFocus: !0 }) }) : /* @__PURE__ */ _.jsxs(_.Fragment, { children: [
+                    /* @__PURE__ */ _.jsx(
                       we.Item,
                       {
                         name: "email",
                         label: t.emailLabel,
                         rules: [{ required: !0, message: t.emailLabel }, { type: "email" }],
-                        children: /* @__PURE__ */ N.jsx(dt, { name: "email", type: "email", autoComplete: "username", autoFocus: !0, inputMode: "email" })
+                        children: /* @__PURE__ */ _.jsx(dt, { name: "email", type: "email", autoComplete: "username", autoFocus: !0, inputMode: "email" })
                       }
                     ),
-                    /* @__PURE__ */ N.jsx(we.Item, { name: "password", label: t.passwordLabel, rules: [{ required: !0, message: t.passwordLabel }], children: /* @__PURE__ */ N.jsx(dt.Password, { name: "password", autoComplete: "current-password" }) })
+                    /* @__PURE__ */ _.jsx(we.Item, { name: "password", label: t.passwordLabel, rules: [{ required: !0, message: t.passwordLabel }], children: /* @__PURE__ */ _.jsx(dt.Password, { name: "password", autoComplete: "current-password" }) })
                   ] }),
-                  /* @__PURE__ */ N.jsx(Ve, { type: "primary", htmlType: "submit", block: !0, loading: r, children: t.signIn })
+                  /* @__PURE__ */ _.jsx(Ve, { type: "primary", htmlType: "submit", block: !0, loading: r, children: t.signIn })
                 ]
               }
             )
@@ -81079,17 +81077,17 @@ Please change the parent <Route path="${C}"> to <Route path="${C === "/" ? "*" :
           [y]: P
         }
       }, "saved");
-    }, _ = async () => {
+    }, N = async () => {
       if (!s || !y) return;
       const P = { ...s.working.category_listing_profiles ?? {} };
       delete P[y], await I({ ...s.working, category_listing_profiles: P }, "removed"), a.setFieldsValue(f0);
     };
-    return /* @__PURE__ */ N.jsx(wu, { spinning: S, children: /* @__PURE__ */ N.jsx(lt, { direction: "vertical", size: "large", className: "panel-stack", children: /* @__PURE__ */ N.jsxs(Ot, { title: r.title, children: [
-      /* @__PURE__ */ N.jsx(_t.Paragraph, { type: "secondary", children: r.help }),
-      /* @__PURE__ */ N.jsxs(we, { form: a, layout: "vertical", initialValues: f0, onFinish: (P) => {
+    return /* @__PURE__ */ _.jsx(wu, { spinning: S, children: /* @__PURE__ */ _.jsx(lt, { direction: "vertical", size: "large", className: "panel-stack", children: /* @__PURE__ */ _.jsxs(Ot, { title: r.title, children: [
+      /* @__PURE__ */ _.jsx(_t.Paragraph, { type: "secondary", children: r.help }),
+      /* @__PURE__ */ _.jsxs(we, { form: a, layout: "vertical", initialValues: f0, onFinish: (P) => {
         D(P);
       }, children: [
-        /* @__PURE__ */ N.jsx(we.Item, { label: r.category, required: !0, children: /* @__PURE__ */ N.jsx(
+        /* @__PURE__ */ _.jsx(we.Item, { label: r.category, required: !0, children: /* @__PURE__ */ _.jsx(
           kt,
           {
             showSearch: !0,
@@ -81099,8 +81097,8 @@ Please change the parent <Route path="${C}"> to <Route path="${C === "/" ? "*" :
             options: u.filter((P) => P.status === "active" && P.system_key !== "root").map((P) => ({ value: P.id, label: P.name }))
           }
         ) }),
-        g ? null : /* @__PURE__ */ N.jsx(Lt, { type: "info", showIcon: !0, message: r.noSpecSet }),
-        /* @__PURE__ */ N.jsx(
+        g ? null : /* @__PURE__ */ _.jsx(Lt, { type: "info", showIcon: !0, message: r.noSpecSet }),
+        /* @__PURE__ */ _.jsx(
           we.Item,
           {
             name: "visible_columns",
@@ -81109,18 +81107,18 @@ Please change the parent <Route path="${C}"> to <Route path="${C === "/" ? "*" :
               { required: !0 },
               { validator: (P, T) => T?.includes("part_number") ? Promise.resolve() : Promise.reject(new Error(r.requiredPart)) }
             ],
-            children: /* @__PURE__ */ N.jsx(kt, { mode: "multiple", options: [...GL.map(([P, T]) => ({ value: P, label: T })), ...R] })
+            children: /* @__PURE__ */ _.jsx(kt, { mode: "multiple", options: [...GL.map(([P, T]) => ({ value: P, label: T })), ...R] })
           }
         ),
-        /* @__PURE__ */ N.jsxs(lt, { align: "start", wrap: !0, children: [
-          /* @__PURE__ */ N.jsx(we.Item, { name: "default_sort", label: r.sort, rules: [{ required: !0 }], children: /* @__PURE__ */ N.jsx(kt, { style: { minWidth: 220 }, options: GL.filter(([P]) => ["part_number", "name", "manufacturer", "brand", "lifecycle"].includes(P)).map(([P, T]) => ({ value: P, label: T })) }) }),
-          /* @__PURE__ */ N.jsx(we.Item, { name: "default_sort_direction", label: r.direction, rules: [{ required: !0 }], children: /* @__PURE__ */ N.jsx(kt, { style: { minWidth: 160 }, options: [{ value: "asc", label: r.asc }, { value: "desc", label: r.desc }] }) })
+        /* @__PURE__ */ _.jsxs(lt, { align: "start", wrap: !0, children: [
+          /* @__PURE__ */ _.jsx(we.Item, { name: "default_sort", label: r.sort, rules: [{ required: !0 }], children: /* @__PURE__ */ _.jsx(kt, { style: { minWidth: 220 }, options: GL.filter(([P]) => ["part_number", "name", "manufacturer", "brand", "lifecycle"].includes(P)).map(([P, T]) => ({ value: P, label: T })) }) }),
+          /* @__PURE__ */ _.jsx(we.Item, { name: "default_sort_direction", label: r.direction, rules: [{ required: !0 }], children: /* @__PURE__ */ _.jsx(kt, { style: { minWidth: 160 }, options: [{ value: "asc", label: r.asc }, { value: "desc", label: r.desc }] }) })
         ] }),
-        /* @__PURE__ */ N.jsx(we.Item, { name: "mobile_key_specs", label: r.mobile, children: /* @__PURE__ */ N.jsx(kt, { mode: "multiple", maxCount: 5, options: M }) }),
-        /* @__PURE__ */ N.jsxs(lt, { children: [
-          /* @__PURE__ */ N.jsx(Ve, { type: "primary", htmlType: "submit", disabled: !y, children: r.save }),
-          /* @__PURE__ */ N.jsx(Ve, { onClick: () => {
-            _();
+        /* @__PURE__ */ _.jsx(we.Item, { name: "mobile_key_specs", label: r.mobile, children: /* @__PURE__ */ _.jsx(kt, { mode: "multiple", maxCount: 5, options: M }) }),
+        /* @__PURE__ */ _.jsxs(lt, { children: [
+          /* @__PURE__ */ _.jsx(Ve, { type: "primary", htmlType: "submit", disabled: !y, children: r.save }),
+          /* @__PURE__ */ _.jsx(Ve, { onClick: () => {
+            N();
           }, disabled: !y || !s?.working.category_listing_profiles?.[y], children: r.remove })
         ] })
       ] })
@@ -81615,7 +81613,7 @@ Please change the parent <Route path="${C}"> to <Route path="${C === "/" ? "*" :
     return e.find((r) => r.key === t && r.locale === n);
   }
   function Mve({ locale: e, onError: t, onMessage: n }) {
-    const r = Ive[e], [a, s] = l.useState(), [c, u] = l.useState("en-US"), [f, m] = l.useState(), [p, g] = l.useState(""), [v, y] = l.useState(), [b, S] = l.useState(""), [C, E] = l.useState(!1), [R, $] = l.useState(), [M, I] = l.useState(), [D, _] = l.useState(!1), [P, T] = l.useState("desktop"), A = async () => {
+    const r = Ive[e], [a, s] = l.useState(), [c, u] = l.useState("en-US"), [f, m] = l.useState(), [p, g] = l.useState(""), [v, y] = l.useState(), [b, S] = l.useState(""), [C, E] = l.useState(!1), [R, $] = l.useState(), [M, I] = l.useState(), [D, N] = l.useState(!1), [P, T] = l.useState("desktop"), A = async () => {
       try {
         const Q = await Rt("/admin/api/website/public-copy");
         s(Q), u(
@@ -81692,19 +81690,19 @@ Please change the parent <Route path="${C}"> to <Route path="${C === "/" ? "*" :
       }
     }, G = async () => {
       if (R) {
-        _(!0);
+        N(!0);
         try {
           const Q = new FormData();
           Q.append("file", R, R.name), I(await Rt("/admin/api/website/public-copy/import/preview", { method: "POST", body: Q }));
         } catch (Q) {
           t(Q);
         } finally {
-          _(!1);
+          N(!1);
         }
       }
     }, W = async () => {
       if (M?.fully_validated) {
-        _(!0);
+        N(!0);
         try {
           const Q = await Wt("/admin/api/website/public-copy/import/commit", {
             expected_working_revision: M.working_revision,
@@ -81714,21 +81712,21 @@ Please change the parent <Route path="${C}"> to <Route path="${C === "/" ? "*" :
         } catch (Q) {
           t(Q);
         } finally {
-          _(!1);
+          N(!1);
         }
       }
     };
-    return /* @__PURE__ */ N.jsxs(lt, { direction: "vertical", size: "middle", className: "panel-stack", children: [
-      /* @__PURE__ */ N.jsx(Ot, { title: r.title, children: /* @__PURE__ */ N.jsxs(lt, { direction: "vertical", size: "middle", className: "panel-stack", children: [
-        /* @__PURE__ */ N.jsx(_t.Paragraph, { children: r.help }),
-        /* @__PURE__ */ N.jsx(Lt, { type: "warning", showIcon: !0, message: r.disclaimerTitle, description: r.disclaimer }),
-        a && /* @__PURE__ */ N.jsxs(xn, { size: "small", column: { xs: 1, sm: 3 }, children: [
-          /* @__PURE__ */ N.jsx(xn.Item, { label: r.workingRevision, children: a.working_revision }),
-          /* @__PURE__ */ N.jsx(xn.Item, { label: r.bundleVersion, children: a.catalog.official_bundle_version }),
-          /* @__PURE__ */ N.jsx(xn.Item, { label: r.reviewStatus, children: a.catalog.review_status })
+    return /* @__PURE__ */ _.jsxs(lt, { direction: "vertical", size: "middle", className: "panel-stack", children: [
+      /* @__PURE__ */ _.jsx(Ot, { title: r.title, children: /* @__PURE__ */ _.jsxs(lt, { direction: "vertical", size: "middle", className: "panel-stack", children: [
+        /* @__PURE__ */ _.jsx(_t.Paragraph, { children: r.help }),
+        /* @__PURE__ */ _.jsx(Lt, { type: "warning", showIcon: !0, message: r.disclaimerTitle, description: r.disclaimer }),
+        a && /* @__PURE__ */ _.jsxs(xn, { size: "small", column: { xs: 1, sm: 3 }, children: [
+          /* @__PURE__ */ _.jsx(xn.Item, { label: r.workingRevision, children: a.working_revision }),
+          /* @__PURE__ */ _.jsx(xn.Item, { label: r.bundleVersion, children: a.catalog.official_bundle_version }),
+          /* @__PURE__ */ _.jsx(xn.Item, { label: r.reviewStatus, children: a.catalog.review_status })
         ] }),
-        /* @__PURE__ */ N.jsxs(lt, { wrap: !0, children: [
-          /* @__PURE__ */ N.jsx(
+        /* @__PURE__ */ _.jsxs(lt, { wrap: !0, children: [
+          /* @__PURE__ */ _.jsx(
             kt,
             {
               "aria-label": r.locale,
@@ -81738,7 +81736,7 @@ Please change the parent <Route path="${C}"> to <Route path="${C === "/" ? "*" :
               style: { minWidth: 150 }
             }
           ),
-          /* @__PURE__ */ N.jsx(
+          /* @__PURE__ */ _.jsx(
             kt,
             {
               allowClear: !0,
@@ -81750,7 +81748,7 @@ Please change the parent <Route path="${C}"> to <Route path="${C === "/" ? "*" :
               style: { minWidth: 170 }
             }
           ),
-          /* @__PURE__ */ N.jsx(
+          /* @__PURE__ */ _.jsx(
             dt.Search,
             {
               allowClear: !0,
@@ -81762,7 +81760,7 @@ Please change the parent <Route path="${C}"> to <Route path="${C === "/" ? "*" :
             }
           )
         ] }),
-        /* @__PURE__ */ N.jsx(
+        /* @__PURE__ */ _.jsx(
           In,
           {
             size: "small",
@@ -81782,33 +81780,33 @@ Please change the parent <Route path="${C}"> to <Route path="${C === "/" ? "*" :
                 title: r.kind,
                 dataIndex: "value_kind",
                 width: 110,
-                render: (Q) => /* @__PURE__ */ N.jsx(Cn, { children: Q })
+                render: (Q) => /* @__PURE__ */ _.jsx(Cn, { children: Q })
               }
             ]
           }
         )
       ] }) }),
-      F ? /* @__PURE__ */ N.jsx(Ot, { title: `${F.key} · ${c}`, children: /* @__PURE__ */ N.jsxs(lt, { direction: "vertical", size: "middle", className: "panel-stack", children: [
-        /* @__PURE__ */ N.jsxs(xn, { size: "small", column: { xs: 1, sm: 2 }, children: [
-          /* @__PURE__ */ N.jsx(xn.Item, { label: r.description, children: F.description }),
-          /* @__PURE__ */ N.jsx(xn.Item, { label: r.kind, children: F.value_kind }),
-          /* @__PURE__ */ N.jsx(xn.Item, { label: `${r.placeholders} (${r.required})`, children: F.required_placeholders.join(", ") || r.none }),
-          /* @__PURE__ */ N.jsx(xn.Item, { label: `${r.placeholders} (${r.allowed})`, children: F.allowed_placeholders.join(", ") || r.none }),
-          /* @__PURE__ */ N.jsx(xn.Item, { label: r.sample, span: 2, children: F.sample ? JSON.stringify(F.sample) : r.none }),
-          /* @__PURE__ */ N.jsx(xn.Item, { label: r.official, span: 2, children: /* @__PURE__ */ N.jsx(_t.Text, { code: !0, children: ee ?? "—" }) }),
-          /* @__PURE__ */ N.jsx(xn.Item, { label: r.whereUsed, span: 2, children: (F.where_used ?? []).map((Q) => /* @__PURE__ */ N.jsxs("div", { children: [
-            /* @__PURE__ */ N.jsx("strong", { children: Q.surface }),
+      F ? /* @__PURE__ */ _.jsx(Ot, { title: `${F.key} · ${c}`, children: /* @__PURE__ */ _.jsxs(lt, { direction: "vertical", size: "middle", className: "panel-stack", children: [
+        /* @__PURE__ */ _.jsxs(xn, { size: "small", column: { xs: 1, sm: 2 }, children: [
+          /* @__PURE__ */ _.jsx(xn.Item, { label: r.description, children: F.description }),
+          /* @__PURE__ */ _.jsx(xn.Item, { label: r.kind, children: F.value_kind }),
+          /* @__PURE__ */ _.jsx(xn.Item, { label: `${r.placeholders} (${r.required})`, children: F.required_placeholders.join(", ") || r.none }),
+          /* @__PURE__ */ _.jsx(xn.Item, { label: `${r.placeholders} (${r.allowed})`, children: F.allowed_placeholders.join(", ") || r.none }),
+          /* @__PURE__ */ _.jsx(xn.Item, { label: r.sample, span: 2, children: F.sample ? JSON.stringify(F.sample) : r.none }),
+          /* @__PURE__ */ _.jsx(xn.Item, { label: r.official, span: 2, children: /* @__PURE__ */ _.jsx(_t.Text, { code: !0, children: ee ?? "—" }) }),
+          /* @__PURE__ */ _.jsx(xn.Item, { label: r.whereUsed, span: 2, children: (F.where_used ?? []).map((Q) => /* @__PURE__ */ _.jsxs("div", { children: [
+            /* @__PURE__ */ _.jsx("strong", { children: Q.surface }),
             " · ",
             Q.section,
             " — ",
             Q.purpose,
-            /* @__PURE__ */ N.jsx("br", {}),
-            /* @__PURE__ */ N.jsx(_t.Text, { type: "secondary", children: Q.safe_context })
+            /* @__PURE__ */ _.jsx("br", {}),
+            /* @__PURE__ */ _.jsx(_t.Text, { type: "secondary", children: Q.safe_context })
           ] }, `${Q.surface}-${Q.section}`)) })
         ] }),
-        !V && /* @__PURE__ */ N.jsx(Lt, { type: "info", showIcon: !0, message: r.noOverride }),
-        /* @__PURE__ */ N.jsx(_t.Text, { strong: !0, children: r.override }),
-        /* @__PURE__ */ N.jsx(
+        !V && /* @__PURE__ */ _.jsx(Lt, { type: "info", showIcon: !0, message: r.noOverride }),
+        /* @__PURE__ */ _.jsx(_t.Text, { strong: !0, children: r.override }),
+        /* @__PURE__ */ _.jsx(
           dt.TextArea,
           {
             autoSize: { minRows: 3, maxRows: 10 },
@@ -81816,9 +81814,9 @@ Please change the parent <Route path="${C}"> to <Route path="${C === "/" ? "*" :
             onChange: (Q) => S(Q.target.value)
           }
         ),
-        /* @__PURE__ */ N.jsxs(lt, { children: [
-          /* @__PURE__ */ N.jsx(_t.Text, { strong: !0, children: r.contextPreview }),
-          /* @__PURE__ */ N.jsx(
+        /* @__PURE__ */ _.jsxs(lt, { children: [
+          /* @__PURE__ */ _.jsx(_t.Text, { strong: !0, children: r.contextPreview }),
+          /* @__PURE__ */ _.jsx(
             kt,
             {
               value: P,
@@ -81827,7 +81825,7 @@ Please change the parent <Route path="${C}"> to <Route path="${C === "/" ? "*" :
             }
           )
         ] }),
-        /* @__PURE__ */ N.jsx(
+        /* @__PURE__ */ _.jsx(
           "div",
           {
             "aria-label": r.contextPreview,
@@ -81839,28 +81837,28 @@ Please change the parent <Route path="${C}"> to <Route path="${C === "/" ? "*" :
               borderRadius: 8,
               background: "#fff"
             },
-            children: /* @__PURE__ */ N.jsx(_t.Text, { children: X })
+            children: /* @__PURE__ */ _.jsx(_t.Text, { children: X })
           }
         ),
-        /* @__PURE__ */ N.jsxs(lt, { children: [
-          /* @__PURE__ */ N.jsx(Ve, { type: "primary", loading: C, onClick: () => {
+        /* @__PURE__ */ _.jsxs(lt, { children: [
+          /* @__PURE__ */ _.jsx(Ve, { type: "primary", loading: C, onClick: () => {
             U();
           }, children: r.save }),
-          /* @__PURE__ */ N.jsx(Lr, { title: r.resetConfirm, onConfirm: () => {
+          /* @__PURE__ */ _.jsx(Lr, { title: r.resetConfirm, onConfirm: () => {
             H();
-          }, children: /* @__PURE__ */ N.jsx(Ve, { disabled: !V || C, children: r.reset }) })
+          }, children: /* @__PURE__ */ _.jsx(Ve, { disabled: !V || C, children: r.reset }) })
         ] })
-      ] }) }) : /* @__PURE__ */ N.jsx(Ot, { children: /* @__PURE__ */ N.jsx(Ha, { description: r.selectEntry }) }),
-      /* @__PURE__ */ N.jsx(Ot, { title: r.exchangeTitle, children: /* @__PURE__ */ N.jsxs(lt, { direction: "vertical", size: "middle", className: "panel-stack", children: [
-        /* @__PURE__ */ N.jsx(_t.Paragraph, { children: r.exchangeHelp }),
-        /* @__PURE__ */ N.jsxs(lt, { wrap: !0, children: [
-          /* @__PURE__ */ N.jsx(Ve, { onClick: () => {
+      ] }) }) : /* @__PURE__ */ _.jsx(Ot, { children: /* @__PURE__ */ _.jsx(Ha, { description: r.selectEntry }) }),
+      /* @__PURE__ */ _.jsx(Ot, { title: r.exchangeTitle, children: /* @__PURE__ */ _.jsxs(lt, { direction: "vertical", size: "middle", className: "panel-stack", children: [
+        /* @__PURE__ */ _.jsx(_t.Paragraph, { children: r.exchangeHelp }),
+        /* @__PURE__ */ _.jsxs(lt, { wrap: !0, children: [
+          /* @__PURE__ */ _.jsx(Ve, { onClick: () => {
             K("csv");
           }, children: r.exportCSV }),
-          /* @__PURE__ */ N.jsx(Ve, { onClick: () => {
+          /* @__PURE__ */ _.jsx(Ve, { onClick: () => {
             K("xlsx");
           }, children: r.exportXLSX }),
-          /* @__PURE__ */ N.jsx(
+          /* @__PURE__ */ _.jsx(
             Pl,
             {
               accept: ".csv,.xlsx,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
@@ -81869,13 +81867,13 @@ Please change the parent <Route path="${C}"> to <Route path="${C === "/" ? "*" :
               onRemove: () => {
                 $(void 0), I(void 0);
               },
-              children: /* @__PURE__ */ N.jsx(Ve, { children: r.chooseExchange })
+              children: /* @__PURE__ */ _.jsx(Ve, { children: r.chooseExchange })
             }
           ),
-          /* @__PURE__ */ N.jsx(Ve, { type: "primary", disabled: !R, loading: D, onClick: () => {
+          /* @__PURE__ */ _.jsx(Ve, { type: "primary", disabled: !R, loading: D, onClick: () => {
             G();
           }, children: r.validateExchange }),
-          /* @__PURE__ */ N.jsx(
+          /* @__PURE__ */ _.jsx(
             Ve,
             {
               type: "primary",
@@ -81888,8 +81886,8 @@ Please change the parent <Route path="${C}"> to <Route path="${C === "/" ? "*" :
             }
           )
         ] }),
-        M && /* @__PURE__ */ N.jsxs(N.Fragment, { children: [
-          /* @__PURE__ */ N.jsx(
+        M && /* @__PURE__ */ _.jsxs(_.Fragment, { children: [
+          /* @__PURE__ */ _.jsx(
             Lt,
             {
               showIcon: !0,
@@ -81897,7 +81895,7 @@ Please change the parent <Route path="${C}"> to <Route path="${C === "/" ? "*" :
               message: M.fully_validated ? `${M.changes.length} validated change(s)` : `${M.issues.length} validation issue(s)`
             }
           ),
-          M.issues.length > 0 && /* @__PURE__ */ N.jsx(
+          M.issues.length > 0 && /* @__PURE__ */ _.jsx(
             In,
             {
               size: "small",
@@ -81913,7 +81911,7 @@ Please change the parent <Route path="${C}"> to <Route path="${C === "/" ? "*" :
               ]
             }
           ),
-          /* @__PURE__ */ N.jsx(
+          /* @__PURE__ */ _.jsx(
             In,
             {
               size: "small",
@@ -82296,11 +82294,11 @@ Please change the parent <Route path="${C}"> to <Route path="${C === "/" ? "*" :
         return;
       }
       g(T), await $({ action: v.preview.action, target_id: v.preview.target_id }, T);
-    }, D = E === "change_category" || E === "change_lifecycle", _ = E === "change_category" ? c.map((T) => ({ value: T.id, label: T.name })) : f.map((T) => ({ value: T.id, label: T.name })), P = v?.receipt?.results.filter((T) => m0(T.status)) ?? [];
-    return /* @__PURE__ */ N.jsxs(lt, { direction: "vertical", size: "large", className: "panel-stack", children: [
-      /* @__PURE__ */ N.jsx(Lt, { showIcon: !0, type: "info", message: r.title, description: r.help }),
-      /* @__PURE__ */ N.jsxs(Ot, { title: r.selection, children: [
-        /* @__PURE__ */ N.jsx(
+    }, D = E === "change_category" || E === "change_lifecycle", N = E === "change_category" ? c.map((T) => ({ value: T.id, label: T.name })) : f.map((T) => ({ value: T.id, label: T.name })), P = v?.receipt?.results.filter((T) => m0(T.status)) ?? [];
+    return /* @__PURE__ */ _.jsxs(lt, { direction: "vertical", size: "large", className: "panel-stack", children: [
+      /* @__PURE__ */ _.jsx(Lt, { showIcon: !0, type: "info", message: r.title, description: r.help }),
+      /* @__PURE__ */ _.jsxs(Ot, { title: r.selection, children: [
+        /* @__PURE__ */ _.jsx(
           In,
           {
             size: "small",
@@ -82315,10 +82313,10 @@ Please change the parent <Route path="${C}"> to <Route path="${C === "/" ? "*" :
             ]
           }
         ),
-        /* @__PURE__ */ N.jsxs(we, { form: C, layout: "inline", initialValues: { action: "publish" }, onFinish: (T) => {
+        /* @__PURE__ */ _.jsxs(we, { form: C, layout: "inline", initialValues: { action: "publish" }, onFinish: (T) => {
           $(T);
         }, children: [
-          /* @__PURE__ */ N.jsx(we.Item, { name: "action", label: r.action, rules: [{ required: !0 }], children: /* @__PURE__ */ N.jsx(
+          /* @__PURE__ */ _.jsx(we.Item, { name: "action", label: r.action, rules: [{ required: !0 }], children: /* @__PURE__ */ _.jsx(
             kt,
             {
               style: { width: 210 },
@@ -82326,26 +82324,26 @@ Please change the parent <Route path="${C}"> to <Route path="${C === "/" ? "*" :
               onChange: () => C.setFieldValue("target_id", void 0)
             }
           ) }),
-          D && /* @__PURE__ */ N.jsx(we.Item, { name: "target_id", label: r.target, rules: [{ required: !0 }], children: /* @__PURE__ */ N.jsx(kt, { showSearch: !0, optionFilterProp: "label", style: { width: 240 }, options: _ }) }),
-          /* @__PURE__ */ N.jsx(Ve, { htmlType: "submit", type: "primary", loading: b, children: r.preflight })
+          D && /* @__PURE__ */ _.jsx(we.Item, { name: "target_id", label: r.target, rules: [{ required: !0 }], children: /* @__PURE__ */ _.jsx(kt, { showSearch: !0, optionFilterProp: "label", style: { width: 240 }, options: N }) }),
+          /* @__PURE__ */ _.jsx(Ve, { htmlType: "submit", type: "primary", loading: b, children: r.preflight })
         ] })
       ] }),
-      v && /* @__PURE__ */ N.jsx(
+      v && /* @__PURE__ */ _.jsx(
         Ot,
         {
           title: `${r.actions[v.preview.action]} · ${v.preview.run_id}`,
-          extra: v.status !== "completed" && /* @__PURE__ */ N.jsx(Lr, { title: r.confirm, onConfirm: () => {
+          extra: v.status !== "completed" && /* @__PURE__ */ _.jsx(Lr, { title: r.confirm, onConfirm: () => {
             M();
-          }, children: /* @__PURE__ */ N.jsx(Ve, { type: "primary", loading: b, children: r.execute }) }),
-          children: /* @__PURE__ */ N.jsxs(lt, { direction: "vertical", size: "middle", className: "panel-stack", children: [
-            /* @__PURE__ */ N.jsxs(xn, { size: "small", column: { xs: 1, sm: 3 }, children: [
-              /* @__PURE__ */ N.jsx(xn.Item, { label: r.selection, children: v.preview.selection_count }),
-              /* @__PURE__ */ N.jsx(xn.Item, { label: r.eligible, children: v.preview.eligible_count }),
-              /* @__PURE__ */ N.jsx(xn.Item, { label: r.state, children: v.status })
+          }, children: /* @__PURE__ */ _.jsx(Ve, { type: "primary", loading: b, children: r.execute }) }),
+          children: /* @__PURE__ */ _.jsxs(lt, { direction: "vertical", size: "middle", className: "panel-stack", children: [
+            /* @__PURE__ */ _.jsxs(xn, { size: "small", column: { xs: 1, sm: 3 }, children: [
+              /* @__PURE__ */ _.jsx(xn.Item, { label: r.selection, children: v.preview.selection_count }),
+              /* @__PURE__ */ _.jsx(xn.Item, { label: r.eligible, children: v.preview.eligible_count }),
+              /* @__PURE__ */ _.jsx(xn.Item, { label: r.state, children: v.status })
             ] }),
-            /* @__PURE__ */ N.jsx(_t.Text, { children: r.previewSummary(v.preview.eligible_count, v.preview.selection_count) }),
-            v.preview.warning && /* @__PURE__ */ N.jsx(Lt, { type: "warning", showIcon: !0, message: v.preview.warning }),
-            /* @__PURE__ */ N.jsx(
+            /* @__PURE__ */ _.jsx(_t.Text, { children: r.previewSummary(v.preview.eligible_count, v.preview.selection_count) }),
+            v.preview.warning && /* @__PURE__ */ _.jsx(Lt, { type: "warning", showIcon: !0, message: v.preview.warning }),
+            /* @__PURE__ */ _.jsx(
               In,
               {
                 size: "small",
@@ -82356,13 +82354,13 @@ Please change the parent <Route path="${C}"> to <Route path="${C === "/" ? "*" :
                   { title: r.partNumber, dataIndex: "part_number" },
                   { title: r.revision, dataIndex: "expected_revision" },
                   { title: r.state, render: (T, A) => `${A.record_state} / ${A.publishing_state}` },
-                  { title: r.eligible, render: (T, A) => /* @__PURE__ */ N.jsx(Cn, { color: A.eligible ? "green" : "red", children: A.eligible ? r.yes : r.no }) },
+                  { title: r.eligible, render: (T, A) => /* @__PURE__ */ _.jsx(Cn, { color: A.eligible ? "green" : "red", children: A.eligible ? r.yes : r.no }) },
                   { title: r.message, dataIndex: "message" }
                 ]
               }
             ),
-            v.receipt && /* @__PURE__ */ N.jsxs(N.Fragment, { children: [
-              /* @__PURE__ */ N.jsx(
+            v.receipt && /* @__PURE__ */ _.jsxs(_.Fragment, { children: [
+              /* @__PURE__ */ _.jsx(
                 In,
                 {
                   size: "small",
@@ -82371,13 +82369,13 @@ Please change the parent <Route path="${C}"> to <Route path="${C === "/" ? "*" :
                   pagination: !1,
                   columns: [
                     { title: r.partNumber, dataIndex: "part_number" },
-                    { title: r.result, dataIndex: "status", render: (T) => /* @__PURE__ */ N.jsx(Cn, { color: T === "succeeded" ? "green" : m0(T) ? "red" : "blue", children: T }) },
+                    { title: r.result, dataIndex: "status", render: (T) => /* @__PURE__ */ _.jsx(Cn, { color: T === "succeeded" ? "green" : m0(T) ? "red" : "blue", children: T }) },
                     { title: r.revision, dataIndex: "result_revision" },
                     { title: r.message, dataIndex: "message" }
                   ]
                 }
               ),
-              /* @__PURE__ */ N.jsxs(Ve, { disabled: P.length === 0, onClick: () => {
+              /* @__PURE__ */ _.jsxs(Ve, { disabled: P.length === 0, onClick: () => {
                 I();
               }, children: [
                 r.retryUnresolved,
@@ -82617,16 +82615,16 @@ Please change the parent <Route path="${C}"> to <Route path="${C === "/" ? "*" :
         }
       }
     };
-    return /* @__PURE__ */ N.jsx(lt, { direction: "vertical", size: "large", className: "panel-stack", children: /* @__PURE__ */ N.jsx(
+    return /* @__PURE__ */ _.jsx(lt, { direction: "vertical", size: "large", className: "panel-stack", children: /* @__PURE__ */ _.jsx(
       Ot,
       {
         title: r.title,
-        extra: /* @__PURE__ */ N.jsx(Ve, { onClick: () => {
+        extra: /* @__PURE__ */ _.jsx(Ve, { onClick: () => {
           g();
         }, loading: c, children: r.refresh }),
-        children: /* @__PURE__ */ N.jsxs(lt, { direction: "vertical", size: "large", className: "panel-stack", children: [
-          /* @__PURE__ */ N.jsx(Lt, { type: "info", showIcon: !0, message: r.explanation }),
-          /* @__PURE__ */ N.jsxs(
+        children: /* @__PURE__ */ _.jsxs(lt, { direction: "vertical", size: "large", className: "panel-stack", children: [
+          /* @__PURE__ */ _.jsx(Lt, { type: "info", showIcon: !0, message: r.explanation }),
+          /* @__PURE__ */ _.jsxs(
             we,
             {
               form: f,
@@ -82635,16 +82633,16 @@ Please change the parent <Route path="${C}"> to <Route path="${C === "/" ? "*" :
                 v(y);
               },
               children: [
-                /* @__PURE__ */ N.jsxs("div", { className: "form-grid three-columns", children: [
-                  /* @__PURE__ */ N.jsx(we.Item, { label: r.defaultLocale, children: /* @__PURE__ */ N.jsx(dt, { value: a ? Es(a.default_locale) : "", readOnly: !0 }) }),
-                  /* @__PURE__ */ N.jsx(we.Item, { label: r.supportedLocales, children: /* @__PURE__ */ N.jsx(
+                /* @__PURE__ */ _.jsxs("div", { className: "form-grid three-columns", children: [
+                  /* @__PURE__ */ _.jsx(we.Item, { label: r.defaultLocale, children: /* @__PURE__ */ _.jsx(dt, { value: a ? Es(a.default_locale) : "", readOnly: !0 }) }),
+                  /* @__PURE__ */ _.jsx(we.Item, { label: r.supportedLocales, children: /* @__PURE__ */ _.jsx(
                     dt,
                     {
                       value: a?.supported_locales.map(Es).join(", "),
                       readOnly: !0
                     }
                   ) }),
-                  /* @__PURE__ */ N.jsx(
+                  /* @__PURE__ */ _.jsx(
                     we.Item,
                     {
                       name: "time_zone",
@@ -82659,15 +82657,15 @@ Please change the parent <Route path="${C}"> to <Route path="${C === "/" ? "*" :
                           }
                         }
                       ],
-                      children: /* @__PURE__ */ N.jsx(dt, { placeholder: "UTC" })
+                      children: /* @__PURE__ */ _.jsx(dt, { placeholder: "UTC" })
                     }
                   )
                 ] }),
-                /* @__PURE__ */ N.jsx(Ve, { type: "primary", htmlType: "submit", loading: c, children: r.save })
+                /* @__PURE__ */ _.jsx(Ve, { type: "primary", htmlType: "submit", loading: c, children: r.save })
               ]
             }
           ),
-          a && /* @__PURE__ */ N.jsxs(_t.Text, { type: "secondary", children: [
+          a && /* @__PURE__ */ _.jsxs(_t.Text, { type: "secondary", children: [
             r.revision,
             " ",
             a.revision,
@@ -82786,19 +82784,19 @@ Please change the parent <Route path="${C}"> to <Route path="${C === "/" ? "*" :
         }
       }
     };
-    return /* @__PURE__ */ N.jsx($r, { open: !!e, title: `${c.title} · ${e?.name ?? ""}`, footer: null, onCancel: r, width: 760, destroyOnHidden: !0, children: u || !m || !e ? /* @__PURE__ */ N.jsx(wu, {}) : /* @__PURE__ */ N.jsx(tp, { items: [
-      { key: "source", label: c.perField, children: /* @__PURE__ */ N.jsxs(we, { form: y, layout: "vertical", onFinish: ($) => {
+    return /* @__PURE__ */ _.jsx($r, { open: !!e, title: `${c.title} · ${e?.name ?? ""}`, footer: null, onCancel: r, width: 760, destroyOnHidden: !0, children: u || !m || !e ? /* @__PURE__ */ _.jsx(wu, {}) : /* @__PURE__ */ _.jsx(tp, { items: [
+      { key: "source", label: c.perField, children: /* @__PURE__ */ _.jsxs(we, { form: y, layout: "vertical", onFinish: ($) => {
         R($);
       }, children: [
-        /* @__PURE__ */ N.jsx(Lt, { className: "bottom-gap", type: "info", showIcon: !0, message: c.sourceHelp }),
-        /* @__PURE__ */ N.jsx(we.Item, { name: "source_locale", label: c.source, rules: [{ required: !0 }], children: /* @__PURE__ */ N.jsx(kt, { disabled: !n, options: C }) }),
-        /* @__PURE__ */ N.jsx(Ot, { size: "small", title: c.perField, children: ["name", "description"].map(($) => /* @__PURE__ */ N.jsx(we.Item, { name: ["source_locales", $], label: c[$], rules: [{ required: !0 }], children: /* @__PURE__ */ N.jsx(kt, { disabled: !n, options: C }) }, $)) }),
-        n ? /* @__PURE__ */ N.jsx(Ve, { type: "primary", htmlType: "submit", loading: u, children: c.saveSource }) : null
+        /* @__PURE__ */ _.jsx(Lt, { className: "bottom-gap", type: "info", showIcon: !0, message: c.sourceHelp }),
+        /* @__PURE__ */ _.jsx(we.Item, { name: "source_locale", label: c.source, rules: [{ required: !0 }], children: /* @__PURE__ */ _.jsx(kt, { disabled: !n, options: C }) }),
+        /* @__PURE__ */ _.jsx(Ot, { size: "small", title: c.perField, children: ["name", "description"].map(($) => /* @__PURE__ */ _.jsx(we.Item, { name: ["source_locales", $], label: c[$], rules: [{ required: !0 }], children: /* @__PURE__ */ _.jsx(kt, { disabled: !n, options: C }) }, $)) }),
+        n ? /* @__PURE__ */ _.jsx(Ve, { type: "primary", htmlType: "submit", loading: u, children: c.saveSource }) : null
       ] }) },
       ...S.filter(($) => $ !== m.source_locale).map(($) => ({
         key: $,
         label: Es($),
-        children: /* @__PURE__ */ N.jsx(Fve, { target: e, content: m, locale: $, item: m.translations?.find((M) => M.locale === $), text: c, canEdit: n, onSaved: E, onError: a })
+        children: /* @__PURE__ */ _.jsx(Fve, { target: e, content: m, locale: $, item: m.translations?.find((M) => M.locale === $), text: c, canEdit: n, onSaved: E, onError: a })
       }))
     ] }) });
   }
@@ -82819,13 +82817,13 @@ Please change the parent <Route path="${C}"> to <Route path="${C === "/" ? "*" :
         }
       }
     };
-    return /* @__PURE__ */ N.jsxs(we, { form: p, layout: "vertical", onFinish: (v) => {
+    return /* @__PURE__ */ _.jsxs(we, { form: p, layout: "vertical", onFinish: (v) => {
       g(v);
     }, children: [
-      /* @__PURE__ */ N.jsx(Lt, { className: "bottom-gap", type: "info", showIcon: !0, message: a.empty }),
-      /* @__PURE__ */ N.jsx(we.Item, { name: "name", label: a.name, children: /* @__PURE__ */ N.jsx(dt, { disabled: !s }) }),
-      /* @__PURE__ */ N.jsx(we.Item, { name: "description", label: a.description, children: /* @__PURE__ */ N.jsx(dt.TextArea, { disabled: !s, rows: 4 }) }),
-      s ? /* @__PURE__ */ N.jsx(Ve, { type: "primary", htmlType: "submit", loading: f, children: a.save }) : null
+      /* @__PURE__ */ _.jsx(Lt, { className: "bottom-gap", type: "info", showIcon: !0, message: a.empty }),
+      /* @__PURE__ */ _.jsx(we.Item, { name: "name", label: a.name, children: /* @__PURE__ */ _.jsx(dt, { disabled: !s }) }),
+      /* @__PURE__ */ _.jsx(we.Item, { name: "description", label: a.description, children: /* @__PURE__ */ _.jsx(dt.TextArea, { disabled: !s, rows: 4 }) }),
+      s ? /* @__PURE__ */ _.jsx(Ve, { type: "primary", htmlType: "submit", loading: f, children: a.save }) : null
     ] });
   }
   const U4 = {
@@ -83381,7 +83379,7 @@ Please change the parent <Route path="${C}"> to <Route path="${C === "/" ? "*" :
     }
   };
   function Bve({ locale: e, onError: t, onMessage: n }) {
-    const r = U4[e], { capabilities: a } = A1(), s = !!a["catalog.edit"], c = Iu(), [u, f] = l.useState("manufacturer"), m = bs({ resource: "categories", pagination: { mode: "off" }, queryOptions: { retry: !1 } }), p = bs({ resource: "dictionary-entries", pagination: { mode: "off" }, meta: { kind: u }, queryOptions: { retry: !1 } }), g = bs({ resource: "spec-definitions", pagination: { mode: "off" }, queryOptions: { retry: !1 } }), v = bs({ resource: "spec-sets", pagination: { mode: "off" }, queryOptions: { retry: !1 } }), y = m.result.data, b = p.result.data, S = g.result.data, C = v.result.data, [E, R] = l.useState(), [$, M] = l.useState(), [I, D] = l.useState(), [_, P] = l.useState(), [T, A] = l.useState(), [z, O] = l.useState(!1), [L] = we.useForm(), [F] = we.useForm(), [U] = we.useForm(), [H] = we.useForm(), [V] = we.useForm(), [ee] = we.useForm(), [X] = we.useForm(), K = m.query.error ?? p.query.error ?? g.query.error ?? v.query.error;
+    const r = U4[e], { capabilities: a } = A1(), s = !!a["catalog.edit"], c = Iu(), [u, f] = l.useState("manufacturer"), m = bs({ resource: "categories", pagination: { mode: "off" }, queryOptions: { retry: !1 } }), p = bs({ resource: "dictionary-entries", pagination: { mode: "off" }, meta: { kind: u }, queryOptions: { retry: !1 } }), g = bs({ resource: "spec-definitions", pagination: { mode: "off" }, queryOptions: { retry: !1 } }), v = bs({ resource: "spec-sets", pagination: { mode: "off" }, queryOptions: { retry: !1 } }), y = m.result.data, b = p.result.data, S = g.result.data, C = v.result.data, [E, R] = l.useState(), [$, M] = l.useState(), [I, D] = l.useState(), [N, P] = l.useState(), [T, A] = l.useState(), [z, O] = l.useState(!1), [L] = we.useForm(), [F] = we.useForm(), [U] = we.useForm(), [H] = we.useForm(), [V] = we.useForm(), [ee] = we.useForm(), [X] = we.useForm(), K = m.query.error ?? p.query.error ?? g.query.error ?? v.query.error;
     l.useEffect(() => {
       K && t(K);
     }, [K]);
@@ -83422,11 +83420,11 @@ Please change the parent <Route path="${C}"> to <Route path="${C === "/" ? "*" :
           t(Z);
         }
     }, q = async () => {
-      if (!(!E || !_)) {
+      if (!(!E || !N)) {
         O(!0);
         try {
           const Z = await U.validateFields();
-          await fa.updateCategory(E, Z), n(r.updated(E.name, _.affected_products.length)), R(void 0), P(void 0), await G(gi.category);
+          await fa.updateCategory(E, Z), n(r.updated(E.name, N.affected_products.length)), R(void 0), P(void 0), await G(gi.category);
         } catch (Z) {
           t(Z);
         } finally {
@@ -83476,26 +83474,26 @@ Please change the parent <Route path="${C}"> to <Route path="${C === "/" ? "*" :
           t(xe), await G(["categories"]);
         }
     };
-    return /* @__PURE__ */ N.jsxs(N.Fragment, { children: [
-      /* @__PURE__ */ N.jsx(
+    return /* @__PURE__ */ _.jsxs(_.Fragment, { children: [
+      /* @__PURE__ */ _.jsx(
         tp,
         {
           items: [
             {
               key: "categories",
               label: r.categories,
-              children: /* @__PURE__ */ N.jsxs(lt, { direction: "vertical", size: "large", className: "panel-stack", children: [
-                s ? /* @__PURE__ */ N.jsx(Ot, { title: r.newCategory, children: /* @__PURE__ */ N.jsxs(we, { form: L, layout: "inline", onFinish: (Z) => {
+              children: /* @__PURE__ */ _.jsxs(lt, { direction: "vertical", size: "large", className: "panel-stack", children: [
+                s ? /* @__PURE__ */ _.jsx(Ot, { title: r.newCategory, children: /* @__PURE__ */ _.jsxs(we, { form: L, layout: "inline", onFinish: (Z) => {
                   B(Z);
                 }, children: [
-                  /* @__PURE__ */ N.jsx(we.Item, { name: "name", rules: [{ required: !0 }], children: /* @__PURE__ */ N.jsx(dt, { placeholder: r.name }) }),
-                  /* @__PURE__ */ N.jsx(we.Item, { name: "slug", rules: [{ required: !0 }], children: /* @__PURE__ */ N.jsx(dt, { placeholder: r.slug }) }),
-                  /* @__PURE__ */ N.jsx(we.Item, { name: "parent_id", children: /* @__PURE__ */ N.jsx(kt, { allowClear: !0, showSearch: !0, optionFilterProp: "label", placeholder: r.parent, style: { minWidth: 180 }, options: y.filter((Z) => Z.status === "active").map((Z) => ({ value: Z.id, label: Z.name })) }) }),
-                  /* @__PURE__ */ N.jsx(Ve, { type: "primary", htmlType: "submit", children: r.create })
+                  /* @__PURE__ */ _.jsx(we.Item, { name: "name", rules: [{ required: !0 }], children: /* @__PURE__ */ _.jsx(dt, { placeholder: r.name }) }),
+                  /* @__PURE__ */ _.jsx(we.Item, { name: "slug", rules: [{ required: !0 }], children: /* @__PURE__ */ _.jsx(dt, { placeholder: r.slug }) }),
+                  /* @__PURE__ */ _.jsx(we.Item, { name: "parent_id", children: /* @__PURE__ */ _.jsx(kt, { allowClear: !0, showSearch: !0, optionFilterProp: "label", placeholder: r.parent, style: { minWidth: 180 }, options: y.filter((Z) => Z.status === "active").map((Z) => ({ value: Z.id, label: Z.name })) }) }),
+                  /* @__PURE__ */ _.jsx(Ve, { type: "primary", htmlType: "submit", children: r.create })
                 ] }) }) : null,
-                /* @__PURE__ */ N.jsx(Ot, { title: r.categoryData, extra: /* @__PURE__ */ N.jsx(Ve, { onClick: () => {
+                /* @__PURE__ */ _.jsx(Ot, { title: r.categoryData, extra: /* @__PURE__ */ _.jsx(Ve, { onClick: () => {
                   W();
-                }, children: r.refresh }), children: /* @__PURE__ */ N.jsx(
+                }, children: r.refresh }), children: /* @__PURE__ */ _.jsx(
                   In,
                   {
                     rowKey: "id",
@@ -83506,16 +83504,16 @@ Please change the parent <Route path="${C}"> to <Route path="${C === "/" ? "*" :
                       { title: r.name, dataIndex: "name" },
                       { title: r.slug, dataIndex: "slug" },
                       { title: r.parent, render: (Z, me) => y.find((xe) => xe.id === me.parent_id)?.name ?? me.parent_id ?? r.root },
-                      { title: r.status, render: (Z, me) => /* @__PURE__ */ N.jsx(Cn, { color: me.status === "active" ? "green" : "default", children: me.status === "active" ? r.active : r.disabled }) },
+                      { title: r.status, render: (Z, me) => /* @__PURE__ */ _.jsx(Cn, { color: me.status === "active" ? "green" : "default", children: me.status === "active" ? r.active : r.disabled }) },
                       { title: r.revision, dataIndex: "revision" },
                       {
                         title: r.actions,
-                        render: (Z, me) => me.system_key === "root" ? null : /* @__PURE__ */ N.jsxs(lt, { children: [
-                          s ? /* @__PURE__ */ N.jsx(Ve, { size: "small", onClick: () => ie(me), children: r.edit }) : null,
-                          /* @__PURE__ */ N.jsx(Ve, { size: "small", onClick: () => D({ type: "category", id: me.id, name: me.name }), children: r.translate }),
-                          s && !me.system_key && me.status !== "disabled" ? /* @__PURE__ */ N.jsx(Lr, { title: r.disableCategoryConfirm, onConfirm: () => {
+                        render: (Z, me) => me.system_key === "root" ? null : /* @__PURE__ */ _.jsxs(lt, { children: [
+                          s ? /* @__PURE__ */ _.jsx(Ve, { size: "small", onClick: () => ie(me), children: r.edit }) : null,
+                          /* @__PURE__ */ _.jsx(Ve, { size: "small", onClick: () => D({ type: "category", id: me.id, name: me.name }), children: r.translate }),
+                          s && !me.system_key && me.status !== "disabled" ? /* @__PURE__ */ _.jsx(Lr, { title: r.disableCategoryConfirm, onConfirm: () => {
                             re(me);
-                          }, children: /* @__PURE__ */ N.jsx(Ve, { size: "small", danger: !0, children: r.disable }) }) : null
+                          }, children: /* @__PURE__ */ _.jsx(Ve, { size: "small", danger: !0, children: r.disable }) }) : null
                         ] })
                       }
                     ]
@@ -83526,9 +83524,9 @@ Please change the parent <Route path="${C}"> to <Route path="${C === "/" ? "*" :
             {
               key: "dictionaries",
               label: r.dictionaries,
-              children: /* @__PURE__ */ N.jsxs(lt, { direction: "vertical", size: "large", className: "panel-stack", children: [
-                /* @__PURE__ */ N.jsx(Ot, { title: r.dictionary, children: /* @__PURE__ */ N.jsxs(lt, { direction: "vertical", className: "panel-stack", children: [
-                  /* @__PURE__ */ N.jsx(
+              children: /* @__PURE__ */ _.jsxs(lt, { direction: "vertical", size: "large", className: "panel-stack", children: [
+                /* @__PURE__ */ _.jsx(Ot, { title: r.dictionary, children: /* @__PURE__ */ _.jsxs(lt, { direction: "vertical", className: "panel-stack", children: [
+                  /* @__PURE__ */ _.jsx(
                     kt,
                     {
                       value: u,
@@ -83537,17 +83535,17 @@ Please change the parent <Route path="${C}"> to <Route path="${C === "/" ? "*" :
                       style: { width: 220 }
                     }
                   ),
-                  s ? /* @__PURE__ */ N.jsxs(we, { form: F, layout: "inline", onFinish: (Z) => {
+                  s ? /* @__PURE__ */ _.jsxs(we, { form: F, layout: "inline", onFinish: (Z) => {
                     J(Z);
                   }, children: [
-                    /* @__PURE__ */ N.jsx(we.Item, { name: "name", rules: [{ required: !0 }], children: /* @__PURE__ */ N.jsx(dt, { placeholder: r.name }) }),
-                    /* @__PURE__ */ N.jsx(we.Item, { name: "slug", children: /* @__PURE__ */ N.jsx(dt, { placeholder: r.optionalSlug }) }),
-                    /* @__PURE__ */ N.jsx(Ve, { type: "primary", htmlType: "submit", children: r.create })
+                    /* @__PURE__ */ _.jsx(we.Item, { name: "name", rules: [{ required: !0 }], children: /* @__PURE__ */ _.jsx(dt, { placeholder: r.name }) }),
+                    /* @__PURE__ */ _.jsx(we.Item, { name: "slug", children: /* @__PURE__ */ _.jsx(dt, { placeholder: r.optionalSlug }) }),
+                    /* @__PURE__ */ _.jsx(Ve, { type: "primary", htmlType: "submit", children: r.create })
                   ] }) : null
                 ] }) }),
-                /* @__PURE__ */ N.jsx(Ot, { title: r.kinds[u], extra: /* @__PURE__ */ N.jsx(Ve, { onClick: () => {
+                /* @__PURE__ */ _.jsx(Ot, { title: r.kinds[u], extra: /* @__PURE__ */ _.jsx(Ve, { onClick: () => {
                   Q();
-                }, children: r.refresh }), children: /* @__PURE__ */ N.jsx(
+                }, children: r.refresh }), children: /* @__PURE__ */ _.jsx(
                   In,
                   {
                     rowKey: "id",
@@ -83557,16 +83555,16 @@ Please change the parent <Route path="${C}"> to <Route path="${C === "/" ? "*" :
                     columns: [
                       { title: r.name, dataIndex: "name" },
                       { title: r.slug, dataIndex: "slug", render: (Z) => Z || "—" },
-                      { title: r.status, render: (Z, me) => /* @__PURE__ */ N.jsx(Cn, { color: me.status === "active" ? "green" : "default", children: me.status === "active" ? r.active : r.disabled }) },
+                      { title: r.status, render: (Z, me) => /* @__PURE__ */ _.jsx(Cn, { color: me.status === "active" ? "green" : "default", children: me.status === "active" ? r.active : r.disabled }) },
                       { title: r.revision, dataIndex: "revision" },
                       {
                         title: r.actions,
-                        render: (Z, me) => /* @__PURE__ */ N.jsxs(lt, { children: [
-                          s ? /* @__PURE__ */ N.jsx(Ve, { size: "small", onClick: () => te(me), children: r.edit }) : null,
-                          /* @__PURE__ */ N.jsx(Ve, { size: "small", onClick: () => D({ type: "dictionary", id: me.id, name: me.name }), children: r.translate }),
-                          s && me.status !== "disabled" ? /* @__PURE__ */ N.jsx(Lr, { title: r.disableValueConfirm, onConfirm: () => {
+                        render: (Z, me) => /* @__PURE__ */ _.jsxs(lt, { children: [
+                          s ? /* @__PURE__ */ _.jsx(Ve, { size: "small", onClick: () => te(me), children: r.edit }) : null,
+                          /* @__PURE__ */ _.jsx(Ve, { size: "small", onClick: () => D({ type: "dictionary", id: me.id, name: me.name }), children: r.translate }),
+                          s && me.status !== "disabled" ? /* @__PURE__ */ _.jsx(Lr, { title: r.disableValueConfirm, onConfirm: () => {
                             le(me);
-                          }, children: /* @__PURE__ */ N.jsx(Ve, { size: "small", danger: !0, children: r.disable }) }) : null
+                          }, children: /* @__PURE__ */ _.jsx(Ve, { size: "small", danger: !0, children: r.disable }) }) : null
                         ] })
                       }
                     ]
@@ -83577,34 +83575,34 @@ Please change the parent <Route path="${C}"> to <Route path="${C === "/" ? "*" :
             {
               key: "specifications",
               label: r.specifications,
-              children: /* @__PURE__ */ N.jsxs(lt, { direction: "vertical", size: "large", className: "panel-stack", children: [
-                s ? /* @__PURE__ */ N.jsx(Ot, { title: r.newSpec, children: /* @__PURE__ */ N.jsxs(we, { form: V, layout: "inline", initialValues: { filterable: !1, semantic_version: 1 }, onFinish: (Z) => {
+              children: /* @__PURE__ */ _.jsxs(lt, { direction: "vertical", size: "large", className: "panel-stack", children: [
+                s ? /* @__PURE__ */ _.jsx(Ot, { title: r.newSpec, children: /* @__PURE__ */ _.jsxs(we, { form: V, layout: "inline", initialValues: { filterable: !1, semantic_version: 1 }, onFinish: (Z) => {
                   pe(Z);
                 }, children: [
-                  /* @__PURE__ */ N.jsx(we.Item, { name: "name", rules: [{ required: !0 }], children: /* @__PURE__ */ N.jsx(dt, { placeholder: r.name }) }),
-                  /* @__PURE__ */ N.jsx(we.Item, { name: "preferred_unit", children: /* @__PURE__ */ N.jsx(dt, { placeholder: r.preferredUnit }) }),
-                  /* @__PURE__ */ N.jsx(we.Item, { name: "semantic_version", rules: [{ required: !0 }], children: /* @__PURE__ */ N.jsx(Jo, { min: 1, precision: 0 }) }),
-                  /* @__PURE__ */ N.jsx(we.Item, { name: "filterable", valuePropName: "checked", children: /* @__PURE__ */ N.jsx(no, { children: r.filterable }) }),
-                  /* @__PURE__ */ N.jsx(Ve, { type: "primary", htmlType: "submit", children: r.create })
+                  /* @__PURE__ */ _.jsx(we.Item, { name: "name", rules: [{ required: !0 }], children: /* @__PURE__ */ _.jsx(dt, { placeholder: r.name }) }),
+                  /* @__PURE__ */ _.jsx(we.Item, { name: "preferred_unit", children: /* @__PURE__ */ _.jsx(dt, { placeholder: r.preferredUnit }) }),
+                  /* @__PURE__ */ _.jsx(we.Item, { name: "semantic_version", rules: [{ required: !0 }], children: /* @__PURE__ */ _.jsx(Jo, { min: 1, precision: 0 }) }),
+                  /* @__PURE__ */ _.jsx(we.Item, { name: "filterable", valuePropName: "checked", children: /* @__PURE__ */ _.jsx(no, { children: r.filterable }) }),
+                  /* @__PURE__ */ _.jsx(Ve, { type: "primary", htmlType: "submit", children: r.create })
                 ] }) }) : null,
-                s ? /* @__PURE__ */ N.jsx(Ot, { title: r.newSpecSet, children: /* @__PURE__ */ N.jsxs(we, { form: ee, layout: "inline", onFinish: (Z) => {
+                s ? /* @__PURE__ */ _.jsx(Ot, { title: r.newSpecSet, children: /* @__PURE__ */ _.jsxs(we, { form: ee, layout: "inline", onFinish: (Z) => {
                   oe(Z);
                 }, children: [
-                  /* @__PURE__ */ N.jsx(we.Item, { name: "name", rules: [{ required: !0 }], children: /* @__PURE__ */ N.jsx(dt, { placeholder: r.name }) }),
-                  /* @__PURE__ */ N.jsx(we.Item, { name: "spec_ids", rules: [{ required: !0 }], children: /* @__PURE__ */ N.jsx(kt, { mode: "multiple", placeholder: r.specifications, style: { minWidth: 320 }, options: S.filter((Z) => Z.status === "active").map((Z) => ({ value: Z.id, label: Z.name })) }) }),
-                  /* @__PURE__ */ N.jsx(Ve, { type: "primary", htmlType: "submit", children: r.create })
+                  /* @__PURE__ */ _.jsx(we.Item, { name: "name", rules: [{ required: !0 }], children: /* @__PURE__ */ _.jsx(dt, { placeholder: r.name }) }),
+                  /* @__PURE__ */ _.jsx(we.Item, { name: "spec_ids", rules: [{ required: !0 }], children: /* @__PURE__ */ _.jsx(kt, { mode: "multiple", placeholder: r.specifications, style: { minWidth: 320 }, options: S.filter((Z) => Z.status === "active").map((Z) => ({ value: Z.id, label: Z.name })) }) }),
+                  /* @__PURE__ */ _.jsx(Ve, { type: "primary", htmlType: "submit", children: r.create })
                 ] }) }) : null,
-                s ? /* @__PURE__ */ N.jsx(Ot, { title: r.assignSpecSet, children: /* @__PURE__ */ N.jsxs(we, { form: X, layout: "inline", onFinish: (Z) => {
+                s ? /* @__PURE__ */ _.jsx(Ot, { title: r.assignSpecSet, children: /* @__PURE__ */ _.jsxs(we, { form: X, layout: "inline", onFinish: (Z) => {
                   ce(Z);
                 }, children: [
-                  /* @__PURE__ */ N.jsx(we.Item, { name: "category_id", rules: [{ required: !0 }], children: /* @__PURE__ */ N.jsx(kt, { placeholder: r.category, style: { minWidth: 220 }, options: y.filter((Z) => Z.status === "active" && !Z.system_key).map((Z) => ({ value: Z.id, label: Z.name })) }) }),
-                  /* @__PURE__ */ N.jsx(we.Item, { name: "spec_set_id", rules: [{ required: !0 }], children: /* @__PURE__ */ N.jsx(kt, { placeholder: r.specSet, style: { minWidth: 220 }, options: C.filter((Z) => Z.status === "active").map((Z) => ({ value: Z.id, label: Z.name })) }) }),
-                  /* @__PURE__ */ N.jsx(Ve, { type: "primary", htmlType: "submit", children: r.assign })
+                  /* @__PURE__ */ _.jsx(we.Item, { name: "category_id", rules: [{ required: !0 }], children: /* @__PURE__ */ _.jsx(kt, { placeholder: r.category, style: { minWidth: 220 }, options: y.filter((Z) => Z.status === "active" && !Z.system_key).map((Z) => ({ value: Z.id, label: Z.name })) }) }),
+                  /* @__PURE__ */ _.jsx(we.Item, { name: "spec_set_id", rules: [{ required: !0 }], children: /* @__PURE__ */ _.jsx(kt, { placeholder: r.specSet, style: { minWidth: 220 }, options: C.filter((Z) => Z.status === "active").map((Z) => ({ value: Z.id, label: Z.name })) }) }),
+                  /* @__PURE__ */ _.jsx(Ve, { type: "primary", htmlType: "submit", children: r.assign })
                 ] }) }) : null,
-                /* @__PURE__ */ N.jsxs(Ot, { title: r.definitions, extra: /* @__PURE__ */ N.jsx(Ve, { onClick: () => {
+                /* @__PURE__ */ _.jsxs(Ot, { title: r.definitions, extra: /* @__PURE__ */ _.jsx(Ve, { onClick: () => {
                   k();
                 }, children: r.refresh }), children: [
-                  /* @__PURE__ */ N.jsx(
+                  /* @__PURE__ */ _.jsx(
                     In,
                     {
                       rowKey: "id",
@@ -83620,7 +83618,7 @@ Please change the parent <Route path="${C}"> to <Route path="${C === "/" ? "*" :
                       ]
                     }
                   ),
-                  /* @__PURE__ */ N.jsx(
+                  /* @__PURE__ */ _.jsx(
                     In,
                     {
                       className: "top-gap",
@@ -83642,13 +83640,13 @@ Please change the parent <Route path="${C}"> to <Route path="${C === "/" ? "*" :
           ]
         }
       ),
-      /* @__PURE__ */ N.jsxs(
+      /* @__PURE__ */ _.jsxs(
         $r,
         {
           open: !!E,
           title: r.editCategory,
           okText: r.applyReviewed,
-          okButtonProps: { disabled: !_ },
+          okButtonProps: { disabled: !N },
           confirmLoading: z,
           onOk: () => {
             q();
@@ -83657,10 +83655,10 @@ Please change the parent <Route path="${C}"> to <Route path="${C === "/" ? "*" :
             R(void 0), P(void 0);
           },
           children: [
-            /* @__PURE__ */ N.jsxs(we, { form: U, layout: "vertical", onValuesChange: () => P(void 0), children: [
-              /* @__PURE__ */ N.jsx(we.Item, { name: "name", label: r.name, rules: [{ required: !0 }], children: /* @__PURE__ */ N.jsx(dt, { disabled: E?.system_key === "uncategorized" }) }),
-              /* @__PURE__ */ N.jsx(we.Item, { name: "slug", label: r.slug, rules: [{ required: !0 }], children: /* @__PURE__ */ N.jsx(dt, {}) }),
-              /* @__PURE__ */ N.jsx(we.Item, { name: "parent_id", label: r.parent, children: /* @__PURE__ */ N.jsx(
+            /* @__PURE__ */ _.jsxs(we, { form: U, layout: "vertical", onValuesChange: () => P(void 0), children: [
+              /* @__PURE__ */ _.jsx(we.Item, { name: "name", label: r.name, rules: [{ required: !0 }], children: /* @__PURE__ */ _.jsx(dt, { disabled: E?.system_key === "uncategorized" }) }),
+              /* @__PURE__ */ _.jsx(we.Item, { name: "slug", label: r.slug, rules: [{ required: !0 }], children: /* @__PURE__ */ _.jsx(dt, {}) }),
+              /* @__PURE__ */ _.jsx(we.Item, { name: "parent_id", label: r.parent, children: /* @__PURE__ */ _.jsx(
                 kt,
                 {
                   disabled: E?.system_key === "uncategorized",
@@ -83670,14 +83668,14 @@ Please change the parent <Route path="${C}"> to <Route path="${C === "/" ? "*" :
                 }
               ) })
             ] }),
-            /* @__PURE__ */ N.jsx(Ve, { onClick: () => {
+            /* @__PURE__ */ _.jsx(Ve, { onClick: () => {
               Y();
             }, children: r.previewAffected }),
-            _ ? /* @__PURE__ */ N.jsx(YL, { impact: _, locale: e }) : null
+            N ? /* @__PURE__ */ _.jsx(YL, { impact: N, locale: e }) : null
           ]
         }
       ),
-      /* @__PURE__ */ N.jsxs(
+      /* @__PURE__ */ _.jsxs(
         $r,
         {
           open: !!$,
@@ -83692,18 +83690,18 @@ Please change the parent <Route path="${C}"> to <Route path="${C === "/" ? "*" :
             M(void 0), A(void 0);
           },
           children: [
-            /* @__PURE__ */ N.jsxs(we, { form: H, layout: "vertical", onValuesChange: () => A(void 0), children: [
-              /* @__PURE__ */ N.jsx(we.Item, { name: "name", label: r.name, rules: [{ required: !0 }], children: /* @__PURE__ */ N.jsx(dt, {}) }),
-              /* @__PURE__ */ N.jsx(we.Item, { name: "slug", label: r.slug, children: /* @__PURE__ */ N.jsx(dt, {}) })
+            /* @__PURE__ */ _.jsxs(we, { form: H, layout: "vertical", onValuesChange: () => A(void 0), children: [
+              /* @__PURE__ */ _.jsx(we.Item, { name: "name", label: r.name, rules: [{ required: !0 }], children: /* @__PURE__ */ _.jsx(dt, {}) }),
+              /* @__PURE__ */ _.jsx(we.Item, { name: "slug", label: r.slug, children: /* @__PURE__ */ _.jsx(dt, {}) })
             ] }),
-            /* @__PURE__ */ N.jsx(Ve, { onClick: () => {
+            /* @__PURE__ */ _.jsx(Ve, { onClick: () => {
               de();
             }, children: r.previewAffected }),
-            T ? /* @__PURE__ */ N.jsx(YL, { impact: T, locale: e }) : null
+            T ? /* @__PURE__ */ _.jsx(YL, { impact: T, locale: e }) : null
           ]
         }
       ),
-      /* @__PURE__ */ N.jsx(
+      /* @__PURE__ */ _.jsx(
         jve,
         {
           target: I,
@@ -83720,14 +83718,14 @@ Please change the parent <Route path="${C}"> to <Route path="${C === "/" ? "*" :
   }
   function YL({ impact: e, locale: t }) {
     const n = U4[t];
-    return /* @__PURE__ */ N.jsxs("div", { className: "top-gap", children: [
-      /* @__PURE__ */ N.jsx("strong", { children: n.affected(e.affected_products.length) }),
-      e.affected_products.length ? /* @__PURE__ */ N.jsx("ul", { children: e.affected_products.map((r) => /* @__PURE__ */ N.jsxs("li", { children: [
+    return /* @__PURE__ */ _.jsxs("div", { className: "top-gap", children: [
+      /* @__PURE__ */ _.jsx("strong", { children: n.affected(e.affected_products.length) }),
+      e.affected_products.length ? /* @__PURE__ */ _.jsx("ul", { children: e.affected_products.map((r) => /* @__PURE__ */ _.jsxs("li", { children: [
         r.part_number,
         ": ",
         r.current_route || n.notPublic,
         r.proposed_route && r.proposed_route !== r.current_route ? ` → ${r.proposed_route}` : ""
-      ] }, r.product_id)) }) : /* @__PURE__ */ N.jsx("p", { children: n.noChanges })
+      ] }, r.product_id)) }) : /* @__PURE__ */ _.jsx("p", { children: n.noChanges })
     ] });
   }
   const Hve = {
@@ -83865,17 +83863,17 @@ Please change the parent <Route path="${C}"> to <Route path="${C === "/" ? "*" :
         }
       }
     };
-    return /* @__PURE__ */ N.jsx(Ot, { title: r.title, loading: !s && u, children: /* @__PURE__ */ N.jsxs(lt, { direction: "vertical", size: "middle", className: "panel-stack", children: [
-      /* @__PURE__ */ N.jsx(_t.Paragraph, { children: r.explanation }),
-      /* @__PURE__ */ N.jsx(Lt, { type: "info", showIcon: !0, message: s?.trusted_proxy_configured ? r.proxyConfigured : r.proxy }),
-      /* @__PURE__ */ N.jsxs(we, { form: a, layout: "vertical", onFinish: (v) => {
+    return /* @__PURE__ */ _.jsx(Ot, { title: r.title, loading: !s && u, children: /* @__PURE__ */ _.jsxs(lt, { direction: "vertical", size: "middle", className: "panel-stack", children: [
+      /* @__PURE__ */ _.jsx(_t.Paragraph, { children: r.explanation }),
+      /* @__PURE__ */ _.jsx(Lt, { type: "info", showIcon: !0, message: s?.trusted_proxy_configured ? r.proxyConfigured : r.proxy }),
+      /* @__PURE__ */ _.jsxs(we, { form: a, layout: "vertical", onFinish: (v) => {
         g(v);
       }, children: [
-        /* @__PURE__ */ N.jsxs(lt, { wrap: !0, align: "start", children: [
-          /* @__PURE__ */ N.jsx(we.Item, { name: "rfq_limit", label: r.limit, rules: [{ required: !0 }], children: /* @__PURE__ */ N.jsx(Jo, { min: 1, max: 1e4, precision: 0 }) }),
-          /* @__PURE__ */ N.jsx(we.Item, { name: "rfq_window_seconds", label: r.window, rules: [{ required: !0 }], children: /* @__PURE__ */ N.jsx(Jo, { min: 1, max: 86400, precision: 0 }) })
+        /* @__PURE__ */ _.jsxs(lt, { wrap: !0, align: "start", children: [
+          /* @__PURE__ */ _.jsx(we.Item, { name: "rfq_limit", label: r.limit, rules: [{ required: !0 }], children: /* @__PURE__ */ _.jsx(Jo, { min: 1, max: 1e4, precision: 0 }) }),
+          /* @__PURE__ */ _.jsx(we.Item, { name: "rfq_window_seconds", label: r.window, rules: [{ required: !0 }], children: /* @__PURE__ */ _.jsx(Jo, { min: 1, max: 86400, precision: 0 }) })
         ] }),
-        /* @__PURE__ */ N.jsx("div", { children: /* @__PURE__ */ N.jsx(Ve, { type: "primary", htmlType: "submit", loading: u, children: r.save }) })
+        /* @__PURE__ */ _.jsx("div", { children: /* @__PURE__ */ _.jsx(Ve, { type: "primary", htmlType: "submit", loading: u, children: r.save }) })
       ] })
     ] }) });
   }
@@ -85152,8 +85150,8 @@ Please change the parent <Route path="${C}"> to <Route path="${C === "/" ? "*" :
   };
   function Jve({ fieldName: e, copy: t, urlLabel: n, newWindowLabel: r }) {
     const a = we.useWatch(["navigation", e, "target_type"]) ?? "link";
-    return /* @__PURE__ */ N.jsxs(N.Fragment, { children: [
-      /* @__PURE__ */ N.jsx(we.Item, { name: [e, "target_type"], label: t.targetType, rules: [{ required: !0 }], children: /* @__PURE__ */ N.jsx(
+    return /* @__PURE__ */ _.jsxs(_.Fragment, { children: [
+      /* @__PURE__ */ _.jsx(we.Item, { name: [e, "target_type"], label: t.targetType, rules: [{ required: !0 }], children: /* @__PURE__ */ _.jsx(
         kt,
         {
           options: [
@@ -85163,11 +85161,11 @@ Please change the parent <Route path="${C}"> to <Route path="${C === "/" ? "*" :
           ]
         }
       ) }),
-      a === "link" ? /* @__PURE__ */ N.jsxs(N.Fragment, { children: [
-        /* @__PURE__ */ N.jsx(we.Item, { name: [e, "url"], label: n, rules: [{ required: !0 }], children: /* @__PURE__ */ N.jsx(dt, {}) }),
-        /* @__PURE__ */ N.jsx(we.Item, { name: [e, "open_new_window"], valuePropName: "checked", children: /* @__PURE__ */ N.jsx(no, { children: r }) })
+      a === "link" ? /* @__PURE__ */ _.jsxs(_.Fragment, { children: [
+        /* @__PURE__ */ _.jsx(we.Item, { name: [e, "url"], label: n, rules: [{ required: !0 }], children: /* @__PURE__ */ _.jsx(dt, {}) }),
+        /* @__PURE__ */ _.jsx(we.Item, { name: [e, "open_new_window"], valuePropName: "checked", children: /* @__PURE__ */ _.jsx(no, { children: r }) })
       ] }) : null,
-      a === "system_action" ? /* @__PURE__ */ N.jsx(we.Item, { name: [e, "system_action"], label: t.action, rules: [{ required: !0 }], children: /* @__PURE__ */ N.jsx(
+      a === "system_action" ? /* @__PURE__ */ _.jsx(we.Item, { name: [e, "system_action"], label: t.action, rules: [{ required: !0 }], children: /* @__PURE__ */ _.jsx(
         kt,
         {
           options: [
@@ -85177,7 +85175,7 @@ Please change the parent <Route path="${C}"> to <Route path="${C === "/" ? "*" :
           ]
         }
       ) }) : null,
-      /* @__PURE__ */ N.jsx(we.Item, { name: [e, "presentation"], label: t.presentation, rules: [{ required: !0 }], children: /* @__PURE__ */ N.jsx(
+      /* @__PURE__ */ _.jsx(we.Item, { name: [e, "presentation"], label: t.presentation, rules: [{ required: !0 }], children: /* @__PURE__ */ _.jsx(
         kt,
         {
           options: [
@@ -85189,7 +85187,7 @@ Please change the parent <Route path="${C}"> to <Route path="${C === "/" ? "*" :
     ] });
   }
   function ebe({ locale: e, onError: t, onMessage: n }) {
-    const r = Zve[e], a = Xve(e), s = Yve[e], [c, u] = l.useState(), [f, m] = l.useState(), [p, g] = l.useState(), [v, y] = l.useState([]), [b, S] = l.useState(), [C, E] = l.useState(), [R, $] = l.useState(""), [M, I] = l.useState(), [D, _] = l.useState(""), [P, T] = l.useState(!1), [A, z] = l.useState(!1), [O, L] = l.useState(!1), [F, U] = l.useState(!1), [H] = we.useForm(), [V] = we.useForm(), [ee] = we.useForm(), [X] = we.useForm(), K = async () => {
+    const r = Zve[e], a = Xve(e), s = Yve[e], [c, u] = l.useState(), [f, m] = l.useState(), [p, g] = l.useState(), [v, y] = l.useState([]), [b, S] = l.useState(), [C, E] = l.useState(), [R, $] = l.useState(""), [M, I] = l.useState(), [D, N] = l.useState(""), [P, T] = l.useState(!1), [A, z] = l.useState(!1), [O, L] = l.useState(!1), [F, U] = l.useState(!1), [H] = we.useForm(), [V] = we.useForm(), [ee] = we.useForm(), [X] = we.useForm(), K = async () => {
       L(!0);
       try {
         const [oe, ce, Z, me] = await Promise.all([
@@ -85421,9 +85419,9 @@ Please change the parent <Route path="${C}"> to <Route path="${C === "/" ? "*" :
         L(!1);
       }
     }, fe = [...b?.missing ?? [], ...b?.conflicts ?? []], pe = b !== void 0 && fe.length === 0 && b.current_epoch === c?.current_epoch && b.working_revision === f?.working_revision;
-    return /* @__PURE__ */ N.jsxs(lt, { direction: "vertical", size: "large", className: "panel-stack", children: [
-      /* @__PURE__ */ N.jsxs(Ot, { title: r.workingConfiguration, loading: !f && O, children: [
-        f && /* @__PURE__ */ N.jsx(
+    return /* @__PURE__ */ _.jsxs(lt, { direction: "vertical", size: "large", className: "panel-stack", children: [
+      /* @__PURE__ */ _.jsxs(Ot, { title: r.workingConfiguration, loading: !f && O, children: [
+        f && /* @__PURE__ */ _.jsx(
           xn,
           {
             size: "small",
@@ -85435,22 +85433,22 @@ Please change the parent <Route path="${C}"> to <Route path="${C === "/" ? "*" :
             ]
           }
         ),
-        f?.custom_css_disabled ? /* @__PURE__ */ N.jsx(
+        f?.custom_css_disabled ? /* @__PURE__ */ _.jsx(
           Lt,
           {
             type: "warning",
             showIcon: !0,
             message: r.cssSafeMode,
             description: r.cssSafeDescription,
-            action: /* @__PURE__ */ N.jsx(Ve, { onClick: () => {
+            action: /* @__PURE__ */ _.jsx(Ve, { onClick: () => {
               de(!1);
             }, loading: O, children: r.reenableCSS })
           }
-        ) : /* @__PURE__ */ N.jsx(Lr, { title: r.disableCSSConfirm, onConfirm: () => {
+        ) : /* @__PURE__ */ _.jsx(Lr, { title: r.disableCSSConfirm, onConfirm: () => {
           de(!0);
-        }, children: /* @__PURE__ */ N.jsx(Ve, { danger: !0, loading: O, children: r.disableCSS }) }),
-        /* @__PURE__ */ N.jsx(_t.Paragraph, { type: "secondary", children: r.workingHelp }),
-        /* @__PURE__ */ N.jsx(
+        }, children: /* @__PURE__ */ _.jsx(Ve, { danger: !0, loading: O, children: r.disableCSS }) }),
+        /* @__PURE__ */ _.jsx(_t.Paragraph, { type: "secondary", children: r.workingHelp }),
+        /* @__PURE__ */ _.jsx(
           we,
           {
             form: ee,
@@ -85458,8 +85456,8 @@ Please change the parent <Route path="${C}"> to <Route path="${C === "/" ? "*" :
             onFinish: (oe) => {
               W(oe);
             },
-            children: /* @__PURE__ */ N.jsxs(Ot, { size: "small", title: r.localization, children: [
-              /* @__PURE__ */ N.jsx(
+            children: /* @__PURE__ */ _.jsxs(Ot, { size: "small", title: r.localization, children: [
+              /* @__PURE__ */ _.jsx(
                 Lt,
                 {
                   className: "bottom-gap",
@@ -85469,16 +85467,16 @@ Please change the parent <Route path="${C}"> to <Route path="${C === "/" ? "*" :
                   description: `${r.activeLocales}: ${f?.active_localization.enabled_locales.map(Es).join(", ") ?? ""}`
                 }
               ),
-              /* @__PURE__ */ N.jsx(
+              /* @__PURE__ */ _.jsx(
                 we.Item,
                 {
                   name: "default_locale",
                   label: r.defaultLocale,
                   rules: [{ required: !0 }],
-                  children: /* @__PURE__ */ N.jsx(kt, { options: ZL })
+                  children: /* @__PURE__ */ _.jsx(kt, { options: ZL })
                 }
               ),
-              /* @__PURE__ */ N.jsx(
+              /* @__PURE__ */ _.jsx(
                 we.Item,
                 {
                   name: "enabled_locales",
@@ -85493,49 +85491,49 @@ Please change the parent <Route path="${C}"> to <Route path="${C === "/" ? "*" :
                       }
                     })
                   ],
-                  children: /* @__PURE__ */ N.jsx(kt, { mode: "multiple", options: ZL })
+                  children: /* @__PURE__ */ _.jsx(kt, { mode: "multiple", options: ZL })
                 }
               ),
-              /* @__PURE__ */ N.jsx(we.Item, { name: "content_editing_enabled", valuePropName: "checked", children: /* @__PURE__ */ N.jsx(no, { children: r.contentEditingEnabled }) }),
-              /* @__PURE__ */ N.jsx(Ve, { type: "primary", htmlType: "submit", loading: O, children: r.saveLocalization })
+              /* @__PURE__ */ _.jsx(we.Item, { name: "content_editing_enabled", valuePropName: "checked", children: /* @__PURE__ */ _.jsx(no, { children: r.contentEditingEnabled }) }),
+              /* @__PURE__ */ _.jsx(Ve, { type: "primary", htmlType: "submit", loading: O, children: r.saveLocalization })
             ] })
           }
         ),
-        /* @__PURE__ */ N.jsxs(Ot, { size: "small", title: a.title, children: [
-          /* @__PURE__ */ N.jsx(_t.Paragraph, { type: "secondary", children: a.help }),
-          /* @__PURE__ */ N.jsx(Lt, { type: "info", showIcon: !0, message: a.exactSource }),
-          /* @__PURE__ */ N.jsxs(lt.Compact, { block: !0, children: [
-            /* @__PURE__ */ N.jsx(dt, { type: "url", value: D, onChange: (oe) => _(oe.target.value), placeholder: "https://www.example.com/", "aria-label": a.sourceURL }),
-            /* @__PURE__ */ N.jsx(Ve, { onClick: () => {
+        /* @__PURE__ */ _.jsxs(Ot, { size: "small", title: a.title, children: [
+          /* @__PURE__ */ _.jsx(_t.Paragraph, { type: "secondary", children: a.help }),
+          /* @__PURE__ */ _.jsx(Lt, { type: "info", showIcon: !0, message: a.exactSource }),
+          /* @__PURE__ */ _.jsxs(lt.Compact, { block: !0, children: [
+            /* @__PURE__ */ _.jsx(dt, { type: "url", value: D, onChange: (oe) => N(oe.target.value), placeholder: "https://www.example.com/", "aria-label": a.sourceURL }),
+            /* @__PURE__ */ _.jsx(Ve, { onClick: () => {
               le();
             }, disabled: !D.trim() || A, loading: O, children: a.generate })
           ] }),
-          A && /* @__PURE__ */ N.jsx(Lt, { type: "warning", showIcon: !0, message: r.dirtyCapture, description: r.dirtyCaptureDescription, action: /* @__PURE__ */ N.jsx(Ve, { onClick: () => {
+          A && /* @__PURE__ */ _.jsx(Lt, { type: "warning", showIcon: !0, message: r.dirtyCapture, description: r.dirtyCaptureDescription, action: /* @__PURE__ */ _.jsx(Ve, { onClick: () => {
             K();
           }, disabled: O, children: r.reloadWorking }) }),
-          C && /* @__PURE__ */ N.jsxs(lt, { direction: "vertical", className: "panel-stack", children: [
-            /* @__PURE__ */ N.jsx(xn, { size: "small", column: 2, items: [
+          C && /* @__PURE__ */ _.jsxs(lt, { direction: "vertical", className: "panel-stack", children: [
+            /* @__PURE__ */ _.jsx(xn, { size: "small", column: 2, items: [
               { key: "source", label: a.sourceURL, children: C.source_url },
               { key: "expires", label: a.expires, children: new Date(C.expires_at).toLocaleString(e) }
             ] }),
-            /* @__PURE__ */ N.jsx(_t.Title, { level: 5, children: a.prompt }),
-            /* @__PURE__ */ N.jsx(dt.TextArea, { value: C.prompt, readOnly: !0, autoSize: { minRows: 10, maxRows: 18 } }),
-            /* @__PURE__ */ N.jsx(Ve, { onClick: () => {
+            /* @__PURE__ */ _.jsx(_t.Title, { level: 5, children: a.prompt }),
+            /* @__PURE__ */ _.jsx(dt.TextArea, { value: C.prompt, readOnly: !0, autoSize: { minRows: 10, maxRows: 18 } }),
+            /* @__PURE__ */ _.jsx(Ve, { onClick: () => {
               ie();
             }, children: a.copyPrompt }),
-            /* @__PURE__ */ N.jsx(_t.Title, { level: 5, children: a.pasteResult }),
-            /* @__PURE__ */ N.jsx(dt.TextArea, { value: R, onChange: (oe) => {
+            /* @__PURE__ */ _.jsx(_t.Title, { level: 5, children: a.pasteResult }),
+            /* @__PURE__ */ _.jsx(dt.TextArea, { value: R, onChange: (oe) => {
               $(oe.target.value), I(void 0), T(!1);
             }, autoSize: { minRows: 10, maxRows: 22 }, placeholder: "{ ... }" }),
-            /* @__PURE__ */ N.jsx(Ve, { type: "primary", onClick: () => {
+            /* @__PURE__ */ _.jsx(Ve, { type: "primary", onClick: () => {
               Y();
             }, disabled: !R.trim() || A, loading: O, children: a.validate })
           ] }),
-          M && /* @__PURE__ */ N.jsxs(lt, { direction: "vertical", className: "panel-stack", children: [
-            /* @__PURE__ */ N.jsx(xn, { size: "small", items: [{ key: "status", label: a.status, children: M.status }] }),
-            M.status === "unavailable" && /* @__PURE__ */ N.jsx(Lt, { type: "warning", showIcon: !0, message: a.unavailable }),
-            (M.limitations ?? []).map((oe) => /* @__PURE__ */ N.jsx(Lt, { type: "warning", showIcon: !0, message: a.limitations, description: oe }, oe)),
-            /* @__PURE__ */ N.jsx(
+          M && /* @__PURE__ */ _.jsxs(lt, { direction: "vertical", className: "panel-stack", children: [
+            /* @__PURE__ */ _.jsx(xn, { size: "small", items: [{ key: "status", label: a.status, children: M.status }] }),
+            M.status === "unavailable" && /* @__PURE__ */ _.jsx(Lt, { type: "warning", showIcon: !0, message: a.unavailable }),
+            (M.limitations ?? []).map((oe) => /* @__PURE__ */ _.jsx(Lt, { type: "warning", showIcon: !0, message: a.limitations, description: oe }, oe)),
+            /* @__PURE__ */ _.jsx(
               In,
               {
                 rowKey: "field",
@@ -85545,93 +85543,93 @@ Please change the parent <Route path="${C}"> to <Route path="${C === "/" ? "*" :
                 locale: { emptyText: a.noChanges },
                 columns: [
                   { title: r.field, dataIndex: "field" },
-                  { title: a.current, dataIndex: "before", render: (oe) => /* @__PURE__ */ N.jsx(_t.Text, { code: !0, children: JSON.stringify(oe, null, 2) }) },
-                  { title: a.proposed, dataIndex: "after", render: (oe) => /* @__PURE__ */ N.jsx(_t.Text, { code: !0, children: JSON.stringify(oe, null, 2) }) }
+                  { title: a.current, dataIndex: "before", render: (oe) => /* @__PURE__ */ _.jsx(_t.Text, { code: !0, children: JSON.stringify(oe, null, 2) }) },
+                  { title: a.proposed, dataIndex: "after", render: (oe) => /* @__PURE__ */ _.jsx(_t.Text, { code: !0, children: JSON.stringify(oe, null, 2) }) }
                 ]
               }
             ),
-            M.proposed_configuration && /* @__PURE__ */ N.jsxs(N.Fragment, { children: [
-              /* @__PURE__ */ N.jsx(no, { checked: P, onChange: (oe) => T(oe.target.checked), children: a.rights }),
-              /* @__PURE__ */ N.jsxs(lt, { children: [
-                /* @__PURE__ */ N.jsx(Ve, { type: "primary", onClick: () => {
+            M.proposed_configuration && /* @__PURE__ */ _.jsxs(_.Fragment, { children: [
+              /* @__PURE__ */ _.jsx(no, { checked: P, onChange: (oe) => T(oe.target.checked), children: a.rights }),
+              /* @__PURE__ */ _.jsxs(lt, { children: [
+                /* @__PURE__ */ _.jsx(Ve, { type: "primary", onClick: () => {
                   q();
                 }, disabled: !P || A || M.working_revision !== f?.working_revision, loading: O, children: a.apply }),
-                M.working_revision !== f?.working_revision && /* @__PURE__ */ N.jsx(Ve, { onClick: () => {
+                M.working_revision !== f?.working_revision && /* @__PURE__ */ _.jsx(Ve, { onClick: () => {
                   Q();
                 }, loading: F, children: F ? `${a.preview}…` : a.preview })
               ] })
             ] })
           ] })
         ] }),
-        /* @__PURE__ */ N.jsxs(we, { form: V, layout: "vertical", onFinish: (oe) => {
+        /* @__PURE__ */ _.jsxs(we, { form: V, layout: "vertical", onFinish: (oe) => {
           G(oe);
         }, onValuesChange: () => z(!0), children: [
-          /* @__PURE__ */ N.jsxs(Ot, { size: "small", title: r.organization, children: [
-            /* @__PURE__ */ N.jsx(we.Item, { name: ["organization", "display_name"], label: r.displayName, rules: [{ required: !0 }], children: /* @__PURE__ */ N.jsx(dt, {}) }),
-            /* @__PURE__ */ N.jsxs(lt, { wrap: !0, align: "start", children: [
-              /* @__PURE__ */ N.jsx(we.Item, { name: ["organization", "legal_name"], label: r.legalName, children: /* @__PURE__ */ N.jsx(dt, {}) }),
-              /* @__PURE__ */ N.jsx(we.Item, { name: ["organization", "official_website"], label: r.officialWebsite, rules: [{ type: "url" }], children: /* @__PURE__ */ N.jsx(dt, {}) }),
-              /* @__PURE__ */ N.jsx(we.Item, { name: ["organization", "privacy_url"], label: r.privacyURL, rules: [{ type: "url" }], children: /* @__PURE__ */ N.jsx(dt, {}) }),
-              /* @__PURE__ */ N.jsx(we.Item, { name: ["organization", "terms_url"], label: r.termsURL, rules: [{ type: "url" }], children: /* @__PURE__ */ N.jsx(dt, {}) })
+          /* @__PURE__ */ _.jsxs(Ot, { size: "small", title: r.organization, children: [
+            /* @__PURE__ */ _.jsx(we.Item, { name: ["organization", "display_name"], label: r.displayName, rules: [{ required: !0 }], children: /* @__PURE__ */ _.jsx(dt, {}) }),
+            /* @__PURE__ */ _.jsxs(lt, { wrap: !0, align: "start", children: [
+              /* @__PURE__ */ _.jsx(we.Item, { name: ["organization", "legal_name"], label: r.legalName, children: /* @__PURE__ */ _.jsx(dt, {}) }),
+              /* @__PURE__ */ _.jsx(we.Item, { name: ["organization", "official_website"], label: r.officialWebsite, rules: [{ type: "url" }], children: /* @__PURE__ */ _.jsx(dt, {}) }),
+              /* @__PURE__ */ _.jsx(we.Item, { name: ["organization", "privacy_url"], label: r.privacyURL, rules: [{ type: "url" }], children: /* @__PURE__ */ _.jsx(dt, {}) }),
+              /* @__PURE__ */ _.jsx(we.Item, { name: ["organization", "terms_url"], label: r.termsURL, rules: [{ type: "url" }], children: /* @__PURE__ */ _.jsx(dt, {}) })
             ] }),
-            /* @__PURE__ */ N.jsx(lt, { wrap: !0, align: "start", children: [
+            /* @__PURE__ */ _.jsx(lt, { wrap: !0, align: "start", children: [
               ["primary_logo_asset_id", r.primaryLogo],
               ["dark_logo_asset_id", r.darkLogo],
               ["favicon_asset_id", r.favicon],
               ["social_image_asset_id", r.socialImage]
-            ].map(([oe, ce]) => /* @__PURE__ */ N.jsxs(lt, { direction: "vertical", children: [
-              /* @__PURE__ */ N.jsx(we.Item, { name: ["organization", oe], label: `${ce} ${r.assetID}`, children: /* @__PURE__ */ N.jsx(dt, { readOnly: !0, allowClear: !0 }) }),
-              /* @__PURE__ */ N.jsx(Pl, { accept: ".jpg,.jpeg,.png,.webp,.svg", showUploadList: !1, beforeUpload: (Z) => (k(Z, oe), !1), children: /* @__PURE__ */ N.jsxs(Ve, { loading: O, children: [
+            ].map(([oe, ce]) => /* @__PURE__ */ _.jsxs(lt, { direction: "vertical", children: [
+              /* @__PURE__ */ _.jsx(we.Item, { name: ["organization", oe], label: `${ce} ${r.assetID}`, children: /* @__PURE__ */ _.jsx(dt, { readOnly: !0, allowClear: !0 }) }),
+              /* @__PURE__ */ _.jsx(Pl, { accept: ".jpg,.jpeg,.png,.webp,.svg", showUploadList: !1, beforeUpload: (Z) => (k(Z, oe), !1), children: /* @__PURE__ */ _.jsxs(Ve, { loading: O, children: [
                 r.upload,
                 " ",
                 ce
               ] }) })
             ] }, oe)) }),
-            /* @__PURE__ */ N.jsx(we.List, { name: ["organization", "contact_links"], children: (oe, { add: ce, remove: Z }) => /* @__PURE__ */ N.jsxs(lt, { direction: "vertical", className: "panel-stack", children: [
-              oe.map((me) => /* @__PURE__ */ N.jsxs(lt, { wrap: !0, align: "start", children: [
-                /* @__PURE__ */ N.jsx(we.Item, { ...me, name: [me.name, "id"], label: r.contactID, rules: [{ required: !0 }], children: /* @__PURE__ */ N.jsx(dt, {}) }),
-                /* @__PURE__ */ N.jsx(we.Item, { ...me, name: [me.name, "label"], label: r.label, rules: [{ required: !0 }], children: /* @__PURE__ */ N.jsx(dt, {}) }),
-                /* @__PURE__ */ N.jsx(we.Item, { ...me, name: [me.name, "url"], label: r.url, rules: [{ required: !0 }, { type: "url" }], children: /* @__PURE__ */ N.jsx(dt, {}) }),
-                /* @__PURE__ */ N.jsx(we.Item, { ...me, name: [me.name, "sort_order"], label: r.order, children: /* @__PURE__ */ N.jsx(Jo, {}) }),
-                /* @__PURE__ */ N.jsx(Ve, { danger: !0, onClick: () => Z(me.name), children: r.removeContact })
+            /* @__PURE__ */ _.jsx(we.List, { name: ["organization", "contact_links"], children: (oe, { add: ce, remove: Z }) => /* @__PURE__ */ _.jsxs(lt, { direction: "vertical", className: "panel-stack", children: [
+              oe.map((me) => /* @__PURE__ */ _.jsxs(lt, { wrap: !0, align: "start", children: [
+                /* @__PURE__ */ _.jsx(we.Item, { ...me, name: [me.name, "id"], label: r.contactID, rules: [{ required: !0 }], children: /* @__PURE__ */ _.jsx(dt, {}) }),
+                /* @__PURE__ */ _.jsx(we.Item, { ...me, name: [me.name, "label"], label: r.label, rules: [{ required: !0 }], children: /* @__PURE__ */ _.jsx(dt, {}) }),
+                /* @__PURE__ */ _.jsx(we.Item, { ...me, name: [me.name, "url"], label: r.url, rules: [{ required: !0 }, { type: "url" }], children: /* @__PURE__ */ _.jsx(dt, {}) }),
+                /* @__PURE__ */ _.jsx(we.Item, { ...me, name: [me.name, "sort_order"], label: r.order, children: /* @__PURE__ */ _.jsx(Jo, {}) }),
+                /* @__PURE__ */ _.jsx(Ve, { danger: !0, onClick: () => Z(me.name), children: r.removeContact })
               ] }, me.key)),
-              /* @__PURE__ */ N.jsx(Ve, { onClick: () => ce({ id: "", label: "", url: "", sort_order: oe.length * 10 }), children: r.addContact })
+              /* @__PURE__ */ _.jsx(Ve, { onClick: () => ce({ id: "", label: "", url: "", sort_order: oe.length * 10 }), children: r.addContact })
             ] }) })
           ] }),
-          /* @__PURE__ */ N.jsx(Ot, { size: "small", title: r.navigation, children: /* @__PURE__ */ N.jsx(we.List, { name: "navigation", children: (oe, { add: ce, remove: Z }) => /* @__PURE__ */ N.jsxs(lt, { direction: "vertical", className: "panel-stack", children: [
-            oe.map((me) => /* @__PURE__ */ N.jsxs(lt, { wrap: !0, align: "start", children: [
-              /* @__PURE__ */ N.jsx(we.Item, { ...me, name: [me.name, "id"], label: r.id, rules: [{ required: !0 }], children: /* @__PURE__ */ N.jsx(dt, {}) }),
-              /* @__PURE__ */ N.jsx(we.Item, { ...me, name: [me.name, "parent_id"], label: r.parentID, children: /* @__PURE__ */ N.jsx(dt, {}) }),
-              /* @__PURE__ */ N.jsx(we.Item, { ...me, name: [me.name, "label"], label: r.label, rules: [{ required: !0 }], children: /* @__PURE__ */ N.jsx(dt, {}) }),
-              /* @__PURE__ */ N.jsx(Jve, { fieldName: me.name, copy: s, urlLabel: r.url, newWindowLabel: r.newWindow }),
-              /* @__PURE__ */ N.jsx(we.Item, { ...me, name: [me.name, "sort_order"], label: r.order, children: /* @__PURE__ */ N.jsx(Jo, {}) }),
-              /* @__PURE__ */ N.jsx(we.Item, { ...me, name: [me.name, "visible"], valuePropName: "checked", children: /* @__PURE__ */ N.jsx(no, { children: r.visible }) }),
-              /* @__PURE__ */ N.jsx(Ve, { danger: !0, onClick: () => Z(me.name), children: r.removeLink })
+          /* @__PURE__ */ _.jsx(Ot, { size: "small", title: r.navigation, children: /* @__PURE__ */ _.jsx(we.List, { name: "navigation", children: (oe, { add: ce, remove: Z }) => /* @__PURE__ */ _.jsxs(lt, { direction: "vertical", className: "panel-stack", children: [
+            oe.map((me) => /* @__PURE__ */ _.jsxs(lt, { wrap: !0, align: "start", children: [
+              /* @__PURE__ */ _.jsx(we.Item, { ...me, name: [me.name, "id"], label: r.id, rules: [{ required: !0 }], children: /* @__PURE__ */ _.jsx(dt, {}) }),
+              /* @__PURE__ */ _.jsx(we.Item, { ...me, name: [me.name, "parent_id"], label: r.parentID, children: /* @__PURE__ */ _.jsx(dt, {}) }),
+              /* @__PURE__ */ _.jsx(we.Item, { ...me, name: [me.name, "label"], label: r.label, rules: [{ required: !0 }], children: /* @__PURE__ */ _.jsx(dt, {}) }),
+              /* @__PURE__ */ _.jsx(Jve, { fieldName: me.name, copy: s, urlLabel: r.url, newWindowLabel: r.newWindow }),
+              /* @__PURE__ */ _.jsx(we.Item, { ...me, name: [me.name, "sort_order"], label: r.order, children: /* @__PURE__ */ _.jsx(Jo, {}) }),
+              /* @__PURE__ */ _.jsx(we.Item, { ...me, name: [me.name, "visible"], valuePropName: "checked", children: /* @__PURE__ */ _.jsx(no, { children: r.visible }) }),
+              /* @__PURE__ */ _.jsx(Ve, { danger: !0, onClick: () => Z(me.name), children: r.removeLink })
             ] }, me.key)),
-            /* @__PURE__ */ N.jsx(Ve, { onClick: () => ce({ id: "", label: "", url: "/", target_type: "link", presentation: "direct", sort_order: oe.length * 10, visible: !0, open_new_window: !1 }), children: r.addLink })
+            /* @__PURE__ */ _.jsx(Ve, { onClick: () => ce({ id: "", label: "", url: "/", target_type: "link", presentation: "direct", sort_order: oe.length * 10, visible: !0, open_new_window: !1 }), children: r.addLink })
           ] }) }) }),
-          /* @__PURE__ */ N.jsxs(Ot, { size: "small", title: r.themeSEO, children: [
-            /* @__PURE__ */ N.jsxs(lt, { wrap: !0, align: "start", children: [
-              /* @__PURE__ */ N.jsx(we.Item, { name: ["theme", "primary_color"], label: r.primaryColor, rules: [{ required: !0 }, { pattern: /^#[0-9a-fA-F]{6}$/ }], children: /* @__PURE__ */ N.jsx(dt, { type: "color" }) }),
-              /* @__PURE__ */ N.jsx(we.Item, { name: ["theme", "secondary_color"], label: r.secondaryColor, rules: [{ required: !0 }, { pattern: /^#[0-9a-fA-F]{6}$/ }], children: /* @__PURE__ */ N.jsx(dt, { type: "color" }) }),
-              /* @__PURE__ */ N.jsx(we.Item, { name: ["theme", "font_family"], label: r.fontFamily, rules: [{ required: !0 }], children: /* @__PURE__ */ N.jsx(dt, {}) }),
-              /* @__PURE__ */ N.jsx(we.Item, { name: ["theme", "content_width_px"], label: r.contentWidth, rules: [{ required: !0 }], children: /* @__PURE__ */ N.jsx(Jo, { min: 640, max: 1920 }) })
+          /* @__PURE__ */ _.jsxs(Ot, { size: "small", title: r.themeSEO, children: [
+            /* @__PURE__ */ _.jsxs(lt, { wrap: !0, align: "start", children: [
+              /* @__PURE__ */ _.jsx(we.Item, { name: ["theme", "primary_color"], label: r.primaryColor, rules: [{ required: !0 }, { pattern: /^#[0-9a-fA-F]{6}$/ }], children: /* @__PURE__ */ _.jsx(dt, { type: "color" }) }),
+              /* @__PURE__ */ _.jsx(we.Item, { name: ["theme", "secondary_color"], label: r.secondaryColor, rules: [{ required: !0 }, { pattern: /^#[0-9a-fA-F]{6}$/ }], children: /* @__PURE__ */ _.jsx(dt, { type: "color" }) }),
+              /* @__PURE__ */ _.jsx(we.Item, { name: ["theme", "font_family"], label: r.fontFamily, rules: [{ required: !0 }], children: /* @__PURE__ */ _.jsx(dt, {}) }),
+              /* @__PURE__ */ _.jsx(we.Item, { name: ["theme", "content_width_px"], label: r.contentWidth, rules: [{ required: !0 }], children: /* @__PURE__ */ _.jsx(Jo, { min: 640, max: 1920 }) })
             ] }),
-            /* @__PURE__ */ N.jsx(we.Item, { name: ["theme", "custom_css_enabled"], valuePropName: "checked", children: /* @__PURE__ */ N.jsx(no, { children: r.applyCSS }) }),
-            /* @__PURE__ */ N.jsx(we.Item, { name: ["theme", "custom_css"], label: r.customCSS, children: /* @__PURE__ */ N.jsx(dt.TextArea, { rows: 6 }) }),
-            /* @__PURE__ */ N.jsx(we.Item, { name: ["seo", "default_title"], label: r.defaultTitle, children: /* @__PURE__ */ N.jsx(dt, {}) }),
-            /* @__PURE__ */ N.jsx(we.Item, { name: ["seo", "default_description"], label: r.defaultDescription, children: /* @__PURE__ */ N.jsx(dt.TextArea, { rows: 3 }) })
+            /* @__PURE__ */ _.jsx(we.Item, { name: ["theme", "custom_css_enabled"], valuePropName: "checked", children: /* @__PURE__ */ _.jsx(no, { children: r.applyCSS }) }),
+            /* @__PURE__ */ _.jsx(we.Item, { name: ["theme", "custom_css"], label: r.customCSS, children: /* @__PURE__ */ _.jsx(dt.TextArea, { rows: 6 }) }),
+            /* @__PURE__ */ _.jsx(we.Item, { name: ["seo", "default_title"], label: r.defaultTitle, children: /* @__PURE__ */ _.jsx(dt, {}) }),
+            /* @__PURE__ */ _.jsx(we.Item, { name: ["seo", "default_description"], label: r.defaultDescription, children: /* @__PURE__ */ _.jsx(dt.TextArea, { rows: 3 }) })
           ] }),
-          /* @__PURE__ */ N.jsxs(lt, { children: [
-            /* @__PURE__ */ N.jsx(Ve, { type: "primary", htmlType: "submit", loading: O, children: r.saveWorking }),
-            /* @__PURE__ */ N.jsx(Ve, { onClick: () => {
+          /* @__PURE__ */ _.jsxs(lt, { children: [
+            /* @__PURE__ */ _.jsx(Ve, { type: "primary", htmlType: "submit", loading: O, children: r.saveWorking }),
+            /* @__PURE__ */ _.jsx(Ve, { onClick: () => {
               Q();
             }, disabled: !f, loading: F, children: F ? `${r.previewWorking}…` : r.previewWorking })
           ] })
         ] })
       ] }),
-      /* @__PURE__ */ N.jsx(Ot, { title: r.searchExposure, loading: !p && O, children: /* @__PURE__ */ N.jsxs(lt, { direction: "vertical", className: "panel-stack", children: [
-        /* @__PURE__ */ N.jsx(
+      /* @__PURE__ */ _.jsx(Ot, { title: r.searchExposure, loading: !p && O, children: /* @__PURE__ */ _.jsxs(lt, { direction: "vertical", className: "panel-stack", children: [
+        /* @__PURE__ */ _.jsx(
           Lt,
           {
             showIcon: !0,
@@ -85640,18 +85638,18 @@ Please change the parent <Route path="${C}"> to <Route path="${C === "/" ? "*" :
             description: r.searchHelp
           }
         ),
-        p && /* @__PURE__ */ N.jsxs(we, { form: X, layout: "vertical", onFinish: (oe) => {
+        p && /* @__PURE__ */ _.jsxs(we, { form: X, layout: "vertical", onFinish: (oe) => {
           te(oe);
         }, children: [
-          /* @__PURE__ */ N.jsxs(Ot, { size: "small", title: r.indexNowTitle, children: [
-            /* @__PURE__ */ N.jsx(we.Item, { name: "indexnow_enabled", valuePropName: "checked", children: /* @__PURE__ */ N.jsx(no, { disabled: !p.indexnow_available, children: r.enableIndexNow }) }),
-            !p.indexnow_available && /* @__PURE__ */ N.jsx(Lt, { showIcon: !0, type: "warning", message: r.indexNowUnavailable }),
-            p.indexnow_key_url && /* @__PURE__ */ N.jsx(xn, { size: "small", items: [{ key: "key", label: r.keyURL, children: /* @__PURE__ */ N.jsx(_t.Text, { copyable: !0, children: p.indexnow_key_url }) }] })
+          /* @__PURE__ */ _.jsxs(Ot, { size: "small", title: r.indexNowTitle, children: [
+            /* @__PURE__ */ _.jsx(we.Item, { name: "indexnow_enabled", valuePropName: "checked", children: /* @__PURE__ */ _.jsx(no, { disabled: !p.indexnow_available, children: r.enableIndexNow }) }),
+            !p.indexnow_available && /* @__PURE__ */ _.jsx(Lt, { showIcon: !0, type: "warning", message: r.indexNowUnavailable }),
+            p.indexnow_key_url && /* @__PURE__ */ _.jsx(xn, { size: "small", items: [{ key: "key", label: r.keyURL, children: /* @__PURE__ */ _.jsx(_t.Text, { copyable: !0, children: p.indexnow_key_url }) }] })
           ] }),
-          /* @__PURE__ */ N.jsxs(Ot, { size: "small", title: r.googleTitle, children: [
-            /* @__PURE__ */ N.jsx(we.Item, { name: "google_enabled", valuePropName: "checked", children: /* @__PURE__ */ N.jsx(no, { disabled: !p.google_available, children: r.enableGoogle }) }),
-            !p.google_available && /* @__PURE__ */ N.jsx(Lt, { showIcon: !0, type: "warning", message: r.googleUnavailable }),
-            /* @__PURE__ */ N.jsx(
+          /* @__PURE__ */ _.jsxs(Ot, { size: "small", title: r.googleTitle, children: [
+            /* @__PURE__ */ _.jsx(we.Item, { name: "google_enabled", valuePropName: "checked", children: /* @__PURE__ */ _.jsx(no, { disabled: !p.google_available, children: r.enableGoogle }) }),
+            !p.google_available && /* @__PURE__ */ _.jsx(Lt, { showIcon: !0, type: "warning", message: r.googleUnavailable }),
+            /* @__PURE__ */ _.jsx(
               we.Item,
               {
                 name: "google_site_url",
@@ -85660,36 +85658,36 @@ Please change the parent <Route path="${C}"> to <Route path="${C === "/" ? "*" :
                 rules: [({ getFieldValue: oe }) => ({ validator(ce, Z) {
                   return !oe("google_enabled") || Z?.trim() ? Promise.resolve() : Promise.reject(new Error(r.sitePropertyRequired));
                 } })],
-                children: /* @__PURE__ */ N.jsx(dt, { disabled: !p.google_available })
+                children: /* @__PURE__ */ _.jsx(dt, { disabled: !p.google_available })
               }
             )
           ] }),
-          /* @__PURE__ */ N.jsx(Ve, { type: "primary", htmlType: "submit", loading: O, children: r.saveSearch })
+          /* @__PURE__ */ _.jsx(Ve, { type: "primary", htmlType: "submit", loading: O, children: r.saveSearch })
         ] })
       ] }) }),
-      /* @__PURE__ */ N.jsxs(Ot, { title: r.publicRoutes, loading: !c && O, children: [
-        c && /* @__PURE__ */ N.jsx(xn, { size: "small", column: 3, items: [
+      /* @__PURE__ */ _.jsxs(Ot, { title: r.publicRoutes, loading: !c && O, children: [
+        c && /* @__PURE__ */ _.jsx(xn, { size: "small", column: 3, items: [
           { key: "epoch", label: r.activeEpoch, children: c.current_epoch },
           { key: "prefix", label: r.activePrefix, children: c.config.product_prefix },
           { key: "pattern", label: r.activePattern, children: c.config.url_pattern }
         ] }),
-        /* @__PURE__ */ N.jsx(_t.Paragraph, { type: "secondary", children: r.routesHelp }),
-        /* @__PURE__ */ N.jsxs(we, { form: H, layout: "inline", onFinish: (oe) => {
+        /* @__PURE__ */ _.jsx(_t.Paragraph, { type: "secondary", children: r.routesHelp }),
+        /* @__PURE__ */ _.jsxs(we, { form: H, layout: "inline", onFinish: (oe) => {
           B(oe);
         }, onValuesChange: () => S(void 0), children: [
-          /* @__PURE__ */ N.jsx(we.Item, { name: "product_prefix", label: r.productPrefix, rules: [{ required: !0 }, { pattern: /^\/[A-Za-z0-9._-]+$/, message: r.safeSegment }], children: /* @__PURE__ */ N.jsx(dt, { placeholder: "/products" }) }),
-          /* @__PURE__ */ N.jsx(we.Item, { name: "url_pattern", label: r.pattern, rules: [{ required: !0 }], children: /* @__PURE__ */ N.jsx(kt, { style: { width: 190 }, options: [
+          /* @__PURE__ */ _.jsx(we.Item, { name: "product_prefix", label: r.productPrefix, rules: [{ required: !0 }, { pattern: /^\/[A-Za-z0-9._-]+$/, message: r.safeSegment }], children: /* @__PURE__ */ _.jsx(dt, { placeholder: "/products" }) }),
+          /* @__PURE__ */ _.jsx(we.Item, { name: "url_pattern", label: r.pattern, rules: [{ required: !0 }], children: /* @__PURE__ */ _.jsx(kt, { style: { width: 190 }, options: [
             { value: "compact", label: r.compact },
             { value: "manufacturer", label: r.manufacturerPath },
             { value: "brand", label: r.brandPath },
             { value: "category", label: r.categoryPath }
           ] }) }),
-          /* @__PURE__ */ N.jsx(Ve, { htmlType: "submit", loading: O, children: r.previewSite })
+          /* @__PURE__ */ _.jsx(Ve, { htmlType: "submit", loading: O, children: r.previewSite })
         ] })
       ] }),
-      b && /* @__PURE__ */ N.jsxs(Ot, { title: r.candidateEpoch(b.candidate_epoch), children: [
-        pe ? /* @__PURE__ */ N.jsx(Lt, { type: "success", showIcon: !0, message: r.routesReady(b.affected, b.working_revision) }) : /* @__PURE__ */ N.jsx(Lt, { type: "error", showIcon: !0, message: r.cannotPublish, description: r.cannotPublishDescription }),
-        fe.length > 0 && /* @__PURE__ */ N.jsx(
+      b && /* @__PURE__ */ _.jsxs(Ot, { title: r.candidateEpoch(b.candidate_epoch), children: [
+        pe ? /* @__PURE__ */ _.jsx(Lt, { type: "success", showIcon: !0, message: r.routesReady(b.affected, b.working_revision) }) : /* @__PURE__ */ _.jsx(Lt, { type: "error", showIcon: !0, message: r.cannotPublish, description: r.cannotPublishDescription }),
+        fe.length > 0 && /* @__PURE__ */ _.jsx(
           In,
           {
             rowKey: (oe) => `${oe.product_id}:${oe.reason}:${oe.route ?? ""}`,
@@ -85703,11 +85701,11 @@ Please change the parent <Route path="${C}"> to <Route path="${C === "/" ? "*" :
             ]
           }
         ),
-        /* @__PURE__ */ N.jsx(Lr, { title: r.publishConfirm, onConfirm: () => {
+        /* @__PURE__ */ _.jsx(Lr, { title: r.publishConfirm, onConfirm: () => {
           J();
-        }, disabled: !pe, children: /* @__PURE__ */ N.jsx(Ve, { type: "primary", disabled: !pe, loading: O, children: r.publishWebsite }) })
+        }, disabled: !pe, children: /* @__PURE__ */ _.jsx(Ve, { type: "primary", disabled: !pe, loading: O, children: r.publishWebsite }) })
       ] }),
-      /* @__PURE__ */ N.jsx(Ot, { title: r.publishedVersions, children: /* @__PURE__ */ N.jsx(
+      /* @__PURE__ */ _.jsx(Ot, { title: r.publishedVersions, children: /* @__PURE__ */ _.jsx(
         In,
         {
           rowKey: "version",
@@ -85720,9 +85718,9 @@ Please change the parent <Route path="${C}"> to <Route path="${C === "/" ? "*" :
             { title: r.created, dataIndex: "created_at", render: (oe) => new Date(oe).toLocaleString(e) },
             {
               title: r.action,
-              render: (oe, ce) => /* @__PURE__ */ N.jsx(Lr, { title: r.restoreConfirm(ce.version), onConfirm: () => {
+              render: (oe, ce) => /* @__PURE__ */ _.jsx(Lr, { title: r.restoreConfirm(ce.version), onConfirm: () => {
                 re(ce.version);
-              }, children: /* @__PURE__ */ N.jsx(Ve, { disabled: O, children: r.restoreWorking }) })
+              }, children: /* @__PURE__ */ _.jsx(Ve, { disabled: O, children: r.restoreWorking }) })
             }
           ]
         }
@@ -85981,104 +85979,104 @@ Please change the parent <Route path="${C}"> to <Route path="${C === "/" ? "*" :
     return the(e) ? e : C1(document.documentElement.lang);
   }
   function ibe() {
-    const [e, t] = l.useState(abe), [n, r] = l.useState(), [a, s] = l.useState(), [c, u] = l.useState(!1), f = A1(), m = ra(), p = hv(), g = m.pathname.replace(/^\//, "") || "catalog", v = Object.keys(gv).filter((_) => gv[_].every((P) => f.capabilities[P])), y = v.includes(g) ? g : "", b = (_) => {
-      r(void 0), s(void 0), p(`/${_}`);
-    }, [S, C] = l.useState(), E = tbe[e], R = (_) => {
-      s(void 0), r(_);
-    }, $ = (_) => {
-      s(obe(_));
+    const [e, t] = l.useState(abe), [n, r] = l.useState(), [a, s] = l.useState(), [c, u] = l.useState(!1), f = A1(), m = ra(), p = hv(), g = m.pathname.replace(/^\//, "") || "catalog", v = Object.keys(gv).filter((N) => gv[N].every((P) => f.capabilities[P])), y = v.includes(g) ? g : "", b = (N) => {
+      r(void 0), s(void 0), p(`/${N}`);
+    }, [S, C] = l.useState(), E = tbe[e], R = (N) => {
+      s(void 0), r(N);
+    }, $ = (N) => {
+      s(obe(N));
     }, M = async () => {
       try {
         await H4.logout({});
-      } catch (_) {
-        $(_);
+      } catch (N) {
+        $(N);
       }
     };
     l.useEffect(() => {
       document.documentElement.lang = e, window.localStorage.setItem("prods-admin-locale", e), ahe(e);
     }, [e]), l.useEffect(() => {
-      let _ = !1;
+      let N = !1;
       if (f.capabilities["system.manage"])
         return Rt("/admin/api/system/health").then((P) => {
-          _ || (C(P), P.status === "Critical" && b("health"));
+          N || (C(P), P.status === "Critical" && b("health"));
         }).catch(() => {
         }), () => {
-          _ = !0;
+          N = !0;
         };
     }, []);
     const I = [
       {
         key: "catalog",
         label: E.catalog,
-        content: /* @__PURE__ */ N.jsx(mve, { locale: e, onError: $, onMessage: R })
+        content: /* @__PURE__ */ _.jsx(mve, { locale: e, onError: $, onMessage: R })
       },
       {
         key: "taxonomy",
         label: E.taxonomy,
-        content: /* @__PURE__ */ N.jsx(Bve, { locale: e, onError: $, onMessage: R })
+        content: /* @__PURE__ */ _.jsx(Bve, { locale: e, onError: $, onMessage: R })
       },
       {
         key: "imports",
         label: E.imports,
-        content: /* @__PURE__ */ N.jsx(xve, { locale: e, onError: $, onMessage: R })
+        content: /* @__PURE__ */ _.jsx(xve, { locale: e, onError: $, onMessage: R })
       },
       {
         key: "product-bulk",
         label: E.productBulk,
-        content: /* @__PURE__ */ N.jsx(Ave, { locale: e, onError: $, onMessage: R })
+        content: /* @__PURE__ */ _.jsx(Ave, { locale: e, onError: $, onMessage: R })
       },
       {
         key: "jobs",
         label: E.jobs,
-        content: /* @__PURE__ */ N.jsx(Rve, { locale: e, onError: $, onMessage: R })
+        content: /* @__PURE__ */ _.jsx(Rve, { locale: e, onError: $, onMessage: R })
       },
       {
         key: "website",
         label: E.website,
-        content: /* @__PURE__ */ N.jsx(ebe, { locale: e, onError: $, onMessage: R })
+        content: /* @__PURE__ */ _.jsx(ebe, { locale: e, onError: $, onMessage: R })
       },
       {
         key: "listing-profiles",
         label: E.listingProfiles,
-        content: /* @__PURE__ */ N.jsx(_ve, { locale: e, onError: $, onMessage: R })
+        content: /* @__PURE__ */ _.jsx(_ve, { locale: e, onError: $, onMessage: R })
       },
       {
         key: "public-copy",
         label: E.publicCopy,
-        content: /* @__PURE__ */ N.jsx(Mve, { locale: e, onError: $, onMessage: R })
+        content: /* @__PURE__ */ _.jsx(Mve, { locale: e, onError: $, onMessage: R })
       },
       {
         key: "access",
         label: E.access,
-        content: /* @__PURE__ */ N.jsx(uhe, { locale: e, onError: $, onMessage: R })
+        content: /* @__PURE__ */ _.jsx(uhe, { locale: e, onError: $, onMessage: R })
       },
       {
         key: "activity",
         label: E.activity,
-        content: /* @__PURE__ */ N.jsx(mhe, { locale: e, onError: $ })
+        content: /* @__PURE__ */ _.jsx(mhe, { locale: e, onError: $ })
       },
       {
         key: "settings",
         label: E.settings,
-        content: /* @__PURE__ */ N.jsx(Lve, { locale: e, onError: $, onMessage: R })
+        content: /* @__PURE__ */ _.jsx(Lve, { locale: e, onError: $, onMessage: R })
       },
       {
         key: "health",
         label: E.health,
-        content: /* @__PURE__ */ N.jsx(vve, { locale: e, onError: $ })
+        content: /* @__PURE__ */ _.jsx(vve, { locale: e, onError: $ })
       },
       {
         key: "backups",
         label: E.backups,
-        content: /* @__PURE__ */ N.jsx(ove, { locale: e, onError: $, onMessage: R })
+        content: /* @__PURE__ */ _.jsx(ove, { locale: e, onError: $, onMessage: R })
       },
       {
         key: "traffic",
         label: E.traffic,
-        content: /* @__PURE__ */ N.jsx(Uve, { locale: e, onError: $, onMessage: R })
+        content: /* @__PURE__ */ _.jsx(Uve, { locale: e, onError: $, onMessage: R })
       }
-    ].filter((_) => v.includes(_.key)), D = I.find((_) => _.key === y);
-    return /* @__PURE__ */ N.jsx(
+    ].filter((N) => v.includes(N.key)), D = I.find((N) => N.key === y);
+    return /* @__PURE__ */ _.jsx(
       Fo,
       {
         locale: g4(e),
@@ -86089,8 +86087,8 @@ Please change the parent <Route path="${C}"> to <Route path="${C === "/" ? "*" :
             colorBgLayout: "#f2f5f7"
           }
         },
-        children: /* @__PURE__ */ N.jsxs(Ua, { className: "admin-shell", children: [
-          /* @__PURE__ */ N.jsxs(
+        children: /* @__PURE__ */ _.jsxs(Ua, { className: "admin-shell", children: [
+          /* @__PURE__ */ _.jsxs(
             Ua.Sider,
             {
               className: "admin-sidebar",
@@ -86101,43 +86099,43 @@ Please change the parent <Route path="${C}"> to <Route path="${C === "/" ? "*" :
               onCollapse: u,
               trigger: null,
               children: [
-                /* @__PURE__ */ N.jsxs("div", { className: "sidebar-brand", children: [
-                  /* @__PURE__ */ N.jsx(_t.Title, { level: 2, className: "brand-title", children: "Prods" }),
-                  /* @__PURE__ */ N.jsx(_t.Text, { className: "brand-subtitle", children: E.subtitle })
+                /* @__PURE__ */ _.jsxs("div", { className: "sidebar-brand", children: [
+                  /* @__PURE__ */ _.jsx(_t.Title, { level: 2, className: "brand-title", children: "Prods" }),
+                  /* @__PURE__ */ _.jsx(_t.Text, { className: "brand-subtitle", children: E.subtitle })
                 ] }),
-                /* @__PURE__ */ N.jsx(
+                /* @__PURE__ */ _.jsx(
                   Ll,
                   {
                     className: "admin-menu",
                     theme: "dark",
                     mode: "inline",
                     selectedKeys: y ? [y] : [],
-                    items: I.map(({ key: _, label: P }) => ({ key: _, label: P })),
-                    onClick: ({ key: _ }) => {
-                      b(_), window.matchMedia("(max-width: 991px)").matches && u(!0);
+                    items: I.map(({ key: N, label: P }) => ({ key: N, label: P })),
+                    onClick: ({ key: N }) => {
+                      b(N), window.matchMedia("(max-width: 991px)").matches && u(!0);
                     }
                   }
                 )
               ]
             }
           ),
-          /* @__PURE__ */ N.jsxs(Ua, { className: "admin-main", children: [
-            /* @__PURE__ */ N.jsx(Ua.Header, { className: "admin-header", children: /* @__PURE__ */ N.jsxs("div", { className: "header-content", children: [
-              /* @__PURE__ */ N.jsxs(lt, { size: "small", children: [
-                /* @__PURE__ */ N.jsx(
+          /* @__PURE__ */ _.jsxs(Ua, { className: "admin-main", children: [
+            /* @__PURE__ */ _.jsx(Ua.Header, { className: "admin-header", children: /* @__PURE__ */ _.jsxs("div", { className: "header-content", children: [
+              /* @__PURE__ */ _.jsxs(lt, { size: "small", children: [
+                /* @__PURE__ */ _.jsx(
                   Ve,
                   {
                     className: "sidebar-toggle",
                     type: "text",
                     "aria-label": nbe[e],
-                    onClick: () => u((_) => !_),
+                    onClick: () => u((N) => !N),
                     children: "☰"
                   }
                 ),
-                /* @__PURE__ */ N.jsx(_t.Title, { level: 4, className: "section-title", children: D?.label ?? "Admin" })
+                /* @__PURE__ */ _.jsx(_t.Title, { level: 4, className: "section-title", children: D?.label ?? "Admin" })
               ] }),
-              /* @__PURE__ */ N.jsxs(lt, { className: "header-actions", children: [
-                /* @__PURE__ */ N.jsx(
+              /* @__PURE__ */ _.jsxs(lt, { className: "header-actions", children: [
+                /* @__PURE__ */ _.jsx(
                   kt,
                   {
                     "aria-label": E.language,
@@ -86146,14 +86144,14 @@ Please change the parent <Route path="${C}"> to <Route path="${C === "/" ? "*" :
                     options: [...gu]
                   }
                 ),
-                /* @__PURE__ */ N.jsx(Ve, { onClick: () => {
+                /* @__PURE__ */ _.jsx(Ve, { onClick: () => {
                   M();
                 }, children: E.signOut })
               ] })
             ] }) }),
-            /* @__PURE__ */ N.jsx(Ua.Content, { className: "content", children: /* @__PURE__ */ N.jsxs(lt, { direction: "vertical", size: "middle", className: "panel-stack", children: [
-              n && /* @__PURE__ */ N.jsx(Lt, { closable: !0, type: "success", showIcon: !0, message: n, onClose: () => r(void 0) }),
-              a && /* @__PURE__ */ N.jsx(
+            /* @__PURE__ */ _.jsx(Ua.Content, { className: "content", children: /* @__PURE__ */ _.jsxs(lt, { direction: "vertical", size: "middle", className: "panel-stack", children: [
+              n && /* @__PURE__ */ _.jsx(Lt, { closable: !0, type: "success", showIcon: !0, message: n, onClose: () => r(void 0) }),
+              a && /* @__PURE__ */ _.jsx(
                 Lt,
                 {
                   closable: !0,
@@ -86164,17 +86162,17 @@ Please change the parent <Route path="${C}"> to <Route path="${C === "/" ? "*" :
                   onClose: () => s(void 0)
                 }
               ),
-              S?.status === "Warning" && /* @__PURE__ */ N.jsx(
+              S?.status === "Warning" && /* @__PURE__ */ _.jsx(
                 Lt,
                 {
                   type: "warning",
                   showIcon: !0,
                   message: E.healthWarning,
                   description: E.healthWarningDescription,
-                  action: /* @__PURE__ */ N.jsx(Ve, { size: "small", onClick: () => b("health"), children: E.health })
+                  action: /* @__PURE__ */ _.jsx(Ve, { size: "small", onClick: () => b("health"), children: E.health })
                 }
               ),
-              !y && /* @__PURE__ */ N.jsx(Lt, { type: "warning", title: rbe[e] }),
+              !y && /* @__PURE__ */ _.jsx(Lt, { type: "warning", title: rbe[e] }),
               D?.content
             ] }) })
           ] })
@@ -86183,8 +86181,8 @@ Please change the parent <Route path="${C}"> to <Route path="${C === "/" ? "*" :
     );
   }
   const JL = document.getElementById("admin-root");
-  JL && CE.createRoot(JL).render(/* @__PURE__ */ N.jsx(tve, { children: /* @__PURE__ */ N.jsx(ibe, {}) }));
+  JL && CE.createRoot(JL).render(/* @__PURE__ */ _.jsx(tve, { children: /* @__PURE__ */ _.jsx(ibe, {}) }));
   const h0 = document.getElementById("admin-login-root");
-  h0 && CE.createRoot(h0).render(/* @__PURE__ */ N.jsx(Tve, { root: h0 }));
+  h0 && CE.createRoot(h0).render(/* @__PURE__ */ _.jsx(Tve, { root: h0 }));
 });
 export default sbe();

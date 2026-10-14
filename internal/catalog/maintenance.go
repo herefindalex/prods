@@ -191,22 +191,26 @@ const (
 )
 
 type NormalizedValue struct {
-	ID                  string           `json:"id"`
-	SpecValueID         string           `json:"spec_value_id"`
-	ValueJSON           string           `json:"value_json,omitempty"`
-	SourceRevision      int64            `json:"source_revision"`
-	SpecSemanticVersion int64            `json:"spec_semantic_version"`
-	NormalizerVersion   string           `json:"normalizer_version"`
-	Source              NormalizedSource `json:"source"`
-	Status              NormalizedStatus `json:"status"`
-	FailureReason       string           `json:"failure_reason,omitempty"`
+	ID                   string           `json:"id"`
+	SpecValueID          string           `json:"spec_value_id"`
+	ValueJSON            string           `json:"value_json,omitempty"`
+	SourceRevision       int64            `json:"source_revision"`
+	SpecSemanticVersion  int64            `json:"spec_semantic_version"`
+	NormalizerVersion    string           `json:"normalizer_version"`
+	Source               NormalizedSource `json:"source"`
+	Status               NormalizedStatus `json:"status"`
+	FailureReason        string           `json:"failure_reason,omitempty"`
+	ProfileRevision      int64            `json:"profile_revision"`
+	SourceOriginLocale   string           `json:"source_origin_locale,omitempty"`
+	NumericSchemaVersion int              `json:"numeric_schema_version"`
 }
 
 // SpecValueDetail is the Admin read model for an authoritative raw value and
 // its derived normalization history. Public rendering does not consume it.
 type SpecValueDetail struct {
-	Value      SpecValue         `json:"value"`
-	Normalized []NormalizedValue `json:"normalized"`
+	SourceSelection ProductSpecSource `json:"source_selection"`
+	Value           SpecValue         `json:"value"`
+	Normalized      []NormalizedValue `json:"normalized"`
 }
 
 type ProductDocument struct {

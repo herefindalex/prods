@@ -172,6 +172,7 @@ func runWithStop(stop <-chan struct{}) (returnErr error) {
 	}
 	inspection := sqlite.Inspect(dbPath)
 	slog.Info("resolved Prods runtime",
+		"spec_search_backend", options.SpecSearchBackend,
 		"version", applicationVersion,
 		"go", runtime.Version(),
 		"config", options.ConfigPath,
@@ -380,7 +381,8 @@ func runWithStop(stop <-chan struct{}) (returnErr error) {
 		}
 	}
 	app, generatedToken, err := webapp.New(store, webapp.Config{
-		BaseURL: *baseURL, AdminToken: *adminToken, EnablePOCAdmin: pocMode,
+		SpecSearchBackend: options.SpecSearchBackend,
+		BaseURL:           *baseURL, AdminToken: *adminToken, EnablePOCAdmin: pocMode,
 		SecureCookies: secureCookies, EnforceHost: true, WorkDir: filepath.Join(*dataDir, "work"),
 		PublicDir: filepath.Join(*dataDir, "generated", "public"),
 		AssetDir:  filepath.Join(*dataDir, "assets"), DatabasePath: dbPath, BackupDir: *backupDir, ResourceGate: resourceGate,

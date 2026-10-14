@@ -305,6 +305,92 @@ func TestWriteNewUsesRelativePathsForPortableInTreeData(t *testing.T) {
 	}
 }
 
+func TestSpecSearchBackendUsesCLIEnvironmentConfigPrecedence(t *testing.T) {
+	root := t.TempDir()
+	configPath := filepath.Join(root, "prods.ini")
+	environment := map[string]string{}
+	resolver := Resolver{
+		Executable: filepath.Join(root, "prods"),
+		LookupEnv:  func(name string) (string, bool) { value, ok := environment[name]; return value, ok },
+		Getwd:      func() (string, error) { return root, nil },
+		FlagOutput: &bytes.Buffer{},
+	}
+	check := func(want string) {
+		t.Helper()
+		options, err := resolver.Resolve()
+		if err != nil {
+			t.Fatal(err)
+		}
+		if options.SpecSearchBackend != want {
+			t.Fatalf("backend=%q, want %q", options.SpecSearchBackend, want)
+		}
+	}
+	check("bleve")
+	if err := os.WriteFile(configPath, []byte("[prods]\nspec_search_backend= SqLiTe \n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	check("sqlite")
+	environment[EnvSpecSearchBackend] = ""
+	check("sqlite")
+	environment[EnvSpecSearchBackend] = " BlEvE "
+	check("bleve")
+	// Invalid losing values are ignored when the explicit CLI value wins.
+	if err := os.WriteFile(configPath, []byte("[prods]\nspec_search_backend=obsolete\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	environment[EnvSpecSearchBackend] = "obsolete"
+	resolver.Args = []string{"--spec-search-backend", " SqLiTe "}
+	check("sqlite")
+}
+
+func TestWriteNewSpecSearchBackendPersistsAndRejectsInvalidSelection(t *testing.T) {
+	root := t.TempDir()
+	options := Options{
+		ConfigPath: filepath.Join(root, "prods.ini"), Listen: ":8080",
+		DataDir: filepath.Join(root, "data"), BackupDir: filepath.Join(root, "backups"),
+		BaseURL: "http://127.0.0.1:8080", SpecSearchBackend: " SqLiTe ",
+	}
+	if err := WriteNew(options); err != nil {
+		t.Fatal(err)
+	}
+	resolver := Resolver{Executable: filepath.Join(root, "prods"), LookupEnv: emptyEnv, FlagOutput: &bytes.Buffer{}}
+	reloaded, err := resolver.Resolve()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if reloaded.SpecSearchBackend != "sqlite" {
+		t.Fatalf("reloaded backend=%q", reloaded.SpecSearchBackend)
+	}
+
+	for _, selection := range []string{"obsolete", ""} {
+		resolver.Args = []string{"--spec-search-backend", selection}
+		if _, err := resolver.Resolve(); err == nil {
+			t.Fatalf("explicit backend %q accepted", selection)
+		}
+	}
+	options.ConfigPath = filepath.Join(root, "invalid", "prods.ini")
+	options.SpecSearchBackend = "obsolete"
+	if err := WriteNew(options); err == nil {
+		t.Fatal("invalid backend persisted")
+	}
+	if _, err := os.Stat(options.ConfigPath); !os.IsNotExist(err) {
+		t.Fatalf("invalid selection created config: %v", err)
+	}
+	options.ConfigPath = filepath.Join(root, "default", "prods.ini")
+	options.SpecSearchBackend = ""
+	if err := WriteNew(options); err != nil {
+		t.Fatal(err)
+	}
+	resolver.Args = []string{"--config", options.ConfigPath}
+	defaults, err := resolver.Resolve()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if defaults.SpecSearchBackend != "bleve" {
+		t.Fatalf("programmatic default backend=%q", defaults.SpecSearchBackend)
+	}
+}
+
 func TestAssetGCGraceDaysUsesCLIEnvironmentConfigPrecedenceAndValidation(t *testing.T) {
 	root := t.TempDir()
 	configPath := filepath.Join(root, "prods.ini")

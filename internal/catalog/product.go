@@ -79,7 +79,7 @@ type ProductTranslation struct {
 	Name          string `json:"name,omitempty"`
 	Description   string `json:"description,omitempty"`
 	Features      string `json:"features,omitempty"`
-	Specification string `json:"specification,omitempty"`
+	Specification string `json:"-"`
 	Revision      int64  `json:"revision"`
 	UpdatedBy     string `json:"updated_by,omitempty"`
 	UpdatedAt     string `json:"updated_at,omitempty"`
@@ -101,6 +101,9 @@ func (p *Product) Prepare() error {
 	p.Name = strings.TrimSpace(p.Name)
 	p.SourceLocale = strings.TrimSpace(p.SourceLocale)
 	for field, locale := range p.SourceLocales {
+		if field != "name" && field != "description" && field != "features" {
+			return ErrInvalidProduct
+		}
 		trimmedField := strings.TrimSpace(field)
 		trimmedLocale := strings.TrimSpace(locale)
 		if trimmedField == "" || trimmedLocale == "" || trimmedField != field {

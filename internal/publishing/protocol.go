@@ -39,11 +39,12 @@ type Intent struct {
 }
 
 type SourceSpec struct {
-	ID            string
-	Name          string
-	RawValue      string
-	PreferredUnit string
-	Language      string
+	SourceRevision int64
+	ID             string
+	Name           string
+	RawValue       string
+	PreferredUnit  string
+	Language       string
 }
 
 type SourceDocument struct {
@@ -65,6 +66,8 @@ type SourceImage struct {
 }
 
 type Source struct {
+	NumericFacts               []PublicNumericFact
+	NumericDefinitions         []PublicNumericDefinition
 	ApplicableSpecs            []SourceSpec
 	Product                    catalog.Product
 	Translations               []catalog.ProductTranslation
@@ -201,16 +204,20 @@ type Repository interface {
 }
 
 type Config struct {
-	Root           string
-	AssetRoot      string
-	BaseURL        string
-	ResourceGate   *platform.ResourceGate
-	ByteHeadroom   uint64
-	InodeHeadroom  uint64
-	MinFreePercent uint8
+	SpecSearchBackend string
+	Root              string
+	AssetRoot         string
+	BaseURL           string
+	ResourceGate      *platform.ResourceGate
+	ByteHeadroom      uint64
+	InodeHeadroom     uint64
+	MinFreePercent    uint8
 }
 
 type publicIndex struct {
+	specDigest        string
+	specDigestError   error
+	specInventory     map[string]SpecCandidateBinding
 	byID              map[string]ActivePublication
 	byRoute           map[string]routeTarget
 	byAsset           map[string]assetTarget
@@ -237,6 +244,13 @@ type assetTarget struct {
 }
 
 type Engine struct {
+	specBackend                string
+	specBleve                  *bleveSpecIndex
+	specRefreshMu              sync.Mutex
+	specDirty                  atomic.Bool
+	specStatus                 atomic.Pointer[specSearchStatus]
+	specCandidateQueries       atomic.Uint64
+	specFallbackQueries        atomic.Uint64
 	processMu                  sync.Mutex
 	deferVisibility            atomic.Bool
 	deferredVisibilityDirty    atomic.Bool
@@ -259,6 +273,10 @@ type Engine struct {
 }
 
 func NewEngine(ctx context.Context, repository Repository, config Config) (*Engine, error) {
+	backend, err := NormalizeSpecSearchBackend(config.SpecSearchBackend)
+	if err != nil {
+		return nil, err
+	}
 	if repository == nil || strings.TrimSpace(config.Root) == "" || strings.TrimSpace(config.BaseURL) == "" {
 		return nil, errors.New("publishing repository, root, and base URL are required")
 	}
@@ -287,10 +305,24 @@ func NewEngine(ctx context.Context, repository Repository, config Config) (*Engi
 		config.ResourceGate = platform.NewResourceGate(nil)
 	}
 	engine := &Engine{
-		repository: repository, root: root, assetRoot: assetRoot, baseURL: strings.TrimRight(config.BaseURL, "/"),
+		specBackend: backend,
+		repository:  repository, root: root, assetRoot: assetRoot, baseURL: strings.TrimRight(config.BaseURL, "/"),
 		resources: config.ResourceGate, byteHeadroom: config.ByteHeadroom, inodeHeadroom: config.InodeHeadroom,
 		minFreePercent: config.MinFreePercent, wake: make(chan struct{}, 1),
 	}
+	if backend == "bleve" {
+		engine.specBleve, err = newBleveSpecIndex(ctx, filepath.Join(filepath.Dir(root), "search", "specs"), config)
+		if err != nil {
+			engine.specSearchFailure(err)
+		}
+	}
+	// Adapter resources must be released if authoritative startup fails.
+	started := false
+	defer func() {
+		if !started && engine.specBleve != nil {
+			_ = engine.specBleve.close()
+		}
+	}()
 	if err := repository.ResetPublicationClaims(ctx); err != nil {
 		return nil, err
 	}
@@ -301,6 +333,7 @@ func NewEngine(ctx context.Context, repository Repository, config Config) (*Engi
 	engine.cancel = cancel
 	engine.wg.Add(1)
 	go engine.worker(workerContext)
+	started = true
 	engine.Wake()
 	return engine, nil
 }
@@ -312,6 +345,14 @@ func (e *Engine) Close() {
 	e.BeginDrain()
 	e.cancel()
 	e.wg.Wait()
+	e.specRefreshMu.Lock()
+	defer e.specRefreshMu.Unlock()
+	if e.specBleve != nil {
+		if err := e.specBleve.close(); err != nil {
+			e.specSearchFailure(err)
+		}
+	}
+	e.specStatus.Store(&specSearchStatus{lastError: "spec search index closed"})
 }
 
 func (e *Engine) BeginDrain() {
@@ -348,7 +389,7 @@ func (e *Engine) worker(ctx context.Context) {
 			if e.draining.Load() {
 				return
 			}
-			processed, err := e.ProcessOne(ctx)
+			processed, err := e.processWorkerBatch(ctx)
 			if err != nil {
 				slog.Error("publication worker failed", "error", err)
 				break
@@ -360,19 +401,52 @@ func (e *Engine) worker(ctx context.Context) {
 	}
 }
 
+// Keep ordinary Product visibility installation synchronous, but coalesce the
+// derived refresh across bounded worker progress. The bound matches profile
+// work's chunk size and prevents a sustained backlog from delaying refresh
+// indefinitely. The worker continues full chunks without waiting for a tick.
+func (e *Engine) processWorkerBatch(ctx context.Context) (processed bool, err error) {
+	e.processMu.Lock()
+	defer e.processMu.Unlock()
+	defer e.refreshSpecSearch(ctx, false)
+	for i := 0; i < 100; i++ {
+		if err := ctx.Err(); err != nil {
+			return processed, err
+		}
+		worked, err := e.processOne(ctx)
+		processed = processed || worked
+		if err != nil || !worked {
+			return processed, err
+		}
+	}
+	return processed, nil
+}
+
 func (e *Engine) ProcessOne(ctx context.Context) (bool, error) {
 	e.processMu.Lock()
 	defer e.processMu.Unlock()
-	return e.processOne(ctx)
+	processed, err := e.processOne(ctx)
+	e.refreshSpecSearch(ctx, false)
+	return processed, err
 }
 
 func (e *Engine) processOne(ctx context.Context) (bool, error) {
 	if e == nil || e.draining.Load() {
 		return false, nil
 	}
+	profileWorked := false
+	if worker, ok := e.repository.(interface {
+		ProcessSpecNumericProfileWork(context.Context, int) (bool, error)
+	}); ok {
+		var err error
+		profileWorked, err = worker.ProcessSpecNumericProfileWork(ctx, 100)
+		if err != nil {
+			return profileWorked, err
+		}
+	}
 	intent, found, err := e.repository.ClaimPublicationIntent(ctx)
 	if err != nil || !found {
-		return found, err
+		return profileWorked || found, err
 	}
 	source, err := e.repository.PublicationSource(ctx, intent.ProductID)
 	if err != nil {
@@ -432,6 +506,7 @@ func (e *Engine) ProcessBatch(ctx context.Context, limit int) (processed int, er
 	}
 	e.deferVisibility.Store(true)
 	defer func() {
+		defer e.refreshSpecSearch(ctx, false)
 		e.deferVisibility.Store(false)
 		if !e.deferredVisibilityDirty.Swap(false) {
 			return
@@ -536,6 +611,17 @@ func (e *Engine) Reconcile(ctx context.Context) error {
 	if err := e.repository.RebuildSearchPublications(ctx, active); err != nil {
 		return err
 	}
+	// Keep the existing rebuildable SQLite projection repaired on startup,
+	// including when Bleve is selected. Its failure is a derived-cache failure
+	// and cannot invalidate otherwise healthy public authority.
+	if e.specBackend != "sqlite" {
+		if repository, ok := e.repository.(SpecSearchRepository); ok {
+			if err := repository.RebuildSpecSearchProjection(ctx, active); err != nil {
+				slog.Warn("SQLite spec projection repair failed", "error", err)
+			}
+		}
+	}
+	e.refreshSpecSearch(ctx, false)
 	for _, activation := range active {
 		if err := e.repository.ConvergePublicationDependencies(ctx, activation.ProductID, activation.SourceRevision); err != nil {
 			return err
@@ -640,6 +726,7 @@ func (e *Engine) installLocked(ctx context.Context) error {
 		return err
 	}
 	e.index = next
+	e.installSpecSearchLocked(next)
 	return nil
 }
 
@@ -653,6 +740,7 @@ func applicableSpecifications(specs []SourceSpec) []ApplicableSpecification {
 
 func (e *Engine) viewFromSource(source Source) PublicView {
 	view := PublicView{
+		NumericFacts: source.NumericFacts, NumericDefinitions: source.NumericDefinitions,
 		PackageFormFactor:        source.Product.PackageFormFactor,
 		ApplicableSpecifications: applicableSpecifications(source.ApplicableSpecs),
 		Site:                     source.Site,
@@ -715,7 +803,7 @@ func (e *Engine) viewFromSource(source Source) PublicView {
 		view.Language = "en-US"
 	}
 	for _, spec := range source.Specs {
-		view.Specifications = append(view.Specifications, Specification(spec))
+		view.Specifications = append(view.Specifications, Specification{ID: spec.ID, Name: spec.Name, RawValue: spec.RawValue, PreferredUnit: spec.PreferredUnit, Language: spec.Language, SourceRevision: spec.SourceRevision})
 	}
 	for _, document := range source.Documents {
 		location := document.URL
@@ -834,11 +922,14 @@ func (e *Engine) validateAsset(asset PublicAsset, verifyChecksum bool) (string, 
 	return resolvedPath, nil
 }
 
+const renderContractVersion = "shared-specs-1"
+
 type unitManifest struct {
-	ProductID string            `json:"product_id"`
-	Revision  int64             `json:"revision"`
-	SiteEpoch int64             `json:"site_epoch"`
-	Files     map[string]string `json:"files"`
+	RenderContractVersion string            `json:"render_contract_version"`
+	ProductID             string            `json:"product_id"`
+	Revision              int64             `json:"revision"`
+	SiteEpoch             int64             `json:"site_epoch"`
+	Files                 map[string]string `json:"files"`
 }
 
 func (e *Engine) stage(ctx context.Context, operationID string, view PublicView) (string, string, error) {
@@ -921,7 +1012,7 @@ func (e *Engine) stage(ctx context.Context, operationID string, view PublicView)
 		return "", "", err
 	}
 	defer os.RemoveAll(staging)
-	manifest := unitManifest{ProductID: view.ID, Revision: view.Revision, SiteEpoch: view.SiteEpoch, Files: make(map[string]string, len(files))}
+	manifest := unitManifest{RenderContractVersion: renderContractVersion, ProductID: view.ID, Revision: view.Revision, SiteEpoch: view.SiteEpoch, Files: make(map[string]string, len(files))}
 	for name, body := range files {
 		manifest.Files[name] = hashBytes(body)
 		if err := writeDurable(filepath.Join(staging, name), body); err != nil {
@@ -960,7 +1051,7 @@ func (e *Engine) validateUnit(activation ActivePublication) error {
 		return ErrArtifactInvalid
 	}
 	var manifest unitManifest
-	if json.Unmarshal(manifestBody, &manifest) != nil || manifest.ProductID != activation.ProductID || manifest.Revision != activation.PublicRevision || manifest.SiteEpoch != activation.SiteEpoch {
+	if json.Unmarshal(manifestBody, &manifest) != nil || manifest.RenderContractVersion != renderContractVersion || manifest.ProductID != activation.ProductID || manifest.Revision != activation.PublicRevision || manifest.SiteEpoch != activation.SiteEpoch {
 		return ErrArtifactInvalid
 	}
 	for name, expected := range manifest.Files {

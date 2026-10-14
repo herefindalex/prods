@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"fmt"
 	"time"
 
 	"prods/internal/catalog"
@@ -275,8 +276,21 @@ func (s *Store) SaveSpecValue(ctx context.Context, actorID, productID, specID, r
 		active = applicable != 0
 		var existingID string
 		var sourceRevision int64
-		err := tx.QueryRowContext(ctx, `SELECT id,source_revision FROM product_spec_values
-			WHERE product_id=? AND spec_id=? AND source_locale=?`, productID, specID, sourceLocale).Scan(&existingID, &sourceRevision)
+		err := tx.QueryRowContext(ctx, `SELECT pv.id,pv.source_revision FROM product_spec_sources ps
+			JOIN product_spec_values pv ON pv.id=ps.spec_value_id AND pv.product_id=ps.product_id AND pv.spec_id=ps.spec_id
+			WHERE ps.product_id=? AND ps.spec_id=?`, productID, specID).Scan(&existingID, &sourceRevision)
+		if errors.Is(err, sql.ErrNoRows) {
+			var count int
+			if err := tx.QueryRowContext(ctx, `SELECT COUNT(*) FROM product_spec_values WHERE product_id=? AND spec_id=?`, productID, specID).Scan(&count); err != nil {
+				return err
+			}
+			if count > 1 {
+				return fmt.Errorf("%w: multiple Raw sources require explicit selection", catalog.ErrRevisionConflict)
+			}
+			if count == 1 {
+				err = tx.QueryRowContext(ctx, `SELECT id,source_revision FROM product_spec_values WHERE product_id=? AND spec_id=?`, productID, specID).Scan(&existingID, &sourceRevision)
+			}
+		}
 		now := time.Now().UTC().Format(time.RFC3339Nano)
 		if errors.Is(err, sql.ErrNoRows) {
 			existingID, err = randomID("spv")
@@ -285,13 +299,13 @@ func (s *Store) SaveSpecValue(ctx context.Context, actorID, productID, specID, r
 			}
 			sourceRevision = 1
 			_, err = tx.ExecContext(ctx, `INSERT INTO product_spec_values(
-				id,product_id,spec_id,raw_value,source_locale,source_revision,active,created_by,updated_by,created_at,updated_at
-			) VALUES(?,?,?,?,?,?,?,?,?,?,?)`, existingID, productID, specID, rawValue, sourceLocale, sourceRevision, active,
+				id,product_id,spec_id,raw_value,source_locale,source_origin_locale,source_revision,active,created_by,updated_by,created_at,updated_at
+			) VALUES(?,?,?,?,?,?,?,?,?,?,?,?)`, existingID, productID, specID, rawValue, sourceLocale, sourceLocale, sourceRevision, active,
 				actorID, actorID, now, now)
 		} else if err == nil {
 			sourceRevision++
-			_, err = tx.ExecContext(ctx, `UPDATE product_spec_values SET raw_value=?,source_revision=?,active=?,updated_by=?,updated_at=?
-				WHERE id=?`, rawValue, sourceRevision, active, actorID, now, existingID)
+			_, err = tx.ExecContext(ctx, `UPDATE product_spec_values SET raw_value=?,source_origin_locale=?,source_revision=?,active=?,updated_by=?,updated_at=?
+				WHERE id=?`, rawValue, sourceLocale, sourceRevision, active, actorID, now, existingID)
 			if err == nil {
 				_, err = tx.ExecContext(ctx, `UPDATE normalized_values SET status='stale'
 					WHERE spec_value_id=? AND status='current'`, existingID)
@@ -301,6 +315,10 @@ func (s *Store) SaveSpecValue(ctx context.Context, actorID, productID, specID, r
 			return err
 		}
 		newProductRevision := expectedProductRevision + 1
+		if _, err := tx.ExecContext(ctx, `INSERT INTO product_spec_sources(product_id,spec_id,spec_value_id,revision,updated_by,updated_at)
+			VALUES(?,?,?,1,?,?) ON CONFLICT(product_id,spec_id) DO NOTHING`, productID, specID, existingID, actorID, now); err != nil {
+			return err
+		}
 		result, err := tx.ExecContext(ctx, `UPDATE products SET revision=?,updated_by=?,updated_at=? WHERE id=? AND revision=?`,
 			newProductRevision, actorID, now, productID, expectedProductRevision)
 		if err != nil {
@@ -326,7 +344,7 @@ func (s *Store) ProductSpecValues(ctx context.Context, productID string) ([]cata
 	if err := s.db.QueryRowContext(ctx, `SELECT 1 FROM products WHERE id=?`, productID).Scan(&exists); err != nil {
 		return nil, err
 	}
-	rows, err := s.db.QueryContext(ctx, `SELECT id,product_id,spec_id,raw_value,source_locale,source_revision,active
+	rows, err := s.db.QueryContext(ctx, `SELECT id,product_id,spec_id,raw_value,source_origin_locale,source_revision,active
 		FROM product_spec_values WHERE product_id=? ORDER BY spec_id,source_locale,id`, productID)
 	if err != nil {
 		return nil, err
@@ -348,8 +366,14 @@ func (s *Store) ProductSpecValues(ctx context.Context, productID string) ([]cata
 		return nil, err
 	}
 	for index := range details {
+		selection := &details[index].SourceSelection
+		selection.ProductID, selection.SpecID = productID, details[index].Value.SpecID
+		err := s.db.QueryRowContext(ctx, `SELECT spec_value_id,revision FROM product_spec_sources WHERE product_id=? AND spec_id=?`, productID, selection.SpecID).Scan(&selection.SpecValueID, &selection.Revision)
+		if err != nil && !errors.Is(err, sql.ErrNoRows) {
+			return nil, err
+		}
 		normalizedRows, err := s.db.QueryContext(ctx, `SELECT id,spec_value_id,value_json,source_revision,spec_semantic_version,
-			normalizer_version,source,status,failure_reason
+			normalizer_version,source,status,failure_reason,profile_revision,source_origin_locale,numeric_schema_version
 			FROM normalized_values WHERE spec_value_id=? ORDER BY created_at DESC,id DESC`, details[index].Value.ID)
 		if err != nil {
 			return nil, err
@@ -358,7 +382,7 @@ func (s *Store) ProductSpecValues(ctx context.Context, productID string) ([]cata
 			var normalized catalog.NormalizedValue
 			if err := normalizedRows.Scan(&normalized.ID, &normalized.SpecValueID, &normalized.ValueJSON,
 				&normalized.SourceRevision, &normalized.SpecSemanticVersion, &normalized.NormalizerVersion,
-				&normalized.Source, &normalized.Status, &normalized.FailureReason); err != nil {
+				&normalized.Source, &normalized.Status, &normalized.FailureReason, &normalized.ProfileRevision, &normalized.SourceOriginLocale, &normalized.NumericSchemaVersion); err != nil {
 				normalizedRows.Close()
 				return nil, err
 			}
@@ -375,6 +399,10 @@ func (s *Store) ProductSpecValues(ctx context.Context, productID string) ([]cata
 }
 
 func (s *Store) SaveNormalizedValue(ctx context.Context, actorID string, normalized catalog.NormalizedValue) (catalog.NormalizedValue, error) {
+	// Legacy history writes never establish controlled adoption metadata.
+	normalized.ProfileRevision = 0
+	normalized.SourceOriginLocale = ""
+	normalized.NumericSchemaVersion = 0
 	if normalized.SpecValueID == "" || (normalized.Source != catalog.NormalizedAutomatic && normalized.Source != catalog.NormalizedManual) ||
 		(normalized.Status != catalog.NormalizedCurrent && normalized.Status != catalog.NormalizedFailed) || normalized.NormalizerVersion == "" {
 		return catalog.NormalizedValue{}, catalog.ErrInvalidSpec

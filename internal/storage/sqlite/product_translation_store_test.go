@@ -70,12 +70,19 @@ func TestProductTranslationsPreserveSourceRevisionAndDisabledLocaleData(t *testi
 	if err != nil {
 		t.Fatal(err)
 	}
+	// Simulate an existing private translation from the old four-field contract.
+	if _, err := store.db.Exec(`INSERT INTO product_translations(product_id,locale,name,description,features,specification,revision,updated_by,updated_at) VALUES(?,'zh-TW','','','','Legacy specification',1,?,'2026-01-01T00:00:00Z')`, product.ID, owner.ID); err != nil {
+		t.Fatal(err)
+	}
 	content, err := store.SaveProductTranslation(t.Context(), owner.ID, product.ID, product.Revision, catalog.ProductTranslation{Locale: "zh-TW", Name: "翻譯名稱", Description: "翻譯說明"})
 	if err != nil {
 		t.Fatal(err)
 	}
 	if content.SourceLocale != "en-US" || content.ProductRevision != product.Revision+1 || len(content.Translations) != 1 || content.Translations[0].Name != "翻譯名稱" {
 		t.Fatalf("content = %+v", content)
+	}
+	if content.Translations[0].Specification != "Legacy specification" {
+		t.Fatal("translation save erased private legacy specification")
 	}
 	clone, err := store.CloneProduct(t.Context(), owner.ID, product.ID, content.ProductRevision, catalog.Product{PartNumber: "ML-2"})
 	if err != nil {

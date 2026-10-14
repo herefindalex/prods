@@ -53,6 +53,7 @@ func SystemStaticFS() (fs.FS, error) {
 }
 
 type Config struct {
+	SpecSearchBackend          string
 	IndexNowSubmitter          searchnotify.IndexNowSubmitter
 	GoogleSearchSubmitter      searchnotify.GoogleSubmitter
 	PublicDir                  string
@@ -144,6 +145,11 @@ type Server struct {
 }
 
 func New(store *sqlite.Store, config Config) (*Server, string, error) {
+	backend, err := publishing.NormalizeSpecSearchBackend(config.SpecSearchBackend)
+	if err != nil {
+		return nil, "", err
+	}
+	config.SpecSearchBackend = backend
 	generated := ""
 	if config.SessionTTL <= 0 {
 		config.SessionTTL = 12 * time.Hour
@@ -217,7 +223,8 @@ func New(store *sqlite.Store, config Config) (*Server, string, error) {
 	}
 	if !config.EnablePOCAdmin {
 		server.publisher, err = publishing.NewEngine(context.Background(), store, publishing.Config{
-			Root: config.PublicDir, AssetRoot: config.AssetDir, BaseURL: config.BaseURL,
+			SpecSearchBackend: config.SpecSearchBackend,
+			Root:              config.PublicDir, AssetRoot: config.AssetDir, BaseURL: config.BaseURL,
 			ResourceGate: config.ResourceGate, ByteHeadroom: resourceByteHeadroom,
 			InodeHeadroom: resourceInodeHeadroom, MinFreePercent: resourceMinFreePercent,
 		})
@@ -602,7 +609,13 @@ func (s *Server) routes(static fs.FS) {
 	s.mux.HandleFunc("POST /admin/api/categories/{id}/spec-set", s.adminSetCategorySpecSet)
 	s.mux.HandleFunc("GET /admin/api/products/{id}/spec-values", s.adminProductSpecValues)
 	s.mux.HandleFunc("POST /admin/api/products/{id}/spec-values", s.adminSaveSpecValue)
-	s.mux.HandleFunc("POST /admin/api/spec-values/{id}/normalized", s.adminSaveNormalizedValue)
+	s.mux.HandleFunc("POST /admin/api/spec-values/{id}/normalized", s.adminAdoptSpec)
+	s.mux.HandleFunc("PUT /admin/api/specs/{id}/numeric-profile", s.adminConfigureNumericProfile)
+	s.mux.HandleFunc("GET /admin/api/spec-values/{id}/normalization-context", s.adminSpecNormalizationContext)
+	s.mux.HandleFunc("POST /admin/api/spec-values/{id}/normalize", s.adminNormalizeSpec)
+	s.mux.HandleFunc("POST /admin/api/spec-values/{id}/normalization/automatic", s.adminSelectAutomaticSpec)
+	s.mux.HandleFunc("POST /admin/api/products/{id}/spec-source", s.adminSelectSpecSource)
+	s.mux.HandleFunc("POST /api/search/specs", s.publicSpecSearch)
 	s.mux.HandleFunc("GET /admin/api/products/{id}/documents", s.adminProductDocuments)
 	s.mux.HandleFunc("POST /admin/api/products/{id}/documents", s.adminAddProductDocument)
 	s.mux.HandleFunc("POST /admin/api/products/{id}/assets", s.adminUploadProductAsset)
@@ -1731,9 +1744,22 @@ func (s *Server) internalError(w http.ResponseWriter, err error) {
 
 func decodeJSON(body io.ReadCloser, target any) error {
 	defer body.Close()
-	decoder := json.NewDecoder(io.LimitReader(body, 1<<20))
+	encoded, err := io.ReadAll(io.LimitReader(body, (1<<20)+1))
+	if err != nil {
+		return err
+	}
+	if len(encoded) > 1<<20 {
+		return fmt.Errorf("JSON body exceeds 1 MiB")
+	}
+	decoder := json.NewDecoder(strings.NewReader(string(encoded)))
 	decoder.DisallowUnknownFields()
-	return decoder.Decode(target)
+	if err := decoder.Decode(target); err != nil {
+		return err
+	}
+	if err := decoder.Decode(new(any)); err != io.EOF {
+		return fmt.Errorf("expected one JSON value")
+	}
+	return nil
 }
 
 func writeJSON(w http.ResponseWriter, status int, value any) {
