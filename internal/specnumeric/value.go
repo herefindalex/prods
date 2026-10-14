@@ -254,8 +254,31 @@ func ValidateValue(value Value, profile Profile) error {
 		if value.Bound.Direction != BoundLower && value.Bound.Direction != BoundUpper {
 			return fmt.Errorf("invalid bound direction")
 		}
+		if profile.SemanticRole == RoleErrorMagnitude && (value.Bound.Direction != BoundUpper || value.Bound.Value.rat().Sign() < 0) {
+			return fmt.Errorf("error magnitude requires a nonnegative upper bound")
+		}
 	default:
 		return fmt.Errorf("unsupported shape")
+	}
+	if profile.Quantity == "count" {
+		var numbers []Decimal
+		switch value.Shape {
+		case ShapeScalar:
+			numbers = append(numbers, *value.Scalar)
+		case ShapeDiscreteSet:
+			numbers = value.Values
+		case ShapeIntervalSet:
+			for _, interval := range value.Intervals {
+				numbers = append(numbers, interval.Lower, interval.Upper)
+			}
+		case ShapeBoundClaim:
+			numbers = append(numbers, value.Bound.Value)
+		}
+		for _, number := range numbers {
+			if number.rat().Sign() < 0 || !number.rat().IsInt() {
+				return fmt.Errorf("count requires nonnegative integers")
+			}
+		}
 	}
 	return nil
 }
