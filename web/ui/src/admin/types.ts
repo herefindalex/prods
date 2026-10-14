@@ -33,7 +33,6 @@ export type ProductTranslation = {
   name?: string;
   description?: string;
   features?: string;
-  specification?: string;
   revision: number;
   updated_by?: string;
   updated_at?: string;

@@ -30,7 +30,6 @@ const targets = [
   "name_source_locale",
   "description_source_locale",
   "features_source_locale",
-  "specification_source_locale",
 ];
 
 const localeOptions = localeSelectOptions([

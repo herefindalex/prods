@@ -105,7 +105,7 @@ func (s *Store) ForEachProductExport(ctx context.Context, actorID string,
 	if err := rows.Close(); err != nil {
 		return err
 	}
-	rows, err = tx.QueryContext(ctx, `SELECT v.product_id,v.spec_id,d.name,v.raw_value,v.source_locale,v.source_revision,v.active,v.updated_at
+	rows, err = tx.QueryContext(ctx, `SELECT v.product_id,v.spec_id,d.name,v.raw_value,v.source_origin_locale,v.source_revision,v.active,v.updated_at
 		FROM product_spec_values v JOIN spec_definitions d ON d.id=v.spec_id
 		ORDER BY v.product_id,d.name,v.spec_id,v.source_locale`)
 	if err != nil {

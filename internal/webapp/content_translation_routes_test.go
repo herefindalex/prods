@@ -77,9 +77,19 @@ func TestContentTranslationRoutesRevisionGateAndEditingLifecycle(t *testing.T) {
 		t.Fatalf("enable editing status=%d body=%s", localization.StatusCode, body)
 	}
 
+	badSource := adminJSONMethod(t, client, http.MethodPut, server.URL+"/admin/api/products/"+product.ID+"/content/source-locales", csrf,
+		`{"expected_revision":1,"source_locale":"en-US","source_locales":{"specification":"en-US"}}`)
+	if body := responseBody(t, badSource); badSource.StatusCode != http.StatusUnprocessableEntity {
+		t.Fatalf("shared specification source status=%d body=%s", badSource.StatusCode, body)
+	}
+	badTranslation := adminJSONMethod(t, client, http.MethodPut, server.URL+"/admin/api/products/"+product.ID+"/translations/de-DE", csrf,
+		`{"expected_revision":1,"translation":{"specification":"Not translatable"}}`)
+	if body := responseBody(t, badTranslation); badTranslation.StatusCode != http.StatusBadRequest {
+		t.Fatalf("shared specification translation status=%d body=%s", badTranslation.StatusCode, body)
+	}
 	productSource := adminJSONMethod(t, client, http.MethodPut,
 		server.URL+"/admin/api/products/"+product.ID+"/content/source-locales", csrf,
-		`{"expected_revision":1,"source_locale":"en-US","source_locales":{"name":"en-US","description":"en-US","features":"en-US","specification":"en-US"}}`)
+		`{"expected_revision":1,"source_locale":"en-US","source_locales":{"name":"en-US","description":"en-US","features":"en-US"}}`)
 	if productSource.StatusCode != http.StatusOK {
 		t.Fatalf("Product source locale status=%d body=%s", productSource.StatusCode, responseBody(t, productSource))
 	}

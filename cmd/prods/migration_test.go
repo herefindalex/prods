@@ -89,6 +89,16 @@ func newMigrationFixture(t *testing.T) migrationFixture {
 		t.Fatal(err)
 	}
 	if _, err := db.Exec(`
+		DROP TABLE public_spec_projection_fields;
+		DROP TABLE public_spec_projection_products;
+		DROP TABLE spec_numeric_profile_work;
+		DROP TABLE spec_normalization_selections;
+		DROP TABLE product_spec_sources;
+		DROP TABLE spec_numeric_profiles;
+		ALTER TABLE product_spec_values DROP COLUMN source_origin_locale;
+		ALTER TABLE normalized_values DROP COLUMN numeric_schema_version;
+		ALTER TABLE normalized_values DROP COLUMN source_origin_locale;
+		ALTER TABLE normalized_values DROP COLUMN profile_revision;
 		DROP TABLE search_submission_jobs;
 		DROP TABLE search_notification_state;
 		DROP TABLE search_integration_settings;

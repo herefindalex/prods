@@ -407,15 +407,19 @@ func (s *Store) CloneProduct(ctx context.Context, actorID, sourceID string, expe
 }
 
 func cloneSpecValues(ctx context.Context, tx *sql.Tx, sourceID, targetID, categoryID, actorID, now string) error {
-	rows, err := tx.QueryContext(ctx, `SELECT spec_id,raw_value,source_locale FROM product_spec_values WHERE product_id=?`, sourceID)
+	rows, err := tx.QueryContext(ctx, `SELECT pv.spec_id,pv.raw_value,pv.source_locale,pv.source_origin_locale,COALESCE(ps.spec_value_id=pv.id,0)
+	 FROM product_spec_values pv LEFT JOIN product_spec_sources ps ON ps.product_id=pv.product_id AND ps.spec_id=pv.spec_id WHERE pv.product_id=?`, sourceID)
 	if err != nil {
 		return err
 	}
-	type sourceValue struct{ specID, rawValue, sourceLocale string }
+	type sourceValue struct {
+		specID, rawValue, sourceLocale, sourceOriginLocale string
+		selected                                           bool
+	}
 	var values []sourceValue
 	for rows.Next() {
 		var value sourceValue
-		if err := rows.Scan(&value.specID, &value.rawValue, &value.sourceLocale); err != nil {
+		if err := rows.Scan(&value.specID, &value.rawValue, &value.sourceLocale, &value.sourceOriginLocale, &value.selected); err != nil {
 			rows.Close()
 			return err
 		}
@@ -436,10 +440,15 @@ func cloneSpecValues(ctx context.Context, tx *sql.Tx, sourceID, targetID, catego
 			return err
 		}
 		if _, err := tx.ExecContext(ctx, `INSERT INTO product_spec_values(
-			id,product_id,spec_id,raw_value,source_locale,source_revision,active,created_by,updated_by,created_at,updated_at
-		) VALUES(?,?,?,?,?,1,?,?,?,?,?)`, id, targetID, value.specID, value.rawValue, value.sourceLocale,
+			id,product_id,spec_id,raw_value,source_locale,source_origin_locale,source_revision,active,created_by,updated_by,created_at,updated_at
+		) VALUES(?,?,?,?,?,?,1,?,?,?,?,?)`, id, targetID, value.specID, value.rawValue, value.sourceLocale, value.sourceOriginLocale,
 			applicable != 0, actorID, actorID, now, now); err != nil {
 			return err
+		}
+		if value.selected {
+			if _, err := tx.ExecContext(ctx, `INSERT INTO product_spec_sources(product_id,spec_id,spec_value_id,revision,updated_by,updated_at) VALUES(?,?,?,1,?,?)`, targetID, value.specID, id, actorID, now); err != nil {
+				return err
+			}
 		}
 	}
 	return nil

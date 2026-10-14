@@ -28,10 +28,14 @@ func TestInstallationSampleDataCommitsWithOwnerAndReadyMarker(t *testing.T) {
 		OwnerEmail: "owner@example.test", PasswordHash: passwordHash,
 		DefaultLocale: "en-US", SupportedLocales: []string{"en-US"}, TimeZone: "UTC",
 		SampleData: &InstallationSampleData{
-		Version: "v1.2.3", DatasetVersion: "a01-r1", SourceURL: "embedded:sample-data/prods-sample-data-v1.json",
-			SHA256:     "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
-			Categories: []catalog.Category{{ID: "cat_sample", ParentID: "cat_root", Name: "Sample", Slug: "sample", SourceLocale: "en-US"}},
-			Products:   []catalog.Product{{ID: "sample-1", PartNumber: "SAMPLE-1", Name: "Sample product", CategoryID: "cat_sample", Manufacturer: "Example", Status: catalog.Published}},
+			Version: "v1.2.3", DatasetVersion: "a01-r1", SourceURL: "embedded:sample-data/prods-sample-data-v1.json",
+			SHA256:           "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+			Categories:       []catalog.Category{{ID: "cat_sample", ParentID: "cat_root", Name: "Sample", Slug: "sample", SourceLocale: "en-US"}},
+			Products:         []catalog.Product{{ID: "sample-1", PartNumber: "SAMPLE-1", Name: "Sample product", CategoryID: "cat_sample", Manufacturer: "Example", Status: catalog.Published}},
+			Specs:            []catalog.SpecDefinition{{ID: "spc_sample", Name: "Voltage", Status: catalog.EntryActive, SemanticVer: 1}},
+			SpecSets:         []catalog.SpecSet{{ID: "sps_sample", Name: "Sample", SpecIDs: []string{"spc_sample"}, Status: catalog.EntryActive}},
+			CategorySpecSets: []InstallationCategorySpecSet{{CategoryID: "cat_sample", SpecSetID: "sps_sample"}},
+			SpecValues:       []catalog.SpecValue{{ID: "spv_sample", ProductID: "sample-1", SpecID: "spc_sample", RawValue: "5V", SourceLocale: "ja-JP"}},
 		},
 	})
 	if err != nil {
@@ -58,6 +62,13 @@ func TestInstallationSampleDataCommitsWithOwnerAndReadyMarker(t *testing.T) {
 	if products != 1 || intents != 1 || details["sample_data"] == nil {
 		t.Fatalf("sample installation products=%d intents=%d audit=%v", products, intents, details)
 	}
+	var raw, origin string
+	if err := store.db.QueryRowContext(t.Context(), `SELECT pv.raw_value,pv.source_origin_locale FROM product_spec_sources ps JOIN product_spec_values pv ON pv.id=ps.spec_value_id WHERE ps.product_id='sample-1' AND ps.spec_id='spc_sample'`).Scan(&raw, &origin); err != nil {
+		t.Fatal(err)
+	}
+	if raw != "5V" || origin != "ja-JP" {
+		t.Fatalf("sample shared Raw: %q %q", raw, origin)
+	}
 }
 
 func TestInstallationSampleDataPreservesArchivedProducts(t *testing.T) {
@@ -75,7 +86,7 @@ func TestInstallationSampleDataPreservesArchivedProducts(t *testing.T) {
 		SupportedLocales: []string{"en-US"}, TimeZone: "UTC",
 		SampleData: &InstallationSampleData{
 			Version: "v1.2.3", DatasetVersion: "a01-r1",
-		SourceURL: "embedded:sample-data/prods-sample-data-v1.json",
+			SourceURL: "embedded:sample-data/prods-sample-data-v1.json",
 			SHA256:    strings.Repeat("a", 64),
 			Products: []catalog.Product{
 				{ID: "current", PartNumber: "SAME", Manufacturer: "Example", Status: catalog.Hidden, RecordState: catalog.RecordCurrent},
@@ -109,7 +120,7 @@ func TestInvalidSampleDataRollsBackWholeInstallation(t *testing.T) {
 		OwnerEmail: "owner@example.test", PasswordHash: passwordHash,
 		DefaultLocale: "en-US", SupportedLocales: []string{"en-US"}, TimeZone: "UTC",
 		SampleData: &InstallationSampleData{
-		Version: "v1.2.3", DatasetVersion: "a01-r1", SourceURL: "embedded:sample-data/prods-sample-data-v1.json",
+			Version: "v1.2.3", DatasetVersion: "a01-r1", SourceURL: "embedded:sample-data/prods-sample-data-v1.json",
 			SHA256: "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
 			Products: []catalog.Product{
 				{ID: "sample-1", PartNumber: "SAME", Manufacturer: "Example"},

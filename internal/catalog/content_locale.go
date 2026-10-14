@@ -9,7 +9,7 @@ import (
 
 var ErrInvalidContentLocale = errors.New("invalid customer content source locale")
 
-var ProductTranslatableFields = []string{"name", "description", "features", "specification"}
+var ProductTranslatableFields = []string{"name", "description", "features"}
 var TaxonomyTranslatableFields = []string{"name", "description"}
 
 func NormalizeFieldSourceLocales(values map[string]string, fallback string, allowedFields []string) (map[string]string, error) {

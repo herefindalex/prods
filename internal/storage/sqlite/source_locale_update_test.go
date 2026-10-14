@@ -24,7 +24,7 @@ func TestPerFieldSourceLocaleUpdatesAreRevisionedAndUseWorkingEditingGate(t *tes
 	if err != nil {
 		t.Fatal(err)
 	}
-	productContent, err := store.SaveProductSourceLocales(t.Context(), owner.ID, product.ID, product.Revision, "de-DE", map[string]string{"name": "de-DE", "description": "fr-FR", "features": "de-DE", "specification": "ja-JP"})
+	productContent, err := store.SaveProductSourceLocales(t.Context(), owner.ID, product.ID, product.Revision, "de-DE", map[string]string{"name": "de-DE", "description": "fr-FR", "features": "de-DE"})
 	if err != nil {
 		t.Fatal(err)
 	}

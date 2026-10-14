@@ -104,3 +104,166 @@ Restore 准备并验证各 root、持久记录 `prepared`，再依逐 root 证�
 ## 生产环境叙事仍需的证据
 
 操作者可补充部署版本／source revision、主机／平台、service／proxy 配置、TLS 验证、持久 root 对照、备份保留／异地主机位置、有日期的恢复演练及测量负载／事件记录。凭证与客户数据保持私密。在证据齐备前，描述实现与测试，不使用尚未验证的生产环境成功叙事。
+
+## 数值规格搜索（后端）
+
+本节描述 2026-10-14 核查的 `v0.7.0` 后端。前述章节与架构／工程案例指南保留历史 `v0.6.8` 核查范围。数值 profile 编辑、共享来源／采用控件及 Public 数值筛选 UI 延后提供；现有文本搜索独立运行。
+
+### 配置候选后端
+
+默认为 `bleve`。Flag `--spec-search-backend`、环境变量 `PRODS_SPEC_SEARCH_BACKEND` 与 INI key `[prods] spec_search_backend` 接受 `bleve` 或 `sqlite`，优先序为 CLI > ENV > INI > 默认值。选择下列其中一种配置，使用相同站点路径重启：
+
+```ini
+[prods]
+spec_search_backend=bleve
+```
+
+```sh
+PRODS_SPEC_SEARCH_BACKEND=sqlite ./prods-linux-amd64
+./prods-linux-amd64 --spec-search-backend sqlite
+```
+
+Bleve 内嵌于 Go 进程，在 `<data_dir>/generated/search/specs` 写入私有、可重建候选索引。SQLite 仍为主存储；`sqlite` 后端改用其派生 Spec-ID 投影。不要通过 filesystem server 公开 generated/search 目录。公开激活状态变更后，由 publication worker 替换／重建候选。
+
+候选失败、不完整或与已准入 inventory／revision 不符时，查询改为完整扫描当前公开 inventory 并精确判定。这保留结果与计数，但增加扫描成本，不保证延迟。Log 会记录候选索引失败。已打开 adapter 的 refresh 会在后续 worker tick 重试；初次打开失败的 Bleve adapter 不会由 tick 重新打开。修正 filesystem／ownership／resource 原因后重启，或以 `sqlite` 重启。`SpecSearchDiagnostics` 与 `RebuildSpecSearchIndex` 是内部方法，没有 Admin／Public 诊断或重建 endpoint。正式公开索引本身不健康时仍返回 503。
+
+### 准备与采用数值事实
+
+每个 Product + Spec 选择一份共享 Raw 来源。`source_origin_locale` 记录来源 provenance，不为每个公开语言创建另一份数值事实；本地化展示文字独立保存。Migration 19 保留旧 Raw／history，只为 Product + Spec 恰有一行的情况选择来源；多来源旧分组保持未选择，直到明确命令处理。它不从旧 display unit／history 创建数值 profile 或采用事实。Published Current Product 获得新 source revision 与 publication intent；替换完成前保留旧的有效公开 activation。内置合成样本也只提供 Raw 规格，不包含已配置 profile／已采用数值事实。
+
+使用合法同源 Admin 登录与私有 cookie jar（`admin_cookie_jar`），从已登录 Admin 页面的 `csrf-token` meta 值取得 `admin_csrf`。`base` 设为指定 Base URL，ID 变量设为现有 domain ID。Admin 读取需要 `catalog.view`；写入需要 `catalog.edit`、session cookie 及 `X-CSRF-Token`。这是 browser Admin 命令，不是外部 write token。以下 body 是示意文件，请填入操作打开时观察到的 ID／revision。每个 mutation 示例是独立操作，不是可盲目依次执行的 script。
+
+| 方法／路径 | 权限／body |
+| --- | --- |
+| `PUT /admin/api/specs/{id}/numeric-profile` | `catalog.edit`; `expected_revision`, `profile` |
+| `GET /admin/api/products/{id}/spec-values` | `catalog.view`; 查看已保存 Raw 来源 |
+| `POST /admin/api/products/{id}/spec-source` | `catalog.edit`; `spec_id`, `spec_value_id`, `expected_product_revision`, `expected_source_revision`, `expected_source_selection_revision` |
+| `GET /admin/api/spec-values/{id}/normalization-context` | `catalog.view`; 冻结 Raw、profile、`expected`、`selection`、`source_selection` |
+| `POST /admin/api/spec-values/{id}/normalize` | `catalog.edit`; `expected` |
+| `POST /admin/api/spec-values/{id}/normalized` | `catalog.edit`; `expected`, `value_json` (以字符串编码的 JSON) |
+| `POST /admin/api/spec-values/{id}/normalization/automatic` | `catalog.edit`; `expected`, `candidate_id` |
+
+Operating-voltage Spec 的 `profile-command.json` 示例（`expected_revision` 使用 Spec definition 的实际 `revision`）：
+
+```json
+{
+  "expected_revision": 1,
+  "profile": {
+    "quantity": "voltage",
+    "semantic_role": "operating_support",
+    "allowed_shapes": ["scalar", "discrete_set", "interval_set"],
+    "allowed_operators": ["contains_point", "contains_range", "overlaps_range"],
+    "canonical_unit": "V",
+    "declared_input_unit": "V",
+    "numeric_format": "decimal-dot",
+    "schema_version": 1,
+    "parser_version": "electrical-parser-1",
+    "unit_registry_version": "electrical-1"
+  }
+}
+```
+
+```sh
+curl -b "$admin_cookie_jar" -H "X-CSRF-Token: $admin_csrf" \
+  -H 'Content-Type: application/json' -X PUT   "$base/admin/api/specs/$spec_id/numeric-profile" --data-binary @profile-command.json
+curl -b "$admin_cookie_jar" \
+  "$base/admin/api/products/$product_id/spec-values"
+curl -b "$admin_cookie_jar" \
+  "$base/admin/api/spec-values/$spec_value_id/normalization-context"
+```
+
+若 context 尚未选定共享来源，先用 `source-command.json` 选择。三个 expectation 分别采用 context 的 `expected.product_revision`、`expected.source_revision` 与 `source_selection.revision`；成功后重新打开 normalization context：
+
+```json
+{
+  "spec_id": "spec_input_voltage",
+  "spec_value_id": "spv_selected_source",
+  "expected_product_revision": 7,
+  "expected_source_revision": 1,
+  "expected_source_selection_revision": 0
+}
+```
+
+```sh
+curl -b "$admin_cookie_jar" -H "X-CSRF-Token: $admin_csrf" \
+  -H 'Content-Type: application/json'   "$base/admin/api/products/$product_id/spec-source" --data-binary @source-command.json
+```
+
+将下列保存为 `normalize-command.json`，用 `normalization-context` 返回的完整 `expected` 对象替换五个值：`product_revision`、`source_revision`、`spec_semantic_version`、`profile_revision`、`selection_revision`。前四个须为正数，selection revision 可为零。写入事务重新验证所有 expectation 及选定共享来源。
+
+```json
+{
+  "expected": {
+    "product_revision": 7,
+    "source_revision": 1,
+    "spec_semantic_version": 2,
+    "profile_revision": 1,
+    "selection_revision": 0
+  }
+}
+```
+
+```sh
+curl -b "$admin_cookie_jar" -H "X-CSRF-Token: $admin_csrf" \
+  -H 'Content-Type: application/json'   "$base/admin/api/spec-values/$spec_value_id/normalize" --data-binary @normalize-command.json
+```
+
+规范化可能采用有效 automatic 结果、在 manual preference 有效时记录 candidate，或对无法解析 Raw 返回 HTTP 200、`state: "failed"` 与 `reason_code`；不覆盖手动采用的 selection。Manual adoption 以 `value_json` 字符串提供经过验证、canonical-unit 的 `Value`。上述 voltage profile 可用以下 `manual-command.json`：
+
+```json
+{
+  "expected": {"product_revision": 7, "source_revision": 1, "spec_semantic_version": 2, "profile_revision": 1, "selection_revision": 0},
+  "value_json": "{\"schema_version\":1,\"quantity\":\"voltage\",\"semantic_role\":\"operating_support\",\"shape\":\"scalar\",\"unit\":\"V\",\"unit_registry_version\":\"electrical-1\",\"scalar\":\"5\",\"context\":{\"kind\":\"unconditional\"}}"
+}
+```
+
+```sh
+curl -b "$admin_cookie_jar" -H "X-CSRF-Token: $admin_csrf" \
+  -H 'Content-Type: application/json'   "$base/admin/api/spec-values/$spec_value_id/normalized" --data-binary @manual-command.json
+```
+
+若要将 manual preference 改为当前 automatic candidate，明确选择服务器已记录的 ID，并将重新查看的 context 填入 `automatic-command.json`；任意、过期或不兼容 candidate 会被拒绝：
+
+```json
+{
+  "expected": {"product_revision": 8, "source_revision": 1, "spec_semantic_version": 2, "profile_revision": 1, "selection_revision": 1},
+  "candidate_id": "nrm_current_automatic_candidate"
+}
+```
+
+```sh
+curl -b "$admin_cookie_jar" -H "X-CSRF-Token: $admin_csrf" \
+  -H 'Content-Type: application/json'   "$base/admin/api/spec-values/$spec_value_id/normalization/automatic" --data-binary @automatic-command.json
+```
+
+采用成功会增加 Product／selection revision，可能返回 `publication_pending: true`。已保存或已排程不代表公开激活。不要自动重试写入；409 时保留编辑，读取新 context 并查看变更版本后再发出新命令。
+
+### 查询冻结公开事实
+
+`POST /api/search/specs` 是有界读取命令，不要求 Admin session 或 Admin CSRF token。将示意 Spec／category ID 换成已公开、profile 允许该 operator／unit 的 ID。Output-current 示例另需允许 `>=` 的 current profile：
+
+```sh
+curl -H 'Content-Type: application/json' "$base/api/search/specs" --data-binary '{
+  "predicates": [
+    {"spec_id":"spec_input_voltage","operator":"contains_point","value":"5","unit":"V"},
+    {"spec_id":"spec_output_current","operator":">=","value":"0.5","unit":"A"}
+  ],
+  "page":1,"page_size":20
+}'
+curl -H 'Content-Type: application/json' "$base/api/search/specs" --data-binary '{
+  "predicates":[{"spec_id":"spec_input_voltage","operator":"contains_range","lower":"3","upper":"5","unit":"V"}],
+  "category_id":"cat_power","locale":"en-US","page":1,"page_size":20
+}'
+```
+
+请求需有 1–16 个 predicate、正数 `page` 及 1–100 的 `page_size`。Decimal operand 是 JSON 字符串，必须明确指定 unit。Point operator（`contains_point`、`=`、`<`、`<=`、`>`、`>=`）只用 `value`；range operator（`contains_range`、`overlaps_range`、`between`）只用 `lower`／`upper`。不要传不相关 operand key，即使值为 `null`。选填 `category_id` 包含该分类及后代；`manufacturer_id` 按精确 ID 筛选。`locale` 必须已公开启用，省略时解析 active Site Default。
+
+所有 predicate 须对已准入 active `PublicView` 中采用的事实／冻结 profile 判定为 `MATCH`。缺失、过期、有条件或不兼容事实为 `UNKNOWN`，不纳入结果。分离 operating range 保留间隙；nominal／tolerance 与单向 limit claim 遵循声明 role，不推断为 operating range。候选索引不决定数值真相。在同一准入 snapshot 完成精确判定、可见性／scope 检查后才计算 `total` 与分页。结果为 `{rows,total,page,page_size}`，按 Part Number 再 stable Product ID 排序；超出范围的页面返回空 rows，保留精确 total。待发布 source／profile 编辑影响未来 publication，不改当前 active 冻结事实。
+
+### 解读 API 结果
+
+Admin：400 `invalid_json` 包含 body／expectation 格式错误及不合法 controlled value JSON；401 `unauthorized` 表示无有效 session；403 `forbidden` 或 `invalid_csrf` 表示权限／安全拒绝；404 `not_found` 包含缺少 source／profile context；409 `revision_conflict` 包含过期 expectation 或未选定共享来源；422 `validation_failed` 表示 domain／profile 不兼容。Manual unit／quantity／role／allowed-shape 不兼容返回 422，tagged Value 格式错误返回 400。Raw 解析失败是上述成功 200 outcome，不是传输错误。
+
+Public search：JSON／operand shape、decimal encoding 或页面范围错误返回 400 `invalid_json`；明确指定 disabled／unknown locale 返回 400 `validation_failed`（准入 locale-policy 竞争可能返回 400 `invalid_json`）。未知 operator 或与 scope 内冻结 definition 不兼容的 operator／unit 返回 422 `validation_failed`。Scope 内无 definition／fact 时不成立 match，不虚构 profile 语义。正式 publication 不可用返回 503 `service_unavailable`；非预期 server error 返回 500 `internal_error`。Maintenance 会拦截路由，返回 HTTP 503 HTML 与 `Retry-After: 300`；draining 可能在 API 处理前返回纯文本 503。候选索引降级本身触发精确 fallback，不返回近似答案。
+
+证据：[`spec_numeric.go`](../../internal/webapp/spec_numeric.go)、[`spec_search.go`](../../internal/webapp/spec_search.go)、[数值 profile](../../internal/specnumeric/profile.go)、[数值 value](../../internal/specnumeric/value.go)、[精确判定](../../internal/specnumeric/predicate.go)、[搜索引擎](../../internal/publishing/spec_search.go)、[后端生命周期](../../internal/publishing/spec_search_backend.go) 与 [migration 19](../../internal/storage/sqlite/migrations.go)。这些链接说明实现；生产规模与 Windows／macOS 原生验收仍需独立证据。

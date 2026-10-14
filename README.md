@@ -25,6 +25,8 @@ One Go process serves the public website, embedded Admin application and lifecyc
 
 These guides describe the working tree reviewed on 2026-09-17 (`VERSION`: `v0.6.8`). Source, tests and release workflows demonstrate implemented mechanisms; this review did not verify a live production deployment, customer workload or availability target. Release workflows publish artifacts, not a running site. Historical requirements and ADRs remain internal; the guides provide source-linked explanations without republishing them.
 
+Architecture and case-study guides retain their 2026-09-17 `v0.6.8` review scope. The numeric-search overview here and the corresponding Operations section describe the `v0.7.0` backend changes reviewed on 2026-10-14; they do not renew the historical guides or establish production deployment evidence.
+
 ## Implemented scope
 
 | Area | Implementation in this repository |
@@ -125,11 +127,20 @@ data_dir=data
 backup_dir=backups
 trusted_proxies=127.0.0.1/32
 asset_gc_grace_days=7
+spec_search_backend=bleve
 ```
 
 Equivalent environment variables include `PRODS_LISTEN`, `PRODS_BASE_URL`, `PRODS_DATA_DIR`, `PRODS_BACKUP_DIR`, `PRODS_CONFIG`, and `PRODS_TRUSTED_PROXIES`.
 
 For an Internet-facing deployment, terminate HTTPS at a trusted reverse proxy, set the canonical HTTPS Base URL explicitly, and accept forwarded client information only from known proxy IPs or CIDRs. Never expose data, backup, secret, or generated-history directories through a generic file server.
+
+## Numeric specification search (backend)
+
+`v0.7.0` adds controlled numeric profiles, normalization/adoption commands and `POST /api/search/specs`. A Product + Spec has one explicitly selected shared Raw source; its source locale records provenance, while translations remain display content. Search reads adopted numeric facts and their frozen profiles from the active published `PublicView`, combines predicates with AND, and includes only `MATCH`. Missing, stale, conditional or incompatible facts remain `UNKNOWN` and are excluded. Counts and pagination follow exact evaluation; pending edits do not replace the active public revision.
+
+The default candidate backend is `bleve`; `sqlite` is selectable through `--spec-search-backend`, `PRODS_SPEC_SEARCH_BACKEND`, or `[prods] spec_search_backend` in `prods.ini`, using CLI > ENV > INI > default precedence. Bleve's private derived files live at `<data_dir>/generated/search/specs`; SQLite remains authoritative. Unavailable or mismatched candidates fall back to a complete exact scan of admitted public facts. An adapter that failed its initial open requires fixing the cause and restarting; internal diagnostic/rebuild methods have no Admin/Public endpoint.
+
+The numeric-profile editor, adoption/source-selection controls and numeric Public filter UI are deferred. Existing text search remains separate. See [Operations: numeric specification search](docs/en/operations.md#numeric-specification-search-backend) for configuration, migration and authenticated Admin/Public API examples. The bundled synthetic sample does not configure numeric profiles or populate adopted numeric facts automatically.
 
 ## Publishing and RFQ behavior
 
@@ -249,7 +260,7 @@ The frontend build writes embedded assets under `internal/webapp/static/`; commi
 Build a complete Linux amd64, Windows amd64, macOS Intel, and macOS Apple Silicon release with an embedded version, matching sample data, source metadata, notices, and checksums:
 
 ```sh
-./scripts/build-release.sh v0.6.8
+./scripts/build-release.sh v0.7.0
 ```
 
 Output is written to `dist/<version>/`. Root [`VERSION`](VERSION) is the release source of truth; the script rejects any different argument, and GitHub Actions rejects a different tag. The same version is embedded in every binary, written into the sample payload and `BUILD_INFO.txt`, and used for the artifact directory and GitHub Release tag. Cross-builds prove compilation only. Windows must be tested on Windows before claiming Windows runtime verification; both macOS artifacts remain explicitly untested until native macOS acceptance is recorded.
@@ -266,6 +277,6 @@ The release script requires a clean tracked working tree and records the version
 
 Prods Community is licensed under the [GNU Affero General Public License v3.0 only](LICENSE), identified as `AGPL-3.0-only`. Network users are entitled to the corresponding source for the running version under that license.
 
-The current release closure contains only third-party components under MIT, BSD, Apache-2.0, ISC/0BSD, or public-domain terms. The audited graphs contain no third-party GPL, AGPL, LGPL, SSPL, BSL, Commons Clause, PolyForm, non-commercial, or no-derivatives dependency. See [LICENSE_POLICY.md](LICENSE_POLICY.md) for the full scope, build-only exceptions, future closed-source conditions, and automated gate; retained notices and license texts are in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
+The audited Go release closure uses MIT, BSD-3-Clause and Apache-2.0 terms; the production UI uses MIT, BSD-3-Clause and 0BSD. The full build/test graphs have separately reviewed exceptions and source-only fixtures, including MPL-2.0, CC-BY-4.0 and CC-BY-SA material; those terms are not a blanket description of shipped runtime code. See [LICENSE_POLICY.md](LICENSE_POLICY.md) for the selected license options, exact scope, source-only obligations, future closed-source conditions and automated gate; retained runtime notices and license texts are in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
 
 Permissive third-party licenses do not prevent a future separately licensed proprietary edition. The central condition is ownership of Prods contributions: before merging material external contributions, the project needs a Contributor License Agreement that explicitly grants the accepting legal entity the rights required to relicense those contributions in open-source and proprietary products. A commit sign-off or DCO alone is not a substitute. Product data, images, datasheets, RFQs, backups, and other customer content are not automatically relicensed as Prods source code.

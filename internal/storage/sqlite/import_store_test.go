@@ -276,6 +276,10 @@ func TestImportD7SourceLocaleAndD10PreserveClearAndDuplicateTargetRules(t *testi
 	if err != nil {
 		t.Fatal(err)
 	}
+	// Loaded legacy metadata must not become new caller input during import.
+	if _, err := store.db.Exec(`UPDATE product_content_metadata SET source_locales_json='{"name":"en-US","description":"fr-FR","features":"en-US","specification":"ja-JP"}' WHERE product_id=?`, existing.ID); err != nil {
+		t.Fatal(err)
+	}
 	headers := []string{"Part", "Description", "Features", "Specification", "Applications", "Description locale"}
 	mappings := []importing.ColumnMapping{
 		{SourceIndex: 0, Target: importing.TargetPartNumber},
@@ -333,7 +337,7 @@ func TestImportD7SourceLocaleAndD10PreserveClearAndDuplicateTargetRules(t *testi
 		t.Fatal(err)
 	}
 	createdContent, err := store.ProductContent(ctx, createdPreview.Items[0].Product.ID)
-	if err != nil || createdContent.SourceLocale != "ja-JP" || createdContent.SourceLocales["specification"] != "ja-JP" {
+	if err != nil || createdContent.SourceLocale != "ja-JP" || createdContent.SourceLocales["name"] != "ja-JP" || createdContent.SourceLocales["specification"] != "" {
 		t.Fatalf("committed D7 Source Locale=%+v err=%v", createdContent, err)
 	}
 

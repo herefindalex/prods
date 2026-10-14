@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"reflect"
 	"strings"
 	"time"
 
@@ -14,6 +15,7 @@ import (
 	"prods/internal/localization"
 	"prods/internal/publishing"
 	"prods/internal/site"
+	"prods/internal/specnumeric"
 )
 
 func (s *Store) ResetPublicationClaims(ctx context.Context) error {
@@ -216,8 +218,9 @@ func (s *Store) PublicationSource(ctx context.Context, productID string) (publis
 	if err := applicableRows.Err(); err != nil {
 		return publishing.Source{}, err
 	}
-	specRows, err := tx.QueryContext(ctx, `SELECT sd.id,sd.name,pv.raw_value,sd.preferred_unit,pv.source_locale
+	specRows, err := tx.QueryContext(ctx, `SELECT sd.id,sd.name,pv.raw_value,sd.preferred_unit,pv.source_origin_locale,pv.source_revision
 		FROM product_spec_values pv JOIN spec_definitions sd ON sd.id=pv.spec_id
+ JOIN product_spec_sources ps ON ps.product_id=pv.product_id AND ps.spec_id=pv.spec_id AND ps.spec_value_id=pv.id
 		WHERE pv.product_id=? AND pv.active=1 AND sd.status='active'
 		ORDER BY sd.name,sd.id,pv.source_locale`, productID)
 	if err != nil {
@@ -225,7 +228,7 @@ func (s *Store) PublicationSource(ctx context.Context, productID string) (publis
 	}
 	for specRows.Next() {
 		var spec publishing.SourceSpec
-		if err := specRows.Scan(&spec.ID, &spec.Name, &spec.RawValue, &spec.PreferredUnit, &spec.Language); err != nil {
+		if err := specRows.Scan(&spec.ID, &spec.Name, &spec.RawValue, &spec.PreferredUnit, &spec.Language, &spec.SourceRevision); err != nil {
 			specRows.Close()
 			return publishing.Source{}, err
 		}
@@ -235,6 +238,9 @@ func (s *Store) PublicationSource(ctx context.Context, productID string) (publis
 		return publishing.Source{}, err
 	}
 	if err := specRows.Err(); err != nil {
+		return publishing.Source{}, err
+	}
+	if err := loadPublicationNumericSnapshot(ctx, tx, productID, &source); err != nil {
 		return publishing.Source{}, err
 	}
 	documentRows, err := tx.QueryContext(ctx, `SELECT pd.id,pd.label,dt.name,COALESCE(pd.asset_id,''),
@@ -626,6 +632,13 @@ func (s *Store) ActivateSiteRoutes(ctx context.Context, request publishing.SiteR
 		seenRoutes := make(map[string]struct{}, len(activations))
 		prepared := make([]preparedActivation, 0, len(activations))
 		for _, activation := range activations {
+			current, err := publicationNumericSnapshotCurrent(ctx, tx, activation)
+			if err != nil {
+				return err
+			}
+			if !current {
+				return publishing.ErrSiteRouteInvalid
+			}
 			activationSite, err := json.Marshal(activation.View.Site)
 			if err != nil || string(activationSite) != string(normalizedWorking) {
 				return publishing.ErrSiteRouteInvalid
@@ -704,6 +717,9 @@ func (s *Store) ActivateSiteRoutes(ctx context.Context, request publishing.SiteR
 		if _, err := tx.ExecContext(ctx, `DELETE FROM public_activations`); err != nil {
 			return err
 		}
+		if _, err := tx.ExecContext(ctx, `DELETE FROM public_spec_projection_products`); err != nil {
+			return err
+		}
 		for _, item := range prepared {
 			activation := item.activation
 			if oldRoute := oldRoutes[activation.ProductID]; oldRoute != "" && oldRoute != activation.Route {
@@ -730,6 +746,9 @@ func (s *Store) ActivateSiteRoutes(ctx context.Context, request publishing.SiteR
 				return err
 			}
 			if err := upsertPublicSearchProjection(ctx, tx, activation, generation, now); err != nil {
+				return err
+			}
+			if err := upsertSpecSearchProjection(ctx, tx, activation); err != nil {
 				return err
 			}
 			if _, err := tx.ExecContext(ctx, `UPDATE publication_intents SET status='superseded',updated_at=? WHERE entity_type='product' AND entity_id=? AND desired_revision<=? AND status IN ('pending','processing')`, now, activation.ProductID, activation.SourceRevision); err != nil {
@@ -773,9 +792,16 @@ func (s *Store) ActivatePublication(ctx context.Context, intent publishing.Inten
 		if activation.ProductID != intent.ProductID || activation.SourceRevision != revision || activation.PublicRevision != revision || activation.Route == "" {
 			return errors.New("activation does not match current source")
 		}
+		current, err := publicationNumericSnapshotCurrent(ctx, tx, activation)
+		if err != nil {
+			return err
+		}
+		if !current {
+			return nil
+		}
 		var generation int64
 		var currentlyVisible int
-		err := tx.QueryRowContext(ctx, `SELECT generation,visible FROM public_visibility WHERE product_id=?`, intent.ProductID).
+		err = tx.QueryRowContext(ctx, `SELECT generation,visible FROM public_visibility WHERE product_id=?`, intent.ProductID).
 			Scan(&generation, &currentlyVisible)
 		if errors.Is(err, sql.ErrNoRows) {
 			generation = 1
@@ -812,6 +838,9 @@ func (s *Store) ActivatePublication(ctx context.Context, intent publishing.Inten
 			return err
 		}
 		if err := upsertPublicSearchProjection(ctx, tx, activation, generation, now); err != nil {
+			return err
+		}
+		if err := upsertSpecSearchProjection(ctx, tx, activation); err != nil {
 			return err
 		}
 		if _, err := tx.ExecContext(ctx, `UPDATE publication_intents SET status='completed',updated_at=? WHERE id=? AND status='processing'`, now, intent.ID); err != nil {
@@ -1215,6 +1244,9 @@ func (s *Store) RevokeProduct(ctx context.Context, request publishing.RevokeRequ
 		if _, err := tx.ExecContext(ctx, `DELETE FROM public_search_projection WHERE product_id=?`, request.ProductID); err != nil {
 			return err
 		}
+		if _, err := tx.ExecContext(ctx, `DELETE FROM public_spec_projection_products WHERE product_id=?`, request.ProductID); err != nil {
+			return err
+		}
 		if newRevision != revision {
 			if err := appendAudit(ctx, tx, request.ActorID, cause, "product", request.ProductID, map[string]any{
 				"from_revision": revision, "to_revision": newRevision,
@@ -1317,4 +1349,56 @@ func markPublicationDependenciesDirty(ctx context.Context, tx *sql.Tx, productID
 		}
 	}
 	return nil
+}
+
+// Read from the same transaction as Product, shared Raw, and the publication revision.
+// Missing or untrusted derived data omits the fact without preventing Raw publication.
+func loadPublicationNumericSnapshot(ctx context.Context, tx *sql.Tx, productID string, source *publishing.Source) error {
+	rows, err := tx.QueryContext(ctx, `SELECT sd.id,sd.semantic_version,np.profile_json,
+ COALESCE(nv.value_json,''),COALESCE(nv.normalizer_version,'')
+ FROM products p JOIN category_spec_sets cs ON cs.category_id=p.category_id
+ JOIN spec_set_members sm ON sm.spec_set_id=cs.spec_set_id
+ JOIN spec_definitions sd ON sd.id=sm.spec_id AND sd.status='active' AND sd.filterable=1
+ JOIN spec_numeric_profiles np ON np.spec_id=sd.id AND np.spec_semantic_version=sd.semantic_version
+ LEFT JOIN product_spec_sources ps ON ps.product_id=p.id AND ps.spec_id=sd.id
+ LEFT JOIN product_spec_values pv ON pv.id=ps.spec_value_id AND pv.product_id=p.id AND pv.spec_id=sd.id AND pv.active=1
+ LEFT JOIN spec_normalization_selections ns ON ns.spec_value_id=pv.id
+ LEFT JOIN normalized_values nv ON nv.id=ns.selected_normalized_value_id AND nv.spec_value_id=pv.id
+  AND nv.status='current' AND nv.source_revision=pv.source_revision AND nv.spec_semantic_version=sd.semantic_version
+  AND nv.profile_revision=np.revision AND nv.numeric_schema_version=? AND nv.source_origin_locale=pv.source_origin_locale
+ WHERE p.id=? ORDER BY sd.id`, specnumeric.SchemaVersion, productID)
+	if err != nil {
+		return err
+	}
+	defer rows.Close()
+	for rows.Next() {
+		var definition publishing.PublicNumericDefinition
+		var profileJSON, valueJSON, parserVersion string
+		if err := rows.Scan(&definition.SpecID, &definition.SpecSemanticVersion, &profileJSON, &valueJSON, &parserVersion); err != nil {
+			return err
+		}
+		if json.Unmarshal([]byte(profileJSON), &definition.Profile) != nil || specnumeric.ValidateProfile(definition.Profile) != nil {
+			continue
+		}
+		source.NumericDefinitions = append(source.NumericDefinitions, definition)
+		if valueJSON == "" || parserVersion != definition.Profile.ParserVersion {
+			continue
+		}
+		value, err := specnumeric.UnmarshalValue(valueJSON, definition.Profile)
+		if err != nil {
+			continue
+		}
+		source.NumericFacts = append(source.NumericFacts, publishing.PublicNumericFact{SpecID: definition.SpecID, SpecSemanticVersion: definition.SpecSemanticVersion, Profile: definition.Profile, Value: value})
+	}
+	return rows.Err()
+}
+
+// A profile edit becomes authoritative before its durable fan-out advances the
+// Product revision. Recheck that dependency in the admitted activation transaction.
+func publicationNumericSnapshotCurrent(ctx context.Context, tx *sql.Tx, activation publishing.ActivePublication) (bool, error) {
+	var current publishing.Source
+	if err := loadPublicationNumericSnapshot(ctx, tx, activation.ProductID, &current); err != nil {
+		return false, err
+	}
+	return reflect.DeepEqual(current.NumericDefinitions, activation.View.NumericDefinitions) && reflect.DeepEqual(current.NumericFacts, activation.View.NumericFacts), nil
 }

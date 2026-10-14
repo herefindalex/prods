@@ -105,14 +105,14 @@ function LocaleForm({ productID, locale, item, revision, text, onSaved, onError 
   onSaved(content: ProductContent): void; onError(error: unknown): void;
 }) {
   const [saving, setSaving] = useState(false);
-  const [form] = Form.useForm<Omit<ProductTranslation, "locale" | "revision">>();
-  useEffect(() => { form.setFieldsValue(item ?? {}); }, [form, item]);
-  const submit = async (values: Omit<ProductTranslation, "locale" | "revision">) => {
+  const [form] = Form.useForm<Pick<ProductTranslation, "name" | "description" | "features">>();
+  useEffect(() => { form.setFieldsValue({ name: item?.name, description: item?.description, features: item?.features }); }, [form, item]);
+  const submit = async (values: Pick<ProductTranslation, "name" | "description" | "features">) => {
     setSaving(true);
     try {
       const content = await putJSON<ProductContent>(`/admin/api/products/${productID}/translations/${encodeURIComponent(locale)}`, {
         expected_revision: revision,
-        translation: values,
+        translation: { name: values.name, description: values.description, features: values.features },
       });
       onSaved(content);
     } catch (error) { onError(error); } finally { setSaving(false); }
@@ -122,7 +122,6 @@ function LocaleForm({ productID, locale, item, revision, text, onSaved, onError 
       <Form.Item name="name" label={text.name}><Input /></Form.Item>
       <Form.Item name="description" label={text.description}><Input.TextArea rows={3} /></Form.Item>
       <Form.Item name="features" label={text.features}><Input.TextArea rows={3} /></Form.Item>
-      <Form.Item name="specification" label={text.specification}><Input.TextArea rows={3} /></Form.Item>
       <Button type="primary" htmlType="submit" loading={saving}>{text.save}</Button>
     </Form>
   );
@@ -136,7 +135,7 @@ function SourceLocaleForm({ productID, content, locales, text, onSaved, onError 
   const [form] = Form.useForm<{ source_locale: string; source_locales: Record<string, string> }>();
   const options = localeSelectOptions(locales);
   useEffect(() => {
-    form.setFieldsValue({ source_locale: content.source_locale, source_locales: content.source_locales });
+    form.setFieldsValue({ source_locale: content.source_locale, source_locales: { name: content.source_locales.name, description: content.source_locales.description, features: content.source_locales.features } });
   }, [content, form]);
   const submit = async (values: { source_locale: string; source_locales: Record<string, string> }) => {
     setSaving(true);
@@ -144,7 +143,7 @@ function SourceLocaleForm({ productID, content, locales, text, onSaved, onError 
       const next = await putJSON<ProductContent>(`/admin/api/products/${productID}/content/source-locales`, {
         expected_revision: content.product_revision,
         source_locale: values.source_locale,
-        source_locales: values.source_locales,
+        source_locales: { name: values.source_locales.name, description: values.source_locales.description, features: values.source_locales.features },
       });
       onSaved(next);
     } catch (error) { onError(error); } finally { setSaving(false); }
@@ -154,7 +153,7 @@ function SourceLocaleForm({ productID, content, locales, text, onSaved, onError 
       <Alert className="bottom-gap" type="info" showIcon message={text.sourceHelp} />
       <Form.Item name="source_locale" label={text.source} rules={[{ required: true }]}><Select options={options} /></Form.Item>
       <Card size="small" title={text.perField}>
-        {(["name", "description", "features", "specification"] as const).map((field) => (
+        {(["name", "description", "features"] as const).map((field) => (
           <Form.Item key={field} name={["source_locales", field]} label={text[field]} rules={[{ required: true }]}>
             <Select options={options} />
           </Form.Item>

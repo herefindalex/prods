@@ -294,10 +294,9 @@ func applyMappedValues(product *catalog.Product, values map[importing.Target]str
 		}
 	}
 	for target, field := range map[importing.Target]string{
-		importing.TargetNameSourceLocale:    "name",
-		importing.TargetDescriptionLocale:   "description",
-		importing.TargetFeaturesLocale:      "features",
-		importing.TargetSpecificationLocale: "specification",
+		importing.TargetNameSourceLocale:  "name",
+		importing.TargetDescriptionLocale: "description",
+		importing.TargetFeaturesLocale:    "features",
 	} {
 		value, mapped := values[target]
 		if !mapped || (preserveBlank && strings.TrimSpace(value) == "") {
@@ -329,7 +328,13 @@ func loadImportContentMetadata(ctx context.Context, tx *sql.Tx, product *catalog
 	if err := tx.QueryRowContext(ctx, `SELECT source_locale,source_locales_json FROM product_content_metadata WHERE product_id=?`, product.ID).Scan(&product.SourceLocale, &encoded); err != nil {
 		return err
 	}
-	return json.Unmarshal([]byte(encoded), &product.SourceLocales)
+	if err := json.Unmarshal([]byte(encoded), &product.SourceLocales); err != nil {
+		return err
+	}
+	// An obsolete key loaded from private metadata is not new caller input
+	// to the three-field Product preparation contract.
+	delete(product.SourceLocales, "specification")
+	return nil
 }
 
 func (s *Store) CommitImport(ctx context.Context, actorID string, preview importing.Preview) (importing.Receipt, error) {

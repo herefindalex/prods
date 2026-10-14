@@ -7,6 +7,7 @@ import (
 	"prods/internal/catalog"
 	"prods/internal/localization"
 	"prods/internal/site"
+	"prods/internal/specnumeric"
 )
 
 type Document struct {
@@ -19,11 +20,12 @@ type Document struct {
 }
 
 type Specification struct {
-	ID            string `json:"id"`
-	Name          string `json:"name"`
-	RawValue      string `json:"raw_value"`
-	PreferredUnit string `json:"preferred_unit,omitempty"`
-	Language      string `json:"language,omitempty"`
+	SourceRevision int64  `json:"source_revision"`
+	ID             string `json:"id"`
+	Name           string `json:"name"`
+	RawValue       string `json:"raw_value"`
+	PreferredUnit  string `json:"preferred_unit,omitempty"`
+	Language       string `json:"language,omitempty"`
 }
 
 type Application struct {
@@ -46,7 +48,24 @@ type ApplicableSpecification struct {
 	PreferredUnit string `json:"preferred_unit,omitempty"`
 }
 
+// PublicNumericDefinition freezes an applicable, filterable semantic definition.
+type PublicNumericDefinition struct {
+	SpecID              string              `json:"spec_id"`
+	SpecSemanticVersion int64               `json:"spec_semantic_version"`
+	Profile             specnumeric.Profile `json:"profile"`
+}
+
+// PublicNumericFact contains only the adopted public value and its fixed meaning.
+type PublicNumericFact struct {
+	SpecID              string              `json:"spec_id"`
+	SpecSemanticVersion int64               `json:"spec_semantic_version"`
+	Profile             specnumeric.Profile `json:"profile"`
+	Value               specnumeric.Value   `json:"value"`
+}
+
 type PublicView struct {
+	NumericFacts             []PublicNumericFact                `json:"numeric_facts,omitempty"`
+	NumericDefinitions       []PublicNumericDefinition          `json:"numeric_definitions,omitempty"`
 	PackageFormFactor        string                             `json:"package_form_factor,omitempty"`
 	ApplicableSpecifications []ApplicableSpecification          `json:"applicable_specifications,omitempty"`
 	ID                       string                             `json:"id"`
@@ -118,7 +137,7 @@ func (v PublicView) ForLocale(locale string) PublicView {
 	v.Language = locale
 	v.FieldLocalization = make(map[string]FieldLocalization, len(catalog.ProductTranslatableFields))
 	fields := map[string]*string{
-		"name": &v.Name, "description": &v.Description, "features": &v.Features, "specification": &v.Specification,
+		"name": &v.Name, "description": &v.Description, "features": &v.Features,
 	}
 	for field, target := range fields {
 		values := make(map[string]string, len(v.Localizations)+1)
@@ -138,8 +157,6 @@ func (v PublicView) ForLocale(locale string) PublicView {
 				values[translationLocale] = item.Description
 			case "features":
 				values[translationLocale] = item.Features
-			case "specification":
-				values[translationLocale] = item.Specification
 			}
 		}
 		resolved := localization.ResolveCustomerValue(locale, defaultLocale, sourceLocale, v.SupportedLocales, values)

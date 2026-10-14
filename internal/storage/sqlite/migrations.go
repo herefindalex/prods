@@ -13,7 +13,7 @@ import (
 
 const (
 	MinimumSupportedSchemaVersion = 1
-	CurrentSchemaVersion          = 18
+	CurrentSchemaVersion          = 19
 )
 
 var (
@@ -478,6 +478,80 @@ CREATE TABLE IF NOT EXISTS product_bulk_items (
 	UNIQUE(run_id,selection_index)
 );
 CREATE INDEX IF NOT EXISTS product_bulk_runs_status_idx ON product_bulk_runs(status,updated_at);`,
+	},
+	{
+		Version: 19, Name: "shared-spec-sources-and-controlled-numeric-selection", Transactional: true,
+		SQL: `ALTER TABLE product_spec_values ADD COLUMN source_origin_locale TEXT NOT NULL DEFAULT '';
+UPDATE product_spec_values SET source_origin_locale=source_locale;
+ALTER TABLE normalized_values ADD COLUMN profile_revision INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE normalized_values ADD COLUMN source_origin_locale TEXT NOT NULL DEFAULT '';
+ALTER TABLE normalized_values ADD COLUMN numeric_schema_version INTEGER NOT NULL DEFAULT 0;
+CREATE TABLE spec_numeric_profiles (
+ spec_id TEXT PRIMARY KEY REFERENCES spec_definitions(id),
+ spec_semantic_version INTEGER NOT NULL CHECK(spec_semantic_version>=1),
+ revision INTEGER NOT NULL CHECK(revision>=1),
+ profile_json TEXT NOT NULL,
+ updated_by TEXT NOT NULL REFERENCES users(id),
+ updated_at TEXT NOT NULL
+);
+CREATE TABLE product_spec_sources (
+ product_id TEXT NOT NULL REFERENCES products(id),
+ spec_id TEXT NOT NULL REFERENCES spec_definitions(id),
+ spec_value_id TEXT NOT NULL REFERENCES product_spec_values(id),
+ revision INTEGER NOT NULL CHECK(revision>=1),
+ updated_by TEXT REFERENCES users(id),
+ updated_at TEXT NOT NULL,
+ PRIMARY KEY(product_id,spec_id)
+);
+INSERT INTO product_spec_sources(product_id,spec_id,spec_value_id,revision,updated_by,updated_at)
+SELECT product_id,spec_id,MIN(id),1,NULL,strftime('%Y-%m-%dT%H:%M:%fZ','now')
+FROM product_spec_values GROUP BY product_id,spec_id HAVING COUNT(*)=1;
+CREATE TABLE spec_normalization_selections (
+ spec_value_id TEXT PRIMARY KEY REFERENCES product_spec_values(id),
+ selected_normalized_value_id TEXT REFERENCES normalized_values(id),
+ preference TEXT NOT NULL CHECK(preference IN ('automatic','manual')),
+ revision INTEGER NOT NULL CHECK(revision>=1),
+ updated_by TEXT NOT NULL REFERENCES users(id),
+ updated_at TEXT NOT NULL
+);
+CREATE TABLE spec_numeric_profile_work (
+ spec_id TEXT NOT NULL REFERENCES spec_definitions(id),
+ profile_revision INTEGER NOT NULL CHECK(profile_revision>=1),
+ spec_semantic_version INTEGER NOT NULL CHECK(spec_semantic_version>=1),
+ cursor_product_id TEXT NOT NULL DEFAULT '',
+ status TEXT NOT NULL CHECK(status IN ('pending','completed')),
+ created_at TEXT NOT NULL,
+ updated_at TEXT NOT NULL,
+ PRIMARY KEY(spec_id,profile_revision)
+);
+CREATE INDEX spec_numeric_profile_work_pending_idx ON spec_numeric_profile_work(status,spec_id,profile_revision);
+CREATE TABLE public_spec_projection_products (
+ product_id TEXT PRIMARY KEY REFERENCES products(id),
+ public_revision INTEGER NOT NULL,
+ source_revision INTEGER NOT NULL,
+ site_epoch INTEGER NOT NULL,
+ visibility_generation INTEGER NOT NULL,
+ projection_version TEXT NOT NULL
+);
+CREATE TABLE public_spec_projection_fields (
+ product_id TEXT NOT NULL REFERENCES public_spec_projection_products(product_id) ON DELETE CASCADE,
+ spec_id TEXT NOT NULL,
+ PRIMARY KEY(product_id,spec_id)
+);
+CREATE INDEX public_spec_projection_fields_spec_idx ON public_spec_projection_fields(spec_id,product_id);
+INSERT INTO admin_log(id,actor_id,action,target_type,target_id,result,details_json,created_at)
+SELECT 'log_'||lower(hex(randomblob(16))),NULL,'product.spec_model_migrated','product',p.id,'success',
+ json_object('migration',19,'old_revision',p.revision,'new_revision',p.revision+1,'render_contract_version','shared-specs-1'),
+ strftime('%Y-%m-%dT%H:%M:%fZ','now')
+FROM products p WHERE p.record_state='current' AND p.status='published';
+INSERT INTO publication_intents(id,entity_type,entity_id,desired_revision,cause,status,created_at,updated_at)
+SELECT 'out_'||lower(hex(randomblob(16))),'product',p.id,p.revision+1,'product.spec_model_migrated','pending',
+ strftime('%Y-%m-%dT%H:%M:%fZ','now'),strftime('%Y-%m-%dT%H:%M:%fZ','now')
+FROM products p WHERE p.record_state='current' AND p.status='published'
+ AND NOT EXISTS(SELECT 1 FROM publication_intents pi WHERE pi.entity_type='product' AND pi.entity_id=p.id
+  AND pi.desired_revision=p.revision+1 AND pi.status IN ('pending','processing'));
+UPDATE products SET revision=revision+1,updated_by=NULL,updated_at=strftime('%Y-%m-%dT%H:%M:%fZ','now')
+WHERE record_state='current' AND status='published';`,
 	},
 }
 

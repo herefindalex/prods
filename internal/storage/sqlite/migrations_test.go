@@ -36,6 +36,7 @@ func TestVersionSeventeenToEighteenAddsDurableProductBulkRuns(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	removeNumericSchema(t, store)
 	if _, err := store.db.Exec(`
 DROP TABLE product_bulk_items;
 DROP TABLE product_bulk_runs;
@@ -96,6 +97,7 @@ func TestVersionOneUpgradeRequiresBackupAndBecomesReady(t *testing.T) {
 	// CreatePOC builds the current schema. Reconstruct the v1 RFQ shape so this
 	// test exercises the complete ordered upgrade rather than merely changing
 	// the version marker under a current schema.
+	removeNumericSchema(t, store)
 	if _, err := store.db.Exec(`
 		DROP TABLE smtp_delivery_recipients;
 		DROP TABLE smtp_delivery_attempts;
@@ -200,6 +202,7 @@ func TestVersionFourUpgradePreservesRFQAndClassifiesLegacyRecipient(t *testing.T
 		t.Fatal(err)
 	}
 	created := "2026-09-14T12:00:00Z"
+	removeNumericSchema(t, store)
 	if _, err := store.db.Exec(`
 		INSERT INTO rfqs(id,name,email,company,phone,country,general_message,created_at)
 		VALUES('rfq_legacy','Legacy Buyer','legacy@example.test','','','','',?);
@@ -337,6 +340,7 @@ func TestVersionSeventeenUpgradeSeedsPinnedLocalesAndPreservesPublishedLocaleSet
 	if err != nil {
 		t.Fatal(err)
 	}
+	removeNumericSchema(t, store)
 	if _, err := store.db.Exec(`
 		UPDATE site_settings SET default_locale='zh-TW',supported_locales_json='["en-US","zh-TW","fr-FR"]',content_multilingual_enabled=1 WHERE singleton=1;
 		INSERT INTO product_translations(product_id,locale,name,description,features,specification,revision,updated_at)

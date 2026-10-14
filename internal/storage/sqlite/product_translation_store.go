@@ -87,6 +87,7 @@ func (s *Store) ProductContent(ctx context.Context, productID string) (catalog.P
 	if err := json.Unmarshal([]byte(sourceLocalesJSON), &content.SourceLocales); err != nil {
 		return content, err
 	}
+	delete(content.SourceLocales, "specification")
 	if len(content.SourceLocales) == 0 {
 		content.SourceLocales, _ = catalog.NormalizeFieldSourceLocales(nil, content.SourceLocale, catalog.ProductTranslatableFields)
 	}
@@ -111,7 +112,6 @@ func (s *Store) SaveProductTranslation(ctx context.Context, actorID, productID s
 	item.Name = strings.TrimSpace(item.Name)
 	item.Description = strings.TrimSpace(item.Description)
 	item.Features = strings.TrimSpace(item.Features)
-	item.Specification = strings.TrimSpace(item.Specification)
 	if actorID == "" || productID == "" || expectedProductRevision < 1 || item.Locale == "" {
 		return catalog.ProductContent{}, catalog.ErrInvalidProduct
 	}
@@ -139,10 +139,10 @@ func (s *Store) SaveProductTranslation(ctx context.Context, actorID, productID s
 			return ErrContentLocaleUnavailable
 		}
 		now := time.Now().UTC().Format(time.RFC3339Nano)
-		_, err := tx.ExecContext(ctx, `INSERT INTO product_translations(product_id,locale,name,description,features,specification,revision,updated_by,updated_at)
-			VALUES(?,?,?,?,?,?,1,?,?) ON CONFLICT(product_id,locale) DO UPDATE SET name=excluded.name,description=excluded.description,
-			features=excluded.features,specification=excluded.specification,revision=product_translations.revision+1,updated_by=excluded.updated_by,updated_at=excluded.updated_at`,
-			productID, item.Locale, item.Name, item.Description, item.Features, item.Specification, actorID, now)
+		_, err := tx.ExecContext(ctx, `INSERT INTO product_translations(product_id,locale,name,description,features,revision,updated_by,updated_at)
+			VALUES(?,?,?,?,?,1,?,?) ON CONFLICT(product_id,locale) DO UPDATE SET name=excluded.name,description=excluded.description,
+			features=excluded.features,revision=product_translations.revision+1,updated_by=excluded.updated_by,updated_at=excluded.updated_at`,
+			productID, item.Locale, item.Name, item.Description, item.Features, actorID, now)
 		if err != nil {
 			return err
 		}

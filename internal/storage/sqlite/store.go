@@ -642,7 +642,7 @@ func (s *Store) CompleteInstallation(ctx context.Context, installation Installat
 			if _, exists := seenSpecIDs[value.SpecID]; !exists {
 				return identity.User{}, fmt.Errorf("sample specification value %d references unknown specification %q", index+1, value.SpecID)
 			}
-			key := value.ProductID + "\x00" + value.SpecID + "\x00" + value.SourceLocale
+			key := value.ProductID + "\x00" + value.SpecID
 			if _, duplicate := seenSpecValues[key]; duplicate {
 				return identity.User{}, fmt.Errorf("sample specification value %d is duplicated", index+1)
 			}
@@ -663,10 +663,13 @@ func (s *Store) CompleteInstallation(ctx context.Context, installation Installat
 				valueID = fmt.Sprintf("spv_sample_%06d", index+1)
 			}
 			if _, err := tx.ExecContext(ctx, `INSERT INTO product_spec_values(
-				id,product_id,spec_id,raw_value,source_locale,source_revision,active,created_by,updated_by,created_at,updated_at
-			) VALUES(?,?,?,?,?,1,1,?,?,?,?)`, valueID, value.ProductID, value.SpecID, value.RawValue, value.SourceLocale,
+				id,product_id,spec_id,raw_value,source_locale,source_origin_locale,source_revision,active,created_by,updated_by,created_at,updated_at
+			) VALUES(?,?,?,?,?,?,1,1,?,?,?,?)`, valueID, value.ProductID, value.SpecID, value.RawValue, value.SourceLocale, value.SourceLocale,
 				ownerID, ownerID, now, now); err != nil {
 				return identity.User{}, fmt.Errorf("install sample specification value for product %q: %w", value.ProductID, err)
+			}
+			if _, err := tx.ExecContext(ctx, `INSERT INTO product_spec_sources(product_id,spec_id,spec_value_id,revision,updated_by,updated_at) VALUES(?,?,?,1,?,?)`, value.ProductID, value.SpecID, valueID, ownerID, now); err != nil {
+				return identity.User{}, err
 			}
 			seenSpecValues[key] = struct{}{}
 		}
