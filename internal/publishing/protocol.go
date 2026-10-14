@@ -39,12 +39,13 @@ type Intent struct {
 }
 
 type SourceSpec struct {
-	SourceRevision int64
-	ID             string
-	Name           string
-	RawValue       string
-	PreferredUnit  string
-	Language       string
+	SemanticVersion int64
+	SourceRevision  int64
+	ID              string
+	Name            string
+	RawValue        string
+	PreferredUnit   string
+	Language        string
 }
 
 type SourceDocument struct {
@@ -66,6 +67,7 @@ type SourceImage struct {
 }
 
 type Source struct {
+	FilterDefinitions          []PublicFilterDefinition
 	NumericFacts               []PublicNumericFact
 	NumericDefinitions         []PublicNumericDefinition
 	ApplicableSpecs            []SourceSpec
@@ -751,14 +753,14 @@ func (e *Engine) installLocked(ctx context.Context) error {
 func applicableSpecifications(specs []SourceSpec) []ApplicableSpecification {
 	result := make([]ApplicableSpecification, 0, len(specs))
 	for _, spec := range specs {
-		result = append(result, ApplicableSpecification{ID: spec.ID, Name: spec.Name, PreferredUnit: spec.PreferredUnit})
+		result = append(result, ApplicableSpecification{ID: spec.ID, SemanticVersion: spec.SemanticVersion, Name: spec.Name, PreferredUnit: spec.PreferredUnit})
 	}
 	return result
 }
 
 func (e *Engine) viewFromSource(source Source) PublicView {
 	view := PublicView{
-		NumericFacts: source.NumericFacts, NumericDefinitions: source.NumericDefinitions,
+		FilterDefinitions: source.FilterDefinitions, NumericFacts: source.NumericFacts, NumericDefinitions: source.NumericDefinitions,
 		PackageFormFactor:        source.Product.PackageFormFactor,
 		ApplicableSpecifications: applicableSpecifications(source.ApplicableSpecs),
 		Site:                     source.Site,
