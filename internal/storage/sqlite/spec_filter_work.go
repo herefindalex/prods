@@ -43,21 +43,7 @@ func (s *Store) StartSpecNormalizationWork(ctx context.Context, actorID, specID 
 		if !errors.Is(err, sql.ErrNoRows) {
 			return err
 		}
-		now := time.Now().UTC().Format(time.RFC3339Nano)
-		if _, err = tx.ExecContext(ctx, `INSERT INTO spec_normalization_work(id,spec_id,actor_id,profile_revision,spec_semantic_version,status,total,created_at,updated_at) VALUES(?,?,?,?,?,'pending',0,?,?)`, id, specID, actorID, profileRevision, p.SpecSemanticVersion, now, now); err != nil {
-			return err
-		}
-		if _, err = tx.ExecContext(ctx, `INSERT INTO spec_normalization_work_items(work_id,spec_value_id,status)
- SELECT ?,pv.id,'pending' FROM product_spec_sources ps JOIN product_spec_values pv ON pv.id=ps.spec_value_id
- JOIN products p ON p.id=pv.product_id JOIN spec_definitions sd ON sd.id=pv.spec_id
- WHERE pv.spec_id=? AND ps.product_id=pv.product_id AND ps.spec_id=pv.spec_id AND pv.active=1 AND sd.status='active' AND p.record_state='current'
- AND EXISTS(SELECT 1 FROM category_spec_sets cs JOIN spec_set_members sm ON sm.spec_set_id=cs.spec_set_id WHERE cs.category_id=p.category_id AND sm.spec_id=pv.spec_id)`, id, specID); err != nil {
-			return err
-		}
-		if _, err = tx.ExecContext(ctx, `UPDATE spec_normalization_work SET total=(SELECT COUNT(*) FROM spec_normalization_work_items WHERE work_id=?) WHERE id=?`, id, id); err != nil {
-			return err
-		}
-		return appendAudit(ctx, tx, actorID, "spec.normalization_work_started", "spec", specID, map[string]any{"work_id": id, "profile_revision": profileRevision, "spec_semantic_version": p.SpecSemanticVersion})
+		return queueSpecNormalizationWorkTx(ctx, tx, actorID, id, specID, profileRevision, p.SpecSemanticVersion, false, time.Now().UTC().Format(time.RFC3339Nano))
 	})
 	if err != nil {
 		return catalog.SpecNormalizationWork{}, err
@@ -67,7 +53,7 @@ func (s *Store) StartSpecNormalizationWork(ctx context.Context, actorID, specID 
 
 func (s *Store) SpecNormalizationWork(ctx context.Context, id string) (catalog.SpecNormalizationWork, error) {
 	var w catalog.SpecNormalizationWork
-	err := s.db.QueryRowContext(ctx, `SELECT id,spec_id,status,cursor_spec_value_id,profile_revision,spec_semantic_version,processed,failed,skipped,total FROM spec_normalization_work WHERE id=?`, id).Scan(&w.ID, &w.SpecID, &w.Status, &w.Cursor, &w.ProfileRevision, &w.SemanticVersion, &w.Processed, &w.Failed, &w.Skipped, &w.Total)
+	err := s.db.QueryRowContext(ctx, `SELECT id,spec_id,status,cursor_spec_value_id,profile_revision,spec_semantic_version,processed,failed,skipped,total,initial_seed FROM spec_normalization_work WHERE id=?`, id).Scan(&w.ID, &w.SpecID, &w.Status, &w.Cursor, &w.ProfileRevision, &w.SemanticVersion, &w.Processed, &w.Failed, &w.Skipped, &w.Total, &w.InitialSeed)
 	return w, err
 }
 
@@ -178,6 +164,14 @@ func (s *Store) ProcessSpecNormalizationWork(ctx context.Context, limit int) (bo
 					if err := recordControlledNormalizationTx(ctx, tx, actor, frozen, frozen.Expected, encoded, reason, catalog.NormalizedAutomatic, false, &outcome); err != nil {
 						return err
 					}
+					// New installation jobs can supersede older pending revisions before
+					// the first activation. Every adopted fact and its latest intent remain
+					// durable; ordinary user work and active Products keep their usual path.
+					if work.InitialSeed && outcome.ProductRevision > 0 {
+						if _, err := tx.ExecContext(ctx, `UPDATE publication_intents SET status='superseded',updated_at=? WHERE entity_type='product' AND entity_id=? AND status='pending' AND desired_revision<? AND NOT EXISTS(SELECT 1 FROM public_activations WHERE product_id=?)`, time.Now().UTC().Format(time.RFC3339Nano), frozen.ProductID, outcome.ProductRevision, frozen.ProductID); err != nil {
+							return err
+						}
+					}
 				}
 			}
 			result, err := tx.ExecContext(ctx, `UPDATE spec_normalization_work_items SET status=?,reason=? WHERE work_id=? AND spec_value_id=? AND status='pending'`, state, reason, id, valueID)
@@ -217,4 +211,21 @@ func (s *Store) ProcessSpecNormalizationWork(ctx context.Context, limit int) (bo
 		return appendAudit(ctx, tx, actor, "spec.normalization_work_completed", "spec", work.SpecID, map[string]any{"work_id": id})
 	})
 	return true, err
+}
+
+func queueSpecNormalizationWorkTx(ctx context.Context, tx *sql.Tx, actorID, id, specID string, profileRevision, semantic int64, initialSeed bool, now string) error {
+	if _, err := tx.ExecContext(ctx, `INSERT INTO spec_normalization_work(id,spec_id,actor_id,profile_revision,spec_semantic_version,initial_seed,status,total,created_at,updated_at) VALUES(?,?,?,?,?,?,'pending',0,?,?)`, id, specID, actorID, profileRevision, semantic, initialSeed, now, now); err != nil {
+		return err
+	}
+	if _, err := tx.ExecContext(ctx, `INSERT INTO spec_normalization_work_items(work_id,spec_value_id,status)
+ SELECT ?,pv.id,'pending' FROM product_spec_sources ps JOIN product_spec_values pv ON pv.id=ps.spec_value_id
+ JOIN products p ON p.id=pv.product_id JOIN spec_definitions sd ON sd.id=pv.spec_id
+ WHERE pv.spec_id=? AND ps.product_id=pv.product_id AND ps.spec_id=pv.spec_id AND pv.active=1 AND sd.status='active' AND p.record_state='current'
+ AND EXISTS(SELECT 1 FROM category_spec_sets cs JOIN spec_set_members sm ON sm.spec_set_id=cs.spec_set_id WHERE cs.category_id=p.category_id AND sm.spec_id=pv.spec_id)`, id, specID); err != nil {
+		return err
+	}
+	if _, err := tx.ExecContext(ctx, `UPDATE spec_normalization_work SET total=(SELECT COUNT(*) FROM spec_normalization_work_items WHERE work_id=?) WHERE id=?`, id, id); err != nil {
+		return err
+	}
+	return appendAudit(ctx, tx, actorID, "spec.normalization_work_started", "spec", specID, map[string]any{"work_id": id, "profile_revision": profileRevision, "spec_semantic_version": semantic})
 }

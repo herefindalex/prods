@@ -11,6 +11,7 @@ type SpecSearchProfile struct {
 }
 
 type SpecNormalizationWork struct {
+	InitialSeed     bool   `json:"-"`
 	ID              string `json:"id"`
 	SpecID          string `json:"spec_id"`
 	Status          string `json:"status"`

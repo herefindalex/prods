@@ -116,3 +116,21 @@ func (s *Store) ConfigureSpecSearchProfile(ctx context.Context, actorID, specID 
 	}
 	return result, nil
 }
+
+// Initial seed definitions are installed once, before any Product exists.
+// Adoption is deferred to bounded durable jobs after Installer commits Ready.
+func installSpecSearchProfileTx(ctx context.Context, tx *sql.Tx, actorID string, spec catalog.SpecDefinition, profile catalogfilter.Profile, now string) error {
+	if err := catalogfilter.ValidateProfile(profile); err != nil {
+		return fmt.Errorf("%w: %v", catalog.ErrInvalidSpec, err)
+	}
+	if profile.Numeric != nil {
+		encoded, err := json.Marshal(profile.Numeric)
+		if err != nil {
+			return err
+		}
+		if _, err = tx.ExecContext(ctx, `INSERT INTO spec_numeric_profiles(spec_id,spec_semantic_version,revision,profile_json,updated_by,updated_at) VALUES(?,?,1,?,?,?)`, spec.ID, spec.SemanticVer, string(encoded), actorID, now); err != nil {
+			return err
+		}
+	}
+	return saveSpecSearchMetadataTx(ctx, tx, actorID, spec.ID, 1, profile, now)
+}

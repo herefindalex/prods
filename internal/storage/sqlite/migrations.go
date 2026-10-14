@@ -578,6 +578,7 @@ CREATE INDEX spec_filter_profile_work_pending_idx ON spec_filter_profile_work(st
 CREATE TABLE spec_normalization_work (
  id TEXT PRIMARY KEY,spec_id TEXT NOT NULL REFERENCES spec_definitions(id),
  actor_id TEXT NOT NULL REFERENCES users(id),profile_revision INTEGER NOT NULL,spec_semantic_version INTEGER NOT NULL,
+ initial_seed INTEGER NOT NULL DEFAULT 0 CHECK(initial_seed IN (0,1)),
  status TEXT NOT NULL CHECK(status IN ('pending','completed','superseded')),
  cursor_spec_value_id TEXT NOT NULL DEFAULT '',processed INTEGER NOT NULL DEFAULT 0,
  failed INTEGER NOT NULL DEFAULT 0,skipped INTEGER NOT NULL DEFAULT 0,total INTEGER NOT NULL,
