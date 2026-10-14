@@ -13,6 +13,8 @@ import (
 )
 
 type catalogFilterControl struct {
+	Hidden                                                         []catalogHiddenField
+	ClearURL                                                       string
 	Field, Label, Kind, Operator, Value, Lower, Upper, Unit, Error string
 	Operators                                                      []catalogFilterOperator
 	Options                                                        []catalogFilterOption
@@ -227,6 +229,18 @@ func catalogFilterForm(snapshot publishing.CatalogSnapshot, values url.Values) [
 		for _, option := range options {
 			control.Options = append(control.Options, catalogFilterOption{Value: option.Value, Label: option.Label, Selected: slices.Contains(selected, option.Value)})
 		}
+		for _, hidden := range catalogFilterHiddenFields(values) {
+			if !strings.HasPrefix(hidden.Name, "f."+d.Field+".") && hidden.Name != d.Field+"_id" {
+				control.Hidden = append(control.Hidden, hidden)
+			}
+		}
+		clear := url.Values{}
+		for key, items := range values {
+			if key != "page" && !strings.HasPrefix(key, "f."+d.Field+".") && key != d.Field+"_id" {
+				clear[key] = slices.Clone(items)
+			}
+		}
+		control.ClearURL = "?" + clear.Encode()
 		controls = append(controls, control)
 	}
 	return controls
@@ -249,9 +263,20 @@ func validateCatalogFilterFields(snapshot publishing.CatalogSnapshot, values url
 	return nil
 }
 func catalogFilterHiddenFields(values url.Values) []catalogHiddenField {
+	active := map[string]bool{}
+	for key, items := range values {
+		if field, property, ok := filterField(key); ok && slices.Contains([]string{"value", "values", "lower", "upper"}, property) {
+			for _, value := range items {
+				if strings.TrimSpace(value) != "" {
+					active[field] = true
+				}
+			}
+		}
+	}
 	keys := []string{}
 	for key := range values {
-		if strings.HasPrefix(key, "f.") || slices.Contains([]string{"manufacturer_id", "brand_id", "category_id", "page_size"}, key) {
+		field, _, isFilter := filterField(key)
+		if (isFilter && active[field]) || slices.Contains([]string{"manufacturer_id", "brand_id", "category_id", "page_size"}, key) {
 			keys = append(keys, key)
 		}
 	}

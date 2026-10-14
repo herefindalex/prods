@@ -8,6 +8,14 @@ import (
 	"testing"
 )
 
+func TestCatalogPreservesCombinedKeywordProjection(t *testing.T) {
+	v := PublicView{ID: "p", PartNumber: "ABC", Name: "Precision", Description: "private-search-boundary", Language: "en-US", SupportedLocales: []string{"en-US"}}
+	result, err := AdmitCatalogViews(t.Context(), []PublicView{v}, site.DefaultConfiguration(), CatalogQuery{Scope: catalogfilter.Scope{Kind: "search", Query: "ABC Precision"}})
+	if err != nil || len(result.Views) != 1 {
+		t.Fatalf("combined public keyword: %+v %v", result.Views, err)
+	}
+}
+
 func TestCatalogCombinesTextAndNumericBeforePagination(t *testing.T) {
 	base := blevePublication(t).View
 	base.Language = "en-US"

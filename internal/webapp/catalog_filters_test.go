@@ -1,10 +1,18 @@
 package webapp
 
 import (
+	"bytes"
+	"fmt"
+	dom "golang.org/x/net/html"
 	"html"
+	tmpl "html/template"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
+	"prods/internal/catalogfilter"
+	"prods/internal/localization"
+	"prods/internal/publishing"
+	"prods/internal/specnumeric"
 	"strings"
 	"testing"
 )
@@ -61,5 +69,82 @@ func TestUnknownCatalogFilterPreservesQuery(t *testing.T) {
 	body := responseBody(t, response)
 	if response.StatusCode != http.StatusUnprocessableEntity || !strings.Contains(body, html.EscapeString(raw)) || !strings.Contains(body, "spec:unknown") || !strings.Contains(body, "original") {
 		t.Fatalf("unknown condition lost input: %d %s", response.StatusCode, body)
+	}
+}
+
+func TestCatalogLargeFieldPanelSubmitsBoundedConditions(t *testing.T) {
+	snapshot := publishing.CatalogSnapshot{Locale: "en-US"}
+	var profile specnumeric.Profile
+	for _, p := range specnumeric.SupportedProfiles() {
+		if p.Quantity == "voltage" && p.SemanticRole == specnumeric.RoleOperatingSupport {
+			profile = p
+			break
+		}
+	}
+	for i := range 34 {
+		id := fmt.Sprintf("spc_%032d", i)
+		snapshot.Definitions = append(snapshot.Definitions, publishing.PublicFilterDefinition{Field: "spec:" + id, Profile: catalogfilter.NumericProfile(profile)})
+	}
+	values := url.Values{"q": {"KEEP"}, "f.package.op": {"contains"}, "f.package.value": {"QFN"}}
+	page := catalogPage{publicPage: publicPage{Text: localization.For("en-US"), Language: "en-US"}, Query: "KEEP", FormAction: "/catalog", FilterControls: catalogFilterForm(snapshot, values), FilterHidden: catalogFilterHiddenFields(values)}
+	template, err := tmpl.New("filters").ParseFS(content, "templates/catalog_filters.tmpl")
+	if err != nil {
+		t.Fatal(err)
+	}
+	var body bytes.Buffer
+	if err = template.ExecuteTemplate(&body, "catalog-filter-panel", page); err != nil {
+		t.Fatal(err)
+	}
+	tree, err := dom.Parse(&body)
+	if err != nil {
+		t.Fatal(err)
+	}
+	attr := func(node *dom.Node, key string) string {
+		for _, a := range node.Attr {
+			if a.Key == key {
+				return a.Val
+			}
+		}
+		return ""
+	}
+	var visit func(*dom.Node)
+	forms := 0
+	visit = func(node *dom.Node) {
+		if node.Type == dom.ElementNode && node.Data == "form" {
+			forms++
+			submission := url.Values{}
+			var controls func(*dom.Node)
+			controls = func(n *dom.Node) {
+				name := attr(n, "name")
+				if n.Data == "input" && name != "" {
+					submission.Add(name, attr(n, "value"))
+				}
+				if n.Data == "select" && name != "" {
+					for child := n.FirstChild; child != nil; child = child.NextSibling {
+						if child.Type == dom.ElementNode && child.Data == "option" {
+							submission.Add(name, attr(child, "value"))
+							break
+						}
+					}
+				}
+				for c := n.FirstChild; c != nil; c = c.NextSibling {
+					controls(c)
+				}
+			}
+			controls(node)
+			if len(submission.Encode()) > 8192 {
+				t.Fatalf("34-field native form exceeds request budget: %d bytes", len(submission.Encode()))
+			}
+			if submission.Get("q") != "KEEP" || submission.Get("f.package.value") != "QFN" {
+				t.Fatalf("form lost existing conditions: %v", submission)
+			}
+		}
+		for c := node.FirstChild; c != nil; c = c.NextSibling {
+			visit(c)
+		}
+	}
+	visit(tree)
+	if forms == 0 {
+		t.Fatal("no usable native forms")
 	}
 }

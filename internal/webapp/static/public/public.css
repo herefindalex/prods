@@ -482,3 +482,5 @@ code {
 .catalog-filter-sidebar :is(input, select, button, a):focus-visible { outline: 3px solid #147985; outline-offset: 2px; }
 @media (max-width: 1024px) { .catalog-workspace { grid-template-columns: minmax(0, 1fr); } .catalog-filter-sidebar .catalog-filters { grid-template-columns: repeat(2, minmax(0, 1fr)); } .catalog-filter-actions { grid-column: 1 / -1; } }
 @media (max-width: 640px) { .catalog-filter-sidebar .catalog-filters { grid-template-columns: minmax(0, 1fr); } }
+
+.catalog-query-form, .catalog-field-form { display: grid; min-width: 0; gap: .5rem; align-content: start; }

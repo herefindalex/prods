@@ -332,7 +332,7 @@ func catalogKeywordRank(v PublicView, q string) int {
 		}
 	}
 	// Keep the existing keyword field boundary and enabled localized names.
-	all := []string{v.Category, v.Lifecycle, applicationNames(v.Applications)}
+	all := []string{v.PartNumber, v.Name, v.Manufacturer, v.Brand, v.Category, v.Lifecycle, applicationNames(v.Applications)}
 	for _, localized := range v.Localizations {
 		all = append(all, localized.Name)
 	}
