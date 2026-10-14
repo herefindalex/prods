@@ -390,3 +390,8 @@ func (s *Store) RestoreWebsiteVersion(ctx context.Context, actorID string, expec
 	}
 	return s.WebsiteState(ctx)
 }
+
+func (s *Store) ActiveWebsiteLocalization(ctx context.Context) (site.WebsiteLocalization, error) {
+	state, err := s.WebsiteState(ctx)
+	return state.ActiveLocalization, err
+}

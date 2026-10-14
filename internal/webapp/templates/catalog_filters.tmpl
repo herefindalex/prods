@@ -1,0 +1,15 @@
+{{define "catalog-filter-panel"}}
+<aside class="catalog-filter-sidebar"><details class="catalog-disclosure filter-disclosure" open><summary>{{.Text.Filters}}</summary>
+{{if .FilterError}}<p class="filter-error" role="alert">{{.FilterError}}</p>{{end}}
+<form action="{{.FormAction}}" method="get" class="catalog-filters"><input type="hidden" name="lang" value="{{.Language}}">
+<label>{{.Text.SearchLabel}} <input name="q" value="{{.Query}}"></label>
+{{range .FilterControls}}<fieldset class="catalog-filter-field"><legend>{{.Label}}</legend>{{if .Error}}<p class="filter-error">{{.Error}}</p>{{end}}
+<label for="filter-{{.Field}}-op">{{$.Text.Filters}}<select id="filter-{{.Field}}-op" name="f.{{.Field}}.op">{{range .Operators}}<option value="{{.Value}}"{{if .Selected}} selected{{end}}>{{.Label}}</option>{{end}}</select></label>
+{{if eq .Kind "numeric"}}<p class="filter-help">{{$.Text.FilterNumericHelp}}</p>
+<label for="filter-{{.Field}}-value">{{$.Text.FilterValue}}<input id="filter-{{.Field}}-value" name="f.{{.Field}}.value" value="{{.Value}}" inputmode="decimal"></label>
+<div class="filter-range"><label for="filter-{{.Field}}-lower">{{$.Text.FilterLower}}<input id="filter-{{.Field}}-lower" name="f.{{.Field}}.lower" value="{{.Lower}}" inputmode="decimal"></label><label for="filter-{{.Field}}-upper">{{$.Text.FilterUpper}}<input id="filter-{{.Field}}-upper" name="f.{{.Field}}.upper" value="{{.Upper}}" inputmode="decimal"></label></div>
+<label for="filter-{{.Field}}-unit">{{$.Text.FilterUnit}}<input id="filter-{{.Field}}-unit" name="f.{{.Field}}.unit" value="{{.Unit}}" maxlength="32"></label>
+{{else if or (eq .Kind "choice") (eq .Kind "multi_choice")}}<label for="filter-{{.Field}}-values">{{.Label}}<select id="filter-{{.Field}}-values" name="f.{{.Field}}.values" multiple size="3"><option value="">{{$.Text.All}}</option>{{range .Options}}<option value="{{.Value}}"{{if .Selected}} selected{{end}}>{{.Label}}</option>{{end}}</select></label>
+{{else}}<label for="filter-{{.Field}}-value">{{.Label}}<input id="filter-{{.Field}}-value" name="f.{{.Field}}.value" value="{{.Value}}" maxlength="512" list="filter-{{.Field}}-suggestions"></label><datalist id="filter-{{.Field}}-suggestions">{{range .Options}}<option value="{{.Value}}">{{.Label}}</option>{{end}}</datalist>{{end}}</fieldset>{{end}}
+<div class="catalog-filter-actions"><button>{{.Text.Search}}</button><a class="clear-filters" href="{{.ClearURL}}">{{.Text.ClearFilters}}</a></div></form></details></aside>
+{{end}}

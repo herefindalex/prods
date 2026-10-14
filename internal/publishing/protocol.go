@@ -217,6 +217,7 @@ type Config struct {
 }
 
 type publicIndex struct {
+	localization      site.WebsiteLocalization
 	specDigest        string
 	specDigestError   error
 	specInventory     map[string]SpecCandidateBinding
@@ -686,6 +687,15 @@ func (e *Engine) installLocked(ctx context.Context) error {
 		return err
 	}
 	next := &publicIndex{byID: make(map[string]ActivePublication), byRoute: make(map[string]routeTarget), byAsset: make(map[string]assetTarget), history: make(map[string]RouteHistory), site: configuration, siteEpoch: siteEpoch, customCSSDisabled: customCSSDisabled, runtimeGeneration: runtimeGeneration}
+	if reader, ok := e.repository.(interface {
+		ActiveWebsiteLocalization(context.Context) (site.WebsiteLocalization, error)
+	}); ok {
+		next.localization, err = reader.ActiveWebsiteLocalization(ctx)
+		if err != nil {
+			e.index = &publicIndex{unhealthy: err}
+			return err
+		}
+	}
 	siteAssets, err := e.assetsForSite(ctx, configuration, false)
 	if err != nil {
 		e.index = &publicIndex{unhealthy: err}

@@ -3,35 +3,42 @@ package publishing
 import (
 	"context"
 	"errors"
-	"fmt"
 	"slices"
 	"sort"
 	"strings"
 
 	"prods/internal/catalog"
 	"prods/internal/catalogfilter"
+	"prods/internal/localization"
 	"prods/internal/site"
 	"prods/internal/specnumeric"
 )
 
 type CatalogQuery struct {
-	Scope   catalogfilter.Scope
-	Locale  string
-	Clauses []catalogfilter.Clause
+	ScopeURL string
+	Scope    catalogfilter.Scope
+	Locale   string
+	Clauses  []catalogfilter.Clause
 }
 type CatalogFilterOption struct {
 	Value string
 	Label string
 }
 type CatalogSnapshot struct {
-	Views       []PublicView
-	ScopeViews  []PublicView
-	Definitions []PublicFilterDefinition
-	Options     map[string][]CatalogFilterOption
-	Site        site.Configuration
-	Locale      string
-	Generation  int64
+	Scope        catalogfilter.Scope
+	AllViews     []PublicView
+	Presentation PublicView
+	Views        []PublicView
+	ScopeViews   []PublicView
+	Definitions  []PublicFilterDefinition
+	Options      map[string][]CatalogFilterOption
+	Site         site.Configuration
+	Locale       string
+	Generation   int64
 }
+
+var ErrCatalogScopeNotFound = errors.New("public catalog scope not found")
+
 type CatalogFilterError struct{ Field, Message string }
 
 func (e *CatalogFilterError) Error() string { return e.Field + ": " + e.Message }
@@ -75,7 +82,62 @@ func (e *Engine) AdmitCatalog(ctx context.Context, request CatalogQuery) (Catalo
 		return CatalogSnapshot{}, err
 	}
 	snapshot := CatalogSnapshot{Site: e.index.site, Generation: e.index.siteEpoch, Options: map[string][]CatalogFilterOption{}, Views: []PublicView{}, ScopeViews: []PublicView{}}
+	presentation := PublicView{Site: e.index.site, SiteEpoch: e.index.siteEpoch, Language: e.index.localization.DefaultLocale, DefaultLocale: e.index.localization.DefaultLocale, SupportedLocales: slices.Clone(e.index.localization.EnabledLocales), PublicCopyDefaults: map[string]map[string]string{}, PublicCopyOverrides: e.index.localization.PublicCopyOverrides}
+	if len(e.index.views) > 0 {
+		presentation = e.admittedViewLocked(e.index.views[0])
+		presentation.Site = e.index.site
+		presentation.SiteEpoch = e.index.siteEpoch
+	}
+	if presentation.DefaultLocale == "" {
+		presentation.DefaultLocale = "en-US"
+	}
+	if presentation.Language == "" {
+		presentation.Language = presentation.DefaultLocale
+	}
+	if len(presentation.SupportedLocales) == 0 {
+		presentation.SupportedLocales = []string{presentation.DefaultLocale}
+	}
+	if len(presentation.PublicCopyDefaults) == 0 {
+		presentation.PublicCopyDefaults = map[string]map[string]string{}
+		for _, item := range localization.OfficialPublicCopyCatalog().Defaults {
+			if presentation.PublicCopyDefaults[item.Key] == nil {
+				presentation.PublicCopyDefaults[item.Key] = map[string]string{}
+			}
+			presentation.PublicCopyDefaults[item.Key][item.Locale] = item.Value
+		}
+	}
+	snapshot.Presentation = presentation
 	locale := request.Locale
+	if locale == "" {
+		locale = presentation.DefaultLocale
+	}
+	if !slices.Contains(presentation.SupportedLocales, locale) {
+		return snapshot, localization.ErrUnsupportedLocale
+	}
+	if request.ScopeURL != "" && request.Scope.ID == "" {
+		for _, v := range e.index.views {
+			switch request.Scope.Kind {
+			case "manufacturer":
+				if v.ManufacturerURL == request.ScopeURL {
+					request.Scope.ID = v.ManufacturerID
+				}
+			case "brand":
+				if v.BrandURL == request.ScopeURL {
+					request.Scope.ID = v.BrandID
+				}
+			case "application":
+				for _, a := range v.Applications {
+					if a.URL == request.ScopeURL {
+						request.Scope.ID = a.ID
+					}
+				}
+			}
+		}
+		if request.Scope.ID == "" {
+			return snapshot, ErrCatalogScopeNotFound
+		}
+	}
+	snapshot.Scope = request.Scope
 	if len(e.index.views) > 0 {
 		view := e.index.views[0]
 		if locale == "" {
@@ -85,7 +147,7 @@ func (e *Engine) AdmitCatalog(ctx context.Context, request CatalogQuery) (Catalo
 			}
 		}
 		if !slices.Contains(publicSupportedLocales(view), locale) {
-			return snapshot, fmt.Errorf("%w: locale is not enabled", ErrInvalidSpecSearch)
+			return snapshot, localization.ErrUnsupportedLocale
 		}
 	}
 	if locale == "" {
@@ -113,7 +175,8 @@ func (e *Engine) AdmitCatalog(ctx context.Context, request CatalogQuery) (Catalo
 		view.Applications = slices.Clone(view.Applications)
 		view.CategoryTrail = slices.Clone(view.CategoryTrail)
 		view = view.ForLocale(locale)
-		if catalogScopeMatches(view, request.Scope) {
+		snapshot.AllViews = append(snapshot.AllViews, view)
+		if catalogScopeMatches(view, request.Scope) && (request.Scope.Kind == "search" || strings.TrimSpace(request.Scope.Query) == "" || catalogKeywordRank(view, request.Scope.Query) >= 0) {
 			snapshot.ScopeViews = append(snapshot.ScopeViews, view)
 		}
 	}
@@ -388,4 +451,13 @@ func (e *Engine) admitSpecCandidatesLocked(snapshot SpecCandidateSnapshot, proje
 		e.specStatus.Store(&specSearchStatus{digest: snapshot.SourceDigest, lastError: candidateErr.Error()})
 	}
 	return candidates, projected
+}
+
+// AdmitCatalogViews retains the explicitly enabled PoC fallback with the same oracle.
+func AdmitCatalogViews(ctx context.Context, views []PublicView, configuration site.Configuration, query CatalogQuery) (CatalogSnapshot, error) {
+	e := &Engine{index: &publicIndex{views: views, byID: map[string]ActivePublication{}, site: configuration}}
+	for _, v := range views {
+		e.index.byID[v.ID] = ActivePublication{ProductID: v.ID, View: v}
+	}
+	return e.AdmitCatalog(ctx, query)
 }

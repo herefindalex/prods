@@ -695,7 +695,10 @@ func (s *Server) currentPublicPage(r *http.Request, views []publishing.PublicVie
 	if len(views) > 0 {
 		configuration = views[0].Site
 		epoch = views[0].SiteEpoch
-		defaultLocale = views[0].Language
+		defaultLocale = views[0].DefaultLocale
+		if defaultLocale == "" {
+			defaultLocale = views[0].Language
+		}
 		supportedLocales = append([]string(nil), views[0].SupportedLocales...)
 	} else {
 		website, err := s.store.WebsiteState(ctx)
