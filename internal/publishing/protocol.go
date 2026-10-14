@@ -444,6 +444,24 @@ func (e *Engine) processOne(ctx context.Context) (bool, error) {
 			return profileWorked, err
 		}
 	}
+	if worker, ok := e.repository.(interface {
+		ProcessSpecSearchProfileWork(context.Context, int) (bool, error)
+	}); ok {
+		worked, err := worker.ProcessSpecSearchProfileWork(ctx, 100)
+		profileWorked = profileWorked || worked
+		if err != nil {
+			return profileWorked, err
+		}
+	}
+	if worker, ok := e.repository.(interface {
+		ProcessSpecNormalizationWork(context.Context, int) (bool, error)
+	}); ok {
+		worked, err := worker.ProcessSpecNormalizationWork(ctx, 100)
+		profileWorked = profileWorked || worked
+		if err != nil {
+			return profileWorked, err
+		}
+	}
 	intent, found, err := e.repository.ClaimPublicationIntent(ctx)
 	if err != nil || !found {
 		return profileWorked || found, err

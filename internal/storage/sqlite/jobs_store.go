@@ -16,11 +16,12 @@ import (
 var ErrJobNotRetryable = errors.New("job is not safely retryable")
 
 type JobKinds struct {
-	Publication bool
-	Import      bool
-	Backup      bool
-	SMTP        bool
-	Search      bool
+	Normalization bool
+	Publication   bool
+	Import        bool
+	Backup        bool
+	SMTP          bool
+	Search        bool
 }
 
 // JobRecord is an Admin read model over each subsystem's durable metadata.
@@ -53,6 +54,7 @@ func (s *Store) RecentJobs(ctx context.Context, kinds JobKinds, limit int) ([]Jo
 		load    func(context.Context, int) ([]JobRecord, error)
 	}{
 		{kinds.Publication, s.recentPublicationJobs},
+		{kinds.Normalization, s.recentSpecNormalizationJobs},
 		{kinds.Import, s.recentImportJobs},
 		{kinds.Backup, s.recentBackupJobs},
 		{kinds.SMTP, s.recentSMTPJobs},
@@ -294,4 +296,26 @@ func (s *Store) RetryPublicationJob(ctx context.Context, actorID, failedIntentID
 		ProgressTotal: 1, Outputs: []string{"html", "json-ld", "json", "markdown", "sitemap", "catalog-manifest"},
 		CreatedAt: now, UpdatedAt: now,
 	}, nil
+}
+
+func (s *Store) recentSpecNormalizationJobs(ctx context.Context, limit int) ([]JobRecord, error) {
+	rows, err := s.db.QueryContext(ctx, `SELECT id,spec_id,status,processed,total,failed,skipped,created_at,updated_at FROM spec_normalization_work ORDER BY updated_at DESC,id DESC LIMIT ?`, limit)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	jobs := []JobRecord{}
+	for rows.Next() {
+		job := JobRecord{Kind: "spec_normalization", Stage: "normalize_selected_sources", TargetType: "spec"}
+		var failed, skipped int64
+		if err = rows.Scan(&job.ID, &job.TargetID, &job.Status, &job.ProgressCurrent, &job.ProgressTotal, &failed, &skipped, &job.CreatedAt, &job.UpdatedAt); err != nil {
+			return nil, err
+		}
+		job.Label = fmt.Sprintf("processed: %d; failed: %d; preserved manual: %d", job.ProgressCurrent, failed, skipped)
+		if failed > 0 {
+			job.ErrorMessage = fmt.Sprintf("%d source values need review", failed)
+		}
+		jobs = append(jobs, job)
+	}
+	return jobs, rows.Err()
 }
