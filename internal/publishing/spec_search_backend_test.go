@@ -212,3 +212,52 @@ func TestSpecSearchOverlappingRefreshPreservesNewInstall(t *testing.T) {
 		t.Fatalf("new snapshot result=%+v err=%v diagnostics=%+v dirty=%v", result, err, d, e.specDirty.Load())
 	}
 }
+
+func TestSpecSearchMachineRefreshOverlapConvergesWhenWorkerIsIdle(t *testing.T) {
+	e, r := workerRefreshFixture(t)
+	r.sources = r.sources[:1]
+	if worked, err := e.processOne(t.Context()); err != nil || !worked {
+		t.Fatalf("install Product: worked=%v err=%v", worked, err)
+	}
+	started, release := make(chan struct{}), make(chan struct{})
+	t.Cleanup(func() {
+		select {
+		case <-release:
+		default:
+			close(release)
+		}
+	})
+	var block atomic.Bool
+	block.Store(true)
+	e.specBleve.resources = platform.NewResourceGate(func(string) (platform.ResourceStats, error) {
+		if block.Swap(false) {
+			close(started)
+			<-release
+		}
+		return platform.ResourceStats{VolumeID: "specs", TotalBytes: 1 << 40, FreeBytes: 1 << 40}, nil
+	})
+	done := make(chan error, 1)
+	go func() { done <- e.refreshSpecSearch(t.Context(), false) }()
+	select {
+	case <-started:
+	case <-time.After(10 * time.Second):
+		t.Fatal("refresh did not reach resource admission")
+	}
+	// Aggregate convergence installs a new pointer with the same public
+	// authority. It must not consume the deferred digest's only retry signal.
+	if err := e.refreshMachine(t.Context()); err != nil {
+		t.Fatal(err)
+	}
+	close(release)
+	if err := <-done; err != nil {
+		t.Fatal(err)
+	}
+	if worked, err := e.processWorkerBatch(t.Context()); err != nil || worked {
+		t.Fatalf("idle worker: worked=%v err=%v", worked, err)
+	}
+	result, err := e.SearchSpecs(t.Context(), specBackendRequest(t))
+	d := e.SpecSearchDiagnostics()
+	if err != nil || result.Total != 2 || !d.Ready || d.CandidateQueries != 1 || d.FallbackQueries != 0 {
+		t.Fatalf("idle convergence total=%d err=%v diagnostics=%+v", result.Total, err, d)
+	}
+}
