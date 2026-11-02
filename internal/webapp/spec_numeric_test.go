@@ -39,6 +39,18 @@ func TestNumericCommandUsesServerValidatedAdoption(t *testing.T) {
 		t.Fatalf("client trust markers status=%d", response.StatusCode)
 	}
 }
+
+func TestSpecSearchSettingsRequireSession(t *testing.T) {
+	_, server, _, _ := numericHTTPFixture(t)
+	response, err := http.Get(server.URL + "/admin/api/spec-search-capabilities")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer response.Body.Close()
+	if response.StatusCode != http.StatusUnauthorized {
+		t.Fatalf("settings without session: %d", response.StatusCode)
+	}
+}
 func TestNumericCommandAdoptsValidatedValue(t *testing.T) {
 	f, server, client, csrf := numericHTTPFixture(t)
 	response, err := client.Get(server.URL + "/admin/api/spec-values/" + f.valueID + "/normalization-context")

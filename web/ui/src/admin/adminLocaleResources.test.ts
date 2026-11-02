@@ -2,7 +2,7 @@ import fs from "node:fs";
 import path from "node:path";
 import ts from "typescript";
 import { describe, expect, it } from "vitest";
-import { ADMIN_LOCALE_OPTIONS, normalizeAdminLocale } from "./locales";
+import { ADMIN_LOCALE_OPTIONS, normalizeAdminLocale, specMessages } from "./locales";
 
 const expectedLocales = ADMIN_LOCALE_OPTIONS.map(({ value }) => value);
 
@@ -160,3 +160,5 @@ describe("Admin locale resources", () => {
     }
   });
 });
+
+it("spec workflow labels cover the ten built-in locales",()=>{const expected=Object.keys(specMessages("en-US"));for(const locale of ADMIN_LOCALE_OPTIONS){const messages=specMessages(locale.value);expect(Object.keys(messages)).toEqual(expected);for(const value of Object.values(messages))expect(value.trim().length).toBeGreaterThan(0);}});

@@ -464,3 +464,23 @@ code {
   .row-more-control { display: inline-flex; }
   .rfq-selection-tray { align-items: stretch; flex-direction: column; width: 100%; }
 }
+
+/* The semantic GET form remains usable without enhancement. */
+.catalog-workspace { display: grid; grid-template-columns: minmax(14rem, 18rem) minmax(0, 1fr); gap: 1.5rem; align-items: start; }
+.catalog-results, .catalog-filter-sidebar { min-width: 0; }
+.catalog-filter-sidebar .catalog-filters { display: grid; gap: 1rem; margin: 0; padding: 1rem; }
+.catalog-filter-sidebar summary { display: list-item; cursor: pointer; font-weight: 700; padding: .75rem; }
+.catalog-filter-field { min-width: 0; margin: 0; padding: .65rem; border: 1px solid #c9d8df; border-radius: .4rem; }
+.catalog-filter-field legend { padding-inline: .25rem; font-weight: 600; overflow-wrap: anywhere; }
+.catalog-filter-field label { display: block; margin-block: .4rem; font-size: .9rem; }
+.catalog-filter-sidebar input, .catalog-filter-sidebar select { width: 100%; min-width: 0; max-width: 100%; box-sizing: border-box; }
+.catalog-filter-sidebar select[multiple] { min-height: 5rem; }
+.filter-range { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: .5rem; }
+.filter-help { font-size: .8rem; line-height: 1.5; color: #4c6170; }
+.filter-error { color: #9b231c; padding: .65rem; border: 1px solid currentColor; overflow-wrap: anywhere; }
+.catalog-filter-actions { display: flex; flex-wrap: wrap; align-items: center; gap: .75rem; }
+.catalog-filter-sidebar :is(input, select, button, a):focus-visible { outline: 3px solid #147985; outline-offset: 2px; }
+@media (max-width: 1024px) { .catalog-workspace { grid-template-columns: minmax(0, 1fr); } .catalog-filter-sidebar .catalog-filters { grid-template-columns: repeat(2, minmax(0, 1fr)); } .catalog-filter-actions { grid-column: 1 / -1; } }
+@media (max-width: 640px) { .catalog-filter-sidebar .catalog-filters { grid-template-columns: minmax(0, 1fr); } }
+
+.catalog-query-form, .catalog-field-form { display: grid; min-width: 0; gap: .5rem; align-content: start; }

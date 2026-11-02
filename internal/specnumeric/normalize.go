@@ -24,7 +24,10 @@ type rawSegment struct {
 	lowerInclusive, upperInclusive bool
 }
 
-type rawParser struct{ rest string }
+type rawParser struct {
+	rest  string
+	units map[string]unitDefinition
+}
 
 // Normalize derives a candidate under an explicit profile. A nonempty Reason
 // always prevents treating that candidate as an unconditional numeric fact.
@@ -50,12 +53,24 @@ func Normalize(raw string, profile Profile) Result {
 		}
 		input = rest
 	}
-	p := rawParser{rest: input}
+	p := rawParser{rest: input, units: registryForVersion(profile.UnitRegistryVersion)}
 	value := Value{SchemaVersion: profile.SchemaVersion, Quantity: profile.Quantity,
 		SemanticRole: profile.SemanticRole, Unit: profile.CanonicalUnit,
 		UnitRegistryVersion: profile.UnitRegistryVersion, Context: Context{Kind: ContextUnconditional}}
 	var reason Reason
-	if operator := p.takeOne(">=", "<=", "≥", "≤", ">", "<"); operator != "" {
+	if profile.SemanticRole == RoleErrorMagnitude {
+		marker := p.takeOne("±", "<=", "≤", "<")
+		atom, failure := p.atom()
+		if failure != "" {
+			return Result{Reason: failure}
+		}
+		number, failure := canonicalAtom(atom, "", profile)
+		if failure != "" {
+			return Result{Reason: failure}
+		}
+		value.Shape = ShapeBoundClaim
+		value.Bound = &BoundClaim{Direction: BoundUpper, Value: number, Inclusive: marker != "<"}
+	} else if operator := p.takeOne(">=", "<=", "≥", "≤", ">", "<"); operator != "" {
 		value.Shape = ShapeBoundClaim
 		atom, failure := p.atom()
 		if failure != "" {
@@ -155,19 +170,12 @@ func (p *rawParser) atom() (rawAtom, Reason) {
 	}
 	rest = rest[len(text):]
 	unitRest := strings.TrimLeftFunc(rest, unicode.IsSpace)
-	end := 0
-	for end < len(unitRest) {
-		r, size := utf8.DecodeRuneInString(unitRest[end:])
-		if !unicode.IsLetter(r) {
-			break
-		}
-		end += size
-	}
+	end := p.unitLength(unitRest)
 	unit := unitRest[:end]
 	// Only registered electrical units are consumed. Words marking roles or
 	// conditions remain suffixes; other adjacent unit text fails closed.
 	if unit != "" {
-		if _, known := electricalUnits[unit]; known {
+		if _, known := p.units[unit]; known {
 			rest = unitRest[end:]
 		} else if !conditionalSuffix(unitRest) && !startsRoleMarker(unitRest) {
 			return rawAtom{}, ReasonUnsupportedUnit
@@ -177,6 +185,22 @@ func (p *rawParser) atom() (rawAtom, Reason) {
 	}
 	p.rest = rest
 	return rawAtom{number: number, unit: unit}, ""
+}
+
+func (p *rawParser) unitLength(rest string) int {
+	if _, ok := p.units["1"]; ok && strings.HasPrefix(rest, "1") {
+		return 1
+	}
+	_, percent := p.units["%"]
+	end := 0
+	for end < len(rest) {
+		r, size := utf8.DecodeRuneInString(rest[end:])
+		if !unicode.IsLetter(r) && !(percent && r == '%') {
+			break
+		}
+		end += size
+	}
+	return end
 }
 
 func (p *rawParser) segment() (rawSegment, Reason) {
@@ -210,17 +234,10 @@ func (p *rawParser) segment() (rawSegment, Reason) {
 		segment.upperInclusive = closing == "]"
 		// A unit following the closing bracket applies to both endpoints.
 		rest := strings.TrimLeftFunc(p.rest, unicode.IsSpace)
-		end := 0
-		for end < len(rest) {
-			r, size := utf8.DecodeRuneInString(rest[end:])
-			if !unicode.IsLetter(r) {
-				break
-			}
-			end += size
-		}
+		end := p.unitLength(rest)
 		if end > 0 {
 			unit := rest[:end]
-			if _, known := electricalUnits[unit]; known {
+			if _, known := p.units[unit]; known {
 				if segment.lower.unit != "" || segment.upper.unit != "" {
 					return rawSegment{}, ReasonAmbiguous
 				}
@@ -286,8 +303,8 @@ func (p *rawParser) tolerance(nominalAtom rawAtom, profile Profile) (*Tolerance,
 		return nil, reason
 	}
 	tolerance := &Tolerance{Nominal: nominal, Type: ToleranceAbsolute}
-	if p.takeOne("%") != "" {
-		if amountAtom.unit != "" {
+	if amountAtom.unit == "%" || p.takeOne("%") != "" {
+		if amountAtom.unit != "" && amountAtom.unit != "%" {
 			return nil, ReasonUnsupportedShape
 		}
 		tolerance.Type = ToleranceRelative

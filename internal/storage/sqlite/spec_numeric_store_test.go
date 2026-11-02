@@ -361,6 +361,11 @@ func removeNumericSchema(t *testing.T, store *Store) {
 	if CurrentSchemaVersion < 19 {
 		return
 	}
+	if CurrentSchemaVersion >= 20 {
+		if _, err := store.db.Exec(`DROP TABLE spec_normalization_work_items; DROP TABLE spec_normalization_work; DROP TABLE spec_filter_profile_work; DROP TABLE spec_filter_profiles; DELETE FROM schema_migrations WHERE version>=20;`); err != nil {
+			t.Fatal(err)
+		}
+	}
 	_, err := store.db.Exec(`
 DROP TABLE public_spec_projection_fields;
 DROP TABLE public_spec_projection_products;
@@ -475,8 +480,8 @@ func TestNumericFreshInstallHasSameSchema(t *testing.T) {
 	if err := store.db.QueryRow(`SELECT schema_version FROM system_state`).Scan(&version); err != nil {
 		t.Fatal(err)
 	}
-	if version != 19 {
-		t.Fatalf("fresh schema=%d, want 19", version)
+	if version != CurrentSchemaVersion {
+		t.Fatalf("fresh schema=%d, want %d", version, CurrentSchemaVersion)
 	}
 	if err := store.db.QueryRow(`SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name IN
 		('spec_numeric_profiles','spec_normalization_selections','product_spec_sources','spec_numeric_profile_work','public_spec_projection_products','public_spec_projection_fields')`).Scan(&tables); err != nil {

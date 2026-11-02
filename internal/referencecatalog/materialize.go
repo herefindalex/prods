@@ -15,6 +15,7 @@ import (
 	"prods/internal/identity"
 	"prods/internal/publishing"
 	"prods/internal/site"
+	"prods/internal/specnumeric"
 	storesqlite "prods/internal/storage/sqlite"
 )
 
@@ -287,10 +288,15 @@ func loadTaxonomy(ctx context.Context, store *storesqlite.Store, actorID string,
 		categoryRevisions[created.ID] = created.Revision
 	}
 	for _, spec := range dataset.Specs {
-		if _, err := store.CreateSpecDefinition(ctx, actorID, spec); err != nil {
+		created, err := store.CreateSpecDefinition(ctx, actorID, spec)
+		if err != nil {
 			return fmt.Errorf("create spec %s: %w", spec.ID, err)
 		}
+		if _, err = store.ConfigureSpecSearchProfile(ctx, actorID, spec.ID, created.Revision, catalog.SpecSearchProfile{Filterable: spec.Filterable, Profile: dataset.SpecSearchProfiles[spec.ID]}); err != nil {
+			return err
+		}
 	}
+
 	for _, set := range dataset.SpecSets {
 		if _, err := store.CreateSpecSet(ctx, actorID, set); err != nil {
 			return fmt.Errorf("create spec set %s: %w", set.ID, err)
@@ -320,11 +326,24 @@ func loadProducts(ctx context.Context, store *storesqlite.Store, actorID string,
 		}
 		revision := created.Revision
 		for _, value := range seed.SpecValues {
-			if _, err := store.SaveSpecValue(ctx, actorID, created.ID, value.SpecID, value.RawValue, value.SourceLocale, revision); err != nil {
-				return fmt.Errorf("save %s for %s: %w", value.SpecID, created.ID, err)
+			saved, err := store.SaveSpecValue(ctx, actorID, created.ID, value.SpecID, value.RawValue, value.SourceLocale, revision)
+			if err != nil {
+				return fmt.Errorf("save %s %s: %w", value.SpecID, created.ID, err)
 			}
 			revision++
+			if dataset.SpecSearchProfiles[value.SpecID].Kind == "numeric" {
+				frozen, err := store.SpecNormalizationContext(ctx, saved.ID)
+				if err != nil {
+					return err
+				}
+				outcome, err := store.RecordSpecNormalization(ctx, actorID, catalog.NormalizeSpecCommand{SpecValueID: saved.ID, Expected: frozen.Expected}, specnumeric.Normalize(frozen.Raw, frozen.Profile))
+				if err != nil {
+					return err
+				}
+				revision = outcome.ProductRevision
+			}
 		}
+
 		for _, translation := range seed.Translations {
 			if _, err := store.SaveProductTranslation(ctx, actorID, created.ID, revision, translation); err != nil {
 				return fmt.Errorf("save %s translation for %s: %w", translation.Locale, created.ID, err)

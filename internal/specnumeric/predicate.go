@@ -52,6 +52,9 @@ func NormalizePredicate(input Predicate, profile Profile) (Predicate, error) {
 }
 
 func predicateCompatible(role string, shape Shape, operator Operator) bool {
+	if role == RoleErrorMagnitude {
+		return shape == ShapeBoundClaim && (operator == OperatorLess || operator == OperatorLessEqual)
+	}
 	switch operator {
 	case OperatorContainsPoint, OperatorContainsRange, OperatorOverlapsRange:
 		return role == RoleOperatingSupport && (shape == ShapeScalar || shape == ShapeDiscreteSet || shape == ShapeIntervalSet)
@@ -71,6 +74,11 @@ func Evaluate(value *Value, profile Profile, predicate Predicate) Truth {
 	query, err := NormalizePredicate(predicate, profile)
 	if err != nil {
 		return Unknown
+	}
+	if profile.SemanticRole == RoleErrorMagnitude {
+		// Compare the declared maximum magnitude, not an unknown actual error
+		// inside the claim and not a nominal value of a tolerance expression.
+		return evaluateScalar(value.Bound.Value, query)
 	}
 	switch query.Operator {
 	case OperatorContainsPoint, OperatorContainsRange, OperatorOverlapsRange:

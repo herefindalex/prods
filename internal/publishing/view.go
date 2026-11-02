@@ -43,9 +43,10 @@ type Image struct {
 }
 
 type ApplicableSpecification struct {
-	ID            string `json:"id"`
-	Name          string `json:"name"`
-	PreferredUnit string `json:"preferred_unit,omitempty"`
+	SemanticVersion int64  `json:"semantic_version"`
+	ID              string `json:"id"`
+	Name            string `json:"name"`
+	PreferredUnit   string `json:"preferred_unit,omitempty"`
 }
 
 // PublicNumericDefinition freezes an applicable, filterable semantic definition.
@@ -64,6 +65,7 @@ type PublicNumericFact struct {
 }
 
 type PublicView struct {
+	FilterDefinitions        []PublicFilterDefinition           `json:"filter_definitions,omitempty"`
 	NumericFacts             []PublicNumericFact                `json:"numeric_facts,omitempty"`
 	NumericDefinitions       []PublicNumericDefinition          `json:"numeric_definitions,omitempty"`
 	PackageFormFactor        string                             `json:"package_form_factor,omitempty"`
