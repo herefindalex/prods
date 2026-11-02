@@ -146,6 +146,7 @@ export type NormalizedValue = {
   failure_reason?: string;
 };
 export type SpecValueDetail = {
+ source_selection: import("./specCommands").SourceSelection;
   value: SpecValue;
   normalized: NormalizedValue[];
 };

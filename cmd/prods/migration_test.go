@@ -89,7 +89,11 @@ func newMigrationFixture(t *testing.T) migrationFixture {
 		t.Fatal(err)
 	}
 	if _, err := db.Exec(`
-		DROP TABLE public_spec_projection_fields;
+		DROP TABLE spec_normalization_work_items;
+DROP TABLE spec_normalization_work;
+DROP TABLE spec_filter_profile_work;
+DROP TABLE spec_filter_profiles;
+DROP TABLE public_spec_projection_fields;
 		DROP TABLE public_spec_projection_products;
 		DROP TABLE spec_numeric_profile_work;
 		DROP TABLE spec_normalization_selections;

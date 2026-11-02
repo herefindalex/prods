@@ -28,20 +28,25 @@ type Profile struct {
 }
 
 func ValidateProfile(profile Profile) error {
-	if profile.SchemaVersion != SchemaVersion || profile.ParserVersion != ParserVersion || profile.UnitRegistryVersion != UnitRegistryVersion || profile.NumericFormat != NumericFormatDecimalDot {
+	if profile.SchemaVersion != SchemaVersion || !validProfileVersions(profile) || profile.NumericFormat != NumericFormatDecimalDot {
 		return fmt.Errorf("unsupported profile version or numeric format")
 	}
 	switch profile.SemanticRole {
 	case RoleOperatingSupport, RoleNominal, RoleTypical, RoleMinimumLimit, RoleMaximumLimit, RoleAbsoluteMaximum:
+	case RoleErrorMagnitude:
+		if profile.ParserVersion != CatalogParserVersion || profile.Quantity != "ratio" {
+			return fmt.Errorf("unsupported error magnitude profile")
+		}
 	default:
 		return fmt.Errorf("unsupported semantic role: %q", profile.SemanticRole)
 	}
-	unit, ok := electricalUnits[profile.CanonicalUnit]
+	units := registryForVersion(profile.UnitRegistryVersion)
+	unit, ok := units[profile.CanonicalUnit]
 	if !ok || unit.exponent != 0 || unit.canonical != profile.CanonicalUnit || unit.quantity != profile.Quantity {
 		return fmt.Errorf("invalid canonical unit for quantity")
 	}
 	if profile.DeclaredInputUnit != "" {
-		input, ok := electricalUnits[profile.DeclaredInputUnit]
+		input, ok := units[profile.DeclaredInputUnit]
 		if !ok || input.quantity != profile.Quantity {
 			return fmt.Errorf("invalid declared input unit for quantity")
 		}
@@ -51,6 +56,9 @@ func ValidateProfile(profile Profile) error {
 	}
 	shapes := map[Shape]bool{}
 	for _, shape := range profile.AllowedShapes {
+		if profile.SemanticRole == RoleErrorMagnitude && shape != ShapeBoundClaim || profile.Quantity == "count" && shape == ShapeTolerance {
+			return fmt.Errorf("shape incompatible with quantity or role")
+		}
 		if !knownShape(shape) || shapes[shape] {
 			return fmt.Errorf("invalid or duplicate allowed shape: %q", shape)
 		}
@@ -58,6 +66,9 @@ func ValidateProfile(profile Profile) error {
 	}
 	operators := map[Operator]bool{}
 	for _, operator := range profile.AllowedOperators {
+		if profile.SemanticRole == RoleErrorMagnitude && operator != OperatorLess && operator != OperatorLessEqual {
+			return fmt.Errorf("unsupported error magnitude operator")
+		}
 		if !knownOperator(operator) || operators[operator] {
 			return fmt.Errorf("invalid or duplicate allowed operator: %q", operator)
 		}

@@ -1,3 +1,6 @@
+import {SpecNormalizationPanel} from "./SpecNormalizationPanel";
+import {specMessages} from "./locales";
+import {useAdminIdentity} from "./AdminProviders";
 import { useEffect, useMemo, useState } from "react";
 import { Alert, Button, Card, Checkbox, Form, Input, InputNumber, List, Modal, Popconfirm, Radio, Select, Space, Tag, Typography, Upload } from "antd";
 import { api, APIError, clientID, postJSON, putJSON } from "./api";
@@ -219,6 +222,9 @@ const labels = {
 
 export function ProductDataModal({ locale, product, open, onClose, onChanged, onError, onMessage }: Props) {
  const text = labels[locale];
+ const {capabilities}=useAdminIdentity();
+ const canEdit=Boolean(capabilities["catalog.edit"]);
+ const [normalizationSpec,setNormalizationSpec]=useState<SpecDefinition>();
   const [current, setCurrent] = useState<Product>();
   const [specs, setSpecs] = useState<SpecDefinition[]>([]);
   const [specSet, setSpecSet] = useState<SpecSet>();
@@ -287,7 +293,6 @@ export function ProductDataModal({ locale, product, open, onClose, onChanged, on
       await onChanged();
     } catch (error) {
       onError(error);
-      await load();
     }
   };
 
@@ -412,6 +417,8 @@ export function ProductDataModal({ locale, product, open, onClose, onChanged, on
   };
 
   return (
+    <>
+    {normalizationSpec&&current&&<SpecNormalizationPanel spec={normalizationSpec} details={values.filter(d=>d.value.spec_id===normalizationSpec.id)} productID={current.id} productRevision={current.revision} locale={locale} canEdit={canEdit} onClose={()=>setNormalizationSpec(undefined)} onChanged={async()=>{await load();await onChanged();}}/>}
     <Modal open={open} onCancel={onClose} footer={null} width={900} title={text.title(current?.part_number, current?.revision)}>
       <Space direction="vertical" size="large" className="panel-stack">
         {!specSet && <Alert type="warning" showIcon message={text.noSpecSet} />}
@@ -420,7 +427,7 @@ export function ProductDataModal({ locale, product, open, onClose, onChanged, on
             dataSource={values}
             locale={{ emptyText: text.noValues }}
             renderItem={(detail) => (
-              <List.Item>
+              <List.Item actions={[<Button key="normalization" onClick={()=>setNormalizationSpec(specs.find(spec=>spec.id===detail.value.spec_id))}>{specMessages(locale).normalization}</Button>]}>
                 <List.Item.Meta
                   title={specs.find((spec) => spec.id === detail.value.spec_id)?.name ?? detail.value.spec_id}
                   description={
@@ -538,5 +545,6 @@ export function ProductDataModal({ locale, product, open, onClose, onChanged, on
         </Card>
       </Space>
     </Modal>
+    </>
   );
 }

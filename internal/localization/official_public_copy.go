@@ -9,6 +9,20 @@ type officialCopyField struct {
 }
 
 var officialCopyFields = []officialCopyField{
+	{"product.package", "Catalog filter Package", func(m Messages) string { return m.Package }},
+	{"filter.equals", "Catalog filter FilterEquals", func(m Messages) string { return m.FilterEquals }},
+	{"filter.contains", "Catalog filter FilterContains", func(m Messages) string { return m.FilterContains }},
+	{"filter.supports_point", "Catalog filter FilterSupports", func(m Messages) string { return m.FilterSupports }},
+	{"filter.covers_range", "Catalog filter FilterCovers", func(m Messages) string { return m.FilterCovers }},
+	{"filter.between", "Catalog filter FilterBetween", func(m Messages) string { return m.FilterBetween }},
+	{"filter.value", "Catalog filter FilterValue", func(m Messages) string { return m.FilterValue }},
+	{"filter.lower", "Catalog filter FilterLower", func(m Messages) string { return m.FilterLower }},
+	{"filter.upper", "Catalog filter FilterUpper", func(m Messages) string { return m.FilterUpper }},
+	{"filter.unit", "Catalog filter FilterUnit", func(m Messages) string { return m.FilterUnit }},
+	{"filter.error", "Catalog filter FilterError", func(m Messages) string { return m.FilterError }},
+	{"filter.unavailable", "Catalog filter FilterUnavailable", func(m Messages) string { return m.FilterUnavailable }},
+	{"filter.numeric_help", "Catalog filter FilterNumericHelp", func(m Messages) string { return m.FilterNumericHelp }},
+
 	{"catalog.title", "Public catalog heading", func(m Messages) string { return m.Catalog }},
 	{"catalog.request_part", "Public catalog request-part action", func(m Messages) string { return m.RequestPart }},
 	{"search.label", "Public search field label", func(m Messages) string { return m.SearchLabel }},
@@ -80,6 +94,20 @@ func OfficialPublicCopyCatalog() PublicCopyCatalog {
 
 func ApplyPublicCopy(messages Messages, values map[string]string) Messages {
 	targets := map[string]*string{
+		"product.package":       &messages.Package,
+		"filter.equals":         &messages.FilterEquals,
+		"filter.contains":       &messages.FilterContains,
+		"filter.supports_point": &messages.FilterSupports,
+		"filter.covers_range":   &messages.FilterCovers,
+		"filter.between":        &messages.FilterBetween,
+		"filter.value":          &messages.FilterValue,
+		"filter.lower":          &messages.FilterLower,
+		"filter.upper":          &messages.FilterUpper,
+		"filter.unit":           &messages.FilterUnit,
+		"filter.error":          &messages.FilterError,
+		"filter.unavailable":    &messages.FilterUnavailable,
+		"filter.numeric_help":   &messages.FilterNumericHelp,
+
 		"catalog.title": &messages.Catalog, "catalog.request_part": &messages.RequestPart,
 		"search.label": &messages.SearchLabel, "search.submit": &messages.Search, "search.all": &messages.All,
 		"search.filters": &messages.Filters, "search.clear_filters": &messages.ClearFilters,

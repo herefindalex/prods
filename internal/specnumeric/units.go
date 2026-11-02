@@ -2,7 +2,6 @@ package specnumeric
 
 import (
 	"fmt"
-	"math/big"
 )
 
 const UnitRegistryVersion = "electrical-1"
@@ -30,17 +29,12 @@ func Convert(value Decimal, unit string, profile Profile) (Decimal, error) {
 	if unit == "" {
 		unit = profile.DeclaredInputUnit
 	}
-	definition, ok := electricalUnits[unit]
+	definition, ok := registryForVersion(profile.UnitRegistryVersion)[unit]
 	if !ok || definition.quantity != profile.Quantity || definition.canonical != profile.CanonicalUnit {
 		return Decimal{}, fmt.Errorf("unsupported_unit: %q", unit)
 	}
-	factor := new(big.Int).Exp(big.NewInt(10), big.NewInt(int64(abs(definition.exponent))), nil)
 	converted := value.rat()
-	if definition.exponent >= 0 {
-		converted.Mul(converted, new(big.Rat).SetInt(factor))
-	} else {
-		converted.Quo(converted, new(big.Rat).SetInt(factor))
-	}
+	converted.Mul(converted, unitFactor(unit, definition, profile.UnitRegistryVersion))
 	return decimalFromRat(converted)
 }
 

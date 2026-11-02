@@ -611,6 +611,12 @@ func (s *Server) routes(static fs.FS) {
 	s.mux.HandleFunc("POST /admin/api/products/{id}/spec-values", s.adminSaveSpecValue)
 	s.mux.HandleFunc("POST /admin/api/spec-values/{id}/normalized", s.adminAdoptSpec)
 	s.mux.HandleFunc("PUT /admin/api/specs/{id}/numeric-profile", s.adminConfigureNumericProfile)
+	s.mux.HandleFunc("GET /admin/api/spec-search-capabilities", s.adminSpecSearchCapabilities)
+	s.mux.HandleFunc("GET /admin/api/specs/{id}/search-profile", s.adminSpecSearchProfile)
+	s.mux.HandleFunc("POST /admin/api/specs/{id}/search-profile", s.adminConfigureSpecSearchProfile)
+	s.mux.HandleFunc("POST /admin/api/specs/{id}/normalization-work", s.adminStartSpecNormalizationWork)
+	s.mux.HandleFunc("GET /admin/api/spec-normalization-work/{id}", s.adminSpecNormalizationWork)
+	s.mux.HandleFunc("GET /admin/api/spec-normalization-work/{id}/items", s.adminSpecNormalizationWorkItems)
 	s.mux.HandleFunc("GET /admin/api/spec-values/{id}/normalization-context", s.adminSpecNormalizationContext)
 	s.mux.HandleFunc("POST /admin/api/spec-values/{id}/normalize", s.adminNormalizeSpec)
 	s.mux.HandleFunc("POST /admin/api/spec-values/{id}/normalization/automatic", s.adminSelectAutomaticSpec)
@@ -689,7 +695,10 @@ func (s *Server) currentPublicPage(r *http.Request, views []publishing.PublicVie
 	if len(views) > 0 {
 		configuration = views[0].Site
 		epoch = views[0].SiteEpoch
-		defaultLocale = views[0].Language
+		defaultLocale = views[0].DefaultLocale
+		if defaultLocale == "" {
+			defaultLocale = views[0].Language
+		}
 		supportedLocales = append([]string(nil), views[0].SupportedLocales...)
 	} else {
 		website, err := s.store.WebsiteState(ctx)

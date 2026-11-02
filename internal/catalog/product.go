@@ -4,8 +4,7 @@ import (
 	"errors"
 	"strings"
 
-	"golang.org/x/text/cases"
-	"golang.org/x/text/unicode/norm"
+	"prods/internal/searchtext"
 )
 
 const SearchProjectionVersion = "x-text-v0.25.0-nfc-casefold-fields-v2"
@@ -276,7 +275,7 @@ func (p Product) DisplayName() string {
 }
 
 func FoldSearch(value string) string {
-	return norm.NFC.String(cases.Fold().String(norm.NFC.String(value)))
+	return searchtext.Fold(value)
 }
 
 func EscapeLike(value string) string {

@@ -17,6 +17,7 @@ import (
 	"time"
 
 	"prods/internal/catalog"
+	"prods/internal/catalogfilter"
 	"prods/internal/identity"
 	"prods/internal/inquiries"
 	"prods/internal/localization"
@@ -107,17 +108,18 @@ type Installation struct {
 }
 
 type InstallationSampleData struct {
-	Version          string
-	DatasetVersion   string
-	SourceURL        string
-	SHA256           string
-	Dictionaries     []catalog.DictionaryEntry
-	Categories       []catalog.Category
-	Specs            []catalog.SpecDefinition
-	SpecSets         []catalog.SpecSet
-	CategorySpecSets []InstallationCategorySpecSet
-	Products         []catalog.Product
-	SpecValues       []catalog.SpecValue
+	SpecSearchProfiles map[string]catalogfilter.Profile
+	Version            string
+	DatasetVersion     string
+	SourceURL          string
+	SHA256             string
+	Dictionaries       []catalog.DictionaryEntry
+	Categories         []catalog.Category
+	Specs              []catalog.SpecDefinition
+	SpecSets           []catalog.SpecSet
+	CategorySpecSets   []InstallationCategorySpecSet
+	Products           []catalog.Product
+	SpecValues         []catalog.SpecValue
 }
 
 type InstallationCategorySpecSet struct {
@@ -522,7 +524,17 @@ func (s *Store) CompleteInstallation(ctx context.Context, installation Installat
 				spec.Status, 1, ownerID, ownerID, now, now); err != nil {
 				return identity.User{}, fmt.Errorf("install sample specification %q: %w", spec.ID, err)
 			}
+			if profile, ok := installation.SampleData.SpecSearchProfiles[spec.ID]; ok {
+				if err := installSpecSearchProfileTx(ctx, tx, ownerID, spec, profile, now); err != nil {
+					return identity.User{}, err
+				}
+			}
 			seenSpecIDs[spec.ID] = struct{}{}
+		}
+		for id := range installation.SampleData.SpecSearchProfiles {
+			if _, ok := seenSpecIDs[id]; !ok {
+				return identity.User{}, catalog.ErrInvalidSpec
+			}
 		}
 		seenSpecSetIDs := make(map[string]struct{}, len(installation.SampleData.SpecSets))
 		for index := range installation.SampleData.SpecSets {
@@ -672,6 +684,17 @@ func (s *Store) CompleteInstallation(ctx context.Context, installation Installat
 				return identity.User{}, err
 			}
 			seenSpecValues[key] = struct{}{}
+		}
+		for _, spec := range installation.SampleData.Specs {
+			if profile, ok := installation.SampleData.SpecSearchProfiles[spec.ID]; ok && profile.Kind == "numeric" {
+				id, err := randomID("snw")
+				if err != nil {
+					return identity.User{}, err
+				}
+				if err = queueSpecNormalizationWorkTx(ctx, tx, ownerID, id, spec.ID, 1, spec.SemanticVer, true, now); err != nil {
+					return identity.User{}, err
+				}
+			}
 		}
 	}
 	details := map[string]any{}

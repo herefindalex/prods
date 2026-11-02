@@ -6,7 +6,35 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
+
+	"prods/internal/catalogfilter"
+	"prods/internal/site"
 )
+
+type emptyLocalizedVisibilityRepository struct{ *workerRefreshRepository }
+
+func (r *emptyLocalizedVisibilityRepository) ActivePublications(context.Context) ([]ActivePublication, error) {
+	return nil, nil
+}
+
+func (r *emptyLocalizedVisibilityRepository) ActiveWebsiteLocalization(context.Context) (site.WebsiteLocalization, error) {
+	return site.WebsiteLocalization{DefaultLocale: "zh-TW", EnabledLocales: []string{"zh-TW"}}, nil
+}
+
+func TestVisibilityInstallKeepsEmptyCatalogLocale(t *testing.T) {
+	e, base := workerRefreshFixture(t)
+	e.repository = &emptyLocalizedVisibilityRepository{workerRefreshRepository: base}
+	e.LockVisibility()
+	err := e.InstallVisibility(t.Context())
+	e.UnlockVisibility()
+	if err != nil {
+		t.Fatal(err)
+	}
+	result, err := e.AdmitCatalog(t.Context(), CatalogQuery{Scope: catalogfilter.Scope{Kind: "all"}})
+	if err != nil || result.Locale != "zh-TW" {
+		t.Fatalf("empty catalog locale = %q, err = %v", result.Locale, err)
+	}
+}
 
 // Keep real staging and admission while making a catalogue-wide read fail.
 // A Product commit has enough information to read only that Product instead.

@@ -113,7 +113,13 @@ func TestCategoryListingProfileActivatesOnlyWithWebsitePublishAndKeepsEmptyCateg
 		t.Fatal(err)
 	}
 	afterBody := responseBody(t, after)
-	if strings.Index(afterBody, "Output current") < 0 || strings.Index(afterBody, "Input voltage") < 0 || strings.Index(afterBody, "Output current") > strings.Index(afterBody, "Input voltage") {
+	afterHeader := afterBody
+	if start := strings.Index(afterBody, `<table class="catalog-table"`); start >= 0 {
+		if end := strings.Index(afterBody[start:], "</thead>"); end >= 0 {
+			afterHeader = afterBody[start : start+end]
+		}
+	}
+	if strings.Index(afterHeader, "Output current") < 0 || strings.Index(afterHeader, "Input voltage") < 0 || strings.Index(afterHeader, "Output current") > strings.Index(afterHeader, "Input voltage") {
 		t.Fatalf("published listing profile not active: %s", afterBody)
 	}
 	if strings.Contains(afterBody, ">Name</th>") {
